@@ -22,6 +22,7 @@ class paymentAPI
     }
 
     ## inserting the temporary transaction to the temporary transaction tbale.
+    ## Now generates and returns a cryptographically random return_token for secure authorization.
     public function insertTempTransaction($userid, $transid)
     {
         $transaction = new stdClass();
@@ -29,13 +30,16 @@ class paymentAPI
         $transaction->userid = (int)$userid;
         $transaction->ordercode = (int)$this->ordercode;
         $transaction->processed = 0;
+        // Generate a cryptographically random token for this payment attempt (not guessable from ordercode)
+        $transaction->return_token = bin2hex(random_bytes(32));
 
         // Insert the object into the temporary transaction table.
         $result = Factory::getContainer()->get('DatabaseDriver')
             ->insertObject('#__ticketstation_transactions_temp', $transaction);
 
         if ($result == true) {
-            return true;
+            // Return the generated token so the caller can use it in the Mollie redirectUrl
+            return $transaction->return_token;
         }
         else {
             return false;
@@ -43,9 +47,8 @@ class paymentAPI
     }
 
     ## update the temporary transaction to "processed"
-    ## Needs to feeded with the unique transaction ID
-    ## This transaction ID has been entered by yourself with the saveTransaction() functionality.
-    public function updateTempTransaction($transid, $state = 1, $message = 1)
+    ## Now uses return_token (cryptographically random) instead of transaction_number (was md5(ordercode))
+    public function updateTempTransaction($token, $state = 1, $message = 1)
     {
         $db = Factory::getContainer()->get('DatabaseDriver');
 
@@ -57,7 +60,7 @@ class paymentAPI
         );
 
         $conditions = array(
-            $db->quoteName('transaction_number') . ' = ' . $db->quote($transid)
+            $db->quoteName('return_token') . ' = ' . $db->quote($token)
         );
 
         $query->update($db->quoteName('#__ticketstation_transactions_temp'))
@@ -75,9 +78,10 @@ class paymentAPI
         }
     }
 
-    ## Check the count of the temporary transactions
+    ## Check the count of the temporary transactions for this ordercode
     ## Every transaction maybe entered once. It will return false if there are more than 0 transactions.
-    public function checkTempTransactionAmount($intTrxId)
+    ## Note: Changed from transaction_number lookup to ordercode lookup after token-based authorization was introduced.
+    public function checkTempTransactionAmount($intTrxId = null)
     {
         $db = Factory::getContainer()->get('DatabaseDriver');
 
@@ -85,7 +89,7 @@ class paymentAPI
 
         $query->select('*');
         $query->from($db->quoteName('#__ticketstation_transactions_temp'));
-        $query->where($db->quoteName('transaction_number') . ' = ' . $db->quote($intTrxId));
+        $query->where($db->quoteName('ordercode') . ' = ' . $db->quote((int)$this->ordercode));
 
         $db->setQuery($query);
         $temp_transaction = $db->loadObjectList();
@@ -93,8 +97,8 @@ class paymentAPI
         return count($temp_transaction);
     }
 
-    ## Check the count of the temporary transactions
-    ## Every transaction maybe entered once. It will return false if there are more than 0 transactions.
+    ## Get temp transaction result by return_token.
+    ## Now looks up by the cryptographically random return_token instead of the guessable transaction_number.
     public function getTempTransactionResult($intTrxId)
     {
         $db = Factory::getContainer()->get('DatabaseDriver');
@@ -103,7 +107,24 @@ class paymentAPI
 
         $query->select('*');
         $query->from($db->quoteName('#__ticketstation_transactions_temp'));
-        $query->where($db->quoteName('transaction_number') . ' = ' . $db->quote($intTrxId));
+        $query->where($db->quoteName('return_token') . ' = ' . $db->quote($intTrxId));
+
+        $db->setQuery($query);
+
+        return $db->loadObject();
+    }
+
+    ## Get temp transaction result by ordercode (used by webhook processing).
+    ## The Mollie webhook only has the ordercode, not the return_token.
+    public function getTempTransactionByOrdercode($ordercode)
+    {
+        $db = Factory::getContainer()->get('DatabaseDriver');
+
+        $query = $db->getQuery(true);
+
+        $query->select('*');
+        $query->from($db->quoteName('#__ticketstation_transactions_temp'));
+        $query->where($db->quoteName('ordercode') . ' = ' . $db->quote((int)$ordercode));
 
         $db->setQuery($query);
 
@@ -465,13 +486,43 @@ class paymentAPI
         return $db->loadObject();
     }
 
+    /**
+     * Get validation token for an order by ordercode.
+     *
+     * @param int|null $ordercode
+     * @return string|null
+     */
+    private function getValidationTokenForOrder($ordercode = null)
+    {
+        if (!$ordercode) {
+            $ordercode = $this->ordercode;
+        }
+
+        $db = Factory::getContainer()->get('DatabaseDriver');
+        $query = $db->getQuery(true);
+        $query->select('validation_token')
+            ->from($db->quoteName('#__ticketstation_orders'))
+            ->where($db->quoteName('ordercode') . ' = ' . $db->quote((int)$ordercode));
+        $db->setQuery($query);
+        $result = $db->loadObject();
+
+        return $result ? $result->validation_token : null;
+    }
+
     public function generatePaymentLink($ordercode = null)
     {
         if (!$ordercode) {
             $ordercode = $this->ordercode;
         }
 
-        $encoded_link = base64_encode('ordercode=' . $ordercode);
+        $token = $this->getValidationTokenForOrder($ordercode);
+        if (!$token) {
+            // Fallback to old method if token not found (for backward compatibility during migration)
+            $encoded_link = base64_encode('ordercode=' . $ordercode);
+        } else {
+            $encoded_link = base64_encode('token=' . $token);
+        }
+
         $paymentlink = URI::root() . 'index.php?option=com_ticketstation&controller=validate&task=pay&order=' . $encoded_link;
 
         return $paymentlink;
@@ -483,9 +534,42 @@ class paymentAPI
             $ordercode = $this->ordercode;
         }
 
-        $encoded_link = base64_encode('ordercode=' . $ordercode);
+        $token = $this->getValidationTokenForOrder($ordercode);
+        if (!$token) {
+            // Fallback to old method if token not found (for backward compatibility during migration)
+            $encoded_link = base64_encode('ordercode=' . $ordercode);
+        } else {
+            $encoded_link = base64_encode('token=' . $token);
+        }
+
         $confirmation = URI::root() . 'index.php?option=com_ticketstation&controller=validate&task=waitinglist&order=' . $encoded_link;
 
         return $confirmation;
+    }
+
+    /**
+     * Generate a waitinglist confirmation link using validation token.
+     * This is used for sending waitinglist confirmation emails.
+     *
+     * @param int $waitinglistId The ID from waitinglist table
+     * @return string
+     */
+    public function generateWaitingListConfirmationLink($waitinglistId)
+    {
+        $db = Factory::getContainer()->get('DatabaseDriver');
+        $query = $db->getQuery(true);
+        $query->select('validation_token')
+            ->from($db->quoteName('#__ticketstation_waitinglist'))
+            ->where($db->quoteName('id') . ' = ' . $db->quote((int)$waitinglistId));
+        $db->setQuery($query);
+        $result = $db->loadObject();
+
+        if (!$result || !$result->validation_token) {
+            // Fallback: should not happen, but handle gracefully
+            return '';
+        }
+
+        $encoded_link = base64_encode('token=' . $result->validation_token);
+        return URI::root() . 'index.php?option=com_ticketstation&controller=validate&task=waitinglist&order=' . $encoded_link;
     }
 }

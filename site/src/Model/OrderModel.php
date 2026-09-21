@@ -53,6 +53,15 @@ class OrderModel extends BaseDatabaseModel
     {
         $table = $this->getTable();
 
+        // validation_token is NOT NULL + UNIQUE on #__ticketstation_orders (see
+        // admin/sql/updates/mysql/2.0.14.sql) and is used to authorise the guest
+        // "pay later"/confirmation links in ValidateController - every insert path
+        // (checkout, seated-event reservations) goes through this store(), so it's
+        // generated here once rather than in every caller.
+        if (empty($data['validation_token'])) {
+            $data['validation_token'] = bin2hex(random_bytes(32));
+        }
+
         // Bind the data.
         if (!$table->bind($data)) {
             Factory::getApplication()->enqueueMessage('Bind failed', 'error');

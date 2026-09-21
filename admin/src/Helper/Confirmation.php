@@ -748,11 +748,11 @@ class confirmation
         }
 
         $query = $db->getQuery(true);
-        $query->select(['c.userid']);
-        $query->from($db->quoteName('#__ticketstation_waitinglist', 'o'));
-        $query->join('LEFT', $db->quoteName('#__ticketstation_clients', 'c') . ' ON (' . $db->quoteName('c.userid') . ' = ' . $db->quoteName('o.userid') . ')');
-        $query->where($db->quoteName('o.ordercode') . ' = ' . (int) $this->eid);
-        $query->group('o.ordercode');
+        $query->select(['c.userid', 'w.id AS waitinglist_id']);
+        $query->from($db->quoteName('#__ticketstation_waitinglist', 'w'));
+        $query->join('LEFT', $db->quoteName('#__ticketstation_clients', 'c') . ' ON (' . $db->quoteName('c.userid') . ' = ' . $db->quoteName('w.userid') . ')');
+        $query->where($db->quoteName('w.ordercode') . ' = ' . (int) $this->eid);
+        $query->group('w.ordercode');
         $db->setQuery($query);
         $user = $db->loadObject();
 
@@ -770,12 +770,24 @@ class confirmation
         $total_tickets = $payment_helper->getOrderCount();
         $message       = new eTicketsMessage;
 
+        ## Generate confirmation link using waitinglist validation token (if available)
+        $confirmationlink = '';
+        if ($user && isset($user->waitinglist_id))
+        {
+            $confirmationlink = $payment_helper->generateWaitingListConfirmationLink($user->waitinglist_id);
+        }
+        if (empty($confirmationlink))
+        {
+            ## Fallback to ordercode-based link for backward compatibility
+            $confirmationlink = $payment_helper->generateConfirmationLink($this->eid);
+        }
+
         $variables = [
             'orderlist'        => $orderlist,
             'orderdate'        => $date,
             'ordercode'        => $this->eid,
             'price'            => $price,
-            'confirmationlink' => $payment_helper->generateConfirmationLink($this->eid),
+            'confirmationlink' => $confirmationlink,
             'tickets'          => $total_tickets,
         ];
 

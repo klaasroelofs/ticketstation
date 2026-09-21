@@ -33,6 +33,7 @@ class ValidateController extends BaseController
 {
     private $id;
     private $ordercode;
+    private $validationToken;
 
     function __construct()
     {
@@ -41,6 +42,7 @@ class ValidateController extends BaseController
         $jinput          = Factory::getApplication()->getInput();
         $this->ordercode = $jinput->get('oc', '', 'int');
         $this->id        = $jinput->get('cid', '', 'int');
+        $this->validationToken = $jinput->get('token', '', 'string');
     }
 
     /**
@@ -64,9 +66,9 @@ class ValidateController extends BaseController
         }
 
         $decoded   = base64_decode($order);
-        $ordercode = explode('=', $decoded);
+        $parts     = explode('=', $decoded);
 
-        if ( ! isset($ordercode[1]))
+        if ( ! isset($parts[1]))
         {
             $app->enqueueMessage(Text::_('COM_TICKETSTATION_INVALID_ORDER'), 'error');
             $this->setRedirect(Route::_('index.php?option=com_ticketstation&view=upcoming'));
@@ -74,9 +76,10 @@ class ValidateController extends BaseController
             return false;
         }
 
+        $token = $parts[1];
         $waitinglist = new Waitinglist;
 
-        if ( ! $waitinglist->confirm($ordercode[1]))
+        if ( ! $waitinglist->confirmByToken($token))
         {
             $app->enqueueMessage(Text::_('COM_TICKETSTATION_VALIDATION_WAITINGLIST_FAILED'), 'error');
             $this->setRedirect(Route::_('index.php?option=com_ticketstation&view=upcoming'));
@@ -113,17 +116,36 @@ class ValidateController extends BaseController
         }
 
         $decoded   = base64_decode($paylater);
-        $request   = explode('=', $decoded);
-        $ordercode = $request[1];
+        $parts     = explode('=', $decoded);
 
-        // Checking if there is an ordercode.
-        if ( ! isset($ordercode))
+        if ( ! isset($parts[1]))
         {
             $app->enqueueMessage(Text::_('COM_TICKETSTATION_INVALID_ORDER'), 'error');
             $this->setRedirect(Route::_('index.php?option=com_ticketstation&view=upcoming'));
 
             return false;
         }
+
+        $token = $parts[1];
+
+        // Look up ordercode by validation token
+        $db = Factory::getContainer()->get('DatabaseDriver');
+        $query = $db->getQuery(true);
+        $query->select('ordercode')
+            ->from($db->quoteName('#__ticketstation_orders'))
+            ->where($db->quoteName('validation_token') . ' = ' . $db->quote($token));
+        $db->setQuery($query);
+        $result = $db->loadObject();
+
+        if (!$result)
+        {
+            $app->enqueueMessage(Text::_('COM_TICKETSTATION_INVALID_ORDER'), 'error');
+            $this->setRedirect(Route::_('index.php?option=com_ticketstation&view=upcoming'));
+
+            return false;
+        }
+
+        $ordercode = $result->ordercode;
 
         // Checking if there is an order.
         if ( ! (new Order)->isOrderPending($ordercode))
@@ -156,14 +178,39 @@ class ValidateController extends BaseController
     public function validate()
     {
         $app = Factory::getApplication();
+        $db  = Factory::getContainer()->get('DatabaseDriver');
 
-        // If ordercode or id is empty.. Stop here.
-        if ($this->ordercode == 0 || $this->id == 0)
+        // If token is provided (new secure method), use it to look up ordercode
+        if (!empty($this->validationToken))
         {
-            $app->enqueueMessage(Text::_('COM_TICKETSTATION_NO_VALID_ID'), 'error');
-            $this->setRedirect(Route::_('index.php?option=com_ticketstation'));
+            $query = $db->getQuery(true);
+            $query->select('ordercode')
+                ->from($db->quoteName('#__ticketstation_orders'))
+                ->where($db->quoteName('validation_token') . ' = ' . $db->quote($this->validationToken));
+            $db->setQuery($query);
+            $result = $db->loadObject();
 
-            return false;
+            if (!$result)
+            {
+                $app->enqueueMessage(Text::_('COM_TICKETSTATION_NO_VALID_ID'), 'error');
+                $this->setRedirect(Route::_('index.php?option=com_ticketstation'));
+
+                return false;
+            }
+
+            $this->ordercode = $result->ordercode;
+        }
+        else
+        {
+            // Fallback to old method (oc/cid params) for backward compatibility
+            // If ordercode or id is empty.. Stop here.
+            if ($this->ordercode == 0 || $this->id == 0)
+            {
+                $app->enqueueMessage(Text::_('COM_TICKETSTATION_NO_VALID_ID'), 'error');
+                $this->setRedirect(Route::_('index.php?option=com_ticketstation'));
+
+                return false;
+            }
         }
 
         require_once JPATH_ADMINISTRATOR . '/components/com_ticketmaster/classes/confirmation.php';
@@ -174,6 +221,17 @@ class ValidateController extends BaseController
             $this->setRedirect(Route::_('index.php?option=com_ticketstation'));
 
             return false;
+        }
+
+        // Clear validation token after successful validation (single-use)
+        if (!empty($this->validationToken))
+        {
+            $query = $db->getQuery(true);
+            $query->update($db->quoteName('#__ticketstation_orders'))
+                ->set($db->quoteName('validation_token') . ' = NULL')
+                ->where($db->quoteName('ordercode') . ' = ' . $db->quote((int)$this->ordercode));
+            $db->setQuery($query);
+            $db->execute();
         }
 
         if (isset($this->ordercode))

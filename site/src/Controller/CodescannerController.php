@@ -31,9 +31,59 @@ class CodescannerController extends BaseController
 
 		$jinput = Factory::getApplication()->getInput();
 
+		// Authenticate scanner using API key before processing any task
+		$this->authenticate();
+
 		$this->barcode   = $jinput->get('tid', '', 'string');
 		$this->ticketid  = $jinput->get('ticketid', '0', 'int');
 		$this->eventid   = $jinput->get('eventid', '0', 'int');
+	}
+
+	/**
+	 * Authenticate the scanner request using the provided API key.
+	 * The key must be supplied as a query parameter: key=<apikey>
+	 * Returns Unauthorized XML and exits if authentication fails.
+	 *
+	 * @return void
+	 */
+	private function authenticate()
+	{
+		$jinput = Factory::getApplication()->getInput();
+
+		// Get the API key from query parameter 'key'
+		$providedKey = $jinput->get('key', '', 'string');
+
+		if (empty($providedKey))
+		{
+			$this->outputXML('0', 'Unauthorized', '');
+		}
+
+		// Look up the scanner in the database and validate the key
+		$db = Factory::getContainer()->get('DatabaseDriver');
+		$query = $db->getQuery(true)
+			->select('apikey')
+			->from($db->quoteName('#__ticketstation_scannermap'))
+			->where($db->quoteName('published') . ' = 1')
+			->where('(' . $db->quoteName('apikey') . ' != ' . $db->quote('') . ')');
+
+		$db->setQuery($query);
+		$scanners = $db->loadColumn();
+
+		// Use constant-time comparison to prevent timing attacks
+		$keyFound = false;
+		foreach ($scanners as $storedKey)
+		{
+			if (hash_equals($storedKey, $providedKey))
+			{
+				$keyFound = true;
+				break;
+			}
+		}
+
+		if (!$keyFound)
+		{
+			$this->outputXML('0', 'Unauthorized', '');
+		}
 	}
 
 	/**

@@ -236,6 +236,9 @@ class OrderController extends BaseController
             $entry->processed     = 0;
             $entry->ip_address    = $ip_address;
             $entry->requires_seat = $requires_seat;
+            // validation_token is NOT NULL + UNIQUE (admin/sql/updates/mysql/2.0.14.sql) and
+            // authorises the guest waitinglist-confirmation link in ValidateController::waitinglist().
+            $entry->validation_token = bin2hex(random_bytes(32));
 
             if ( ! $db->insertObject('#__ticketstation_waitinglist', $entry))
             {

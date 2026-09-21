@@ -83,31 +83,9 @@ class PaymentController extends BaseController
             ## Force total of the order in this format:
             $ordertotal = number_format($orderamount, 2, '.', '');
 
-            try {
-                $payment = $mollie->payments->create(array(
-                    "amount" => array(
-                        "value"     => $ordertotal,
-                        "currency"  => "EUR",
-                    ),
-                    "method"        => PaymentMethod::IDEAL,
-                    "description"   => $this->mollieconfig->description . ' ' . $this->ordercode,
-                    "redirectUrl"   => $return_url . '&order=' . md5($this->ordercode),
-                    "webhookUrl"    => $notify_url,
-                    "locale"        => $this->mollieconfig->mollie_language,
-                    "metadata"      => array(
-                        "order_id"      => $this->ordercode,
-                    ),
-                ));
-            } catch (\Mollie\Api\Exceptions\ApiException $e) {
-                $this->log('Mollie API error while creating payment: ' . $e->getMessage());
-                exit(Text::_('COM_TICKETSTATION_MOLLIE_ERROR_1000'));
-            }
-
-            History::log($this->ordercode, 'payment_initiated', 'Payment initiated at Mollie (transaction ' . $payment->id . ')', ['mollie_id' => $payment->id]);
-
             ## Start the API to process everything.
             $newPayment = new PaymentAPI((int)$this->ordercode);
-            $transactions = $newPayment->checkTempTransactionAmount(md5($this->ordercode));
+            $transactions = $newPayment->checkTempTransactionAmount();
 
             ## If there are no transactions, insert now.
             if ($transactions == 0) {
@@ -123,14 +101,41 @@ class PaymentController extends BaseController
 
                 $userid = $db->loadResult();
 
-                ## Let the API insert a new payment to the temp transaction table:
-                $temp_transaction = $newPayment->insertTempTransaction($userid, md5($this->ordercode));
+                ## Let the API insert a new payment to the temp transaction table.
+                ## insertTempTransaction now generates and returns a random token instead of using md5(ordercode).
+                $return_token = $newPayment->insertTempTransaction($userid, md5($this->ordercode));
 
                 ## If there is no new created temporary transaction, quit here.
-                if (!$temp_transaction) {
+                if (!$return_token) {
                     exit(Text::_('COM_TICKETSTATION_MOLLIE_ERROR_1000'));
                 }
+            } else {
+                ## Transaction already exists for this ordercode; look it up to get the token
+                $existing = $newPayment->getTempTransactionByOrdercode($this->ordercode);
+                $return_token = $existing->return_token;
             }
+
+            try {
+                $payment = $mollie->payments->create(array(
+                    "amount" => array(
+                        "value"     => $ordertotal,
+                        "currency"  => "EUR",
+                    ),
+                    "method"        => PaymentMethod::IDEAL,
+                    "description"   => $this->mollieconfig->description . ' ' . $this->ordercode,
+                    "redirectUrl"   => $return_url . '&order=' . $return_token,
+                    "webhookUrl"    => $notify_url,
+                    "locale"        => $this->mollieconfig->mollie_language,
+                    "metadata"      => array(
+                        "order_id"      => $this->ordercode,
+                    ),
+                ));
+            } catch (\Mollie\Api\Exceptions\ApiException $e) {
+                $this->log('Mollie API error while creating payment: ' . $e->getMessage());
+                exit(Text::_('COM_TICKETSTATION_MOLLIE_ERROR_1000'));
+            }
+
+            History::log($this->ordercode, 'payment_initiated', 'Payment initiated at Mollie (transaction ' . $payment->id . ')', ['mollie_id' => $payment->id]);
 
             if ($this->mollieconfig->change_payment_state == 1) {
                 $pending_payment = $newPayment->paymentPendingState();
@@ -141,10 +146,17 @@ class PaymentController extends BaseController
         } else {
 
             ## Amount is 0 or Mollie Config is in Bypass-mode
+            ## Generate a random token for bypass authorization (not the guessable ordercode).
+            $bypass_token = bin2hex(random_bytes(32));
+
+            ## Store the bypass token in session so molliebypass() can verify it.
+            Factory::getApplication()->getSession()->set('ticketstation.bypass_token', $bypass_token);
+            Factory::getApplication()->getSession()->set('ticketstation.bypass_ordercode', $this->ordercode);
+
             ## Process the order
             if ($this->ProcessBypassMollie($this->ordercode)) {
-                ## Bypass or amount = 0 >> redirect to mollieBypass
-                header("Location: index.php?option=com_ticketstation&controller=payment&task=molliebypass&order=" . $this->ordercode);
+                ## Bypass or amount = 0 >> redirect to mollieBypass with token
+                header("Location: index.php?option=com_ticketstation&controller=payment&task=molliebypass&token=" . $bypass_token);
                 exit();
             }
 
@@ -206,30 +218,27 @@ class PaymentController extends BaseController
     {
 
         $jinput = Factory::getApplication()->getInput();
-        $tmp_transaction_id = $jinput->getString('order', '');
+        $return_token = $jinput->getString('order', '');
 
-        if ($tmp_transaction_id == '') {
-            exit('No tmp transaction has been sent back -- looks more like an attack');
+        if ($return_token == '') {
+            exit('No return token has been sent back -- looks more like an attack');
         }
 
-        $db = Factory::getContainer()->get('DatabaseDriver');
-
-        $query = $db->getQuery(true)
-            ->select('*')
-            ->from($db->quoteName('#__ticketstation_transactions_temp'))
-            ->where($db->quoteName('transaction_number') . ' = ' . $db->quote($tmp_transaction_id));
-
-        $db->setQuery($query);
-        $temp_transaction = $db->loadObject();
-
         ## Start the API to process everything.
+        $newPayment = new paymentAPI(0);
+
+        ## Look up the temp transaction using the secure random token (not guessable md5).
+        $temp_transaction = $newPayment->getTempTransactionResult($return_token);
+
+        if (!$temp_transaction) {
+            exit('Invalid or expired payment token');
+        }
+
+        ## Clear session and mark this browser as authorized for this order.
         $newPayment = new paymentAPI((int)$temp_transaction->ordercode);
-        ## Clearing the session:
         $newPayment->clearSession();
 
         ## Marking this browser session as authorized to view/download this order's tickets.
-        ## Ordercodes are short and sequential, so without this, guessing one would be enough
-        ## to reach someone else's payment result page or ticket download.
         Factory::getApplication()->getSession()->set('ticketstation.authorized_ordercode', (int) $temp_transaction->ordercode);
 
         $this->log('Payment processed. Customer redirected to payment result screen');
@@ -242,9 +251,22 @@ class PaymentController extends BaseController
     {
 
         $jinput = Factory::getApplication()->getInput();
-        $ordercode = $jinput->getString('order', '');
+        $session = Factory::getApplication()->getSession();
 
-        ##Check if order is processed
+        ## Get the token from query parameter (generated in makepayment for bypass mode).
+        $bypass_token = $jinput->getString('token', '');
+
+        ## Verify the token matches what we stored in session.
+        $stored_token = $session->get('ticketstation.bypass_token', '');
+        $stored_ordercode = $session->get('ticketstation.bypass_ordercode', 0);
+
+        if ($bypass_token === '' || $bypass_token !== $stored_token) {
+            exit('Invalid or missing bypass authorization token');
+        }
+
+        $ordercode = $stored_ordercode;
+
+        ## Check if order is processed
         $db = Factory::getContainer()->get('DatabaseDriver');
 
         $query = $db->getQuery(true)
@@ -255,38 +277,16 @@ class PaymentController extends BaseController
         $db->setQuery($query);
         $order = $db->loadObjectList();
 
-
         ## Clearing the session:
-        $session = Factory::getApplication()->getSession();
         $session->clear('ordercode');
         $session->clear('coupon');
+        $session->clear('ticketstation.bypass_token');
+        $session->clear('ticketstation.bypass_ordercode');
 
         ## Marking this browser session as authorized (see mollie() above).
         $session->set('ticketstation.authorized_ordercode', (int) $ordercode);
 
         Factory::getApplication()->redirect(Route::_('index.php?option=com_ticketstation&view=paymentresult&ordercode=' . $ordercode));
-
-    }
-
-    //TODO: functie gemaakt om ticketcreator te testen
-    function maketickets()
-    {
-        $jinput = Factory::getApplication()->getInput();
-        $ordercode = $jinput->get('ordercode', '0', 'int');
-        $newPayment = new paymentAPI((int)$ordercode);
-
-        $newPayment->createTickets();
-
-    }
-
-    //TODO: functie gemaakt om sendonpayment te testen
-    function sendticketmail()
-    {
-        $jinput = Factory::getApplication()->getInput();
-        $ordercode = $jinput->get('ordercode', '0', 'int');
-        $newPayment = new paymentAPI((int)$ordercode);
-
-        $newPayment->sendTickets();
 
     }
 
@@ -323,12 +323,17 @@ class PaymentController extends BaseController
 
         ## Start the API to process everything.
         $newPayment = new paymentAPI((int)$order_id);
-        $tmpTransaction = $newPayment->getTempTransactionResult(md5($order_id));
+        ## Look up temp transaction by ordercode (now returns the one with return_token).
+        ## Webhooks only have the ordercode from metadata, not the token.
+        $tmpTransaction = $newPayment->getTempTransactionByOrdercode($order_id);
 
         if (!$tmpTransaction) {
             $this->log('No temporary transaction in the database, script has been stopped.');
             exit('No temporary transaction in the database.');
         }
+
+        ## Extract the return_token for use in updateTempTransaction calls.
+        $return_token = $tmpTransaction->return_token;
 
         ## PAYMENT SUCCESFULL
         if ($payment->isPaid() == true) {
@@ -355,7 +360,7 @@ class PaymentController extends BaseController
                 }
 
                 ## set temporary payment to 1 (paid order)
-                $newPayment->updateTempTransaction(md5($order_id), '1', $response['id']);
+                $newPayment->updateTempTransaction($return_token, '1', $response['id']);
 
                 ## if tickets has been created:
                 if ($ticket_creator == true && $this->mollieconfig->send_tickets_directly == 1) {
@@ -368,34 +373,34 @@ class PaymentController extends BaseController
                 exit();
             } else {
                 ## set temporary payment to 2 (wrong amount)
-                $newPayment->updateTempTransaction(md5($order_id), '2');
+                $newPayment->updateTempTransaction($return_token, '2');
                 exit();
             }
         } elseif ($payment->isOpen() == true) {
-            $newPayment->updateTempTransaction(md5($order_id), '3');
+            $newPayment->updateTempTransaction($return_token, '3');
             exit();
         } elseif ($payment->isPending() == true) {
-            $newPayment->updateTempTransaction(md5($order_id), '4');
+            $newPayment->updateTempTransaction($return_token, '4');
             exit();
         } elseif ($payment->isFailed() == true) {
-            $newPayment->updateTempTransaction(md5($order_id), '5');
+            $newPayment->updateTempTransaction($return_token, '5');
             History::log($order_id, 'payment_failed', 'Payment failed at Mollie (transaction ' . $payment->id . ')', ['mollie_id' => $payment->id, 'method' => $payment->method]);
             exit();
         } elseif ($payment->isCanceled() == true) {
-            $newPayment->updateTempTransaction(md5($order_id), '5');
+            $newPayment->updateTempTransaction($return_token, '5');
             History::log($order_id, 'payment_cancelled', 'Payment cancelled by customer (transaction ' . $payment->id . ')', ['mollie_id' => $payment->id, 'method' => $payment->method]);
             exit();
         } elseif ($payment->isExpired() == true) {
-            $newPayment->updateTempTransaction(md5($order_id), '5');
+            $newPayment->updateTempTransaction($return_token, '5');
             History::log($order_id, 'payment_expired', 'Payment expired before completion (transaction ' . $payment->id . ')', ['mollie_id' => $payment->id, 'method' => $payment->method]);
             exit();
         } else {
-            $newPayment->updateTempTransaction(md5($order_id), '5');
+            $newPayment->updateTempTransaction($return_token, '5');
             exit();
         }
 
         ## set temporary payment to 0 (payment is returning without state)
-        $newPayment->updateTempTransaction(md5($order_id), '0');
+        $newPayment->updateTempTransaction($return_token, '0');
         exit();
     }
 

@@ -167,24 +167,23 @@ class OrderseatedController extends BaseController {
         $jinput = Factory::getApplication()->getInput();
         ## Getting the values from the POST.
         $ticketid  = $jinput->get('ticketid', '0', 'INT');
-        $ordercode = $jinput->get('ordercode', '0', 'CMD');
         $orderid   = $jinput->get('orderid', '0', 'INT');
 
-        ## Update the tickets-totals that where removed.
-        $query = 'UPDATE #__ticketstation_orders'
-            . ' SET ticketid = '.(int)$ticketid.''
-            . ' WHERE orderid = '.(int) $orderid.' ';
+        $ordercode = $this->ordercode; // from session, set in the constructor — ignore the client-supplied 'ordercode' param entirely
 
-        ## Do the query now
-        $db->setQuery( $query );
+        $query = $db->getQuery(true)
+            ->update($db->quoteName('#__ticketstation_orders'))
+            ->set($db->quoteName('ticketid') . ' = ' . (int) $ticketid)
+            ->where($db->quoteName('orderid') . ' = ' . (int) $orderid)
+            ->where($db->quoteName('ordercode') . ' = ' . (int) $ordercode);
 
-        ## When query goes wrong.. Show message with error.
-        if (!$db->execute()) {
+        $db->setQuery($query);
 
-            $msg = Text::_('COM_TICKETSTATION_DB_QUERY_FAILED').' (Error: #101)';
+        if (!$db->execute() || $db->getAffectedRows() === 0) {
+            // treat as failure — either the order doesn't exist or doesn't belong to this session
+            $msg = Text::_('COM_TICKETSTATION_DB_QUERY_FAILED') . ' (Error: #101)';
             echo $msg;
             exit();
-
         }
 
         $msg = Text::_('COM_TICKETSTATION_CHANGED_TICKET');

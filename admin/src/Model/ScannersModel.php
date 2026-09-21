@@ -211,6 +211,16 @@ class ScannersModel extends BaseDatabaseModel
             return false;
         }
 
+        // Generate API key for new scanners if not already set
+        $jinput = Factory::getApplication()->getInput();
+        $id = $jinput->get('id', '0', 'INT');
+
+        if ($id == 0 && (empty($row->apikey) || $row->apikey === ''))
+        {
+            // Generate a random 32-byte hex key for new scanner
+            $row->apikey = bin2hex(random_bytes(32));
+        }
+
         ## Make sure the web link table is valid
         if (!$row->check())
         {
@@ -225,11 +235,9 @@ class ScannersModel extends BaseDatabaseModel
             return false;
         }
 
-        $jinput = Factory::getApplication()->getInput();
-
-        if ($jinput->get('id', '0', 'INT') != 0)
+        if ($id != 0)
         {
-            $this->scanner = $jinput->get('id', '0', 'INT');
+            $this->scanner = $id;
         }
         else
         {

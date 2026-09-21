@@ -96,6 +96,9 @@ class HtmlView extends BaseHtmlView
             $assigned_tickets = 0;
         }
 
+        // Prepare API key display - it's a read-only field shown to help configure scanner apps
+        $apikey = isset($data->apikey) ? $data->apikey : '';
+
         $this->config           = $config;
         $this->data             = $data;
         $this->events           = $events;
@@ -103,6 +106,7 @@ class HtmlView extends BaseHtmlView
         $this->assigned_events  = $assigned_events;
         $this->assigned_tickets = $assigned_tickets;
         $this->lists            = $lists;
+        $this->apikey           = $apikey;
 
         $text = empty($this->data->id) ? Text::_('COM_TICKETSTATION_ADD') : Text::_('COM_TICKETSTATION_EDIT');
         ToolBarHelper::title($text . ' ' . Text::_('COM_TICKETSTATION_VIEW_SCANNER_TITLE'), 'fa fa-qrcode');

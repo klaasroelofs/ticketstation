@@ -61,6 +61,19 @@ $editor = Editor::getInstance()
                     <?php echo $this->lists['manual_entry']; ?>
                 </div>
             </div>
+            <?php if (!empty($this->apikey)): ?>
+            <div class="row mb-3">
+                <label for="" class="col-sm-3 col-form-label"
+                       rel="popover"
+                       title="<?= Text::_('COM_TICKETSTATION_SCANNING_API_KEY') ?>">
+                    <?= Text::_('COM_TICKETSTATION_SCANNING_API_KEY') ?>
+                </label>
+                <div class="col-sm-9">
+                    <input type="text" class="form-control" value="<?= htmlspecialchars($this->apikey) ?>" readonly>
+                    <small class="form-text text-muted"><?= Text::_('COM_TICKETSTATION_SCANNING_API_KEY_HELP') ?></small>
+                </div>
+            </div>
+            <?php endif; ?>
         </div>
     </div>
 

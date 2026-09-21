@@ -226,6 +226,8 @@ class WaitingList
                 $process->published		= 1;
                 $process->ipaddress		= $row->ip_address;
                 $process->requires_seat = $row->requires_seat;
+                ## Generate a cryptographically random validation token for secure guest links
+                $process->validation_token = bin2hex(random_bytes(32));
 
                 ## Insert the object into the order table
                 $result = $db->insertObject('#__ticketstation_orders', $process);
@@ -413,6 +415,35 @@ class WaitingList
 
         $fields     = [$db->quoteName('confirmed') . ' = 1'];
         $conditions = [$db->quoteName('ordercode') . ' = ' . (int) $ordercode];
+        $query->update($db->quoteName('#__ticketstation_waitinglist'))->set($fields)->where($conditions);
+
+        $db->setQuery($query);
+
+        $result = $db->execute();
+
+        if ( ! $result)
+        {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Confirm a waiting list entry by validation token (new secure method).
+     * Prevents guessing of waiting list entries.
+     *
+     * @param string $token The validation token
+     * @return bool
+     * @since 1.0.0
+     */
+    public function confirmByToken($token)
+    {
+        $db = Factory::getContainer()->get('DatabaseDriver');
+        $query = $db->getQuery(true);
+
+        $fields     = [$db->quoteName('confirmed') . ' = 1'];
+        $conditions = [$db->quoteName('validation_token') . ' = ' . $db->quote($token)];
         $query->update($db->quoteName('#__ticketstation_waitinglist'))->set($fields)->where($conditions);
 
         $db->setQuery($query);
