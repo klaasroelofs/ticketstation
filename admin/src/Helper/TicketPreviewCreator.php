@@ -3,7 +3,7 @@
 namespace Ticketstation\Component\Ticketstation\Administrator\Helper;
 
 use Joomla\CMS\Factory;
-use Joomla\CMS\Filesystem\File;
+use Joomla\Filesystem\File;
 use Joomla\CMS\Language\Text;
 use setasign\Fpdi\FPDI_EAN13;
 

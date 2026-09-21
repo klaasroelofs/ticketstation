@@ -53,10 +53,10 @@ class MollieController extends BaseController {
 
 
         $app 	= Factory::getApplication();
-        $jinput = $app->input;
+        $jinput = $app->getInput();
         $post 	= $jinput->post->getArray();
 
-        $post['valuta'] = $app->input->get('valuta', null, 'raw');
+        $post['valuta'] = $app->getInput()->get('valuta', null, 'raw');
 
         $model = $this->getModel('Mollie');
 

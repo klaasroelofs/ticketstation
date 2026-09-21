@@ -5,7 +5,7 @@ namespace Ticketstation\Component\Ticketstation\Administrator\Controller;
 defined('_JEXEC') or die;
 
 use Joomla\CMS\Factory;
-use Joomla\CMS\Filesystem\File;
+use Joomla\Filesystem\File;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\Controller\FormController;
 use Joomla\CMS\Uri\Uri;
@@ -47,7 +47,7 @@ class TicketController extends FormController
 
     function display($cachable = false, $urlparams = array())
     {
-        $jinput = Factory::getApplication()->input;
+        $jinput = Factory::getApplication()->getInput();
         $jinput->set('layout', 'edit');
         $jinput->set('view', 'ticket');
         $jinput->set('hidemainmenu', 1);
@@ -126,7 +126,7 @@ class TicketController extends FormController
         // token as a query param, not just POST.
 
         $app = Factory::getApplication();
-        $jinput = $app->input;
+        $jinput = $app->getInput();
         $ticketid = $jinput->get('ticketid', '0', 'INT');
 
         if($ticketid == 0)
@@ -159,7 +159,7 @@ class TicketController extends FormController
         // token as a query param, not just POST.
 
         $app = Factory::getApplication();
-        $jinput = $app->input;
+        $jinput = $app->getInput();
         $ticketid = $jinput->get('ticketid', '0', 'INT');
 
         if($ticketid == 0)
@@ -183,7 +183,7 @@ class TicketController extends FormController
     function TicketLayout()
     {
         $app = Factory::getApplication();
-        $jinput = $app->input;
+        $jinput = $app->getInput();
         $ticketid = $jinput->get('ticketid', '0', 'INT');
         $model	    = $this->getModel('ticket');
 
@@ -201,7 +201,7 @@ class TicketController extends FormController
     function PreviewTicket()
     {
         $app 	  = Factory::getApplication();
-        $jinput   = $app->input;
+        $jinput   = $app->getInput();
         $ticketid = $jinput->get('ticketid', 0, 'INT');
         $data     = $jinput->post->get('jform', array(), 'array');
 

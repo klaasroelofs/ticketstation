@@ -39,7 +39,7 @@ class CouponsModel extends BaseDatabaseModel
         $this->setState('limit', $limit);
         $this->setState('limitstart', $limitstart);
 
-        $array = $app->input->get('cid', array(0), 'array');
+        $array = $app->getInput()->get('cid', array(0), 'array');
         $this->id = (int)$array[0];
     }
 

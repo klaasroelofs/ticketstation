@@ -59,7 +59,7 @@ class TicketsController extends BaseController
 
     public function edit()
     {
-        $jinput = Factory::getApplication()->input;
+        $jinput = Factory::getApplication()->getInput();
         $jinput->set('layout', 'edit');
         $jinput->set('view', 'ticket');
         $jinput->set('hidemainmenu', '0');

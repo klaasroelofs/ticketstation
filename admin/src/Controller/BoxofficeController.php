@@ -64,7 +64,7 @@ class BoxofficeController extends BaseController {
 
     function display($cachable = false, $urlparams = array())
     {
-        $jinput = Factory::getApplication()->input;
+        $jinput = Factory::getApplication()->getInput();
         $jinput->set('layout', 'default');
         $jinput->set('view', 'boxoffice');
         parent::display();
@@ -72,7 +72,7 @@ class BoxofficeController extends BaseController {
 
     function edit($cachable = false, $urlparams = array())
     {
-        $jinput = Factory::getApplication()->input;
+        $jinput = Factory::getApplication()->getInput();
         $jinput->set('layout', 'form');
         $jinput->set('view', 'boxoffice');
         parent::display();
@@ -463,7 +463,7 @@ class BoxofficeController extends BaseController {
     {
 
         $app  = Factory::getApplication();
-        $post = $app->input->post->getArray();
+        $post = $app->getInput()->post->getArray();
         $link = 'index.php?option=com_ticketstation&controller=boxoffice';
 
         $cid = $this->input->get('cid', array(), 'array');

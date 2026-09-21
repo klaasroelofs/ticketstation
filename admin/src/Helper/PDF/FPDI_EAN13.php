@@ -14,7 +14,7 @@ use Endroid\QrCode\RoundBlockSizeMode\RoundBlockSizeModeMargin;
 use Endroid\QrCode\RoundBlockSizeMode\RoundBlockSizeModeNone;
 use Endroid\QrCode\Writer\PngWriter;
 use Endroid\QrCode\Writer\SvgWriter;
-use Joomla\CMS\Filesystem\Folder;
+use Joomla\Filesystem\Folder;
 
 defined('_JEXEC') or die('Restricted access');
 

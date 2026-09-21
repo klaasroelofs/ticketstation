@@ -45,7 +45,7 @@ class CouponController extends FormController
 
     function display($cachable = false, $urlparams = array())
     {
-        $jinput = Factory::getApplication()->input;
+        $jinput = Factory::getApplication()->getInput();
         $jinput->set('layout', 'edit');
         $jinput->set('view', 'coupon');
         parent::display();

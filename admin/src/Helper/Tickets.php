@@ -12,7 +12,7 @@ namespace Ticketstation\Component\Ticketstation\Administrator\Helper;
 
 use Joomla\CMS\Client\ClientHelper;
 use Joomla\CMS\Factory;
-use Joomla\CMS\Filesystem\File;
+use Joomla\Filesystem\File;
 use Joomla\CMS\Uri\Uri;
 
 defined('_JEXEC') or die;

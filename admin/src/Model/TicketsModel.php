@@ -19,7 +19,7 @@ use Joomla\CMS\Pagination\Pagination;
 use Joomla\CMS\Uri\Uri;
 use Joomla\Utilities\ArrayHelper;
 use Joomla\CMS\Client\ClientHelper;
-use Joomla\CMS\Filesystem\File;
+use Joomla\Filesystem\File;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Ticketcleaner;
 
 /**

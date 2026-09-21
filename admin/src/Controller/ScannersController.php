@@ -46,7 +46,7 @@ class ScannersController extends BaseController
 
     function display($cachable = false, $urlparams = array())
     {
-        $jinput = Factory::getApplication()->input;
+        $jinput = Factory::getApplication()->getInput();
         $jinput->set('layout', 'default');
         $jinput->set('view', 'scanners');
         parent::display();
@@ -54,7 +54,7 @@ class ScannersController extends BaseController
 
     public function edit()
     {
-        $jinput = Factory::getApplication()->input;
+        $jinput = Factory::getApplication()->getInput();
         $jinput->set('layout', 'form');
         $jinput->set('view', 'scanners');
         parent::display();
@@ -66,7 +66,7 @@ class ScannersController extends BaseController
 
 
         $app 	= Factory::getApplication();
-        $post 	= $app->input->post->getArray();
+        $post 	= $app->getInput()->post->getArray();
 
         ArrayHelper::toInteger($post['cid']);
 
@@ -93,7 +93,7 @@ class ScannersController extends BaseController
     {
 
         $app 	    = Factory::getApplication();
-        $jinput     = $app->input;
+        $jinput     = $app->getInput();
         $model	    = $this->getModel('scanners');
         $data   	= $jinput->post->getArray();
 

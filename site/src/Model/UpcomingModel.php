@@ -28,7 +28,7 @@ class UpcomingModel extends BaseDatabaseModel {
         parent::__construct();
 
         $app    = Factory::getApplication();
-        $jinput = Factory::getApplication()->input;
+        $jinput = Factory::getApplication()->getInput();
 
         $limit      = $app->getUserStateFromRequest('global.list.limit', 'limit', $app->getCfg('list_limit'), 'int');
         $limitstart = $jinput->get('limitstart', '0', 'int');

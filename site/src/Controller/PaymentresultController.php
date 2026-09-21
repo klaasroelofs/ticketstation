@@ -159,7 +159,7 @@ class PaymentresultController extends BaseController
     public function return()
     {
         $app = Factory::getApplication();
-        $input = $app->input;
+        $input = $app->getInput();
 
         $orderCode = $input->getString('ordercode');
 
@@ -181,7 +181,7 @@ class PaymentresultController extends BaseController
     public function poll()
     {
         $app   = Factory::getApplication();
-        $input = $app->input;
+        $input = $app->getInput();
         $db = Factory::getContainer()->get('DatabaseDriver');
 
         $orderCode = $input->getString('ordercode');

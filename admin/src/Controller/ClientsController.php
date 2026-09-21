@@ -43,7 +43,7 @@ class ClientsController extends BaseController {
 
     function display($cachable = false, $urlparams = array())
     {
-        $jinput = Factory::getApplication()->input;
+        $jinput = Factory::getApplication()->getInput();
         $jinput->set('layout', 'default');
         $jinput->set('view', 'clients');
         parent::display();
@@ -51,7 +51,7 @@ class ClientsController extends BaseController {
 
     function edit($cachable = false, $urlparams = array())
     {
-        $jinput = Factory::getApplication()->input;
+        $jinput = Factory::getApplication()->getInput();
         $jinput->set('layout', 'form');
         $jinput->set('view', 'clients');
         parent::display();
@@ -61,7 +61,7 @@ class ClientsController extends BaseController {
 
 
         $app 	= Factory::getApplication();
-        $jinput = $app->input;
+        $jinput = $app->getInput();
         $post 	= $jinput->post->getArray();
 
         $cid = $this->input->get('clientid');

@@ -25,7 +25,7 @@ class InvoicesController extends BaseController
 
     function display($cachable = false, $urlparams = array())
     {
-        $jinput = Factory::getApplication()->input;
+        $jinput = Factory::getApplication()->getInput();
         $jinput->set('layout', 'default');
         $jinput->set('view', 'invoices');
         parent::display();

@@ -144,7 +144,7 @@ class OrderController extends BaseController
             $ticket_fee = 0;
         }
 
-        $post  = Factory::getApplication()->input->post->getArray();
+        $post  = Factory::getApplication()->getInput()->post->getArray();
         //$model = $this->getModel('order');
         $models = new OrderModel();
 
@@ -415,7 +415,7 @@ class OrderController extends BaseController
         // fires) - check the token as a query param, not just POST.
 
         $post    = [];
-        $jinput  = Factory::getApplication()->input;
+        $jinput  = Factory::getApplication()->getInput();
         $orderid = $jinput->get('orderid', '0', 'int');
 
         $db = Factory::getContainer()->get('DatabaseDriver');
@@ -487,7 +487,7 @@ class OrderController extends BaseController
         // Reached via a plain GET link in cart/default.php (same AJAX-class-mismatch
         // situation as remove() above) - check the token as a query param, not just POST.
 
-        $jinput = Factory::getApplication()->input;
+        $jinput = Factory::getApplication()->getInput();
 
         $db = Factory::getContainer()->get('DatabaseDriver');
 

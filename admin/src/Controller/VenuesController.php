@@ -46,7 +46,7 @@ class VenuesController extends BaseController
 
     function display($cachable = false, $urlparams = array())
     {
-        $jinput = Factory::getApplication()->input;
+        $jinput = Factory::getApplication()->getInput();
         $jinput->set('layout', 'default');
         $jinput->set('view', 'venues');
         parent::display();
@@ -54,7 +54,7 @@ class VenuesController extends BaseController
 
     public function edit()
     {
-        $jinput = Factory::getApplication()->input;
+        $jinput = Factory::getApplication()->getInput();
         $jinput->set('layout', 'form');
         $jinput->set('view', 'venues');
         parent::display();
@@ -122,7 +122,7 @@ class VenuesController extends BaseController
     {
 
         $app 	    = Factory::getApplication();
-        $jinput     = $app->input;
+        $jinput     = $app->getInput();
         $model	    = $this->getModel('venues');
         $data   	= $jinput->post->getArray();
 

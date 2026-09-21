@@ -46,7 +46,7 @@ class TemplatesController extends BaseController {
 
     function display($cachable = false, $urlparams = array())
     {
-        $jinput = Factory::getApplication()->input;
+        $jinput = Factory::getApplication()->getInput();
         $jinput->set('layout', 'default');
         $jinput->set('view', 'templates');
         parent::display();
@@ -54,7 +54,7 @@ class TemplatesController extends BaseController {
 
     public function edit()
     {
-        $jinput = Factory::getApplication()->input;
+        $jinput = Factory::getApplication()->getInput();
         $jinput->set('layout', 'form');
         $jinput->set('view', 'templates');
         parent::display();

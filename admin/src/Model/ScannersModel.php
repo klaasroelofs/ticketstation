@@ -35,7 +35,7 @@ class ScannersModel extends BaseDatabaseModel
 
         ## Get the pagination request variables
         $limit         = $app->getUserStateFromRequest( 'global.list.limit', 'limit', $app->getCfg('list_limit'), 'int' );
-        $limitstart    = $app->input->get('limitstart', 0, 'int');
+        $limitstart    = $app->getInput()->get('limitstart', 0, 'int');
 
         ## In case limit has been changed, adjust limitstart accordingly
         $limitstart = ($limit != 0 ? (floor($limitstart / $limit) * $limit) : 0);

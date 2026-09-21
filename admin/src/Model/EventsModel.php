@@ -21,7 +21,7 @@ use Joomla\CMS\Pagination\Pagination;
 use Joomla\CMS\Uri\Uri;
 use Joomla\Utilities\ArrayHelper;
 use Joomla\CMS\Client\ClientHelper;
-use Joomla\CMS\Filesystem\File;
+use Joomla\Filesystem\File;
 
 /**
  * Ticketstation Events Model
@@ -45,7 +45,7 @@ class EventsModel extends ListModel
         $this->setState('limit', $limit);
         $this->setState('limitstart', $limitstart);
 
-        $array = $app->input->get('cid', array(0), 'array');
+        $array = $app->getInput()->get('cid', array(0), 'array');
         $this->id = (int)$array[0];
     }
 

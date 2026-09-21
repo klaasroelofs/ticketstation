@@ -13,7 +13,7 @@ namespace Ticketstation\Component\Ticketstation\Administrator\Helper;
 
 ## no direct access
 use Joomla\CMS\Factory;
-use Joomla\CMS\Filesystem\File;
+use Joomla\Filesystem\File;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\Uri\Uri;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\PDF\FPDI_EAN13;

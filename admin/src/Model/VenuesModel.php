@@ -39,7 +39,7 @@ class VenuesModel extends BaseDatabaseModel
         $this->setState('limit', $limit);
         $this->setState('limitstart', $limitstart);
 
-        $array = $app->input->get('cid', array(0), 'array');
+        $array = $app->getInput()->get('cid', array(0), 'array');
         $this->id = (int)$array[0];
     }
 
@@ -176,7 +176,7 @@ class VenuesModel extends BaseDatabaseModel
             return false;
         }
 
-        $jinput = Factory::getApplication()->input;
+        $jinput = Factory::getApplication()->getInput();
 
         if ($jinput->get('id', '0', 'INT') != 0)
         {
