@@ -78,6 +78,8 @@ class SeatplansController extends BaseController {
 
     function saveRecord() {
 
+        $this->checkToken() or jexit(Text::_('JINVALID_TOKEN'));
+
         //decode JSON data received from AJAX POST request
         $data = json_decode($_POST["data"]);
 
@@ -174,6 +176,8 @@ class SeatplansController extends BaseController {
 
     function saveSeatChanges() {
 
+        $this->checkToken() or jexit(Text::_('JINVALID_TOKEN'));
+
         //$post = Factory::getApplication()->getInput()->get('post');
         $post   	= Factory::getApplication()->getInput()->post->getArray();
 
@@ -197,6 +201,8 @@ class SeatplansController extends BaseController {
 
     ## adding a seat which is not a multiseat.
     function newSeat() {
+
+        $this->checkToken() or jexit(Text::_('JINVALID_TOKEN'));
 
         $ticketid = Factory::getApplication()->getInput()->get('ticketid', 0);
 
@@ -257,6 +263,8 @@ class SeatplansController extends BaseController {
 
     ## adding multi ticket seats.
     function getRecord() {
+
+        $this->checkToken() or jexit(Text::_('JINVALID_TOKEN'));
 
         $input      = Factory::getApplication()->getInput();
         $ticketid   = $input->get('ticketid', 0);
@@ -350,6 +358,7 @@ class SeatplansController extends BaseController {
 
     function BatchAdds(){
 
+        $this->checkToken() or jexit(Text::_('JINVALID_TOKEN'));
 
         $jinput = Factory::getApplication()->getInput();
 
@@ -375,6 +384,8 @@ class SeatplansController extends BaseController {
 
     function removerecord() {
 
+        $this->checkToken() or jexit(Text::_('JINVALID_TOKEN'));
+
         $id = Factory::getApplication()->getInput()->get('id', 0);
 
         $db = Factory::getContainer()->get('DatabaseDriver');
@@ -394,6 +405,8 @@ class SeatplansController extends BaseController {
     }
 
     function copyfromsource() {
+
+        $this->checkToken() or jexit(Text::_('JINVALID_TOKEN'));
 
         $db = Factory::getContainer()->get('DatabaseDriver');
 

@@ -94,6 +94,8 @@ class BoxofficeController extends BaseController {
 
     function removeSingleOrder()
     {
+        $this->checkToken() or jexit(Text::_('JINVALID_TOKEN'));
+
         $app	= Factory::getApplication();
         $jinput = $app->getInput();
         $link 	= 'index.php?option=com_ticketstation&controller=boxoffice';
@@ -134,6 +136,8 @@ class BoxofficeController extends BaseController {
 
     function resetscanstate()
     {
+        $this->checkToken() or jexit(Text::_('JINVALID_TOKEN'));
+
         $app    = Factory::getApplication();
         $jinput = $app->getInput();
         $link 	= 'index.php?option=com_ticketstation&controller=boxoffice';
@@ -165,6 +169,8 @@ class BoxofficeController extends BaseController {
 
     function markasscanned()
     {
+        $this->checkToken() or jexit(Text::_('JINVALID_TOKEN'));
+
         $app    = Factory::getApplication();
         $jinput = $app->getInput();
         $link 	= 'index.php?option=com_ticketstation&controller=boxoffice';
@@ -197,6 +203,8 @@ class BoxofficeController extends BaseController {
     function full_process()
     {
 
+        $this->checkToken() or jexit(Text::_('JINVALID_TOKEN'));
+
         $app 	= Factory::getApplication();
         $link 	= 'index.php?option=com_ticketstation&controller=boxoffice';
 
@@ -225,6 +233,8 @@ class BoxofficeController extends BaseController {
 
     function refund()
     {
+        $this->checkToken() or jexit(Text::_('JINVALID_TOKEN'));
+
         $app 	= Factory::getApplication();
         $link 	= 'index.php?option=com_ticketstation&controller=boxoffice';
 
@@ -255,6 +265,8 @@ class BoxofficeController extends BaseController {
     function allpayments()
     {
 
+        $this->checkToken() or jexit(Text::_('JINVALID_TOKEN'));
+
         $app 	= Factory::getApplication();
         $link 	= 'index.php?option=com_ticketstation&controller=boxoffice';
 
@@ -284,6 +296,8 @@ class BoxofficeController extends BaseController {
 
     function unlock()
     {
+        $this->checkToken() or jexit(Text::_('JINVALID_TOKEN'));
+
         $app    = Factory::getApplication();
         $jinput = $app->getInput();
         $link   = 'index.php?option=com_ticketstation&controller=boxoffice';
@@ -316,6 +330,8 @@ class BoxofficeController extends BaseController {
     function blocked()
     {
 
+        $this->checkToken() or jexit(Text::_('JINVALID_TOKEN'));
+
         $app    = Factory::getApplication();
         $jinput = $app->getInput();
         $link   = 'index.php?option=com_ticketstation&controller=boxoffice';
@@ -347,6 +363,8 @@ class BoxofficeController extends BaseController {
 
     function resendpayment()
     {
+        $this->checkToken() or jexit(Text::_('JINVALID_TOKEN'));
+
         $app  = Factory::getApplication();
         $link = 'index.php?option=com_ticketstation&controller=boxoffice';
 
@@ -379,6 +397,8 @@ class BoxofficeController extends BaseController {
 
     function payment()
     {
+        $this->checkToken() or jexit(Text::_('JINVALID_TOKEN'));
+
         $app  = Factory::getApplication();
         $jinput = $app->getInput();
 
@@ -402,6 +422,8 @@ class BoxofficeController extends BaseController {
 
     function nopayment()
     {
+        $this->checkToken() or jexit(Text::_('JINVALID_TOKEN'));
+
         $app  = Factory::getApplication();
         $jinput = $app->getInput();
 
@@ -425,6 +447,8 @@ class BoxofficeController extends BaseController {
 
     function processticket()
     {
+        $this->checkToken() or jexit(Text::_('JINVALID_TOKEN'));
+
         $app  = Factory::getApplication();
         $jinput = $app->getInput();
 
@@ -449,6 +473,8 @@ class BoxofficeController extends BaseController {
 
     function sendconfirmation()
     {
+        $this->checkToken() or jexit(Text::_('JINVALID_TOKEN'));
+
         $app  = Factory::getApplication();
         $post = $app->input->post->getArray();
         $link = 'index.php?option=com_ticketstation&controller=boxoffice';
@@ -479,6 +505,8 @@ class BoxofficeController extends BaseController {
 
     function sendingticket()
     {
+        $this->checkToken() or jexit(Text::_('JINVALID_TOKEN'));
+
         $app  = Factory::getApplication();
         $link = 'index.php?option=com_ticketstation&controller=boxoffice';
 
@@ -523,6 +551,8 @@ class BoxofficeController extends BaseController {
 
     function sendticketcopy()
     {
+        $this->checkToken() or jexit(Text::_('JINVALID_TOKEN'));
+
         $app    = Factory::getApplication();
         $jinput = $app->getInput();
 
@@ -556,6 +586,8 @@ class BoxofficeController extends BaseController {
      */
     function sendinvoice()
     {
+        $this->checkToken() or jexit(Text::_('JINVALID_TOKEN'));
+
         $app    = Factory::getApplication();
         $jinput = $app->getInput();
 
@@ -577,6 +609,8 @@ class BoxofficeController extends BaseController {
 
     function updateinsertremark()
     {
+        $this->checkToken() or jexit(Text::_('JINVALID_TOKEN'));
+
         $app    = Factory::getApplication();
         $jinput = $app->getInput();
 
@@ -615,6 +649,8 @@ class BoxofficeController extends BaseController {
 
     function deleteremark()
     {
+        $this->checkToken() or jexit(Text::_('JINVALID_TOKEN'));
+
         $app    = Factory::getApplication();
         $jinput = $app->getInput();
 
@@ -641,6 +677,8 @@ class BoxofficeController extends BaseController {
 
     function publish()
     {
+        $this->checkToken() or jexit(Text::_('JINVALID_TOKEN'));
+
         $app  = Factory::getApplication();
         $link = 'index.php?option=com_ticketstation&controller=boxoffice';
 
@@ -667,6 +705,8 @@ class BoxofficeController extends BaseController {
 
     function remove()
     {
+
+        $this->checkToken() or jexit(Text::_('JINVALID_TOKEN'));
 
         $app  = Factory::getApplication();
         $link = 'index.php?option=com_ticketstation&controller=boxoffice';

@@ -1,6 +1,7 @@
 <?php
 
 use Joomla\CMS\Factory;
+use \Joomla\CMS\HTML\HTMLHelper;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\Router\Route;
 use Joomla\CMS\Editor\Editor;
@@ -140,4 +141,5 @@ $editor = Editor::getInstance()
     <input type="hidden" name="controller" value="scanners" />
     <input type="hidden" name="task" value="" />
     <input type="hidden" name="id" value="<?= isset($this->data->id)?$this->data->id:null; ?>" />
+    <?= HTMLHelper::_( 'form.token' ); ?>
 </form>

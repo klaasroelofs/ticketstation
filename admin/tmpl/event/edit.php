@@ -1,6 +1,7 @@
 <?php
 
 use Joomla\CMS\Factory;
+use \Joomla\CMS\HTML\HTMLHelper;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\Router\Route;
 use Joomla\CMS\Uri\Uri;
@@ -95,5 +96,6 @@ if(isset($this->item->eventid))
     <input type="hidden" name="option" value="com_ticketstation"/>
     <input type="hidden" name="controller" value="event"/>
     <input type="hidden" name="task" value=""/>
+    <?= HTMLHelper::_( 'form.token' ); ?>
 
 </form>

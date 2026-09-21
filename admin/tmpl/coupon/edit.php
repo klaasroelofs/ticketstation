@@ -1,6 +1,7 @@
 <?php
 
 use Joomla\CMS\Factory;
+use \Joomla\CMS\HTML\HTMLHelper;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\Router\Route;
 
@@ -55,6 +56,7 @@ $document->setTitle($add_edit .' '.Text::_('COM_TICKETSTATION_COUPON') . ' - ' .
     <input type="hidden" name="option" value="com_ticketstation" />
     <input type="hidden" name="controller" value="coupon" />
     <input type="hidden" name="task" value="" />
+    <?= HTMLHelper::_( 'form.token' ); ?>
 
 </form>
 

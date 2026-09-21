@@ -116,5 +116,6 @@ $wa->registerAndUseStyle('searchtools', Uri::root() . 'media/templates/administr
     <input name = "boxchecked" type="hidden" value="0"/>
     <input name = "filter_order" type="hidden" value="clientid"/>
     <input name = "filter_order_Dir" type="hidden" value="ASC"/>
+    <?= HTMLHelper::_( 'form.token' ); ?>
 
 </form>

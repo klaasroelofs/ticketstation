@@ -250,6 +250,7 @@ $count = count($this->items);
                                     <input type="hidden" name="controller" value="payment" />
                                     <input type="hidden" name="task" value="makepayment"/>
                                     <input type="hidden" name="ordercode" value="<?= $ordercode; ?>"/>
+                                    <?php echo HTMLHelper::_('form.token'); ?>
 
                                 </form>
                             </div>

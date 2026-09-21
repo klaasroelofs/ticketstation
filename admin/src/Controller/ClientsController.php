@@ -59,6 +59,8 @@ class ClientsController extends BaseController {
 
     function apply() {
 
+        $this->checkToken() or jexit(Text::_('JINVALID_TOKEN'));
+
         $app 	= Factory::getApplication();
         $jinput = $app->input;
         $post 	= $jinput->post->getArray();
@@ -86,6 +88,8 @@ class ClientsController extends BaseController {
     }
 
     function publish(){
+
+        $this->checkToken() or jexit(Text::_('JINVALID_TOKEN'));
 
         $cid    = $this->input->get('cid', array(), 'array');
         ArrayHelper::toInteger($cid);
@@ -124,6 +128,8 @@ class ClientsController extends BaseController {
 
     function remove()
     {
+        $this->checkToken() or jexit(Text::_('JINVALID_TOKEN'));
+
         $app = Factory::getApplication();
 
         $cid = $this->input->get('cid', array(), 'array');

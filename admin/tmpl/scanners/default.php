@@ -76,4 +76,5 @@ $wa->registerAndUseStyle('ticketstation', Uri::base() . 'components\com_ticketst
     <input name = "task" type="hidden" value="" />
     <input name = "boxchecked" type="hidden" value="0"/>
     <input name = "limitstart" type="hidden" value="<?php echo $this->pagination->limitstart; ?>" />
+    <?= HTMLHelper::_( 'form.token' ); ?>
 </form>

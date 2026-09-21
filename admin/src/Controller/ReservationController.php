@@ -64,6 +64,8 @@ class ReservationController extends BaseController
      */
     public function cancel()
     {
+        $this->checkToken() or jexit(Text::_('JINVALID_TOKEN'));
+
         $ordercode = $this->getOrdercode();
 
         if ($ordercode)
@@ -83,6 +85,8 @@ class ReservationController extends BaseController
      */
     public function selectTicket()
     {
+        $this->checkToken() or jexit(Text::_('JINVALID_TOKEN'));
+
         $app    = Factory::getApplication();
         $jinput = $app->getInput();
 
@@ -122,6 +126,8 @@ class ReservationController extends BaseController
      */
     public function addQuantity()
     {
+        $this->checkToken() or jexit(Text::_('JINVALID_TOKEN'));
+
         $app    = Factory::getApplication();
         $jinput = $app->getInput();
         $model  = $this->getModel('Reservation');
@@ -188,6 +194,8 @@ class ReservationController extends BaseController
      */
     public function makeReservation()
     {
+        $this->checkToken() or jexit(Text::_('JINVALID_TOKEN'));
+
         $app    = Factory::getApplication();
         $jinput = $app->getInput();
         $model  = $this->getModel('Reservation');
@@ -268,6 +276,8 @@ class ReservationController extends BaseController
      */
     public function removeSeat()
     {
+        $this->checkToken() or jexit(Text::_('JINVALID_TOKEN'));
+
         $app    = Factory::getApplication();
         $jinput = $app->getInput();
         $model  = $this->getModel('Reservation');
@@ -315,6 +325,8 @@ class ReservationController extends BaseController
      */
     public function saveCustomer()
     {
+        $this->checkToken() or jexit(Text::_('JINVALID_TOKEN'));
+
         $app    = Factory::getApplication();
         $jinput = $app->getInput();
         $model  = $this->getModel('Reservation');
@@ -376,6 +388,8 @@ class ReservationController extends BaseController
      */
     public function complete()
     {
+        $this->checkToken() or jexit(Text::_('JINVALID_TOKEN'));
+
         $app    = Factory::getApplication();
         $jinput = $app->getInput();
 

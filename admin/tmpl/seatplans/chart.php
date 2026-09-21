@@ -1,6 +1,7 @@
 <?php
 
 use Joomla\CMS\Factory;
+use \Joomla\CMS\HTML\HTMLHelper;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\Router\Route;
 use Joomla\CMS\Uri\Uri;
@@ -97,6 +98,7 @@ if (file_exists($image)) {
     <input type="hidden" name="option" value="com_ticketstation" />
     <input type="hidden" name="controller" value="seatplans" />
     <input type="hidden" name="task" value="" />
+    <?= HTMLHelper::_( 'form.token' ); ?>
 
 </form>
 

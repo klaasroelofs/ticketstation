@@ -75,10 +75,11 @@ $waiters = count($this->waiters);
                 var container = parent.attr('id').replace('tm-cart-price-', 'tm-cart-container');
                 var data = 'cid=' + orderid;
 
+                var tokenName = '<?php echo $session->getToken(); ?>';
                 jQuery.ajax({
-                    type      : 'get',
-                    url       : '/index.php?option=com_ticketstation&controller=order&task=remove&format=raw&cid=',
-                    data      : 'orderid=' + parent.attr('id').replace('tm-cart-price-', ''),
+                    type      : 'POST',
+                    url       : '/index.php?option=com_ticketstation&controller=order&task=remove&format=raw',
+                    data      : 'orderid=' + parent.attr('id').replace('tm-cart-price-', '') + '&' + tokenName + '=1',
                     dataType  : 'json',
                     beforeSend: function() {
                         jQuery('#tm-loader').show();
@@ -107,10 +108,11 @@ $waiters = count($this->waiters);
                 var container = parent.attr('id').replace('tm-cart-waiting-', 'tm-cart-container');
                 var data = 'cid=' + orderid;
 
+                var tokenName = '<?php echo $session->getToken(); ?>';
                 jQuery.ajax({
-                    type      : 'get',
+                    type      : 'POST',
                     url       : '/index.php?option=com_ticketstation&controller=order&task=removeWaiting&format=raw',
-                    data      : 'orderid=' + parent.attr('id').replace('tm-cart-waiting-', ''),
+                    data      : 'id=' + parent.attr('id').replace('tm-cart-waiting-', '') + '&' + tokenName + '=1',
                     beforeSend: function() {
                         jQuery('#tm-loader').show();
                         jQuery("#wait-" + orderid).addClass("error");
@@ -148,7 +150,8 @@ $waiters = count($this->waiters);
                 } else {
 
                     // Please do AJAX call with data. -- Get post data first.
-                    var data = 'content=' + remarks + '&ordercode=' + <?php echo $session->get('ordercode'); ?> +'';
+                    var tokenName = '<?php echo $session->getToken(); ?>';
+                    var data = 'content=' + remarks + '&ordercode=' + <?php echo $session->get('ordercode'); ?> + '&' + tokenName + '=1';
 
                     jQuery.ajax({
                         //this is the php file that processes the data and send mail
@@ -287,7 +290,7 @@ $waiters = count($this->waiters);
                             </td>
                             <td>
                                 <div style="text-align: right;">
-                                    <a style="margin-right: 10px;" class="btn btn-danger btn-mini" href="index.php?option=com_ticketstation&controller=order&task=remove&orderid=<?= $row->orderid; ?>">
+                                    <a style="margin-right: 10px;" class="btn btn-danger btn-mini" href="index.php?option=com_ticketstation&controller=order&task=remove&orderid=<?= $row->orderid; ?>&<?php echo $session->getToken(); ?>=1">
                                         <span class="fa fa-trash"></span>
                                     </a>
                                     <?php echo (new TicketstationFunctions)->showprice($this->config->priceformat, $row->ticketprice, $this->config->valuta); ?>
@@ -325,7 +328,7 @@ $waiters = count($this->waiters);
                                 <?php endif; ?>
 
                                 <div align="center">
-                                    <a class="btn btn-danger btn-xs btn-mini" href="index.php?option=com_ticketstation&controller=order&task=removeWaiting&id=<?php echo $row->id; ?>">
+                                    <a class="btn btn-danger btn-xs btn-mini" href="index.php?option=com_ticketstation&controller=order&task=removeWaiting&id=<?php echo $row->id; ?>&<?php echo $session->getToken(); ?>=1">
                                         <span class="fa fa-trash"></span>
                                     </a>
                                 </div>
@@ -417,6 +420,7 @@ $waiters = count($this->waiters);
                             <input type="hidden" name="task" id="coupon" value="coupon" />
                             <input type="hidden" name="controller" id="cart" value="checkout" />
                             <input type="hidden" name="option" id="option" value="com_ticketstation" />
+                            <?php echo HTMLHelper::_('form.token'); ?>
 
                             <input name="button" type="submit" value="<?php echo Text::_('COM_TICKETSTATION_SUBMIT_COUPON'); ?>" class="btn-ticket-small" />
 

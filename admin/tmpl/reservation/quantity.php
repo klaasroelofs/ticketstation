@@ -1,6 +1,7 @@
 <?php
 
 use Joomla\CMS\Language\Text;
+use \Joomla\CMS\HTML\HTMLHelper;
 use Joomla\CMS\Router\Route;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\TicketstationFunctions;
 
@@ -47,6 +48,7 @@ defined('_JEXEC') or die('Restricted Access');
                 </div>
             </div>
             <button type="submit" class="btn btn-primary"><?= Text::_('COM_TICKETSTATION_RESERVATION_CONTINUE') ?></button>
+            <?= HTMLHelper::_( 'form.token' ); ?>
         </form>
 
     </div>

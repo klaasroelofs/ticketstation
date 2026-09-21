@@ -1,6 +1,7 @@
 <?php
 
 use Joomla\CMS\Factory;
+use \Joomla\CMS\HTML\HTMLHelper;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\Router\Route;
 use Joomla\CMS\Editor\Editor;
@@ -134,4 +135,5 @@ $editor = Editor::getInstance($user->getParam('editor', Factory::getConfig()->ge
     <input type="hidden" name="task" value="" />
     <input type="hidden" name="cid" value="<?= $this->data->mailid; ?>" />
     <input type="hidden" name="mailid" value="<?= $this->data->mailid; ?>" />
+    <?= HTMLHelper::_( 'form.token' ); ?>
 </form>

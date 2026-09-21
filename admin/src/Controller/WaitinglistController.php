@@ -40,6 +40,8 @@ class WaitinglistController extends BaseController
      */
     function confirm()
     {
+        $this->checkToken() or jexit(Text::_('JINVALID_TOKEN'));
+
         $app = Factory::getApplication();
 
         $cid = $this->input->get('cid', array(), 'array');
@@ -69,6 +71,8 @@ class WaitinglistController extends BaseController
 
     function remove()
     {
+        $this->checkToken() or jexit(Text::_('JINVALID_TOKEN'));
+
         $app = Factory::getApplication();
 
         $cid = $this->input->get('cid', array(), 'array');

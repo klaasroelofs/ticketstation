@@ -176,5 +176,6 @@ for ($i = 0; $i < count($this->unfinished); $i++)
     <input name="controller" type="hidden" value="events"/>
     <input name="task" type="hidden" value=""/>
     <input name="boxchecked" type="hidden" value="0"/>
+    <?= HTMLHelper::_( 'form.token' ); ?>
 
 </form>

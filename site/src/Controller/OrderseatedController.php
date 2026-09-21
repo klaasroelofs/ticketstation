@@ -52,6 +52,7 @@ class OrderseatedController extends BaseController {
     }
 
     function removeseat(){
+        $this->checkToken() or jexit(Text::_('JINVALID_TOKEN'));
 
         $jinput = Factory::getApplication()->getInput();
 
@@ -161,6 +162,7 @@ class OrderseatedController extends BaseController {
     }
 
     function updateSeat(){
+        $this->checkToken() or jexit(Text::_('JINVALID_TOKEN'));
 
         $db     = Factory::getContainer()->get('DatabaseDriver');
 
@@ -338,6 +340,7 @@ class OrderseatedController extends BaseController {
     }
 
     function makeReservation(){
+        $this->checkToken() or jexit(Text::_('JINVALID_TOKEN'));
 
         $jinput = Factory::getApplication()->getInput();
         ## Getting the values from the POST.
@@ -688,6 +691,7 @@ class OrderseatedController extends BaseController {
     }
 
     function saveseat(){
+        $this->checkToken() or jexit(Text::_('JINVALID_TOKEN'));
 
         $jinput = Factory::getApplication()->getInput();
 

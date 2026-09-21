@@ -56,6 +56,8 @@ class SeatplansettingsController extends BaseController {
 
     function apply()
     {
+        $this->checkToken() or jexit(Text::_('JINVALID_TOKEN'));
+
         $model	    = $this->getModel('seatplansettings');
         $data       = $this->input->post->get('jform', array(), 'array');
 
@@ -78,6 +80,8 @@ class SeatplansettingsController extends BaseController {
 
     function removeBackground()
     {
+        $this->checkToken() or jexit(Text::_('JINVALID_TOKEN'));
+
         $app = Factory::getApplication();
         $jinput = $app->getInput();
         $ticketid = $jinput->get('ticketid', '0', 'INT');

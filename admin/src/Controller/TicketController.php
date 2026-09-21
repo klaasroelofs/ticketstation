@@ -56,6 +56,8 @@ class TicketController extends FormController
 
     function apply()
     {
+        $this->checkToken() or jexit(Text::_('JINVALID_TOKEN'));
+
         $app 	    = Factory::getApplication();
         $model	    = $this->getModel('ticket');
         $data       = $this->input->post->get('jform', array(), 'array');
@@ -121,6 +123,8 @@ class TicketController extends FormController
 
     function removeDesign()
     {
+        $this->checkToken() or jexit(Text::_('JINVALID_TOKEN'));
+
         $app = Factory::getApplication();
         $jinput = $app->input;
         $ticketid = $jinput->get('ticketid', '0', 'INT');
@@ -151,6 +155,8 @@ class TicketController extends FormController
 
     function removeBackground()
     {
+        $this->checkToken() or jexit(Text::_('JINVALID_TOKEN'));
+
         $app = Factory::getApplication();
         $jinput = $app->input;
         $ticketid = $jinput->get('ticketid', '0', 'INT');

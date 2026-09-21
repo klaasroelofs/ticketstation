@@ -374,7 +374,8 @@ $TicketstationFunctions = new TicketstationFunctions();
         var currentId = $(this).attr('id');
         var ticketid = $("#"+currentId).val();
 
-        var data = 'ticketid=' + ticketid  + '&ordercode=' + <?php echo $ordercode; ?> +'&orderid='+currentId;
+        var tokenName = '<?php echo $session->getToken(); ?>';
+        var data = 'ticketid=' + ticketid  + '&ordercode=' + <?php echo $ordercode; ?> +'&orderid='+currentId + '&' + tokenName + '=1';
 
         $.ajax({
             //this is the php file that processes the data
@@ -410,7 +411,8 @@ $TicketstationFunctions = new TicketstationFunctions();
 
         var currentId = $(this).attr('id');
 
-        var data = 'id=' + currentId  + '&ordercode=' + <?php echo $ordercode; ?>;
+        var tokenName = '<?php echo $session->getToken(); ?>';
+        var data = 'id=' + currentId  + '&ordercode=' + <?php echo $ordercode; ?> + '&' + tokenName + '=1';
 
         $.ajax({
             //this is the php file that processes the data
@@ -505,7 +507,8 @@ $TicketstationFunctions = new TicketstationFunctions();
             var seatNumber = $(this).attr('id');
             var currentId = seatNumber.split('-');
 
-            var data = 'id=' + currentId[1]  + '&ordercode=' + <?php echo $ordercode; ?> + '';
+            var tokenName = '<?php echo $session->getToken(); ?>';
+            var data = 'id=' + currentId[1]  + '&ordercode=' + <?php echo $ordercode; ?> + '&' + tokenName + '=1';
 
             $.ajax({
                 //this is the php file that processes the data

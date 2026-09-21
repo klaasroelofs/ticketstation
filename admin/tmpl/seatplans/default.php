@@ -96,5 +96,6 @@ $wa->registerAndUseStyle('ticketstation', Uri::base() . 'components\com_ticketst
     <input name = "option" type="hidden" value="com_ticketstation" />
     <input name = "controller" type="hidden" value="seatplans"/>
     <input name = "task" type="hidden" value="" />
+    <?= HTMLHelper::_( 'form.token' ); ?>
 
 </form>

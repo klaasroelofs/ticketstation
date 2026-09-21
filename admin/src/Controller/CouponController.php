@@ -53,6 +53,8 @@ class CouponController extends FormController
 
     function apply()
     {
+        $this->checkToken() or jexit(Text::_('JINVALID_TOKEN'));
+
         $app 	    = Factory::getApplication();
         $model	    = $this->getModel('coupon');
         $data       = $this->input->post->get('jform', array(), 'array');

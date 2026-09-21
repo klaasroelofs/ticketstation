@@ -192,6 +192,7 @@ $history_icons = [
                     <input name = "option" type="hidden" value="com_ticketstation" />
                     <input name = "task" type="hidden" value="updateinsertremark" />
                     <input name = "controller" type="hidden" value="boxoffice"/>
+                    <?= HTMLHelper::_( 'form.token' ); ?>
                     </form>
                 </div>
                 <div style="float:right;margin-right: 10px;">
@@ -203,6 +204,7 @@ $history_icons = [
                         <input name = "option" type="hidden" value="com_ticketstation" />
                         <input name = "task" type="hidden" value="deleteremark" />
                         <input name = "controller" type="hidden" value="boxoffice"/>
+                        <?= HTMLHelper::_( 'form.token' ); ?>
                     </form>
                 </div>
             </div>
@@ -334,6 +336,7 @@ $history_icons = [
                     <input name = "task" type="hidden" value="" />
                     <input name = "boxchecked" type="hidden" value="0"/>
                     <input name = "controller" type="hidden" value="boxoffice"/>
+                    <?= HTMLHelper::_( 'form.token' ); ?>
 
                 </form>
 

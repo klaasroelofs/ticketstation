@@ -1,6 +1,7 @@
 <?php
 
 use Joomla\CMS\Language\Text;
+use \Joomla\CMS\HTML\HTMLHelper;
 use Joomla\CMS\Router\Route;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\TicketstationFunctions;
 
@@ -73,6 +74,7 @@ defined('_JEXEC') or die('Restricted Access');
                                     <button type="submit" class="btn btn-primary" <?= $ticket->totaltickets < 1 ? 'disabled' : '' ?>>
                                         <?= Text::_('COM_TICKETSTATION_RESERVATION_SELECT_TICKET') ?>
                                     </button>
+                                    <?= HTMLHelper::_( 'form.token' ); ?>
                                 </form>
                             </td>
                             <td><?= TicketstationFunctions::showprice($this->config->priceformat, $ticket->ticketprice, $this->config->valuta) ?></td>

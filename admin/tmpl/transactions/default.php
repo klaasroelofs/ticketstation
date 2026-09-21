@@ -110,4 +110,5 @@ $wa->registerAndUseStyle('searchtools', Uri::root() . 'media/templates/administr
     <input name="task" type="hidden" value="" />
     <input name="boxchecked" type="hidden" value="0"/>
     <input name ="controller" type="hidden" value="transactions"/>
+    <?= HTMLHelper::_( 'form.token' ); ?>
 </form>

@@ -62,6 +62,8 @@ class VenuesController extends BaseController
 
     function publish()
     {
+        $this->checkToken() or jexit(Text::_('JINVALID_TOKEN'));
+
         $cid = $this->input->get('cid', array(), 'array');
         ArrayHelper::toInteger($cid);
 
@@ -99,6 +101,8 @@ class VenuesController extends BaseController
 
     function remove()
     {
+        $this->checkToken() or jexit(Text::_('JINVALID_TOKEN'));
+
         $app = Factory::getApplication();
 
         $cid = $this->input->get('cid', array(), 'array');
@@ -118,6 +122,8 @@ class VenuesController extends BaseController
 
     function apply()
     {
+        $this->checkToken() or jexit(Text::_('JINVALID_TOKEN'));
+
         $app 	    = Factory::getApplication();
         $jinput     = $app->input;
         $model	    = $this->getModel('venues');

@@ -68,6 +68,8 @@ class TicketsController extends BaseController
 
     function publish()
     {
+        $this->checkToken() or jexit(Text::_('JINVALID_TOKEN'));
+
         $cid = $this->input->get('cid', array(), 'array');
         ArrayHelper::toInteger($cid);
 
@@ -105,6 +107,8 @@ class TicketsController extends BaseController
 
     function remove()
     {
+        $this->checkToken() or jexit(Text::_('JINVALID_TOKEN'));
+
         $app = Factory::getApplication();
 
         $cid = $this->input->get('cid', array(), 'array');
@@ -129,6 +133,8 @@ class TicketsController extends BaseController
 
     function duplicate()
     {
+        $this->checkToken() or jexit(Text::_('JINVALID_TOKEN'));
+
         $app = Factory::getApplication();
 
         $cid = $this->input->get('cid', array(), 'array');
@@ -147,6 +153,8 @@ class TicketsController extends BaseController
 
     function resetscanstate()
     {
+        $this->checkToken() or jexit(Text::_('JINVALID_TOKEN'));
+
         $app    = Factory::getApplication();
 
         $cid = $this->input->get('cid', array(), 'array');

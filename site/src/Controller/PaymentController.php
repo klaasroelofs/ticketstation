@@ -53,6 +53,8 @@ class PaymentController extends BaseController
 
     function makepayment()
     {
+        $this->checkToken() or jexit(Text::_('JINVALID_TOKEN'));
+
         $jinput = Factory::getApplication()->getInput();
         $db = Factory::getContainer()->get('DatabaseDriver');
 
@@ -216,6 +218,8 @@ class PaymentController extends BaseController
 
     function mollie()
     {
+        // Do NOT add checkToken() here — this is a redirect callback from Mollie,
+        // not a browser form submission, so Joomla CSRF tokens do not apply.
 
         $jinput = Factory::getApplication()->getInput();
         $return_token = $jinput->getString('order', '');
@@ -292,6 +296,9 @@ class PaymentController extends BaseController
 
     function IPNProcessPayment()
     {
+        // Do NOT add checkToken() here — this is a server-to-server webhook callback from Mollie,
+        // not a browser form submission, so Joomla CSRF tokens do not apply.
+
         $this->log('IPN script called by Mollie');
 
         $response = Factory::getApplication()->getInput()->post->getArray();

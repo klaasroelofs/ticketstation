@@ -1,6 +1,7 @@
 <?php
 
 use Joomla\CMS\Factory;
+use \Joomla\CMS\HTML\HTMLHelper;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\Router\Route;
 
@@ -205,7 +206,7 @@ $document->setTitle(Text::_('COM_TICKETSTATION_VIEW_CUSTOMER_DETAILS') . ' - ' .
     <input type="hidden" name="controller" value="clients" />
     <input type="hidden" name="task" value="" />
     <input type="hidden" name="clientid" value="<?php echo $this->data->clientid; ?>" />
-
+    <?= HTMLHelper::_( 'form.token' ); ?>
 
 </form>
 		

@@ -1,6 +1,7 @@
 <?php
 
 use Joomla\CMS\Language\Text;
+use \Joomla\CMS\HTML\HTMLHelper;
 use Joomla\CMS\Router\Route;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\TicketstationFunctions;
 
@@ -115,6 +116,7 @@ foreach ($this->summary as $row)
             </div>
 
             <button type="submit" class="btn btn-success"><?= Text::_('COM_TICKETSTATION_RESERVATION_COMPLETE') ?></button>
+            <?= HTMLHelper::_( 'form.token' ); ?>
         </form>
 
     </div>

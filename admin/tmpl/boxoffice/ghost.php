@@ -272,6 +272,7 @@ $reason_key = $ghost->reason === 'unfinished'
 <input name="option" type="hidden" value="com_ticketstation" />
 <input name="task" type="hidden" value="" />
 <input name="boxchecked" type="hidden" value="0" />
+<?= HTMLHelper::_( 'form.token' ); ?>
 
 </form>
 

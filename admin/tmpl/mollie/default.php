@@ -1,6 +1,7 @@
 <?php
 
 use Joomla\CMS\Factory;
+use \Joomla\CMS\HTML\HTMLHelper;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\Router\Route;
 use Joomla\CMS\Uri\Uri;
@@ -159,4 +160,5 @@ $wa->registerAndUseScript('passwordview', Uri::root() . 'media/system/js/fields/
     <input name="task" type="hidden" value="" />
     <input name="boxchecked" type="hidden" value="0" />
     <input name="controller" type="hidden" value="mollie" />
+    <?= HTMLHelper::_( 'form.token' ); ?>
 </form>

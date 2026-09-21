@@ -298,6 +298,7 @@ if(isset($this->item->ticketid))
     <input type="hidden" name="option" value="com_ticketstation"/>
     <input type="hidden" name="controller" value="ticket"/>
     <input type="hidden" name="task" value=""/>
+    <?= HTMLHelper::_( 'form.token' ); ?>
 
 </form>
 

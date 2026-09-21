@@ -55,6 +55,8 @@ class EventController extends FormController
 
     function apply()
     {
+        $this->checkToken() or jexit(Text::_('JINVALID_TOKEN'));
+
         $model	    = $this->getModel('event');
         $data       = $this->input->post->get('jform', array(), 'array');
 
@@ -95,6 +97,8 @@ class EventController extends FormController
 
     function removeBackground()
     {
+        $this->checkToken() or jexit(Text::_('JINVALID_TOKEN'));
+
         $app = Factory::getApplication();
         $jinput = $app->getInput();
         $eventid = $jinput->get('eventid', '0', 'INT');
