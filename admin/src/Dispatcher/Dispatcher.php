@@ -15,7 +15,6 @@ defined('_JEXEC') || die;
 use Joomla\CMS\Application\CMSApplication;
 use Joomla\CMS\Dispatcher\ComponentDispatcher;
 use Joomla\CMS\Document\HtmlDocument;
-use Joomla\CMS\Language\Text;
 use Joomla\CMS\Uri\Uri;
 use Joomla\Database\DatabaseAwareTrait;
 
@@ -63,8 +62,6 @@ class Dispatcher extends ComponentDispatcher
 
     protected function onBeforeDispatch()
     {
-        $this->checkAccess();
-
         // Apply the view and controller from the request, falling back to the default view/controller if necessary
         $this->applyViewAndController();
 
@@ -99,16 +96,6 @@ class Dispatcher extends ComponentDispatcher
                 ->addInlineStyle(Uri::base() . 'components/com_ticketstation/assets/css/j5dark.css');
         }
         */
-    }
-
-    private function checkAccess(): void
-    {
-        $user = $this->app->getIdentity();
-
-        if ($user === null || !$user->authorise('core.manage', $this->option))
-        {
-            throw new \Exception(Text::_('JERROR_ALERTNOAUTHOR'), 403);
-        }
     }
 
     private function applyViewAndController(): void
