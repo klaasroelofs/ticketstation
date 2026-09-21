@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<metadata>
+    <layout title="COM_TICKETSTATION_MENU_SCANNING_TITLE">
+        <message><![CDATA[COM_TICKETSTATION_MENU_SCANNING_DESC]]></message>
+    </layout>
+</metadata>

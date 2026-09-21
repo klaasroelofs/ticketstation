@@ -1,0 +1,123 @@
+/*.label,
+.badge {
+    display: inline-block;
+    padding: 2px 4px;
+    font-size: 10.998px;
+    font-weight: bold;
+    line-height: 14px;
+    color: #fff;
+    vertical-align: baseline;
+    white-space: nowrap;
+    text-shadow: 0 -1px 0 rgba(0,0,0,0.25);
+    background-color: #999;
+}
+.label {
+    -webkit-border-radius: 3px;
+    -moz-border-radius: 3px;
+    border-radius: 3px;
+}
+.badge {
+    padding-left: 9px;
+    padding-right: 9px;
+    -webkit-border-radius: 9px;
+    -moz-border-radius: 9px;
+    border-radius: 9px;
+}
+.label:empty,
+.badge:empty {
+    display: none;
+}
+a.label:hover,
+a.label:focus,
+a.badge:hover,
+a.badge:focus {
+    color: #fff;
+    text-decoration: none;
+    cursor: pointer;
+}
+.label-important,
+.badge-important {
+    background-color: #a94442;
+}
+.label-important[href],
+.badge-important[href] {
+    background-color: #843534;
+}
+.label-warning,
+.badge-warning {
+    background-color: #f89406;
+}
+.label-warning[href],
+.badge-warning[href] {
+    background-color: #c67605;
+}
+.label-success,
+.badge-success {
+    background-color: #3c763d;
+}
+.label-success[href],
+.badge-success[href] {
+    background-color: #2b542c;
+}
+.label-info,
+.badge-info {
+    background-color: #31708f;
+}
+.label-info[href],
+.badge-info[href] {
+    background-color: #245269;
+}
+.label-inverse,
+.badge-inverse {
+    background-color: #333;
+}
+.label-inverse[href],
+.badge-inverse[href] {
+    background-color: #1a1a1a;
+}*/
+
+.ticket-color-rgb {
+    width: 65px !important;
+    max-width: 65px !important;
+    margin-right: 5px;
+}
+.ticket-fontsize {
+    width: 65px !important;
+    max-width: 65px !important;
+}
+#toolbar-spacer .btn {
+    visibility:hidden;
+    width:22px;
+}
+.mollie-status {
+    border-radius: 3px;
+    text-align: left;
+    box-shadow: 0 2px 10px -8px var(--template-bg-dark-50);
+	margin: 0;
+	border: none;
+}
+
+.mollie-status-warning {
+    /*color: #BB2721;*/
+}
+
+.mollie-status-success {
+    /*color: #3c763d;*/
+}
+
+.templates-title {
+    font-weight: bold;
+}
+
+.templates-content {
+    margin-bottom: 10px;
+}
+
+.scale_down {
+    transition: transform 0.5s;
+    transform: scale(1);
+}
+.scale_up {
+    transition: transform 0.5s;
+    transform: scale(2.5);
+}

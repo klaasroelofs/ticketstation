@@ -1,0 +1,12 @@
+# Overrides the parent tickets/.htaccess deny-all for this subfolder only.
+# QR-code filenames here are random per-ticket tokens (32 hex characters), not
+# sequential IDs - they can't be guessed, so serving them directly is safe and is
+# what the admin boxoffice screen needs to show them via a plain <img src="...">.
+
+<IfModule mod_authz_core.c>
+    Require all granted
+</IfModule>
+<IfModule !mod_authz_core.c>
+    Order allow,deny
+    Allow from all
+</IfModule>

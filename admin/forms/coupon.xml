@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<form>
+    <fieldset name="details">
+
+        <field
+                name="coupon_id"
+                type="hidden"
+                default="0"
+        />
+        <field
+                name="coupon_name"
+                type="text"
+                label="COM_TICKETSTATION_COUPON_NAME"
+                description="COM_TICKETSTATION_COUPON_NAME_DESC"
+                class="form-control"
+        />
+        <field
+                name="coupon_code"
+                type="text"
+                label="COM_TICKETSTATION_COUPON_CODE"
+                description="COM_TICKETSTATION_COUPON_CODE_DESC"
+                class="form-control"
+                maxlength="25"
+        />
+        <field
+                name="coupon_limit"
+                type="text"
+                label="COM_TICKETSTATION_COUPON_LIMIT"
+                description="COM_TICKETSTATION_COUPON_LIMIT_DESC"
+                class="form-control"
+        />
+        <field
+                name="coupon_valid_to"
+                type="calendar"
+                label="COM_TICKETSTATION_COUPON_EXPIRATION"
+                showtime="false"
+                filter="none"
+                format="%d-%m-%Y"
+                filterformat="d-m-Y"
+        />
+        <field
+                name="coupon_type"
+                type="list"
+                label="COM_TICKETSTATION_COUPON_TYPE"
+                default="1"
+                >
+                <option value="0">COM_TICKETSTATION_AMOUNT</option>
+                <option value="1">COM_TICKETSTATION_PERCENT</option>
+        </field>
+        <field
+                name="coupon_discount"
+                type="text"
+                label="COM_TICKETSTATION_COUPON_DISCOUNT"
+                description="COM_TICKETSTATION_COUPON_DISCOUNT_DESC"
+                class="form-control"
+        />
+
+    </fieldset>
+
+</form>

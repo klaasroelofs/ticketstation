@@ -1,0 +1,520 @@
+<?xml version="1.0" encoding="utf-8"?>
+<form enctype="multipart/form-data">
+    <fieldset name="main_settings">
+        <field
+                name="ticketid"
+                type="hidden"
+                default="0"
+        />
+        <field
+                name="ticketname"
+                type="text"
+                label="COM_TICKETSTATION_TICKETNAME"
+        />
+        <field
+                name="ticketcode"
+                type="text"
+                label="COM_TICKETSTATION_TICKETCODE"
+                maxlength="5"
+        />
+        <field
+                name="freetext_1"
+                type="text"
+                label="COM_TICKETSTATION_FREETEXT_1"
+        />
+        <field
+                name="parent"
+                type="sql"
+                query="SELECT ticketid, concat('-- ', ticketname) AS name FROM #__ticketstation_tickets WHERE published = 1 AND parent = 0"
+                key_field="ticketid"
+                value_field="name"
+                label="COM_TICKETSTATION_CHILD"
+                description="COM_TICKETSTATION_PARENT_EXPLANATION"
+                >
+            <option value="">COM_TICKETSTATION_MAIN_TICKET</option>
+        </field>
+        <field
+                name="eventid"
+                type="sql"
+                query="SELECT eventid, concat(eventcode, ' | ', eventname) AS title FROM #__ticketstation_events ORDER BY eventdate ASC"
+                key_field="eventid"
+                value_field="title"
+                label="COM_TICKETSTATION_EVENT"
+                >
+            <option value="">COM_TICKETSTATION_PLEASE_SELECT_EVENT</option>
+        </field>
+        <field
+                name="venue"
+                type="sql"
+                query="SELECT id, venue FROM #__ticketstation_venues WHERE published = 1"
+                key_field="id"
+                value_field="venue"
+                label="COM_TICKETSTATION_VENUE"
+        >
+            <option value="">COM_TICKETSTATION_CHOOSE_VENUE</option>
+        </field>
+        <field
+                name="totaltickets"
+                type="number"
+                label="COM_TICKETSTATION_TOTAL_TICKETS"
+        />
+        <field
+                name="starting_total_tickets"
+                type="number"
+                label="COM_TICKETSTATION_TOTAL_TICKETS_START"
+                description="COM_TICKETSTATION_TOTAL_TICKETS_START_EXPLANATION"
+        />
+        <field
+                name="counter_choice"
+                type="list"
+                label="COM_TICKETSTATION_COUNTER_CHOICE"
+                description="COM_TICKETSTATION_COUNTER_CHOICE_EXPLANATION"
+                default="0"
+        >
+            <option value="0">COM_TICKETSTATION_USE_PARENT</option>
+            <option value="1">COM_TICKETSTATION_USE_CHILD</option>
+        </field>
+    </fieldset>
+
+    <fieldset name="ticket_details_1">
+        <field
+                name="ticketprice"
+                type="text"
+                label="COM_TICKETSTATION_TICKET_PRICE"
+                description="COM_TICKETSTATION_TICKET_PRICE_DESC"
+                maxlength="5"
+                addonBefore="€"
+        />
+        <field
+                name="vat_percentage"
+                type="text"
+                class="add-on"
+                label="COM_TICKETSTATION_VAT_PERCENTAGE"
+                maxlength="2"
+                addonAfter="%"
+        />
+    </fieldset>
+
+    <fieldset name="ticket_details_2">
+        <field
+                name="min_qty"
+                type="number"
+                label="COM_TICKETSTATION_MINIMUM_AMOUNT"
+        />
+        <field
+                name="max_qty"
+                type="number"
+                label="COM_TICKETSTATION_MAXIMUM_AMOUNT"
+                filter="integer"
+        />
+
+        <field
+                name="startdate"
+                type="calendar"
+                label="COM_TICKETSTATION_TICKET_STARTDATE_TIME"
+                showtime="true"
+                filter="none"
+                format="%d-%m-%Y %H:%M"
+                filterformat="d-m-Y H:i"
+        />
+        <field
+                name="enddate"
+                type="calendar"
+                label="COM_TICKETSTATION_TICKET_ENDDATE_TIME"
+                showtime="true"
+                filter="none"
+                format="%d-%m-%Y %H:%M"
+                filterformat="d-m-Y H:i"
+        />
+        <field
+                name="show_seatplans"
+                type="radio"
+                layout="joomla.form.field.radio.switcher"
+                label="COM_TICKETSTATION_SHOW_SEATPLANS"
+                class="form-control-success"
+                default="0"
+        >
+            <option value="0">COM_TICKETSTATION_NO</option>
+            <option value="1">COM_TICKETSTATION_YES</option>
+        </field>
+        <field
+                name="scans_on"
+                type="radio"
+                layout="joomla.form.field.radio.switcher"
+                label="COM_TICKETSTATION_SCANNING_ON"
+                class="form-control-success"
+                default="1"
+        >
+            <option value="0">COM_TICKETSTATION_NO</option>
+            <option value="1">COM_TICKETSTATION_YES</option>
+        </field>
+    </fieldset>
+
+    <fieldset name="ticket_details_3">
+        <field
+                name="use_auto_publish"
+                type="radio"
+                layout="joomla.form.field.radio.switcher"
+                label="COM_TICKETSTATION_USE_SALE_AUTO_PUBLISH"
+                description="COM_TICKETSTATION_USE_SALE_AUTO_PUBLISH_DESC"
+                class="form-control-success"
+                default="0"
+        >
+            <option value="0">COM_TICKETSTATION_NO</option>
+            <option value="1">COM_TICKETSTATION_YES</option>
+        </field>
+        <field
+                name="publish_date_time"
+                type="calendar"
+                label="COM_TICKETSTATION_PUBLISH_DATE"
+                showtime="true"
+                filter="none"
+                format="%d-%m-%Y %H:%M"
+                filterformat="d-m-Y H:i"
+        />
+        <field
+                name="use_sale_stop"
+                type="radio"
+                layout="joomla.form.field.radio.switcher"
+                label="COM_TICKETSTATION_USE_SALE_STOP_UNPUBLISH"
+                description="COM_TICKETSTATION_USE_SALE_STOP_EXPLANATION"
+                class="form-control-success"
+                default="0"
+        >
+            <option value="0">COM_TICKETSTATION_NO</option>
+            <option value="1">COM_TICKETSTATION_YES</option>
+        </field>
+        <field
+                name="sale_stop"
+                type="calendar"
+                label="COM_TICKETSTATION_SALE_STOP_UNPUBLISH"
+                showtime="true"
+                filter="none"
+                format="%d-%m-%Y %H:%M"
+                filterformat="d-m-Y H:i"
+        />
+    </fieldset>
+
+    <fieldset name="ticket_layout_1">
+        <field
+                name="ticket_size"
+                type="list"
+                label="COM_TICKETSTATION_TICKET_SIZE"
+                default="A5"
+        >
+            <option value="A5">COM_TICKETSTATION_TICKET_SIZE_A5</option>
+            <option value="A4">COM_TICKETSTATION_TICKET_SIZE_A4</option>
+        </field>
+        <field
+                name="override_ticketsize"
+                type="text"
+                label="COM_TICKETSTATION_SET_TICKET_SIZE"
+                description="COM_TICKETSTATION_SET_TICKET_SIZE_DESC"
+        />
+        <field
+                name="ticket_orientation"
+                type="list"
+                label="COM_TICKETSTATION_TICKET_ORIENTATION"
+                default="P"
+        >
+            <option value="P">COM_TICKETSTATION_TICKET_ORIENTATION_PORTRAIT</option>
+            <option value="L">COM_TICKETSTATION_TICKET_ORIENTATION_LANDSCAPE</option>
+        </field>
+    </fieldset>
+
+    <fieldset name="ticket_layout_2">
+        <field
+                name="designfile"
+                type="file"
+                accept="image/jpeg,image/JPG,image/jpg,.pdf"
+                label="COM_TICKETSTATION_UPLOAD_DESIGN_FILE"
+                description="COM_TICKETSTATION_UPLOAD_DESIGN_FILE_DESC"
+        />
+    </fieldset>
+
+    <fieldset name="ticket_layout_3">
+        <field
+                name="backgroundupcomingfile"
+                type="file"
+                accept="image/jpeg,image/JPG,image/jpg"
+                label="COM_TICKETSTATION_UPLOAD_UPCOMING_BACKGROUND_FILE"
+                description="COM_TICKETSTATION_UPLOAD_UPCOMING_BACKGROUND_FILE_DESC"
+        />
+    </fieldset>
+
+    <fieldset name="ticket_layout_eventname">
+        <field
+                name="eventname_fontcolor"
+                type="text"
+                maxlength="6"
+                label="COM_TICKETSTATION_FONTCOLOR"
+                addonBefore="#"
+        />
+        <field
+                name="eventname_fontsize"
+                type="text"
+                label="COM_TICKETSTATION_FONTSIZE"
+                addonAfter="px"
+        />
+        <field
+                name="eventname_position"
+                type="text"
+                label="COM_TICKETSTATION_POSITION"
+        />
+    </fieldset>
+    <fieldset name="ticket_layout_ticketname">
+        <field
+                name="ticketname_fontcolor"
+                type="text"
+                maxlength="6"
+                label="COM_TICKETSTATION_FONTCOLOR"
+                addonBefore="#"
+        />
+        <field
+                name="ticketname_fontsize"
+                type="text"
+                label="COM_TICKETSTATION_FONTSIZE"
+                addonAfter="px"
+        />
+        <field
+                name="ticketname_position"
+                type="text"
+                label="COM_TICKETSTATION_POSITION"
+        />
+    </fieldset>
+    <fieldset name="ticket_layout_freetext_1">
+        <field
+                name="freetext_1_fontcolor"
+                type="text"
+                maxlength="6"
+                label="COM_TICKETSTATION_FONTCOLOR"
+                addonBefore="#"
+        />
+        <field
+                name="freetext_1_fontsize"
+                type="text"
+                label="COM_TICKETSTATION_FONTSIZE"
+                addonAfter="px"
+        />
+        <field
+                name="freetext_1_position"
+                type="text"
+                label="COM_TICKETSTATION_POSITION"
+        />
+    </fieldset>
+    <fieldset name="ticket_layout_ticketdate">
+        <field
+                name="ticketdate_fontcolor"
+                type="text"
+                maxlength="6"
+                label="COM_TICKETSTATION_FONTCOLOR"
+                addonBefore="#"
+        />
+        <field
+                name="ticketdate_fontsize"
+                type="text"
+                label="COM_TICKETSTATION_FONTSIZE"
+                addonAfter="px"
+        />
+        <field
+                name="ticketdate_position"
+                type="text"
+                label="COM_TICKETSTATION_POSITION"
+        />
+    </fieldset>
+    <fieldset name="ticket_layout_ticketprice">
+        <field
+                name="ticketprice_fontcolor"
+                type="text"
+                maxlength="6"
+                label="COM_TICKETSTATION_FONTCOLOR"
+                addonBefore="#"
+        />
+        <field
+                name="ticketprice_fontsize"
+                type="text"
+                label="COM_TICKETSTATION_FONTSIZE"
+                addonAfter="px"
+        />
+        <field
+                name="ticketprice_position"
+                type="text"
+                label="COM_TICKETSTATION_POSITION"
+        />
+    </fieldset>
+    <fieldset name="ticket_layout_orderdate">
+        <field
+                name="orderdate_fontcolor"
+                type="text"
+                maxlength="6"
+                label="COM_TICKETSTATION_FONTCOLOR"
+                addonBefore="#"
+        />
+        <field
+                name="orderdate_fontsize"
+                type="text"
+                label="COM_TICKETSTATION_FONTSIZE"
+                addonAfter="px"
+        />
+        <field
+                name="orderdate_position"
+                type="text"
+                label="COM_TICKETSTATION_POSITION"
+        />
+    </fieldset>
+    <fieldset name="ticket_layout_client">
+        <field
+                name="client_fontcolor"
+                type="text"
+                maxlength="6"
+                label="COM_TICKETSTATION_FONTCOLOR"
+                addonBefore="#"
+        />
+        <field
+                name="client_fontsize"
+                type="text"
+                label="COM_TICKETSTATION_FONTSIZE"
+                addonAfter="px"
+        />
+        <field
+                name="client_position"
+                type="text"
+                label="COM_TICKETSTATION_POSITION"
+        />
+    </fieldset>
+    <fieldset name="ticket_layout_orderticketindex">
+        <field
+                name="orderticketindex_fontcolor"
+                type="text"
+                maxlength="6"
+                label="COM_TICKETSTATION_FONTCOLOR"
+                addonBefore="#"
+        />
+        <field
+                name="orderticketindex_fontsize"
+                type="text"
+                label="COM_TICKETSTATION_FONTSIZE"
+                addonAfter="px"
+        />
+        <field
+                name="orderticketindex_position"
+                type="text"
+                label="COM_TICKETSTATION_POSITION"
+        />
+        <field
+                name="orderticketindex_prependtext_print"
+                type="radio"
+                layout="joomla.form.field.radio.switcher"
+                label="COM_TICKETSTATION_ORDERTICKETINDEX_PRINT_TEXT"
+                class="form-control-success"
+                default="0"
+        >
+            <option value="0">COM_TICKETSTATION_NO</option>
+            <option value="1">COM_TICKETSTATION_YES</option>
+        </field>
+        <field
+                name="orderticketindex_prependtext"
+                type="text"
+                label="COM_TICKETSTATION_ORDERTICKETINDEX_TEXT"
+        />
+    </fieldset>
+    <fieldset name="ticket_layout_ordernumber">
+        <field
+                name="ordernumber_fontcolor"
+                type="text"
+                maxlength="6"
+                label="COM_TICKETSTATION_FONTCOLOR"
+                addonBefore="#"
+        />
+        <field
+                name="ordernumber_fontsize"
+                type="text"
+                label="COM_TICKETSTATION_FONTSIZE"
+                addonAfter="px"
+        />
+        <field
+                name="ordernumber_position"
+                type="text"
+                label="COM_TICKETSTATION_POSITION"
+        />
+    </fieldset>
+    <fieldset name="ticket_layout_seatnumber">
+        <field
+                name="seatnumber_fontcolor"
+                type="text"
+                maxlength="6"
+                label="COM_TICKETSTATION_FONTCOLOR"
+                addonBefore="#"
+        />
+        <field
+                name="seatnumber_fontsize"
+                type="text"
+                label="COM_TICKETSTATION_FONTSIZE"
+                addonAfter="px"
+        />
+        <field
+                name="seatnumber_position"
+                type="text"
+                label="COM_TICKETSTATION_POSITION"
+        />
+    </fieldset>
+    <fieldset name="ticket_layout_orderreference">
+        <field
+                name="orderreference_fontcolor"
+                type="text"
+                maxlength="6"
+                label="COM_TICKETSTATION_FONTCOLOR"
+                addonBefore="#"
+        />
+        <field
+                name="orderreference_fontsize"
+                type="text"
+                label="COM_TICKETSTATION_FONTSIZE"
+                addonAfter="px"
+        />
+        <field
+                name="orderreference_position"
+                type="text"
+                label="COM_TICKETSTATION_POSITION"
+        />
+        <field
+                name="orderreference_centered"
+                type="radio"
+                layout="joomla.form.field.radio.switcher"
+                label="COM_TICKETSTATION_ORDERREFERENCE_CENTERED"
+                class="form-control-success"
+                default="0"
+        >
+            <option value="0">COM_TICKETSTATION_NO</option>
+            <option value="1">COM_TICKETSTATION_YES</option>
+        </field>
+    </fieldset>
+    <fieldset name="ticket_layout_qrcode">
+        <field
+                name="qrcode_position"
+                type="text"
+                label="COM_TICKETSTATION_POSITION"
+        />
+        <field
+                name="qrcode_width"
+                type="text"
+                label="COM_TICKETSTATION_WIDTH_QRCODE"
+        />
+    </fieldset>
+
+    <field
+            name="fieldcopyticket"
+            type="sql"
+            query="SELECT t.ticketid, CONCAT(e.eventcode, ' | ', t.ticketname) AS title
+                            FROM #__ticketstation_tickets AS t
+                            LEFT JOIN #__ticketstation_events AS e
+                            ON (t.eventid = e.eventid)
+                            ORDER BY t.startdate ASC"
+            key_field="ticketid"
+            value_field="title"
+            label="COM_TICKETSTATION_SELECT_SOURCE_TICKET"
+    >
+        <option value="">COM_TICKETSTATION_SELECT_TICKET</option>
+    </field>
+
+</form>

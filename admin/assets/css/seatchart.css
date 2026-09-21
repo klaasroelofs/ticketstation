@@ -1,0 +1,65 @@
+.seat-element {
+    border:1px #198d02 solid;
+    background-color:#e1fdda;
+    /*cursor:crosshair;*/
+    height:14px;
+    width:14px;
+    font-size:9px;
+    color:#000;
+    text-align:center;
+    line-height:14px;
+    -moz-border-radius: 2px;
+    -webkit-border-radius: 2px;
+}
+
+.seat-element:hover {
+    background-color:#daf5fd;
+    border:1px #CCC solid;
+}
+
+.seat-element-cursor {
+    cursor:grab;
+}
+
+.seat-element-cursor:active {
+    cursor:grabbing;
+}
+
+td {
+    padding:1px;
+    vertical-align: middle;
+}
+
+.nietgescand {
+    padding:5px;
+    font-size:13px;
+    font-weight:bold;
+    border:1px solid #ff0000;
+    border-radius: 3px;
+    background-color:#fff;
+    color:#ff0000;
+    box-shadow: rgb(85, 85, 85) 2px 2px;
+}
+
+#seatinfo {
+    text-align: center;
+    padding: 5px;
+    min-height: 35px;
+}
+
+#respond {
+    text-align: center;
+    min-height: 35px;
+}
+
+#respond_html {
+    padding: 5px;
+}
+
+.success_msg {
+    background-color: #b6e9b6;
+}
+
+.danger_msg {
+    background-color: #e9b6b6;
+}

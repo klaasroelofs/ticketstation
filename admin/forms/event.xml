@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+<form>
+    <fieldset name="details">
+
+        <field
+                name="eventid"
+                type="hidden"
+                default="0"
+        />
+        <field
+                name="eventname"
+                type="text"
+                label="COM_TICKETSTATION_EVENTNAME"
+                class="form-control"
+        />
+        <field
+                name="eventcode"
+                type="text"
+                label="COM_TICKETSTATION_EVENTCODE"
+                description="COM_TICKETSTATION_EVENTCODE_DESC"
+                maxlength="10"
+                class="form-control"
+        />
+        <field
+                name="eventdate"
+                type="calendar"
+                label="COM_TICKETSTATION_EVENTDATE"
+                showtime="false"
+                filter="none"
+                format="%d-%m-%Y"
+                filterformat="d-m-Y H:i"
+        />
+        <field
+                name="automatic_change_state"
+                type="radio"
+                layout="joomla.form.field.radio.switcher"
+                label="COM_TICKETSTATION_AUTO_START_END"
+                description="COM_TICKETSTATION_AUTO_START_END_DESC"
+                class="form-control-succes"
+                default="0"
+                >
+                <option value="0">COM_TICKETSTATION_NO</option>
+                <option value="1">COM_TICKETSTATION_YES</option>
+        </field>
+        <field
+                name="startdate"
+                type="calendar"
+                label="COM_TICKETSTATION_AUTO_PUBLISH"
+                showtime="true"
+                filter="none"
+                format="%d-%m-%Y %H:%M"
+                filterformat="d-m-Y H:i"
+        />
+        <field
+                name="closingdate"
+                type="calendar"
+                label="COM_TICKETSTATION_AUTO_UNPUBLISH"
+                showtime="true"
+                filter="none"
+                format="%d-%m-%Y %H:%M"
+                filterformat="d-m-Y H:i"
+        />
+        <field
+                name="eventdescription"
+                type="textarea"
+                label="COM_TICKETSTATION_VIEW_EVENT_DESCRIPTION"
+                class="form-control"
+                rows="3"
+                cols="30"
+        />
+        <field
+                name="backgroundupcomingfile"
+                type="file"
+                accept="image/jpeg,image/JPG,image/jpg"
+                label="COM_TICKETSTATION_UPLOAD_UPCOMING_BACKGROUND_EVENT_FILE"
+                description="COM_TICKETSTATION_UPLOAD_UPCOMING_BACKGROUND_EVENT_FILE_DESC"
+        />
+
+    </fieldset>
+
+</form>

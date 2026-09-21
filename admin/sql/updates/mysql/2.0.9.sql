@@ -1,0 +1,6 @@
+-- This file previously contained a removal_hours column-type fix and the waiting-list
+-- confirmation email template insert. Sites that already updated to 2.0.9 have this
+-- version recorded in #__schemas, so Joomla will never re-run this file's contents again
+-- regardless of edits made here. The removal_hours fix was corrected manually in the
+-- database directly and is no longer needed. The template insert now ships in 2.0.10.sql
+-- instead, under a version number that has not been applied yet.

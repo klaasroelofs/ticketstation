@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Ticketstation update site feed.
+
+    This file is NOT part of the installable component package (it lives outside the
+    admin/ and site/ folders listed in ticketstation.xml's <files> blocks, so it is never
+    copied by the installer). It must be uploaded separately to the URL referenced by
+    ticketstation.xml's <updateservers><server> entry:
+
+        https://www.huibuuke.nl/updates/ticketstation.xml
+
+    Whenever a new version is released:
+    1. Bump <version> below to match the new <version> in ticketstation.xml.
+    2. Point <downloadurl> at the new release zip.
+    3. Re-upload this file to the URL above.
+
+    The <targetplatform> tag is what makes Joomla's Pre-Update Check list this component
+    under "No Update Required" instead of "Update Information Unavailable" - Joomla only
+    recognises the current version as Joomla 6-compatible if an <update> entry whose
+    <version> matches (or exceeds) the installed version carries a <targetplatform> that
+    matches the target Joomla version string (e.g. "6.0.0").
+-->
+<updates>
+    <update>
+        <name>Ticketstation</name>
+        <description>Thank you for installing Ticketstation!</description>
+        <element>com_ticketstation</element>
+        <type>component</type>
+        <version>2.0.0</version>
+        <infourl title="Ticketstation">https://www.huibuuke.nl</infourl>
+        <downloads>
+            <downloadurl type="full" format="zip">https://www.huibuuke.nl/updates/com_ticketstation_2.0.0.zip</downloadurl>
+        </downloads>
+        <tags>
+            <tag>stable</tag>
+        </tags>
+        <maintainerinfo maintainer="Klaas Roelofs" maintainerurl="https://www.huibuuke.nl" />
+        <targetplatform name="joomla" version="6\.[0-9]+" />
+        <php_minimum>8.3.0</php_minimum>
+    </update>
+</updates>

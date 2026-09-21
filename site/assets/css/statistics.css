@@ -1,0 +1,124 @@
+.btn-forward-back {	
+    font-size: 16px;
+    font-weight: bold;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+    background-color: #008c392e;
+    padding: 15px;
+	transition: box-shadow .3s ease;
+	color: #444;
+	text-transform: uppercase;
+}
+
+.btn-forward-back:hover {
+	box-shadow: 0 0 10px 3px rgb(0 140 57 / 50%);
+	color: #444;
+	text-decoration: none;
+}
+
+.ticketmaster_salesscans_card_wrapper {
+	box-shadow: 0px 0px 7px 0px darkgray;
+	border-radius: 10px;
+    margin-bottom: 40px;
+	margin-left: auto;
+	margin-right: auto;
+	max-width: 750px !important;
+	display: grid;
+	background-color: white;
+}
+
+.ticketmaster_salesscans_card_wrapper_heading {
+    padding: 7px;
+	text-transform: uppercase;
+    letter-spacing: -0.5px;
+}
+
+.ticketmaster_salesscans_card_wrapper_content {
+    padding: 0px 25px;
+}
+
+.ticketmaster_salesscans_card {
+	display: inline-grid;
+	width: 49%;
+    margin-left: auto;
+    margin-right: auto;
+	border-radius: 10px;
+	border: 1px solid #ccc;
+    margin-bottom: 15px;
+	position: relative;
+}
+
+.ticketmaster_salesscans_card.wide {
+	width: 99%;
+}
+
+.ticketmaster_salesscans_card_heading {
+    border-radius: 10px 10px 0px 0px;
+	border-bottom: 1px solid #ccc; 
+	padding: 7px;
+	background-color:#008c392e;
+}
+
+.ticketmaster_salesscans_card_content {
+	padding: 10px;
+	background-position: right 0px bottom -340px;
+	border-radius: 0px 0px 10px 10px
+}
+
+
+@media all and (max-width: 900px) {
+	.ticketmaster_salesscans_card_wrapper {
+	padding-bottom: 10px;
+    margin-bottom: 25px;
+	}
+	
+	.ticketmaster_salesscans_card_wrapper_content {
+    padding: 0px 10px;
+	}
+	
+	.ticketmaster_salesscans_card {
+    margin-bottom: 10px;
+	}
+	.ticketmaster_salesscans_card_content {
+	padding: 5px;
+	}
+}
+
+.ticketmaster_salesscans_cardlink {
+	position:absolute; 
+	width:100%;
+	height:100%;
+	top:0;
+	left: 0;
+	border-radius: 10px;
+	z-index: 1;
+	transition: box-shadow .3s ease;
+}
+
+.ticketmaster_salesscans_cardlink:hover {
+	box-shadow: 0px 0px 7px 3px darkgray;
+}
+
+.sales_per_ticket_table {
+	width: 100%;
+	margin-left: auto;
+	margin-right: auto;
+	margin-bottom: 15px;
+}
+
+table.sales_per_ticket_table td {
+	text-align: center;
+	padding: 2px 0px;
+}
+
+table.sales_per_ticket_table th {
+	text-align: center;
+	color: #ff006ab3;
+    background-color: #008c391a;
+    padding: 5px;
+    /*border-radius: 10px 10px 0px 0px;*/
+}
+
+table.sales_per_ticket_table tbody {
+	background-color: #b9d51e1a;
+}

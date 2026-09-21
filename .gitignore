@@ -1,0 +1,4 @@
+/.plans/
+vendor/
+/.idea/
+/.claude/settings.local.json

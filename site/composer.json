@@ -1,0 +1,14 @@
+{
+  "name": "ticketstation/site-vendor",
+  "description": "Bundled runtime dependencies for the Ticketstation site component. This vendor folder is installed as part of the com_ticketstation package.",
+  "type": "project",
+  "license": "proprietary",
+  "require": {
+    "php": ">=8.3",
+    "mollie/mollie-api-php": "2.63.0"
+  },
+  "config": {
+    "optimize-autoloader": true,
+    "sort-packages": true
+  }
+}

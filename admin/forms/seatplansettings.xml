@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<form>
+    <fieldset name="general">
+        <field
+                name="id"
+                type="hidden"
+                default="0"
+        />
+        <field
+                name="ticketid"
+                type="hidden"
+        />
+        <field
+                name="jpgbackground"
+                type="file"
+                accept="image/jpeg,image/JPG,image/jpg,image/png"
+                label="COM_TICKETSTATION_SEATPLANSETTING_JPG_BACKGROUND"
+        />
+        <field
+                name="multi_seat"
+                type="radio"
+                layout="joomla.form.field.radio.switcher"
+                label="COM_TICKETSTATION_SEATPLANSETTING_MULTISEAT"
+                class="form-control-succes"
+                default="1"
+                description="COM_TICKETSTATION_SEATPLANSETTING_MULTISEAT_DESC"
+        >
+            <option value="0">COM_TICKETSTATION_NO</option>
+            <option value="1">COM_TICKETSTATION_YES</option>
+        </field>
+        <field
+                name="background_color"
+                type="text"
+                maxlength="6"
+                label="COM_TICKETSTATION_SEATPLANSETTING_BACKGROUND_COLOR"
+                addonBefore="#"
+        />
+        <field
+                name="border_color"
+                type="text"
+                maxlength="6"
+                label="COM_TICKETSTATION_SEATPLANSETTING_BORDER_COLOR"
+                addonBefore="#"
+        />
+        <field
+                name="font_color"
+                type="text"
+                maxlength="6"
+                label="COM_TICKETSTATION_SEATPLANSETTING_FONT_COLOR"
+                addonBefore="#"
+        />
+        <field
+                name="seat_width"
+                type="text"
+                maxlength="2"
+                label="COM_TICKETSTATION_SEATPLANSETTING_SEAT_WIDTH"
+                addonAfter="px"
+        />
+        <field
+                name="seat_height"
+                type="text"
+                maxlength="2"
+                label="COM_TICKETSTATION_SEATPLANSETTING_SEAT_HEIGHT"
+                addonAfter="px"
+        />
+        <field
+                name="type"
+                type="hidden"
+                default="1"
+        />
+
+
+    </fieldset>
+
+</form>

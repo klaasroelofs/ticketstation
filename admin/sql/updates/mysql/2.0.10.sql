@@ -1,0 +1,13 @@
+-- The waiting-list confirmation email (Confirmation::SendWaitingList()) has always pointed
+-- at a template that was never created, so the mail silently failed to send
+-- (eTicketsMessage::send() bails out when the template can't be found) and nobody on the
+-- waiting list could ever confirm their spot. This adds the missing template as mailid 4,
+-- in line with the existing templates (1-3). New installs get it directly via
+-- install.mysql.utf8.sql; this update brings it to sites installed before that existed.
+--
+-- Was originally shipped in 2.0.9.sql under mailid 102, alongside a removal_hours column
+-- fix. That column fix was corrected manually and removed, and the mailid was renumbered
+-- to 4. Joomla tracks applied schema updates by filename/version in #__schemas, not by
+-- content, so once a site recorded "2.0.9" as applied, re-editing 2.0.9.sql would never run
+-- again there - hence this insert ships under its own new version number.
+INSERT IGNORE INTO `#__ticketstation_templates` VALUES("4","Waiting list confirmation","<p>Beste {firstname},</p><p>Je staat op de wachtlijst voor:</p><p>{orderlist}</p><p>Bevestig hieronder dat je nog interesse hebt. Zodra er een plek vrijkomt, ontvang je een aparte e-mail met een betaallink — zonder bevestiging kunnen we je plek niet garanderen.</p><p>{confirmationlink}</p><p>Mocht je nog vragen hebben, neem dan contact met ons op via <a href=\'mailto:tickets@huibuuke.nl\'>tickets@huibuuke.nl</a>.</p><p>Met vriendelijke groet,</p><p>{company_name}<br />{company_website}</p>","Bevestig je plek op de wachtlijst","tickets@huibuuke.nl","Stichting De Huibuuke");

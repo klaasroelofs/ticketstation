@@ -1,0 +1,14 @@
+# Deny direct web access to generated ticket PDFs and QR codes (eTicket-*.pdf,
+# eTickets-*.pdf, multi-*.pdf, qrcodes/*.png, confirmation/*.pdf). These are meant to be
+# read server-side (email attachments, the download controller) only, never fetched
+# directly by URL - filenames are based on ordercode/orderid, which are sequential and
+# guessable. Applies to this folder and its subfolders (qrcodes/, confirmation/) unless
+# they carry their own, less restrictive .htaccess.
+
+<IfModule mod_authz_core.c>
+    Require all denied
+</IfModule>
+<IfModule !mod_authz_core.c>
+    Order allow,deny
+    Deny from all
+</IfModule>

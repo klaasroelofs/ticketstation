@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="utf-8"?>
+<extension type="component" version="5.0" method="upgrade">
+
+    <name>Ticketstation</name>
+    <creationDate>18-09-2026</creationDate>
+    <author>Klaas Roelofs</author>
+	<authorEmail>klaasroelofs@huibuuke.nl</authorEmail>
+    <authorUrl>https://www.huibuuke.nl</authorUrl>
+    <copyright>© 2026 Klaas Roelofs</copyright>
+    <license>GPL v3</license>
+    <version>2.0.12</version>
+    <description>
+        Thank you for installing Ticketstation!
+    </description>
+
+    <updateservers>
+        <server type="extension" priority="1" name="Ticketstation Update Site">https://www.huibuuke.nl/updates/ticketstation.xml</server>
+    </updateservers>
+
+    <namespace path="src/">Ticketstation\Component\Ticketstation</namespace>
+
+    <files folder="site/">
+        <folder>assets</folder>
+        <folder>language</folder>
+        <folder>src</folder>
+        <folder>tmpl</folder>
+        <folder>vendor</folder>
+        <file>autoloader.php</file>
+    </files>
+
+    <languages folder="site/">
+        <language tag="en-GB">language/en-GB/com_ticketstation.ini</language>
+        <language tag="nl-NL">language/nl-NL/com_ticketstation.ini</language>
+    </languages>
+
+    <administration>
+        <!-- The link that will appear in the Admin panel's "Components" menu -->
+        <menu>Ticketstation <small>for Joomla!™</small></menu>
+        <submenu>
+            <!--
+                Note that all & must be escaped to &amp; for the file to be valid
+                XML and be parsed by the installer
+            -->
+            <menu
+                    link="option=com_ticketstation&amp;view=controlpanel"
+                    view="controlpanel"
+                    alt="Ticketstation/ControlPanel"
+            >
+                COM_TICKETSTATION_CONTROLPANEL
+            </menu>
+            <menu
+                    link="option=com_ticketstation&amp;view=boxoffice"
+                    view="boxoffice"
+                    alt="Ticketstation/Boxoffice"
+            >
+                COM_TICKETSTATION_BOXOFFICE
+            </menu>
+            <menu
+                    link="option=com_ticketstation&amp;view=reservation"
+                    view="reservation"
+                    alt="Ticketstation/Reservation"
+            >
+                COM_TICKETSTATION_VIEW_RESERVATION_TITLE
+            </menu>
+            <menu
+                    link="option=com_ticketstation&amp;view=configuration"
+                    alt="Ticketstation/Configuration"
+            >
+                COM_TICKETSTATION_CONFIGURATION
+            </menu>
+        </submenu>
+
+        <!-- List of files and folders to copy, and where to copy them -->
+        <files folder="admin/">
+            <folder>assets</folder>
+            <folder>forms</folder>
+            <folder>language</folder>
+            <folder>services</folder>
+            <folder>sql</folder>
+            <folder>src</folder>
+            <folder>tickets</folder>
+            <folder>tmpl</folder>
+            <file>autoloader.php</file>
+        </files>
+
+        <languages folder="admin/">
+            <language tag="en-GB">language/en-GB/com_ticketstation.ini</language>
+            <language tag="en-GB">language/en-GB/com_ticketstation.sys.ini</language>
+            <language tag="nl-NL">language/nl-NL/com_ticketstation.ini</language>
+        </languages>
+    </administration>
+
+    <install>
+        <sql>
+            <file driver="mysql" charset="utf8">sql/install.mysql.utf8.sql</file>
+        </sql>
+    </install>
+    <uninstall>
+        <sql>
+            <file driver="mysql" charset="utf8">sql/uninstall.mysql.utf8.sql</file>
+        </sql>
+    </uninstall>
+    <update>
+        <schemas>
+            <schemapath type="mysql">sql/updates/mysql</schemapath>
+        </schemas>
+    </update>
+
+</extension>
