@@ -76,7 +76,7 @@ $wa->registerAndUseStyle('ticketstation', Uri::base() . 'components\com_ticketst
                                 } ?>
                             </td>
                             <td class="small d-none d-lg-table-cell text-center"><?php echo date ($this->config->dateformat, strtotime($row->coupon_added)); ?></td>
-                            <td class="small d-none d-lg-table-cell text-center"><?php echo date ($this->config->dateformat, strtotime($row->coupon_valid_to)); ?></td>
+                            <td class="small d-none d-lg-table-cell text-center"><?php echo $row->coupon_valid_to ? date($this->config->dateformat, strtotime($row->coupon_valid_to)) : '-'; ?></td>
                             <td class="small d-none d-lg-table-cell text-center">
                                 <?php if ($row->coupon_limit == 0) { echo Text::_( 'COM_TICKETSTATION_UNLIMITED' ); }else{ echo $row->coupon_used.' / '.$row->coupon_limit; } ?>
                             </td>
