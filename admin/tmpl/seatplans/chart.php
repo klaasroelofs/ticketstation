@@ -381,7 +381,7 @@ if (file_exists($image)) {
 <script type="text/javascript">
 
     // CSRF token name/value pair for this session, appended to every write request below.
-    var csrfTokenName = '<?php echo Factory::getApplication()->getSession()->getToken(); ?>';
+    var csrfTokenName = '<?php echo \Joomla\CMS\Session\Session::getFormToken(); ?>';
     var csrfTokenParam = csrfTokenName + '=1';
 
     $(document).ready(function () {

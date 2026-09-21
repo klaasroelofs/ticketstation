@@ -374,7 +374,7 @@ $TicketstationFunctions = new TicketstationFunctions();
         var currentId = $(this).attr('id');
         var ticketid = $("#"+currentId).val();
 
-        var tokenName = '<?php echo $session->getToken(); ?>';
+        var tokenName = '<?php echo \Joomla\CMS\Session\Session::getFormToken(); ?>';
         var data = 'ticketid=' + ticketid  + '&ordercode=' + <?php echo $ordercode; ?> +'&orderid='+currentId + '&' + tokenName + '=1';
 
         $.ajax({
@@ -411,7 +411,7 @@ $TicketstationFunctions = new TicketstationFunctions();
 
         var currentId = $(this).attr('id');
 
-        var tokenName = '<?php echo $session->getToken(); ?>';
+        var tokenName = '<?php echo \Joomla\CMS\Session\Session::getFormToken(); ?>';
         var data = 'id=' + currentId  + '&ordercode=' + <?php echo $ordercode; ?> + '&' + tokenName + '=1';
 
         $.ajax({
@@ -507,7 +507,7 @@ $TicketstationFunctions = new TicketstationFunctions();
             var seatNumber = $(this).attr('id');
             var currentId = seatNumber.split('-');
 
-            var tokenName = '<?php echo $session->getToken(); ?>';
+            var tokenName = '<?php echo \Joomla\CMS\Session\Session::getFormToken(); ?>';
             var data = 'id=' + currentId[1]  + '&ordercode=' + <?php echo $ordercode; ?> + '&' + tokenName + '=1';
 
             $.ajax({

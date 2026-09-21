@@ -49,7 +49,7 @@ if (file_exists($image_png)) {
             <div class="row mb-3">
                 <?php if ($background_img_seatchart) { ?>
 
-                    <?php $remove_link_bg = 'index.php?option=com_ticketstation&controller=seatplansettings&task=removeBackground&ticketid='.$this->item->ticketid.'&'.Factory::getApplication()->getSession()->getToken().'=1'; ?>
+                    <?php $remove_link_bg = 'index.php?option=com_ticketstation&controller=seatplansettings&task=removeBackground&ticketid='.$this->item->ticketid.'&'.\Joomla\CMS\Session\Session::getFormToken().'=1'; ?>
 
                     <div class="control-group">
                         <div class="control-label">

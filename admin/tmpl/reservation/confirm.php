@@ -6,7 +6,7 @@ use \Joomla\CMS\HTML\HTMLHelper;
 use Joomla\CMS\Router\Route;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\TicketstationFunctions;
 
-$csrfTokenParam = Factory::getApplication()->getSession()->getToken() . '=1';
+$csrfTokenParam = \Joomla\CMS\Session\Session::getFormToken() . '=1';
 
 /**
  * @package     Joomla.Administrator

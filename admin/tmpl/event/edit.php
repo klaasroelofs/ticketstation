@@ -65,7 +65,7 @@ if(isset($this->item->eventid))
             <div class="row mb-3">
                 <?php if ((isset($this->item->eventid)?$this->item->eventid:0 > 0) && ($background_img_event)) { ?>
 
-                    <?php $remove_link_bg = 'index.php?option=com_ticketstation&controller=event&task=removeBackground&eventid='.$this->item->eventid.'&'.Factory::getApplication()->getSession()->getToken().'=1'; ?>
+                    <?php $remove_link_bg = 'index.php?option=com_ticketstation&controller=event&task=removeBackground&eventid='.$this->item->eventid.'&'.\Joomla\CMS\Session\Session::getFormToken().'=1'; ?>
 
                     <div class="control-group">
                         <div class="control-label">

@@ -16,7 +16,7 @@ use Ticketstation\Component\Ticketstation\Administrator\Helper\TicketstationFunc
 
 // No direct access to this file
 defined('_JEXEC') or die('Restricted Access');
-$csrfTokenParam = Factory::getApplication()->getSession()->getToken() . '=1';
+$csrfTokenParam = \Joomla\CMS\Session\Session::getFormToken() . '=1';
 ?>
 
 <div class="btn-toolbar mb-3" role="toolbar">

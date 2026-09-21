@@ -75,7 +75,7 @@ $waiters = count($this->waiters);
                 var container = parent.attr('id').replace('tm-cart-price-', 'tm-cart-container');
                 var data = 'cid=' + orderid;
 
-                var tokenName = '<?php echo $session->getToken(); ?>';
+                var tokenName = '<?php echo \Joomla\CMS\Session\Session::getFormToken(); ?>';
                 jQuery.ajax({
                     type      : 'POST',
                     url       : '/index.php?option=com_ticketstation&controller=order&task=remove&format=raw',
@@ -108,7 +108,7 @@ $waiters = count($this->waiters);
                 var container = parent.attr('id').replace('tm-cart-waiting-', 'tm-cart-container');
                 var data = 'cid=' + orderid;
 
-                var tokenName = '<?php echo $session->getToken(); ?>';
+                var tokenName = '<?php echo \Joomla\CMS\Session\Session::getFormToken(); ?>';
                 jQuery.ajax({
                     type      : 'POST',
                     url       : '/index.php?option=com_ticketstation&controller=order&task=removeWaiting&format=raw',
@@ -150,7 +150,7 @@ $waiters = count($this->waiters);
                 } else {
 
                     // Please do AJAX call with data. -- Get post data first.
-                    var tokenName = '<?php echo $session->getToken(); ?>';
+                    var tokenName = '<?php echo \Joomla\CMS\Session\Session::getFormToken(); ?>';
                     var data = 'content=' + remarks + '&ordercode=' + <?php echo $session->get('ordercode'); ?> + '&' + tokenName + '=1';
 
                     jQuery.ajax({
@@ -290,7 +290,7 @@ $waiters = count($this->waiters);
                             </td>
                             <td>
                                 <div style="text-align: right;">
-                                    <a style="margin-right: 10px;" class="btn btn-danger btn-mini" href="index.php?option=com_ticketstation&controller=order&task=remove&orderid=<?= $row->orderid; ?>&<?php echo $session->getToken(); ?>=1">
+                                    <a style="margin-right: 10px;" class="btn btn-danger btn-mini" href="index.php?option=com_ticketstation&controller=order&task=remove&orderid=<?= $row->orderid; ?>&<?php echo \Joomla\CMS\Session\Session::getFormToken(); ?>=1">
                                         <span class="fa fa-trash"></span>
                                     </a>
                                     <?php echo (new TicketstationFunctions)->showprice($this->config->priceformat, $row->ticketprice, $this->config->valuta); ?>
@@ -328,7 +328,7 @@ $waiters = count($this->waiters);
                                 <?php endif; ?>
 
                                 <div align="center">
-                                    <a class="btn btn-danger btn-xs btn-mini" href="index.php?option=com_ticketstation&controller=order&task=removeWaiting&id=<?php echo $row->id; ?>&<?php echo $session->getToken(); ?>=1">
+                                    <a class="btn btn-danger btn-xs btn-mini" href="index.php?option=com_ticketstation&controller=order&task=removeWaiting&id=<?php echo $row->id; ?>&<?php echo \Joomla\CMS\Session\Session::getFormToken(); ?>=1">
                                         <span class="fa fa-trash"></span>
                                     </a>
                                 </div>

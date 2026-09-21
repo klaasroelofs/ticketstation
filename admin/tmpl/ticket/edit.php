@@ -121,7 +121,7 @@ if(isset($this->item->ticketid))
                     <div class="row mb-3">
                         <?php if (isset($this->item->ticketid)?$this->item->ticketid:0 > 0)  { ?>
 
-                            <?php $remove_link_design = 'index.php?option=com_ticketstation&controller=ticket&task=removeDesign&ticketid='.$this->item->ticketid.'&'.Factory::getApplication()->getSession()->getToken().'=1'; ?>
+                            <?php $remove_link_design = 'index.php?option=com_ticketstation&controller=ticket&task=removeDesign&ticketid='.$this->item->ticketid.'&'.\Joomla\CMS\Session\Session::getFormToken().'=1'; ?>
 
                             <div class="control-group">
                                 <div class="control-label">
@@ -144,7 +144,7 @@ if(isset($this->item->ticketid))
                     <div class="row mb-3">
                         <?php if (isset($this->item->ticketid)?$this->item->ticketid:0 > 0)  { ?>
 
-                            <?php $remove_link_bg = 'index.php?option=com_ticketstation&controller=ticket&task=removeBackground&ticketid='.$this->item->ticketid.'&'.Factory::getApplication()->getSession()->getToken().'=1'; ?>
+                            <?php $remove_link_bg = 'index.php?option=com_ticketstation&controller=ticket&task=removeBackground&ticketid='.$this->item->ticketid.'&'.\Joomla\CMS\Session\Session::getFormToken().'=1'; ?>
 
                             <div class="control-group">
                                 <div class="control-label">

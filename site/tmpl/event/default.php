@@ -556,7 +556,7 @@ $TicketstationFunctions = new TicketstationFunctions();
         var inputdata = jQuery("#qty_"+ticket).val();
 
         //organize the data properly
-        var tokenName = '<?php echo $session->getToken(); ?>';
+        var tokenName = '<?php echo \Joomla\CMS\Session\Session::getFormToken(); ?>';
         var data = 'amount=' + inputdata + '&ticketid=' + ticket +  '&ordercode='
             + <?php echo $ordercode; ?> + '&togo='  + <?php echo $available_tickets; ?> + '&eventid=' + <?php echo $this->items->eventid; ?> + '&' + tokenName + '=1';
 
@@ -604,7 +604,7 @@ $TicketstationFunctions = new TicketstationFunctions();
         var inputdata = jQuery("#qty_"+items).val();
 
         //organize the data properly
-        var tokenName = '<?php echo $session->getToken(); ?>';
+        var tokenName = '<?php echo \Joomla\CMS\Session\Session::getFormToken(); ?>';
         var data = 'amount=' + inputdata + '&ticketid=' + items +  '&ordercode='
             + <?php echo $ordercode; ?> + '&togo='  + <?php echo $available_tickets; ?> + '&eventid=' + <?php echo $this->items->eventid; ?> + '&' + tokenName + '=1';
 
