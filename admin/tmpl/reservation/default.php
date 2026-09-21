@@ -1,5 +1,6 @@
 <?php
 
+use Joomla\CMS\Factory;
 use Joomla\CMS\Language\Text;
 use \Joomla\CMS\HTML\HTMLHelper;
 use Joomla\CMS\Router\Route;
@@ -15,10 +16,11 @@ use Ticketstation\Component\Ticketstation\Administrator\Helper\TicketstationFunc
 
 // No direct access to this file
 defined('_JEXEC') or die('Restricted Access');
+$csrfTokenParam = Factory::getApplication()->getSession()->getToken() . '=1';
 ?>
 
 <div class="btn-toolbar mb-3" role="toolbar">
-    <a class="btn btn-danger" href="<?= Route::_('index.php?option=com_ticketstation&controller=reservation&task=cancel') ?>">
+    <a class="btn btn-danger" href="<?= Route::_('index.php?option=com_ticketstation&controller=reservation&task=cancel&' . $csrfTokenParam) ?>">
         <span class="icon-cancel" aria-hidden="true"></span> <?= Text::_('JTOOLBAR_CANCEL') ?>
     </a>
     <a class="btn btn-primary ms-2" href="<?= Route::_('index.php?option=com_ticketstation&view=controlpanel') ?>">

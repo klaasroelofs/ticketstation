@@ -151,9 +151,15 @@ class PaymentController extends BaseController
             ## Generate a random token for bypass authorization (not the guessable ordercode).
             $bypass_token = bin2hex(random_bytes(32));
 
-            ## Store the bypass token in session so molliebypass() can verify it.
-            Factory::getApplication()->getSession()->set('ticketstation.bypass_token', $bypass_token);
-            Factory::getApplication()->getSession()->set('ticketstation.bypass_ordercode', $this->ordercode);
+            ## Store the bypass token in a session-side map (token => ordercode) so
+            ## molliebypass() can verify it. Keyed by token rather than a single slot,
+            ## so a second bypass-eligible checkout started in another tab (or before
+            ## the first redirect is followed) doesn't clobber an earlier one still in
+            ## flight under the same session.
+            $bypassSession = Factory::getApplication()->getSession();
+            $bypassTokens = $bypassSession->get('ticketstation.bypass_tokens', []);
+            $bypassTokens[$bypass_token] = $this->ordercode;
+            $bypassSession->set('ticketstation.bypass_tokens', $bypassTokens);
 
             ## Process the order
             if ($this->ProcessBypassMollie($this->ordercode)) {
@@ -260,15 +266,23 @@ class PaymentController extends BaseController
         ## Get the token from query parameter (generated in makepayment for bypass mode).
         $bypass_token = $jinput->getString('token', '');
 
-        ## Verify the token matches what we stored in session.
-        $stored_token = $session->get('ticketstation.bypass_token', '');
-        $stored_ordercode = $session->get('ticketstation.bypass_ordercode', 0);
+        ## Look the token up in the session-side map (token => ordercode). Using
+        ## hash_equals-safe array key lookup here is fine since PHP array key
+        ## lookup is not a secret-comparison timing channel the way a direct
+        ## string compare against a single stored value could be perceived to be;
+        ## the token itself is still the 256-bit secret being checked for presence.
+        $bypassTokens = $session->get('ticketstation.bypass_tokens', []);
 
-        if ($bypass_token === '' || $bypass_token !== $stored_token) {
+        if ($bypass_token === '' || !isset($bypassTokens[$bypass_token])) {
             exit('Invalid or missing bypass authorization token');
         }
 
-        $ordercode = $stored_ordercode;
+        $ordercode = $bypassTokens[$bypass_token];
+
+        ## Single-use: remove only this token, leaving any other bypass-eligible
+        ## checkout still in flight under this session untouched.
+        unset($bypassTokens[$bypass_token]);
+        $session->set('ticketstation.bypass_tokens', $bypassTokens);
 
         ## Check if order is processed
         $db = Factory::getContainer()->get('DatabaseDriver');
@@ -284,8 +298,6 @@ class PaymentController extends BaseController
         ## Clearing the session:
         $session->clear('ordercode');
         $session->clear('coupon');
-        $session->clear('ticketstation.bypass_token');
-        $session->clear('ticketstation.bypass_ordercode');
 
         ## Marking this browser session as authorized (see mollie() above).
         $session->set('ticketstation.authorized_ordercode', (int) $ordercode);

@@ -433,6 +433,15 @@ class WaitingList
      * Confirm a waiting list entry by validation token (new secure method).
      * Prevents guessing of waiting list entries.
      *
+     * Each row created for an order gets its own independently generated token
+     * (see processWaitingListItem()/OrderController::waitinglist()), but a
+     * customer can have several waiting-list rows sharing one ordercode - e.g.
+     * one signup per ticket type. The confirmation email only ever embeds one
+     * row's token (see Confirmation::SendWaitingList()), so confirming must
+     * resolve that single token to its ordercode and then confirm every row
+     * for that ordercode - matching confirm($ordercode) below - rather than
+     * only the one row whose token happened to be emailed.
+     *
      * @param string $token The validation token
      * @return bool
      * @since 1.0.0
@@ -440,22 +449,22 @@ class WaitingList
     public function confirmByToken($token)
     {
         $db = Factory::getContainer()->get('DatabaseDriver');
-        $query = $db->getQuery(true);
 
-        $fields     = [$db->quoteName('confirmed') . ' = 1'];
-        $conditions = [$db->quoteName('validation_token') . ' = ' . $db->quote($token)];
-        $query->update($db->quoteName('#__ticketstation_waitinglist'))->set($fields)->where($conditions);
-
+        $query = $db->getQuery(true)
+            ->select($db->quoteName('ordercode'))
+            ->from($db->quoteName('#__ticketstation_waitinglist'))
+            ->where($db->quoteName('validation_token') . ' = ' . $db->quote($token));
         $db->setQuery($query);
 
-        $result = $db->execute();
+        $ordercode = $db->loadResult();
 
-        if ( ! $result)
+        if (!$ordercode)
         {
+            // Invalid/unknown token - nothing to confirm.
             return false;
         }
 
-        return true;
+        return $this->confirm($ordercode);
     }
 
     /**

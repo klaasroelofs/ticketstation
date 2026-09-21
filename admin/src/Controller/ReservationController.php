@@ -64,7 +64,9 @@ class ReservationController extends BaseController
      */
     public function cancel()
     {
-        $this->checkToken() or jexit(Text::_('JINVALID_TOKEN'));
+        // Reached via a plain GET link in every reservation wizard step's
+        // template - check the token as a query param, not just POST.
+        $this->checkToken('request') or jexit(Text::_('JINVALID_TOKEN'));
 
         $ordercode = $this->getOrdercode();
 

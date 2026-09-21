@@ -123,7 +123,9 @@ class TicketController extends FormController
 
     function removeDesign()
     {
-        $this->checkToken() or jexit(Text::_('JINVALID_TOKEN'));
+        // Reached via a plain GET link in admin/tmpl/ticket/edit.php - check the
+        // token as a query param, not just POST.
+        $this->checkToken('request') or jexit(Text::_('JINVALID_TOKEN'));
 
         $app = Factory::getApplication();
         $jinput = $app->input;
@@ -155,7 +157,9 @@ class TicketController extends FormController
 
     function removeBackground()
     {
-        $this->checkToken() or jexit(Text::_('JINVALID_TOKEN'));
+        // Reached via a plain GET link in admin/tmpl/ticket/edit.php - check the
+        // token as a query param, not just POST.
+        $this->checkToken('request') or jexit(Text::_('JINVALID_TOKEN'));
 
         $app = Factory::getApplication();
         $jinput = $app->input;

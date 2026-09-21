@@ -542,6 +542,14 @@ class Payment
         return $db->loadObject();
     }
 
+    /**
+     * Delegates to paymentAPI::generatePaymentLink(), which builds the link from
+     * the order's random validation_token. This class used to build the link
+     * straight from the ordercode (base64_encode('ordercode=' . $ordercode)) -
+     * the exact guessable-link format the validation_token work replaced - so
+     * PDFs/emails using {payment_link} were still leaking the old format even
+     * after ValidateController::pay() was moved to token-only lookups.
+     */
     public function generatePaymentLink($ordercode = null)
     {
         if ( ! $ordercode)
@@ -549,12 +557,12 @@ class Payment
             $ordercode = $this->ordercode;
         }
 
-        $encoded_link = base64_encode('ordercode=' . $ordercode);
-        $paymentlink  = Uri::root() . 'index.php?option=com_ticketstation&controller=validate&task=pay&order=' . $encoded_link;
-
-        return $paymentlink;
+        return (new paymentAPI((int) $ordercode))->generatePaymentLink($ordercode);
     }
 
+    /**
+     * Delegates to paymentAPI::generateConfirmationLink() - see generatePaymentLink() above.
+     */
     public function generateConfirmationLink($ordercode = null)
     {
         if ( ! $ordercode)
@@ -562,9 +570,6 @@ class Payment
             $ordercode = $this->ordercode;
         }
 
-        $encoded_link = base64_encode('ordercode=' . $ordercode);
-        $confirmation = Uri::root() . 'index.php?option=com_ticketstation&controller=validate&task=waitinglist&order=' . $encoded_link;
-
-        return $confirmation;
+        return (new paymentAPI((int) $ordercode))->generateConfirmationLink($ordercode);
     }
 }

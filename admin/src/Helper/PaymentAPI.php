@@ -116,6 +116,10 @@ class paymentAPI
 
     ## Get temp transaction result by ordercode (used by webhook processing).
     ## The Mollie webhook only has the ordercode, not the return_token.
+    ## A double-submit or a retry after a failed Mollie API call can leave more than
+    ## one row for the same ordercode (see insertTempTransaction()/checkTempTransactionAmount()
+    ## callers) - order by the newest row so we always resolve to the attempt actually
+    ## in flight, not an arbitrary earlier one.
     public function getTempTransactionByOrdercode($ordercode)
     {
         $db = Factory::getContainer()->get('DatabaseDriver');
@@ -125,8 +129,9 @@ class paymentAPI
         $query->select('*');
         $query->from($db->quoteName('#__ticketstation_transactions_temp'));
         $query->where($db->quoteName('ordercode') . ' = ' . $db->quote((int)$ordercode));
+        $query->order($db->quoteName('id') . ' DESC');
 
-        $db->setQuery($query);
+        $db->setQuery($query, 0, 1);
 
         return $db->loadObject();
     }
@@ -516,16 +521,19 @@ class paymentAPI
         }
 
         $token = $this->getValidationTokenForOrder($ordercode);
+
         if (!$token) {
-            // Fallback to old method if token not found (for backward compatibility during migration)
-            $encoded_link = base64_encode('ordercode=' . $ordercode);
-        } else {
-            $encoded_link = base64_encode('token=' . $token);
+            // Every order gets a validation_token on insert (see OrderModel::store()),
+            // so this only happens for a genuinely missing/invalid ordercode. Falling
+            // back to the old base64_encode('ordercode=...') format would both be
+            // insecure (the exact guessable link this token replaced) and broken
+            // (ValidateController::pay() only understands token= links now).
+            return '';
         }
 
-        $paymentlink = URI::root() . 'index.php?option=com_ticketstation&controller=validate&task=pay&order=' . $encoded_link;
+        $encoded_link = base64_encode('token=' . $token);
 
-        return $paymentlink;
+        return URI::root() . 'index.php?option=com_ticketstation&controller=validate&task=pay&order=' . $encoded_link;
     }
 
     public function generateConfirmationLink($ordercode = null)
@@ -535,16 +543,15 @@ class paymentAPI
         }
 
         $token = $this->getValidationTokenForOrder($ordercode);
+
         if (!$token) {
-            // Fallback to old method if token not found (for backward compatibility during migration)
-            $encoded_link = base64_encode('ordercode=' . $ordercode);
-        } else {
-            $encoded_link = base64_encode('token=' . $token);
+            // See generatePaymentLink() above.
+            return '';
         }
 
-        $confirmation = URI::root() . 'index.php?option=com_ticketstation&controller=validate&task=waitinglist&order=' . $encoded_link;
+        $encoded_link = base64_encode('token=' . $token);
 
-        return $confirmation;
+        return URI::root() . 'index.php?option=com_ticketstation&controller=validate&task=waitinglist&order=' . $encoded_link;
     }
 
     /**
