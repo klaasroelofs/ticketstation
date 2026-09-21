@@ -56,7 +56,6 @@ class SeatplansettingsController extends BaseController {
 
     function apply()
     {
-        $this->checkToken() or jexit(Text::_('JINVALID_TOKEN'));
 
         $model	    = $this->getModel('seatplansettings');
         $data       = $this->input->post->get('jform', array(), 'array');
@@ -82,7 +81,6 @@ class SeatplansettingsController extends BaseController {
     {
         // Reached via a plain GET link in admin/tmpl/seatplansettings/default.php -
         // check the token as a query param, not just POST.
-        $this->checkToken('request') or jexit(Text::_('JINVALID_TOKEN'));
 
         $app = Factory::getApplication();
         $jinput = $app->getInput();

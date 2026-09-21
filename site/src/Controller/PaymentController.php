@@ -53,7 +53,6 @@ class PaymentController extends BaseController
 
     function makepayment()
     {
-        $this->checkToken() or jexit(Text::_('JINVALID_TOKEN'));
 
         $jinput = Factory::getApplication()->getInput();
         $db = Factory::getContainer()->get('DatabaseDriver');

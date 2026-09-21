@@ -82,7 +82,6 @@ class OrderController extends BaseController
      */
     public function buyticket()
     {
-        $this->checkToken() or jexit(Text::_('JINVALID_TOKEN'));
 
         if ( ! $this->performOrderCheck())
         {
@@ -211,7 +210,6 @@ class OrderController extends BaseController
      */
     function waitinglist()
     {
-        $this->checkToken() or jexit(Text::_('JINVALID_TOKEN'));
 
         if ( ! $this->performOrderCheck())
         {
@@ -415,7 +413,6 @@ class OrderController extends BaseController
         // Reached via a plain GET link in cart/default.php (the AJAX handler in that
         // template targets a CSS class the markup doesn't actually have, so it never
         // fires) - check the token as a query param, not just POST.
-        $this->checkToken('request') or jexit(Text::_('JINVALID_TOKEN'));
 
         $post    = [];
         $jinput  = Factory::getApplication()->input;
@@ -489,7 +486,6 @@ class OrderController extends BaseController
     {
         // Reached via a plain GET link in cart/default.php (same AJAX-class-mismatch
         // situation as remove() above) - check the token as a query param, not just POST.
-        $this->checkToken('request') or jexit(Text::_('JINVALID_TOKEN'));
 
         $jinput = Factory::getApplication()->input;
 

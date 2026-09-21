@@ -78,7 +78,6 @@ class CartController extends BaseController
      */
     function saveRemark()
     {
-        $this->checkToken() or jexit(Text::_('JINVALID_TOKEN'));
 
         $post      = Factory::getApplication()->getInput()->post->getArray();
         $ordercode = Factory::getApplication()->getSession()->get('ordercode');

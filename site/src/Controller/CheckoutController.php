@@ -63,7 +63,6 @@ class CheckoutController extends BaseController
      */
     function coupon()
     {
-        $this->checkToken() or jexit(Text::_('JINVALID_TOKEN'));
 
         $app    = Factory::getApplication();
         $jinput = $app->getInput();
@@ -103,7 +102,6 @@ class CheckoutController extends BaseController
 
     function save()
     {
-        $this->checkToken() or jexit(Text::_('JINVALID_TOKEN'));
 
         $db     = Factory::getContainer()->get('DatabaseDriver');
         $app    = Factory::getApplication();

@@ -15,8 +15,11 @@ defined('_JEXEC') || die;
 use Joomla\CMS\Application\CMSApplication;
 use Joomla\CMS\Dispatcher\ComponentDispatcher;
 use Joomla\CMS\Document\HtmlDocument;
+use Joomla\CMS\Language\Text;
+use Joomla\CMS\Session\Session;
 use Joomla\CMS\Uri\Uri;
 use Joomla\Database\DatabaseAwareTrait;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\CsrfGate;
 
 
 class Dispatcher extends ComponentDispatcher
@@ -62,10 +65,49 @@ class Dispatcher extends ComponentDispatcher
 
     protected function onBeforeDispatch()
     {
+        // Must run before applyViewAndController(), which overwrites the raw 'task'
+        // input with its own mechanical default ('main') — see checkCsrfToken().
+        $this->checkCsrfToken();
+
         // Apply the view and controller from the request, falling back to the default view/controller if necessary
         $this->applyViewAndController();
 
         $this->loadCommonStaticMedia();
+    }
+
+    /**
+     * Central anti-CSRF token check, run once per request before any controller task
+     * executes, instead of a `$this->checkToken(...) or jexit(...)` call pasted into
+     * every mutating controller method. See CsrfGate for the exempt task list.
+     */
+    private function checkCsrfToken(): void
+    {
+        $rawTask = $this->input->getCmd('task', '');
+
+        if ($rawTask === '') {
+            // No task explicitly requested. Joomla resolves this to whichever task each
+            // controller registered as its own default (via RegisterControllerTasks, or
+            // Joomla core's own 'display' baseline) — never one of this component's
+            // mutating tasks, all of which are always invoked with an explicit task=.
+            return;
+        }
+
+        $view       = $this->input->getCmd('view', $this->defaultController);
+        $controller = $this->input->getCmd('controller', $view);
+        $task       = $rawTask;
+
+        if (strpos($task, '.') !== false)
+        {
+            [$controller, $task] = explode('.', $task);
+        }
+
+        if (CsrfGate::isExempt('administrator', $controller, $task)) {
+            return;
+        }
+
+        if (!Session::checkToken('request')) {
+            jexit(Text::_('JINVALID_TOKEN'));
+        }
     }
 
     protected function loadCommonStaticMedia()

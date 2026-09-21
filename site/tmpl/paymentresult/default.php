@@ -112,7 +112,7 @@ $document->addScriptDeclaration('
 
             <?php if($this->data[0]->downloadbuttonshown != 1) {
 
-                $download_link = "location.href='/index.php?option=com_ticketstation&controller=paymentresult&task=downloadTicketAfterPurchase&order=" . $this->ordercode . "'";
+                $download_link = "location.href='/index.php?option=com_ticketstation&controller=paymentresult&task=downloadTicketAfterPurchase&order=" . $this->ordercode . "&" . \Joomla\CMS\Session\Session::getFormToken() . "=1'";
 
                 if (count($this->data) > 1) {
                     $buttontext = 'tickets';

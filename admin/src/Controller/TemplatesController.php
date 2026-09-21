@@ -65,7 +65,6 @@ class TemplatesController extends BaseController {
      */
     public function apply($cachable = false, $urlparams = []) {
 
-        $this->checkToken() or jexit(Text::_('JINVALID_TOKEN'));
 
         $app 	= Factory::getApplication();
         $jinput = $app->getInput();

@@ -64,7 +64,6 @@ class ScannersController extends BaseController
 
     function remove() {
 
-        $this->checkToken() or jexit(Text::_('JINVALID_TOKEN'));
 
         $app 	= Factory::getApplication();
         $post 	= $app->input->post->getArray();
@@ -92,7 +91,6 @@ class ScannersController extends BaseController
 
     function apply()
     {
-        $this->checkToken() or jexit(Text::_('JINVALID_TOKEN'));
 
         $app 	    = Factory::getApplication();
         $jinput     = $app->input;

@@ -66,7 +66,6 @@ class ReservationController extends BaseController
     {
         // Reached via a plain GET link in every reservation wizard step's
         // template - check the token as a query param, not just POST.
-        $this->checkToken('request') or jexit(Text::_('JINVALID_TOKEN'));
 
         $ordercode = $this->getOrdercode();
 
@@ -87,7 +86,6 @@ class ReservationController extends BaseController
      */
     public function selectTicket()
     {
-        $this->checkToken() or jexit(Text::_('JINVALID_TOKEN'));
 
         $app    = Factory::getApplication();
         $jinput = $app->getInput();
@@ -128,7 +126,6 @@ class ReservationController extends BaseController
      */
     public function addQuantity()
     {
-        $this->checkToken() or jexit(Text::_('JINVALID_TOKEN'));
 
         $app    = Factory::getApplication();
         $jinput = $app->getInput();
@@ -196,7 +193,6 @@ class ReservationController extends BaseController
      */
     public function makeReservation()
     {
-        $this->checkToken() or jexit(Text::_('JINVALID_TOKEN'));
 
         $app    = Factory::getApplication();
         $jinput = $app->getInput();
@@ -278,7 +274,6 @@ class ReservationController extends BaseController
      */
     public function removeSeat()
     {
-        $this->checkToken() or jexit(Text::_('JINVALID_TOKEN'));
 
         $app    = Factory::getApplication();
         $jinput = $app->getInput();
@@ -327,7 +322,6 @@ class ReservationController extends BaseController
      */
     public function saveCustomer()
     {
-        $this->checkToken() or jexit(Text::_('JINVALID_TOKEN'));
 
         $app    = Factory::getApplication();
         $jinput = $app->getInput();
@@ -390,7 +384,6 @@ class ReservationController extends BaseController
      */
     public function complete()
     {
-        $this->checkToken() or jexit(Text::_('JINVALID_TOKEN'));
 
         $app    = Factory::getApplication();
         $jinput = $app->getInput();

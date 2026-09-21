@@ -62,7 +62,6 @@ class CouponsController extends BaseController
 
     function publish()
     {
-        $this->checkToken() or jexit(Text::_('JINVALID_TOKEN'));
 
         $cid = $this->input->get('cid', array(), 'array');
         ArrayHelper::toInteger($cid);
@@ -101,7 +100,6 @@ class CouponsController extends BaseController
 
     function remove()
     {
-        $this->checkToken() or jexit(Text::_('JINVALID_TOKEN'));
 
         $app = Factory::getApplication();
 
