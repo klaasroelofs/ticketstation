@@ -4,6 +4,7 @@ CREATE TABLE IF NOT EXISTS `#__ticketstation_scannermap` (
   `userid` int(11) DEFAULT '0',
   `totals_visible` tinyint(1) DEFAULT '0',
   `manual_entry` tinyint(1) DEFAULT '0',
+  `apikey` varchar(255) NOT NULL DEFAULT '',
   `events` varchar(5120) NOT NULL DEFAULT '[]' COMMENT 'JSON encoded',
   `tickets` varchar(5120) NOT NULL DEFAULT '[]' COMMENT 'JSON encoded',
   PRIMARY KEY (`id`)
@@ -173,13 +174,15 @@ CREATE TABLE IF NOT EXISTS `#__ticketstation_transactions_temp` (
   `userid` int(11) NOT NULL,
   `transaction_number` varchar(50) NOT NULL,
   `ordercode` int(10) NOT NULL,
+  `return_token` varchar(64) DEFAULT NULL,
   `create_date` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `processed` tinyint(1) NOT NULL,
   `status` tinyint(3) DEFAULT NULL,
   `errorcode` tinyint(1) DEFAULT NULL,
   `message` varchar(255) DEFAULT NULL,
   `amounts` varchar(255) DEFAULT NULL,
-  PRIMARY KEY (`id`)
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `idx_return_token` (`return_token`)
 )  DEFAULT CHARSET=utf8;
 
 DROP TABLE IF EXISTS `#__ticketstation_coupons`;
@@ -188,7 +191,7 @@ CREATE TABLE IF NOT EXISTS `#__ticketstation_coupons` (
   `coupon_name` varchar(100) NOT NULL DEFAULT '',
   `coupon_code` varchar(25) NOT NULL DEFAULT '',
   `coupon_limit` int(11) NOT NULL DEFAULT '0',
-  `coupon_valid_to` date NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `coupon_valid_to` date DEFAULT NULL,
   `coupon_added` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `coupon_type` tinyint(1) NOT NULL DEFAULT '1',
   `coupon_discount` int(11) NOT NULL DEFAULT '0',
@@ -268,8 +271,10 @@ CREATE TABLE IF NOT EXISTS `#__ticketstation_orders` (
   `discount_type` tinyint(1) DEFAULT NULL,
   `discount_amount` float DEFAULT NULL,
   `vat_percentage` float DEFAULT NULL,
+  `validation_token` varchar(64) NOT NULL,
   PRIMARY KEY (`orderid`),
-  KEY `ordercode` (`ordercode`)
+  KEY `ordercode` (`ordercode`),
+  UNIQUE KEY `idx_validation_token_orders` (`validation_token`)
 )  AUTO_INCREMENT=10000 ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 DEFAULT COLLATE=utf8mb4_unicode_ci;
 
 DROP TABLE IF EXISTS `#__ticketstation_tickets`;
@@ -357,7 +362,9 @@ CREATE TABLE IF NOT EXISTS `#__ticketstation_waitinglist` (
   `sent` tinyint(1) NOT NULL DEFAULT '0',
   `requires_seat` tinyint(1) NOT NULL,
   `date_sent` datetime DEFAULT NULL,
-  PRIMARY KEY (`id`)
+  `validation_token` varchar(64) NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `idx_validation_token_waitinglist` (`validation_token`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 DEFAULT COLLATE=utf8mb4_unicode_ci;
 
 DROP TABLE IF EXISTS `#__ticketstation_seatplansettings`;
@@ -719,11 +726,11 @@ INSERT IGNORE INTO `#__ticketstation_country` VALUES("244","Canary Islands","XCA
 INSERT IGNORE INTO `#__ticketstation_country` VALUES("245","Montenegro","MNE","ME","0","1");
 INSERT IGNORE INTO `#__ticketstation_country` VALUES("249","Afghanistan","AFG","AF","0","1");
 
-INSERT IGNORE INTO `#__ticketstation_templates` VALUES("1","sending Tickets after successful Payment","<p>Beste {firstname},</p><p>Bedankt voor je bestelling!<br />Je bestelnummer is <strong>{ordercode}</strong>.</p><p>In de bijlage vind je de door jou bestelde tickets.<br />Mocht je nog vragen hebben, neem dan contact met ons op via <a href=\'mailto:tickets@huibuuke.nl\'>tickets@huibuuke.nl</a>.</p><p>Met vriendelijke groet,</p><p>{company_name}<br />{company_website}</p><div><img src=\'https://tickets.huibuuke.nl/images/logo/Logo_Huibuuke.png\' alt=\'Huibuuklogo 2017\' width=\'104\' height=\'129\' /></div>","Alsjeblieft, je ticket(s)!","tickets@huibuuke.nl","Stichting De Huibuuke");
-INSERT IGNORE INTO `#__ticketstation_templates` VALUES("2","resending Tickets","<p>Beste {firstname},</p><p>Hierbij sturen we je nogmaals de door jou bestelde tickets.<br />Mocht je nog vragen hebben, neem dan contact met ons op via <a href=\'mailto:tickets@huibuuke.nl\'>tickets@huibuuke.nl</a>.</p><p>Met vriendelijke groet,</p><p>{company_name}<br />{company_website}</p><div><img src=\'https://tickets.huibuuke.nl/images/logo/Logo_Huibuuke.png\' alt=\'Huibuuklogo 2017\' width=\'104\' height=\'129\' /></div>","Alsjeblieft, je ticket(s)!","tickets@huibuuke.nl","Stichting De Huibuuke");
-INSERT IGNORE INTO `#__ticketstation_templates` VALUES("3","Sending Payment Link","<p>Beste {firstname},</p><p>Hierbij sturen we je de betaallink voor de door jou bestelde tickets:</p><p>{paymentlink}</p><p>Klik op de link (of kopieer en plak deze in je browser) om je betaling te voldoen.<br/>Na succesvolle betaling worden de tickets direct naar dit mailadres verzonden.</p><p>Mocht je nog vragen hebben, neem dan contact met ons op via <a href=\'mailto:tickets@huibuuke.nl\'>tickets@huibuuke.nl</a>.</p><p>Met vriendelijke groet,</p><p>{company_name}<br />{company_website}</p><div><img src=\'https://tickets.huibuuke.nl/images/logo/Logo_Huibuuke.png\' alt=\'Huibuuklogo 2017\' width=\'104\' height=\'129\' /></div>","Betaallink voor je ticket(s)","tickets@huibuuke.nl","Stichting De Huibuuke");
-INSERT IGNORE INTO `#__ticketstation_templates` VALUES("4","Waiting list confirmation","<p>Beste {firstname},</p><p>Je staat op de wachtlijst voor:</p><p>{orderlist}</p><p>Bevestig hieronder dat je nog interesse hebt. Zodra er een plek vrijkomt, ontvang je een aparte e-mail met een betaallink — zonder bevestiging kunnen we je plek niet garanderen.</p><p>{confirmationlink}</p><p>Mocht je nog vragen hebben, neem dan contact met ons op via <a href=\'mailto:tickets@huibuuke.nl\'>tickets@huibuuke.nl</a>.</p><p>Met vriendelijke groet,</p><p>{company_name}<br />{company_website}</p>","Bevestig je plek op de wachtlijst","tickets@huibuuke.nl","Stichting De Huibuuke");
-INSERT IGNORE INTO `#__ticketstation_templates` VALUES("5","Invoice","<p>Beste {firstname},</p><p>Bijgaand vind je de factuur voor je bestelling <strong>{ordercode}</strong>.</p><p>Factuurnummer: {invoice_id}<br />Bedrag: {price}</p><p>Mocht je nog vragen hebben, neem dan contact met ons op via <a href=\'mailto:tickets@huibuuke.nl\'>tickets@huibuuke.nl</a>.</p><p>Met vriendelijke groet,</p><p>{company_name}<br />{company_website}</p>","Factuur voor je bestelling","tickets@huibuuke.nl","Stichting De Huibuuke");
+INSERT IGNORE INTO `#__ticketstation_templates` VALUES("1","sending Tickets after successful Payment","<p>Beste {firstname},</p><p>Bedankt voor je bestelling!<br />Je bestelnummer is <strong>{ordercode}</strong>.</p><p>In de bijlage vind je de door jou bestelde tickets.<br />Mocht je nog vragen hebben, neem dan contact met ons op via <a href='mailto:tickets@huibuuke.nl'>tickets@huibuuke.nl</a>.</p><p>Met vriendelijke groet,</p><p>{company_name}<br />{company_website}</p><div><img src='https://tickets.huibuuke.nl/images/logo/Logo_Huibuuke.png' alt='Huibuuklogo 2017' width='104' height='129' /></div>","Alsjeblieft, je ticket(s)!","tickets@huibuuke.nl","Stichting De Huibuuke");
+INSERT IGNORE INTO `#__ticketstation_templates` VALUES("2","resending Tickets","<p>Beste {firstname},</p><p>Hierbij sturen we je nogmaals de door jou bestelde tickets.<br />Mocht je nog vragen hebben, neem dan contact met ons op via <a href='mailto:tickets@huibuuke.nl'>tickets@huibuuke.nl</a>.</p><p>Met vriendelijke groet,</p><p>{company_name}<br />{company_website}</p><div><img src='https://tickets.huibuuke.nl/images/logo/Logo_Huibuuke.png' alt='Huibuuklogo 2017' width='104' height='129' /></div>","Alsjeblieft, je ticket(s)!","tickets@huibuuke.nl","Stichting De Huibuuke");
+INSERT IGNORE INTO `#__ticketstation_templates` VALUES("3","Sending Payment Link","<p>Beste {firstname},</p><p>Hierbij sturen we je de betaallink voor de door jou bestelde tickets:</p><p>{paymentlink}</p><p>Klik op de link (of kopieer en plak deze in je browser) om je betaling te voldoen.<br/>Na succesvolle betaling worden de tickets direct naar dit mailadres verzonden.</p><p>Mocht je nog vragen hebben, neem dan contact met ons op via <a href='mailto:tickets@huibuuke.nl'>tickets@huibuuke.nl</a>.</p><p>Met vriendelijke groet,</p><p>{company_name}<br />{company_website}</p><div><img src='https://tickets.huibuuke.nl/images/logo/Logo_Huibuuke.png' alt='Huibuuklogo 2017' width='104' height='129' /></div>","Betaallink voor je ticket(s)","tickets@huibuuke.nl","Stichting De Huibuuke");
+INSERT IGNORE INTO `#__ticketstation_templates` VALUES("4","Waiting list confirmation","<p>Beste {firstname},</p><p>Je staat op de wachtlijst voor:</p><p>{orderlist}</p><p>Bevestig hieronder dat je nog interesse hebt. Zodra er een plek vrijkomt, ontvang je een aparte e-mail met een betaallink — zonder bevestiging kunnen we je plek niet garanderen.</p><p>{confirmationlink}</p><p>Mocht je nog vragen hebben, neem dan contact met ons op via <a href='mailto:tickets@huibuuke.nl'>tickets@huibuuke.nl</a>.</p><p>Met vriendelijke groet,</p><p>{company_name}<br />{company_website}</p>","Bevestig je plek op de wachtlijst","tickets@huibuuke.nl","Stichting De Huibuuke");
+INSERT IGNORE INTO `#__ticketstation_templates` VALUES("5","Invoice","<p>Beste {firstname},</p><p>Bijgaand vind je de factuur voor je bestelling <strong>{ordercode}</strong>.</p><p>Factuurnummer: {invoice_id}<br />Bedrag: {price}</p><p>Mocht je nog vragen hebben, neem dan contact met ons op via <a href='mailto:tickets@huibuuke.nl'>tickets@huibuuke.nl</a>.</p><p>Met vriendelijke groet,</p><p>{company_name}<br />{company_website}</p>","Factuur voor je bestelling","tickets@huibuuke.nl","Stichting De Huibuuke");
 
 INSERT IGNORE INTO `#__ticketstation_mollie` VALUES(
 "1",
@@ -829,7 +836,7 @@ INSERT IGNORE INTO `#__ticketstation_config` VALUES(
 "55-140",
 "0",
 "%%SALUTATION%% %%FIRSTNAME%%	%%LASTNAME%% \n%%ADDRESS1%% \n%%ZIPCODE%% %%CITY%% \n%%COUNTRY_FULL%% (%%COUNTRY_2D%%)",
-"Ticketstation \nStreetname 3 \n1234 AB YourCity \nT: +31 (0)6 12345678 \nF: +31 (0)6 12345678 \nE: your_helpdesk@yourdomain.com",
+"%%COMPANY_NAME%% \n%%ADDRESS1%% \n%%ZIPCODE%% %%CITY%% \n%%EMAIL%% \n%%WEBSITE%%",
 "0",
 "1",
 "000",
@@ -841,4 +848,5 @@ INSERT IGNORE INTO `#__ticketstation_config` VALUES(
 "H:i",
 "test@yourdomain.com, welcome@yourdomain.com, name@yourdomain.com",
 "0",
+"",
 "");
