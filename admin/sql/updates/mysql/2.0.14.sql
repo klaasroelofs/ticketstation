@@ -16,5 +16,5 @@ UPDATE `#__ticketstation_waitinglist` SET `validation_token` = CONCAT(
 ) WHERE `validation_token` IS NULL;
 
 -- Make validation_token NOT NULL after backfill
-ALTER TABLE `#__ticketstation_orders` MODIFY COLUMN `validation_token` varchar(64) NOT NULL;
-ALTER TABLE `#__ticketstation_waitinglist` MODIFY COLUMN `validation_token` varchar(64) NOT NULL;
+ALTER TABLE `#__ticketstation_orders` MODIFY `validation_token` varchar(64) NOT NULL;
+ALTER TABLE `#__ticketstation_waitinglist` MODIFY `validation_token` varchar(64) NOT NULL;
