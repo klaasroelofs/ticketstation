@@ -197,6 +197,9 @@ else
             $('#finish-seats-btn').toggleClass('disabled', count < 1);
         }
 
+        // CSRF token name/value pair for this session, sent with every write request below.
+        var csrfTokenName = '<?php echo Factory::getApplication()->getSession()->getToken(); ?>';
+
         $(document).ready(function () {
 
             $('#glassbox').on('click', '.seat-element', function () {
@@ -211,7 +214,7 @@ else
                 $.ajax({
                     type: 'post',
                     url: 'index.php?option=com_ticketstation&controller=reservation&task=makeReservation&format=raw',
-                    data: {id: id},
+                    data: {id: id, [csrfTokenName]: 1},
                     dataType: 'json'
                 }).done(function (result) {
                     if (result.error === '0') {
@@ -238,7 +241,7 @@ else
                 $.ajax({
                     type: 'post',
                     url: 'index.php?option=com_ticketstation&controller=reservation&task=removeSeat&format=raw',
-                    data: {id: id},
+                    data: {id: id, [csrfTokenName]: 1},
                     dataType: 'json'
                 }).done(function (result) {
                     if (result.error === '0') {

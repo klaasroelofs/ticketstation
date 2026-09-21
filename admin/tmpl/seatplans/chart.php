@@ -380,6 +380,10 @@ if (file_exists($image)) {
 
 <script type="text/javascript">
 
+    // CSRF token name/value pair for this session, appended to every write request below.
+    var csrfTokenName = '<?php echo Factory::getApplication()->getSession()->getToken(); ?>';
+    var csrfTokenParam = csrfTokenName + '=1';
+
     $(document).ready(function () {
 
         // Show/Hide Edit section
@@ -487,7 +491,7 @@ if (file_exists($image)) {
 
             coords.push(item);
             var order = { coords: coords };
-            const data = 'data='+JSON.stringify(order);
+            const data = 'data='+JSON.stringify(order)+'&'+csrfTokenParam;
 
             $.ajax({
                 //this is the php file that processes the data
@@ -557,7 +561,7 @@ if (file_exists($image)) {
             return false;
         }
 
-        $.getJSON("index.php?option=com_ticketstation&controller=seatplans&task=newSeat&ticketid="+ singleValue +"&format=raw",
+        $.getJSON("index.php?option=com_ticketstation&controller=seatplans&task=newSeat&ticketid="+ singleValue +"&format=raw&"+csrfTokenParam,
 
             function(data){
 
@@ -585,7 +589,7 @@ if (file_exists($image)) {
             return false;
         }
 
-        $.getJSON("index.php?option=com_ticketstation&controller=seatplans&task=getrecord&ticketid="+ singleValue +"&row_name="+ NewRowName +"&new_seat="+ newSeat +"&format=raw",
+        $.getJSON("index.php?option=com_ticketstation&controller=seatplans&task=getrecord&ticketid="+ singleValue +"&row_name="+ NewRowName +"&new_seat="+ newSeat +"&format=raw&"+csrfTokenParam,
 
             function(data){
 
@@ -621,7 +625,7 @@ if (file_exists($image)) {
 
         //organize the data properly
         var data = 'database_id=' + database_id + '&direction=' + direction +  '&seat_counter=' + seat_counter + '&up_down='  + up_down + '&seat_amount='
-            + seat_amount +'&seat_margin='+seat_margin;
+            + seat_amount +'&seat_margin='+seat_margin+'&'+csrfTokenParam;
 
         $.ajax({
             //this is the php file that processes the data and send mail
@@ -665,7 +669,7 @@ if (file_exists($image)) {
             return false;
         }
 
-        var data = 'id=' + removeValue;
+        var data = 'id=' + removeValue + '&' + csrfTokenParam;
 
         $.ajax({
             //this is the php file that processes the data
@@ -715,7 +719,7 @@ if (file_exists($image)) {
         //$(".seat-element").hide("slow");
         $(".seat-element").remove();
 
-        var data = 'sourceid=' + sourceValue + '&targetid=' + <?= $this->data->ticketid; ?>;
+        var data = 'sourceid=' + sourceValue + '&targetid=' + <?= $this->data->ticketid; ?> + '&' + csrfTokenParam;
 
         $.ajax({
             //this is the php file that processes the data

@@ -124,6 +124,15 @@ class ReservationModel extends BaseDatabaseModel
     {
         $table = $this->getTable('Order');
 
+        // validation_token is NOT NULL + UNIQUE on #__ticketstation_orders (see
+        // admin/sql/updates/mysql/2.0.14.sql) and authorises the guest "pay later"/
+        // confirmation links in ValidateController - every insert path needs one,
+        // matching site/src/Model/OrderModel.php::store().
+        if (empty($fields['validation_token']))
+        {
+            $fields['validation_token'] = bin2hex(random_bytes(32));
+        }
+
         if (! $table->bind($fields) || ! $table->check() || ! $table->store())
         {
             return null;

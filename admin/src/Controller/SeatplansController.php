@@ -167,6 +167,7 @@ class SeatplansController extends BaseController {
         echo '  <input type="hidden" name="option" value="com_ticketstation" />';
         echo '  <input type="hidden" name="task" value="saveSeatChanges" />';
         echo '  <input type="hidden" name="controller" value="seatplans" />';
+        echo '  ' . HTMLHelper::_('form.token');
 
         echo '</form>';
 
