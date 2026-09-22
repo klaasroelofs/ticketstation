@@ -127,11 +127,13 @@ class HtmlView extends BaseHtmlView
 						onchange="this.form.submit();"',
             'value', 'text', $filter_state );
 
-        $items      = $this->get('list');
-        $sold       = $this->get('sold');
-        $config     = $this->get('config');
-        $pagination = $this->get('pagination');
-        $childs     = $this->get('childs');
+        $model = $this->getModel();
+
+        $items      = $model->getList();
+        $sold       = $model->getSold();
+        $config     = $model->getConfig();
+        $pagination = $model->getPagination();
+        $childs     = $model->getChilds();
 
         $this->lists = $lists;
         $this->items = $items;

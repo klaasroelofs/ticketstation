@@ -62,17 +62,31 @@ class HtmlView extends BaseHtmlView
     function _displayChart($tpl = null)
     {
 
+        $app        = Factory::getApplication();
+        $input      = $app->getInput()->get('cid', array(0), 'array');
+        $this->id = (int)$input[0];
+
         $data	= $this->get('data');
+
+        ## The seat plan settings row is only ever created once the settings
+        ## screen has been opened/saved for the (parent) ticket. Bail out
+        ## with a friendly notice instead of letting a missing/incomplete
+        ## row crash the chart further down.
+        if (empty($data)) {
+            $app->enqueueMessage(Text::_('COM_TICKETSTATION_SEATPLANSETTINGS_NOT_SET'), 'warning');
+            $app->redirect('index.php?option=com_ticketstation&controller=seatplans&task=editsettings&cid=' . $this->id);
+            return;
+        }
+
+        if ($data->seat_width === null || $data->seat_width === '' || $data->seat_height === null || $data->seat_height === '') {
+            $app->enqueueMessage(Text::_('COM_TICKETSTATION_SEATPLANSETTINGS_INCOMPLETE'), 'warning');
+        }
 
         if($data->multi_seat != 1) {
             $items = $this->get('seats');
         } else {
             $items = $this->get('nochilds');
         }
-
-        $app        = Factory::getApplication();
-        $input      = $app->getInput()->get('cid', array(0), 'array');
-        $this->id = (int)$input[0];
 
         $db = Factory::getContainer()->get('DatabaseDriver');
 

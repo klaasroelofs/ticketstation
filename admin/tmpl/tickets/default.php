@@ -169,11 +169,7 @@ for ($i = 0; $i < count($this->sold); $i++)
                         $checking   = HTMLHelper::_('grid.id', 1000 + $i2, $second->ticketid );
                         $link       = 'index.php?option=com_ticketstation&controller=tickets&task=edit&cid='.$second->ticketid;
 
-                        if($second->starttime != ''){
-                            $start_time = $second->starttime;
-                        }else{
-                            $start_time = date ($this->config->time_format, strtotime($second->ticketdate));
-                        }
+                        $start_time = date ($this->config->time_format, strtotime($second->startdate));
 
                         if ($row->ticketid == $second->parent) { ?>
                         <tr class="row<?= $i;?>.<?= $i2;?>">
@@ -192,13 +188,13 @@ for ($i = 0; $i < count($this->sold); $i++)
                                 <a href="<?= $link;?>"> <?= $second->ticketname; ?></a> <small>(<?= $second->ticketcode; ?>)</small>
                             </td>
                             <td class="d-none d-md-table-cell">
-                                <?= date($this->config->dateformat, strtotime($second->ticketdate)); ?>
+                                <?= date($this->config->dateformat, strtotime($second->startdate)); ?>
                             </td>
                             <td class="d-none d-lg-table-cell">
                                 <?= $start_time; ?>
                             </td>
                             <td class="d-none d-lg-table-cell">
-                                <strong><?= $second->location; ?></strong>
+                                <strong><?= $second->venue; ?> - <?= $second->city; ?></strong>
                             </td>
                             <td class="d-none d-lg-table-cell text-center">
                                 <?= TicketstationFunctions::showprice($this->config->priceformat, $second->ticketprice, $this->config->valuta); ?>

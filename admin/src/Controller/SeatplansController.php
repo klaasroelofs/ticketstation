@@ -206,12 +206,29 @@ class SeatplansController extends BaseController {
 
         $db     = Factory::getContainer()->get('DatabaseDriver');
 
-        ## Load the dimensions of this seat
-        $sql = 'SELECT * FROM #__ticketstation_seatplansettings
+        ## selecting the parent. For a non-multiseat ticket, $ticketid is a child
+        ## ticket (chosen via the "Seat/Sector" dropdown); its seatplan settings
+        ## are only ever stored against the parent ticket, never the child.
+        $sql = 'SELECT parent FROM #__ticketstation_tickets
 				WHERE ticketid = '.(int)$ticketid.'';
 
         $db->setQuery($sql);
+        $result = $db->loadObject();
+
+        $parentid = (!empty($result) && (int) $result->parent > 0) ? (int) $result->parent : (int) $ticketid;
+
+        ## Load the dimensions of this seat from the parent ticket's settings
+        $sql = 'SELECT * FROM #__ticketstation_seatplansettings
+				WHERE ticketid = '.$parentid.'';
+
+        $db->setQuery($sql);
         $seat = $db->loadObject();
+
+        ## Fall back to sane defaults when the seatplan settings row is missing
+        ## or has an empty type/width/height (all three are nullable columns).
+        $seat_type   = (!empty($seat) && $seat->type !== null && $seat->type !== '') ? (int) $seat->type : 1;
+        $seat_width  = (!empty($seat) && $seat->seat_width !== null && $seat->seat_width !== '') ? (int) $seat->seat_width : 22;
+        $seat_height = (!empty($seat) && $seat->seat_height !== null && $seat->seat_height !== '') ? (int) $seat->seat_height : 22;
 
         ## Loading the latest coord.
         $sql = 'SELECT * FROM #__ticketstation_seatplancoords
@@ -221,17 +238,10 @@ class SeatplansController extends BaseController {
         $db->setQuery($sql);
         $item = $db->loadObject();
 
-        ## selecting the parent.
-        $sql = 'SELECT parent FROM #__ticketstation_tickets
-				WHERE ticketid = '.(int)$ticketid.'';
-
-        $db->setQuery($sql);
-        $result = $db->loadObject();
-
         if(empty($item)){
 
             $query = "INSERT INTO #__ticketstation_seatplancoords (orderid, x_pos, y_pos, ticketid, seatid, booked, type, parent, width, height)
-					  VALUES (0, 10, 10, ".$ticketid.", 1, 0, ".$seat->type.", ".$result->parent.", ".$seat->seat_width.", ".$seat->seat_height." )";
+					  VALUES (0, 10, 10, ".$ticketid.", 1, 0, ".$seat_type.", ".$result->parent.", ".$seat_width.", ".$seat_height." )";
 
             $db->setQuery( $query );
             $db->execute();
@@ -245,7 +255,7 @@ class SeatplansController extends BaseController {
             $seatid = $item->seatid+1;
 
             $query = "INSERT INTO #__ticketstation_seatplancoords (orderid, x_pos, y_pos, ticketid, seatid, booked, type, parent, width, height)
-						VALUES (0, 10, 10, ".$ticketid.", ".(int)$seatid.", 0, ".$seat->type.", ".$result->parent.", ".$seat->seat_width.", ".$seat->seat_height.")";
+						VALUES (0, 10, 10, ".$ticketid.", ".(int)$seatid.", 0, ".$seat_type.", ".$result->parent.", ".$seat_width.", ".$seat_height.")";
 
             $db->setQuery( $query );
             $db->execute();
@@ -254,7 +264,7 @@ class SeatplansController extends BaseController {
 
         }
 
-        $arr = array('seatid' => $seatid, 'id' => $dataid, 'seat_width' => $seat->seat_width, 'seat_height' => $seat->seat_height);
+        $arr = array('seatid' => $seatid, 'id' => $dataid, 'seat_width' => $seat_width, 'seat_height' => $seat_height);
         echo json_encode($arr);
 
     }
@@ -276,6 +286,12 @@ class SeatplansController extends BaseController {
 
         $db->setQuery($sql);
         $seat = $db->loadObject();
+
+        ## Fall back to sane defaults when the seatplan settings row is missing
+        ## or has an empty type/width/height (all three are nullable columns).
+        $seat_type   = (!empty($seat) && $seat->type !== null && $seat->type !== '') ? (int) $seat->type : 1;
+        $seat_width  = (!empty($seat) && $seat->seat_width !== null && $seat->seat_width !== '') ? (int) $seat->seat_width : 22;
+        $seat_height = (!empty($seat) && $seat->seat_height !== null && $seat->seat_height !== '') ? (int) $seat->seat_height : 22;
 
         if($row_name){
 
@@ -310,7 +326,7 @@ class SeatplansController extends BaseController {
         if($new_seat == 1){
 
             $query = "INSERT INTO #__ticketstation_seatplancoords (orderid, x_pos, y_pos, ticketid, seatid, booked, type, parent, width, height, row_name)
-						VALUES (0, 10, 10, ".$ticketid.", 1, 0, ".$seat->type.", ".$result->parent.", ".$seat->seat_width.", ".$seat->seat_height.", ".$db->quote($row_name)." )";
+						VALUES (0, 10, 10, ".$ticketid.", 1, 0, ".$seat_type.", ".$result->parent.", ".$seat_width.", ".$seat_height.", ".$db->quote($row_name)." )";
 
             $db->setQuery( $query );
             $db->execute();
@@ -323,7 +339,7 @@ class SeatplansController extends BaseController {
             if(empty($item)){
 
                 $query = "INSERT INTO #__ticketstation_seatplancoords (orderid, x_pos, y_pos, ticketid, seatid, booked, type, parent, width, height, row_name) 
-							VALUES (0, 10, 10, ".$ticketid.", 1, 0, ".$seat->type.", ".$result->parent.", ".$seat->seat_width.", ".$seat->seat_height.", ".$db->quote($row_name)." )";
+							VALUES (0, 10, 10, ".$ticketid.", 1, 0, ".$seat_type.", ".$result->parent.", ".$seat_width.", ".$seat_height.", ".$db->quote($row_name)." )";
 
                 $db->setQuery( $query );
                 $db->execute();
@@ -336,7 +352,7 @@ class SeatplansController extends BaseController {
                 $seatid = $item->seatid+1;
 
                 $query = "INSERT INTO #__ticketstation_seatplancoords (orderid, x_pos, y_pos, ticketid, seatid, booked, type, parent, width, height, row_name) 
-							VALUES (0, 10, 10, ".$ticketid.", ".(int)$seatid.", 0, ".$seat->type.", ".$result->parent.", ".$seat->seat_width.", ".$seat->seat_height.", ".$db->quote($row_name).")";
+							VALUES (0, 10, 10, ".$ticketid.", ".(int)$seatid.", 0, ".$seat_type.", ".$result->parent.", ".$seat_width.", ".$seat_height.", ".$db->quote($row_name).")";
 
                 $db->setQuery( $query );
                 $db->execute();
@@ -347,7 +363,7 @@ class SeatplansController extends BaseController {
 
         }
 
-        $arr = array('seatid' => $seatid, 'id' => $dataid, 'seat_width' => $seat->seat_width, 'seat_height' => $seat->seat_height, 'row_name' => $row_name, 'new_seatnr' => $new_seat);
+        $arr = array('seatid' => $seatid, 'id' => $dataid, 'seat_width' => $seat_width, 'seat_height' => $seat_height, 'row_name' => $row_name, 'new_seatnr' => $new_seat);
 
         echo json_encode($arr);
 
