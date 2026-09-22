@@ -16,7 +16,6 @@ use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\Controller\BaseController;
 use Joomla\CMS\Uri\Uri;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Amount;
-use Ticketstation\Component\Ticketstation\Administrator\Helper\Config;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Order;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Ordercode;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\PaymentAPI;
@@ -145,9 +144,11 @@ class ReservationController extends BaseController
         }
 
         $ticket  = (new Ticket)->getTicketDetailsById($ticketid);
-        $config  = (new Config)->get(['variable_transcosts', 'transactioncosts', 'transcosts']);
         $pricing = (new Amount)->calculateVatFromPrice($ticket->ticketprice, $ticket->vat_percentage);
-        $fee     = $config->variable_transcosts == 1 ? (($ticket->ticketprice / 100) * $config->transcosts) : 0;
+
+        // Manual/admin reservations don't go through Mollie, so transaction
+        // costs (variable or fixed) never apply here - always store a bare price.
+        $fee     = 0;
 
         if ($amount > $ticket->totaltickets)
         {
@@ -226,9 +227,11 @@ class ReservationController extends BaseController
         // Mirrors addQuantity() above - without this, seated orders never get a vat/vat_percentage/
         // price_excluding_vat/fees value at all (they default to NULL/0), so invoices for seated
         // tickets always show 0% VAT regardless of what's configured on the ticket.
-        $config  = (new Config)->get(['variable_transcosts', 'transactioncosts', 'transcosts']);
         $pricing = (new Amount)->calculateVatFromPrice($ticket->ticketprice, $ticket->vat_percentage);
-        $fee     = $config->variable_transcosts == 1 ? (($ticket->ticketprice / 100) * $config->transcosts) : 0;
+
+        // Manual/admin reservations don't go through Mollie, so transaction
+        // costs (variable or fixed) never apply here - always store a bare price.
+        $fee     = 0;
 
         $orderid = $model->insertOrderRow([
             'ordercode'           => $ordercode,
