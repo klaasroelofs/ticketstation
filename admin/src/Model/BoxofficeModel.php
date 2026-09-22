@@ -33,6 +33,7 @@ use Ticketstation\Component\Ticketstation\Administrator\Helper\SendTicketCopy;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\ticketcreator;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Tickets;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\TicketstationFunctions;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\Transaction;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\WaitingList;
 
 /**
@@ -630,6 +631,30 @@ class BoxofficeModel extends ListModel
                 return $row->ordercode == $affected_ordercode;
             }));
             History::log($affected_ordercode, 'ticket_removed', $count . ' ticket(s) removed from order');
+
+            // If that was the last remaining ticket line for this ordercode, the
+            // order itself no longer exists - clean up anything still tied to it,
+            // same as a full order delete via Box Office > Delete.
+            $query = $db->getQuery(true);
+            $query->select('COUNT(*)')
+                ->from($db->quoteName('#__ticketstation_orders'))
+                ->where($db->quoteName('ordercode') . ' = ' . $db->quote($affected_ordercode));
+
+            $db->setQuery($query);
+            $remaining = (int) $db->loadResult();
+
+            if ($remaining === 0) {
+
+                $query = $db->getQuery(true);
+                $query->delete($db->quoteName('#__ticketstation_remarks'))
+                    ->where($db->quoteName('ordercode') . ' = ' . $db->quote($affected_ordercode));
+
+                $db->setQuery($query);
+                $db->execute();
+
+                (new Invoice)->remove($affected_ordercode);
+                (new Transaction)->remove($affected_ordercode);
+            }
         }
 
         ## Set FTP credentials, if given
@@ -1253,6 +1278,9 @@ class BoxofficeModel extends ListModel
 
                 // An invoice for a deleted order shouldn't survive it.
                 (new Invoice)->remove($removed_ordercode);
+
+                // Nor should its transaction, if one was ever recorded.
+                (new Transaction)->remove($removed_ordercode);
             }
 
             $ticket_helper = new Tickets;
