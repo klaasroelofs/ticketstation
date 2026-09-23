@@ -376,6 +376,16 @@ $document->setTitle(Text::_('COM_TICKETSTATION_VIEW_CONFIGURATION_TITLE') . ' - 
                 </div>
             </div>
             <div class="row mb-3">
+                <label for="show_country" class="col-sm-3 col-form-label"
+                       rel="popover"
+                       title="<?= Text::_('COM_TICKETSTATION_SHOW_COUNTRY') ?>">
+                    <?= Text::_('COM_TICKETSTATION_SHOW_COUNTRY') ?>
+                </label>
+                <div class="col-sm-9">
+                    <?= $this->lists['show_country']; ?>
+                </div>
+            </div>
+            <div class="row mb-3">
                 <label for="show_phone" class="col-sm-3 col-form-label"
                        rel="popover"
                        title="<?= Text::_('COM_TICKETSTATION_SHOW_PHONE') ?>">

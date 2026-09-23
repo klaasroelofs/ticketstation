@@ -138,7 +138,7 @@ class CheckoutController extends BaseController
         */
 
         // Getting the configuration
-        $config = (new Config)->get(['use_automatic_login', 'auto_username', 'show_birthday']);
+        $config = (new Config)->get(['use_automatic_login', 'auto_username', 'show_birthday', 'show_phone', 'show_country', 'show_address', 'show_secondaddress', 'show_thirdaddress', 'show_zipcode', 'show_city', 'show_salutation']);
 
         // Validating the form
         if ( ! $this->validateForm($config))
@@ -190,9 +190,49 @@ class CheckoutController extends BaseController
         $query = $db->getQuery(true)
             ->update($db->quoteName('#__ticketstation_clients'))
             ->set($db->quoteName('name') . ' = ' . $db->quote($jinput->get('lastname', '', 'string')))
-            ->set($db->quoteName('firstname') . ' = ' . $db->quote($jinput->get('firstname', '', 'string')))
-            ->set($db->quoteName('phonenumber') . ' = ' . $db->quote($jinput->get('phonenumber', '', 'string')))
-            ->where($db->quoteName('clientid') . ' = ' . $db->quote($clientid));
+            ->set($db->quoteName('firstname') . ' = ' . $db->quote($jinput->get('firstname', '', 'string')));
+
+        if ($config->show_phone == 1)
+        {
+            $query->set($db->quoteName('phonenumber') . ' = ' . $db->quote($jinput->get('phonenumber', '', 'string')));
+        }
+
+        if ($config->show_salutation == 1)
+        {
+            $query->set($db->quoteName('gender') . ' = ' . $db->quote($jinput->get('gender', '', 'string')));
+        }
+
+        if ($config->show_address == 1)
+        {
+            $query->set($db->quoteName('address') . ' = ' . $db->quote($jinput->get('address', '', 'string')));
+        }
+
+        if ($config->show_secondaddress == 1)
+        {
+            $query->set($db->quoteName('address2') . ' = ' . $db->quote($jinput->get('address2', '', 'string')));
+        }
+
+        if ($config->show_thirdaddress == 1)
+        {
+            $query->set($db->quoteName('address3') . ' = ' . $db->quote($jinput->get('address3', '', 'string')));
+        }
+
+        if ($config->show_zipcode == 1)
+        {
+            $query->set($db->quoteName('zipcode') . ' = ' . $db->quote($jinput->get('zipcode', '', 'string')));
+        }
+
+        if ($config->show_city == 1)
+        {
+            $query->set($db->quoteName('city') . ' = ' . $db->quote($jinput->get('city', '', 'string')));
+        }
+
+        if ($config->show_country == 1)
+        {
+            $query->set($db->quoteName('country_id') . ' = ' . $db->quote($jinput->get('country_id', '1', 'int')));
+        }
+
+        $query->where($db->quoteName('clientid') . ' = ' . $db->quote($clientid));
 
         $db->setQuery($query);
 
@@ -275,12 +315,15 @@ class CheckoutController extends BaseController
             return false;
         }
 
-        // Check if the name has been set.
-        if ($jinput->get('phonenumber', '', 'string') == '')
+        // If enabled, check the phone number.
+        if ($config->show_phone == 1)
         {
-            $app->enqueueMessage('Je hebt geen telefoonnummer ingevoerd', 'error');
+            if ($jinput->get('phonenumber', '', 'string') == '')
+            {
+                $app->enqueueMessage('Je hebt geen telefoonnummer ingevoerd', 'error');
 
-            return false;
+                return false;
+            }
         }
 
         // If enabled the address, check it.

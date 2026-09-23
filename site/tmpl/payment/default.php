@@ -42,6 +42,11 @@ $fees 		= $getamount->_getFees($ordercode);
 $discount 	= $getamount->_getDiscount($ordercode);
 
 $count = count($this->items);
+
+$genderLabels = [
+    '1' => Text::_('COM_TICKETSTATION_MR'),
+    '2' => Text::_('COM_TICKETSTATION_MRS'),
+];
 ?>
 
     <script language="javascript">
@@ -134,14 +139,58 @@ $count = count($this->items);
                             <div class="span8"><h3 style="color: #008C39;"><strong>Bestelnummer <?= $ordercode; ?></strong></h3></div>
                             <div class="span8"><h4><strong>Bestelgegevens:</strong></h4></div>
                             <table style="margin-bottom:30px;">
+                                <?php if($this->config->show_salutation != 0 && isset($genderLabels[$this->items[0]->gender])): ?>
+                                <tr>
+                                    <td style="width: 130px;font-weight:bold;">Aanhef:</td>
+                                    <td><?= $genderLabels[$this->items[0]->gender]; ?></td>
+                                </tr>
+                                <?php endif; ?>
                                 <tr>
                                     <td style="width: 130px;font-weight:bold;">Naam:</td>
                                     <td><?= $this->items[0]->firstname; ?> <?= $this->items[0]->name; ?></td>
                                 </tr>
+                                <?php if($this->config->show_address != 0 ): ?>
+                                <tr>
+                                    <td style="font-weight:bold;">Adres:</td>
+                                    <td><?= htmlspecialchars($this->items[0]->address, ENT_QUOTES, 'UTF-8'); ?></td>
+                                </tr>
+                                <?php endif; ?>
+                                <?php if($this->config->show_secondaddress != 0 ): ?>
+                                <tr>
+                                    <td style="font-weight:bold;">Adres 2:</td>
+                                    <td><?= htmlspecialchars($this->items[0]->address2, ENT_QUOTES, 'UTF-8'); ?></td>
+                                </tr>
+                                <?php endif; ?>
+                                <?php if($this->config->show_thirdaddress != 0 ): ?>
+                                <tr>
+                                    <td style="font-weight:bold;">Adres 3:</td>
+                                    <td><?= htmlspecialchars($this->items[0]->address3, ENT_QUOTES, 'UTF-8'); ?></td>
+                                </tr>
+                                <?php endif; ?>
+                                <?php if($this->config->show_zipcode != 0 ): ?>
+                                <tr>
+                                    <td style="font-weight:bold;">Postcode:</td>
+                                    <td><?= htmlspecialchars($this->items[0]->zipcode, ENT_QUOTES, 'UTF-8'); ?></td>
+                                </tr>
+                                <?php endif; ?>
+                                <?php if($this->config->show_city != 0 ): ?>
+                                <tr>
+                                    <td style="font-weight:bold;">Plaats:</td>
+                                    <td><?= htmlspecialchars($this->items[0]->city, ENT_QUOTES, 'UTF-8'); ?></td>
+                                </tr>
+                                <?php endif; ?>
+                                <?php if($this->config->show_country != 0 && !empty($this->items[0]->country) ): ?>
+                                <tr>
+                                    <td style="font-weight:bold;">Land:</td>
+                                    <td><?= htmlspecialchars($this->items[0]->country, ENT_QUOTES, 'UTF-8'); ?></td>
+                                </tr>
+                                <?php endif; ?>
+                                <?php if($this->config->show_phone != 0 ): ?>
                                 <tr>
                                     <td style="padding-right:5px;font-weight:bold;">Telefoonnummer:</td>
                                     <td><?= $this->items[0]->phonenumber; ?></td>
                                 </tr>
+                                <?php endif; ?>
                                 <tr>
                                     <td style="font-weight:bold;">E-mailadres:</td>
                                     <td><?= $this->items[0]->emailaddress; ?></td>
