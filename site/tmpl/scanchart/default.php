@@ -53,7 +53,8 @@ if (file_exists($image)) {
     $height = 750;
 }
 
-$linkback = Route::_('index.php?option=com_ticketstation&view=ticketscanning');
+$itemid = TicketstationFunctions::getSiteItemid();
+$linkback = Route::_('index.php?option=com_ticketstation&view=ticketscanning' . ($itemid ? '&Itemid=' . $itemid : ''));
 
 ?>
 

@@ -10,6 +10,7 @@ use Joomla\CMS\MVC\View\HtmlView as BaseHtmlView;
 use Joomla\CMS\Router\Route;
 use Joomla\CMS\Uri\Uri;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Config;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\TicketstationFunctions;
 
 /**
  * @package     Joomla.Site
@@ -63,7 +64,8 @@ class HtmlView extends BaseHtmlView {
             if(!in_array($eventid, json_decode($approved_for->events)))
             {
                 Factory::getApplication()->enqueueMessage('Scan niet aan jou toegewezen!', 'error');
-                $app->redirect(Route::_('index.php?option=com_ticketstation&view=ticketscanning'));
+                $itemid = TicketstationFunctions::getSiteItemid();
+                $app->redirect(Route::_('index.php?option=com_ticketstation&view=ticketscanning' . ($itemid ? '&Itemid=' . $itemid : '')));
             }
         }
 
@@ -74,7 +76,8 @@ class HtmlView extends BaseHtmlView {
             if(!in_array($ticketid, json_decode($approved_for->tickets)))
             {
                 Factory::getApplication()->enqueueMessage('Scan niet aan jou toegewezen!', 'error');
-                $app->redirect(Route::_('index.php?option=com_ticketstation&view=ticketscanning'));
+                $itemid = TicketstationFunctions::getSiteItemid();
+                $app->redirect(Route::_('index.php?option=com_ticketstation&view=ticketscanning' . ($itemid ? '&Itemid=' . $itemid : '')));
             }
         }
 

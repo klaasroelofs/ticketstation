@@ -39,7 +39,8 @@ if (!empty($this->event)) {
     $variable_to_validate = strval('ticketid=' . $this->ticket->ticketid);
 }
 
-$linkback = Route::_('index.php?option=com_ticketstation&view=ticketscanning');
+$itemid = TicketstationFunctions::getSiteItemid();
+$linkback = Route::_('index.php?option=com_ticketstation&view=ticketscanning' . ($itemid ? '&Itemid=' . $itemid : ''));
 
 ?>
 

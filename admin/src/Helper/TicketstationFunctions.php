@@ -12,6 +12,7 @@ namespace Ticketstation\Component\Ticketstation\Administrator\Helper;
 
 defined('_JEXEC') or die;
 
+use Joomla\CMS\Factory;
 use Joomla\CMS\Language\Text;
 
 ## no direct access
@@ -143,5 +144,60 @@ class TicketstationFunctions
 
         return $scanResult;
 
+    }
+
+    /**
+     * Look up the Itemid of a published site menu item pointing at com_ticketstation, so
+     * internal redirects/links can be built explicitly under it instead of relying on
+     * Joomla's "borrow the currently active menu item" SEF fallback
+     * (Joomla\CMS\Component\Router\Rules\MenuRules::preprocess(), which Joomla core itself
+     * marks with "TODO: Remove this whole block in 6.0 as it is a bug"). That fallback only
+     * works while rendering a page that is itself served under the menu item; it fails for
+     * AJAX endpoints, controller redirects, payment gateway callbacks, and links sent in
+     * emails, where the "active" menu item is the site's default/home page instead - those
+     * then fall back to the unrouted /component/ticketstation/... URL form.
+     *
+     * Queried directly from the database rather than via the site menu object, so it works
+     * the same whether called from the site app, the administrator app, or a webhook/CLI
+     * context with no site menu loaded.
+     *
+     * @return int  The Itemid, or 0 if no site menu item exists for this component
+     *
+     * @since 2.1.6
+     */
+    public static function getSiteItemid()
+    {
+        static $itemid = null;
+
+        if ($itemid !== null) {
+            return $itemid;
+        }
+
+        $itemid = 0;
+
+        $db    = Factory::getContainer()->get('DatabaseDriver');
+        $query = $db->getQuery(true)
+            ->select($db->quoteName('m.id'))
+            ->from($db->quoteName('#__menu', 'm'))
+            ->join(
+                'INNER',
+                $db->quoteName('#__extensions', 'e'),
+                $db->quoteName('e.extension_id') . ' = ' . $db->quoteName('m.component_id')
+            )
+            ->where($db->quoteName('e.element') . ' = ' . $db->quote('com_ticketstation'))
+            ->where($db->quoteName('m.published') . ' = 1')
+            ->where($db->quoteName('m.client_id') . ' = 0')
+            ->order($db->quoteName('m.id') . ' ASC')
+            ->setLimit(1);
+
+        $db->setQuery($query);
+
+        $result = $db->loadResult();
+
+        if ($result) {
+            $itemid = (int) $result;
+        }
+
+        return $itemid;
     }
 }

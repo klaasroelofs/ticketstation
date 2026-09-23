@@ -434,7 +434,7 @@ class OrderController extends BaseController
         if (empty($tdata))
         {
             Factory::getApplication()->enqueueMessage(Text::_('COM_TICKETSTATION_THIS_IS_NOT_YOUR_ORDER'), 'error');
-            Factory::getApplication()->redirect(Route::_('index.php?option=com_ticketstation&view=cart'));
+            Factory::getApplication()->redirect(Route::_('index.php?option=com_ticketstation&view=cart' . (($itemid = TicketstationFunctions::getSiteItemid()) ? '&Itemid=' . $itemid : '')));
 
             return false;
         }
@@ -463,7 +463,7 @@ class OrderController extends BaseController
         if ( ! (new Order)->removeSingleOrderFromDatabase($orderid))
         {
             Factory::getApplication()->enqueueMessage(Text::_('COM_TICKETSTATION_REMOVE_ORDER_FAILED'), 'error');
-            Factory::getApplication()->redirect(Route::_('index.php?option=com_ticketstation&view=cart'));
+            Factory::getApplication()->redirect(Route::_('index.php?option=com_ticketstation&view=cart' . (($itemid = TicketstationFunctions::getSiteItemid()) ? '&Itemid=' . $itemid : '')));
 
             return false;
         }
@@ -472,7 +472,7 @@ class OrderController extends BaseController
         Factory::getApplication()->triggerEvent('onAfterRemovingOrder', [$post]);
 
         Factory::getApplication()->enqueueMessage(Text::_('COM_TICKETSTATION_REMOVED_ORDER'), 'success');
-        Factory::getApplication()->redirect(Route::_('index.php?option=com_ticketstation&view=cart'));
+        Factory::getApplication()->redirect(Route::_('index.php?option=com_ticketstation&view=cart' . (($itemid = TicketstationFunctions::getSiteItemid()) ? '&Itemid=' . $itemid : '')));
     }
 
     /**
@@ -506,13 +506,13 @@ class OrderController extends BaseController
         if ( ! $db->execute())
         {
             Factory::getApplication()->enqueueMessage(Text::_('COM_TICKETSTATION_REMOVE_ORDER_FAILED'), 'error');
-            Factory::getApplication()->redirect(Route::_('index.php?option=com_ticketstation&view=cart'));
+            Factory::getApplication()->redirect(Route::_('index.php?option=com_ticketstation&view=cart' . (($itemid = TicketstationFunctions::getSiteItemid()) ? '&Itemid=' . $itemid : '')));
 
             return false;
         }
 
         Factory::getApplication()->enqueueMessage(Text::_('COM_TICKETSTATION_REMOVED_ORDER'), 'success');
-        Factory::getApplication()->redirect(Route::_('index.php?option=com_ticketstation&view=cart'));
+        Factory::getApplication()->redirect(Route::_('index.php?option=com_ticketstation&view=cart' . (($itemid = TicketstationFunctions::getSiteItemid()) ? '&Itemid=' . $itemid : '')));
     }
 
     public function itemcount ()

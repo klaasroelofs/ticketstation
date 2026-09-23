@@ -15,6 +15,7 @@ use Ticketstation\Component\Ticketstation\Administrator\Helper\getAmount;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Order;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Ordercode;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\PaymentAPI;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\TicketstationFunctions;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\WaitingList;
 
 /**
@@ -56,11 +57,12 @@ class ValidateController extends BaseController
         $app    = Factory::getApplication();
         $jinput = $app->getInput();
         $order  = $jinput->get('order', '', 'string');
+        $itemid = TicketstationFunctions::getSiteItemid();
 
         if ($order == '')
         {
             $app->enqueueMessage(Text::_('COM_TICKETSTATION_INVALID_ORDER'), 'error');
-            $this->setRedirect(Route::_('index.php?option=com_ticketstation&view=upcoming'));
+            $this->setRedirect(Route::_('index.php?option=com_ticketstation&view=upcoming' . ($itemid ? '&Itemid=' . $itemid : '')));
 
             return false;
         }
@@ -71,7 +73,7 @@ class ValidateController extends BaseController
         if ( ! isset($parts[1]))
         {
             $app->enqueueMessage(Text::_('COM_TICKETSTATION_INVALID_ORDER'), 'error');
-            $this->setRedirect(Route::_('index.php?option=com_ticketstation&view=upcoming'));
+            $this->setRedirect(Route::_('index.php?option=com_ticketstation&view=upcoming' . ($itemid ? '&Itemid=' . $itemid : '')));
 
             return false;
         }
@@ -82,13 +84,13 @@ class ValidateController extends BaseController
         if ( ! $waitinglist->confirmByToken($token))
         {
             $app->enqueueMessage(Text::_('COM_TICKETSTATION_VALIDATION_WAITINGLIST_FAILED'), 'error');
-            $this->setRedirect(Route::_('index.php?option=com_ticketstation&view=upcoming'));
+            $this->setRedirect(Route::_('index.php?option=com_ticketstation&view=upcoming' . ($itemid ? '&Itemid=' . $itemid : '')));
 
             return false;
         }
 
         $msg = Text::_('COM_TICKETSTATION_VALIDATION_WAITINGLIST_COMPLETED');
-        $app->redirect(Route::_('index.php?option=com_ticketstation&view=upcoming'), $msg);
+        $app->redirect(Route::_('index.php?option=com_ticketstation&view=upcoming' . ($itemid ? '&Itemid=' . $itemid : '')), $msg);
 
         return true;
     }
@@ -106,11 +108,12 @@ class ValidateController extends BaseController
         $app    = Factory::getApplication();
         $jinput = $app->getInput();
         $paylater = $jinput->get('order', null, 'string');
+        $itemid = TicketstationFunctions::getSiteItemid();
 
         if (empty($paylater))
         {
             $app->enqueueMessage(Text::_('COM_TICKETSTATION_INVALID_ORDER'), 'error');
-            $this->setRedirect(Route::_('index.php?option=com_ticketstation&view=upcoming'));
+            $this->setRedirect(Route::_('index.php?option=com_ticketstation&view=upcoming' . ($itemid ? '&Itemid=' . $itemid : '')));
 
             return false;
         }
@@ -121,7 +124,7 @@ class ValidateController extends BaseController
         if ( ! isset($parts[1]))
         {
             $app->enqueueMessage(Text::_('COM_TICKETSTATION_INVALID_ORDER'), 'error');
-            $this->setRedirect(Route::_('index.php?option=com_ticketstation&view=upcoming'));
+            $this->setRedirect(Route::_('index.php?option=com_ticketstation&view=upcoming' . ($itemid ? '&Itemid=' . $itemid : '')));
 
             return false;
         }
@@ -140,7 +143,7 @@ class ValidateController extends BaseController
         if (!$result)
         {
             $app->enqueueMessage(Text::_('COM_TICKETSTATION_INVALID_ORDER'), 'error');
-            $this->setRedirect(Route::_('index.php?option=com_ticketstation&view=upcoming'));
+            $this->setRedirect(Route::_('index.php?option=com_ticketstation&view=upcoming' . ($itemid ? '&Itemid=' . $itemid : '')));
 
             return false;
         }
@@ -151,7 +154,7 @@ class ValidateController extends BaseController
         if ( ! (new Order)->isOrderPending($ordercode))
         {
             $app->enqueueMessage(Text::_('COM_TICKETSTATION_PAYMENT_HAS_BEEN_PROCESS_BEFORE'), 'error');
-            $this->setRedirect(Route::_('index.php?option=com_ticketstation&view=upcoming'));
+            $this->setRedirect(Route::_('index.php?option=com_ticketstation&view=upcoming' . ($itemid ? '&Itemid=' . $itemid : '')));
 
             return false;
         }
@@ -159,13 +162,13 @@ class ValidateController extends BaseController
         if(!(new Ordercode)->setOrdercode($ordercode))
         {
             $app->enqueueMessage(Text::_('COM_TICKETSTATION_COULD_NOT_SET_ORDERCODE'), 'error');
-            $this->setRedirect(Route::_('index.php?option=com_ticketstation&view=upcoming'));
+            $this->setRedirect(Route::_('index.php?option=com_ticketstation&view=upcoming' . ($itemid ? '&Itemid=' . $itemid : '')));
 
             return false;
         }
 
         $this->setMessage(Text::_('COM_TICKETSTATION_THANK_YOU_FOR_MAKING_PAYMENT'), 'message');
-        $this->setRedirect(Route::_('index.php?option=com_ticketstation&view=cart'));
+        $this->setRedirect(Route::_('index.php?option=com_ticketstation&view=cart' . ($itemid ? '&Itemid=' . $itemid : '')));
 
         return true;
     }
@@ -179,6 +182,7 @@ class ValidateController extends BaseController
     {
         $app = Factory::getApplication();
         $db  = Factory::getContainer()->get('DatabaseDriver');
+        $itemid = TicketstationFunctions::getSiteItemid();
 
         // If token is provided (new secure method), use it to look up ordercode
         if (!empty($this->validationToken))
@@ -193,7 +197,7 @@ class ValidateController extends BaseController
             if (!$result)
             {
                 $app->enqueueMessage(Text::_('COM_TICKETSTATION_NO_VALID_ID'), 'error');
-                $this->setRedirect(Route::_('index.php?option=com_ticketstation'));
+                $this->setRedirect(Route::_('index.php?option=com_ticketstation&view=upcoming' . ($itemid ? '&Itemid=' . $itemid : '')));
 
                 return false;
             }
@@ -207,18 +211,16 @@ class ValidateController extends BaseController
             if ($this->ordercode == 0 || $this->id == 0)
             {
                 $app->enqueueMessage(Text::_('COM_TICKETSTATION_NO_VALID_ID'), 'error');
-                $this->setRedirect(Route::_('index.php?option=com_ticketstation'));
+                $this->setRedirect(Route::_('index.php?option=com_ticketstation&view=upcoming' . ($itemid ? '&Itemid=' . $itemid : '')));
 
                 return false;
             }
         }
 
-        require_once JPATH_ADMINISTRATOR . '/components/com_ticketmaster/classes/confirmation.php';
-
         if ( ! (new Order)->setOrderToValidated($this->ordercode))
         {
             $app->enqueueMessage(Text::_('COM_TICKETSTATION_VALIDATION_FAILED'), 'error');
-            $this->setRedirect(Route::_('index.php?option=com_ticketstation'));
+            $this->setRedirect(Route::_('index.php?option=com_ticketstation&view=upcoming' . ($itemid ? '&Itemid=' . $itemid : '')));
 
             return false;
         }
@@ -236,15 +238,13 @@ class ValidateController extends BaseController
 
         if (isset($this->ordercode))
         {
-            require_once  JPATH_ADMINISTRATOR . '/components/com_ticketstation/src/Helpers/confirmation.php';
-
             $sendconfirmation = new Confirmation((int) $this->ordercode);
             $sendconfirmation->doConfirm();
             $sendconfirmation->doSend();
         }
 
         $app->enqueueMessage(Text::_('COM_TICKETSTATION_VALIDATED'), 'success');
-        $this->setRedirect(Route::_('index.php?option=com_ticketstation'));
+        $this->setRedirect(Route::_('index.php?option=com_ticketstation&view=upcoming' . ($itemid ? '&Itemid=' . $itemid : '')));
 
         return true;
     }

@@ -14,6 +14,7 @@ use Mollie\Api\Types\PaymentMethod;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\getAmount;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\History;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\PaymentAPI;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\TicketstationFunctions;
 
 /**
  * @package     Joomla.Site
@@ -174,7 +175,8 @@ class PaymentController extends BaseController
             ## Process the order
             if ($this->ProcessBypassMollie($this->ordercode)) {
                 ## Bypass or amount = 0 >> redirect to mollieBypass with token
-                Factory::getApplication()->redirect(Route::_('index.php?option=com_ticketstation&controller=payment&task=molliebypass&token=' . $bypass_token));
+                $itemid = TicketstationFunctions::getSiteItemid();
+                Factory::getApplication()->redirect(Route::_('index.php?option=com_ticketstation&controller=payment&task=molliebypass&token=' . $bypass_token . ($itemid ? '&Itemid=' . $itemid : '')));
             }
 
         }

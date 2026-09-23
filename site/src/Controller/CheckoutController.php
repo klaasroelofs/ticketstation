@@ -68,10 +68,13 @@ class CheckoutController extends BaseController
         $jinput = $app->getInput();
         $couponcode = $jinput->get('couponcode', 'NONE', 'STRING');
 
+        $itemid = TicketstationFunctions::getSiteItemid();
+        $cartUrl = 'index.php?option=com_ticketstation&view=cart' . ($itemid ? '&Itemid=' . $itemid : '');
+
         if ($couponcode == '')
         {
             $app->enqueueMessage(Text::_('COM_TICKETSTATION_EMPTY_COUPON'), 'error');
-            $this->setRedirect(Route::_('index.php?option=com_ticketstation&view=cart'));
+            $this->setRedirect(Route::_($cartUrl));
 
         } else {
 
@@ -83,12 +86,12 @@ class CheckoutController extends BaseController
             {
                 $app->enqueueMessage(Text::_('COM_TICKETSTATION_COUPON_APPLIED_TO_CART'));
                 //$this->setRedirect(JRoute::_('index.php?option=com_ticketmaster&view=checkout'));
-                $this->setRedirect(Route::_('index.php?option=com_ticketstation&view=cart'));
+                $this->setRedirect(Route::_($cartUrl));
             }
             else
             {
                 //$app->enqueueMessage(Text::_('COM_TICKETSTATION_INVALID_COUPON'), 'error');
-                $this->setRedirect(Route::_('index.php?option=com_ticketstation&view=cart'));
+                $this->setRedirect(Route::_($cartUrl));
             }
 
             return true;
@@ -140,7 +143,8 @@ class CheckoutController extends BaseController
         // Validating the form
         if ( ! $this->validateForm($config))
         {
-            $app->redirect(Route::_('index.php?option=com_ticketstation&view=checkout'));
+            $itemid = TicketstationFunctions::getSiteItemid();
+            $app->redirect(Route::_('index.php?option=com_ticketstation&view=checkout' . ($itemid ? '&Itemid=' . $itemid : '')));
 
             return false;
         }
@@ -203,7 +207,13 @@ class CheckoutController extends BaseController
             return false;
         }
 
-        $app->redirect(Route::_('index.php?option=com_ticketstation&view=payment'));
+        // Joomla's built-in "borrow the active menu item's Itemid" fallback (System - SEF
+        // plugin) is unreliable for a mid-request controller redirect like this one - see
+        // TicketstationFunctions::getSiteItemid() for details. Pass the Itemid through
+        // explicitly so the payment screen stays under the site's menu item instead of
+        // falling back to the raw component/ticketstation/payment URL.
+        $itemid = TicketstationFunctions::getSiteItemid();
+        $app->redirect(Route::_('index.php?option=com_ticketstation&view=payment' . ($itemid ? '&Itemid=' . $itemid : '')));
 
         return true;
     }

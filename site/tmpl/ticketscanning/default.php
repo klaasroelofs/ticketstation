@@ -84,7 +84,8 @@ $document->addScript('components/com_ticketstation/assets/javascripts/showLogout
                     <div class="ticketmaster_upcoming_event_content">
                         <?php foreach ($this->events as $event) { ?>
 
-                            <?php $link = Route::_('index.php?option=com_ticketstation&view=ticketscanner&tmpl=component&eventid='.$event->eventid); ?>
+                            <?php $itemid = TicketstationFunctions::getSiteItemid(); ?>
+                            <?php $link = Route::_('index.php?option=com_ticketstation&view=ticketscanner&tmpl=component&eventid='.$event->eventid . ($itemid ? '&Itemid=' . $itemid : '')); ?>
 
                             <div class="row">
                                 <div class="col-xs-12">
@@ -114,8 +115,9 @@ $document->addScript('components/com_ticketstation/assets/javascripts/showLogout
                     <div class="ticketmaster_upcoming_event_content">
                         <?php foreach ($this->tickets as $ticket) { ?>
 
-                            <?php $scanlink = Route::_('index.php?option=com_ticketstation&view=ticketscanner&tmpl=component&ticketid='.$ticket->ticketid); ?>
-                            <?php $chartlink = Route::_('index.php?option=com_ticketstation&view=scanchart&id='.$ticket->ticketid); ?>
+                            <?php $itemid = TicketstationFunctions::getSiteItemid(); ?>
+                            <?php $scanlink = Route::_('index.php?option=com_ticketstation&view=ticketscanner&tmpl=component&ticketid='.$ticket->ticketid . ($itemid ? '&Itemid=' . $itemid : '')); ?>
+                            <?php $chartlink = Route::_('index.php?option=com_ticketstation&view=scanchart&id='.$ticket->ticketid . ($itemid ? '&Itemid=' . $itemid : '')); ?>
 
                             <?php if ($ticket->show_seatplans == 1) { ?>
 
