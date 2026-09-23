@@ -6,7 +6,6 @@ use Joomla\CMS\Language\Text;
 use Joomla\CMS\Router\Route;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Ordercode;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\TicketstationFunctions;
-use Ticketstation\Component\Ticketstation\Administrator\Helper\getAmount;
 
 /**
  * @package     Joomla.Administrator
@@ -34,12 +33,6 @@ $ordercode = $session->get('ordercode');
 $itemid = TicketstationFunctions::getSiteItemid();
 $gotocart = Route::_('index.php?option=com_ticketstation&view=cart' . ($itemid ? '&Itemid=' . $itemid : ''));
 
-## Total for this order:
-$getAmount = new getAmount();
-$ordertotal = $getAmount->_getAmount($ordercode);
-$fees = $getAmount->_getFees($ordercode);
-//$ordertotal = $total-$fees;
-
 ## Determine available tickets
 $available_tickets = $this->items->starting_total_tickets - $this->soldtickets;
 
@@ -52,8 +45,6 @@ $percentage_available = ($this->items->starting_total_tickets > 0)
 ## Venue website link (stored without scheme in the venue form, e.g. "www.example.nl")
 $venue_website_url = preg_match('#^https?://#i', $this->items->website) ? $this->items->website : 'https://' . $this->items->website;
 
-## Load Ticketstation functions
-$TicketstationFunctions = new TicketstationFunctions();
 ?>
 
 <script src="https://code.jquery.com/jquery-latest.min.js"></script>
@@ -88,7 +79,7 @@ $TicketstationFunctions = new TicketstationFunctions();
 
 <div class="row ticketstation">
 
-    <div class="col-xl-9" style="padding-left: 5px;padding-right: 5px;">
+    <div class="col-12" style="padding-left: 5px;padding-right: 5px;">
 
         <h2 class="ticketmaster-header"><strong>Tickets kiezen</strong></h2>
 
@@ -422,84 +413,11 @@ $TicketstationFunctions = new TicketstationFunctions();
 
         </div>
     </div>
-
-    <div class="col-xl-3 ticketmaster_sidebar">
-        <div class="module">
-            <div class="module-inner">
-                <h3 class="module-title "><?php echo Text::_('COM_TICKETSTATION_CART'); ?></h3>
-                <div class="module-ct">
-                    <div id="ticketmaster-cartdetails">
-                        <div id="cart-information" class="cart-information">
-
-                            <?php if ($this->ticket->total == 0) { ?>
-
-                                <p><strong><?php echo Text::_('COM_TICKETSTATION_EMPTY_CART'); ?></strong></p>
-
-                            <?php } else { ?>
-
-                                <?php
-                                if ($this->ticket->total > 1) {
-                                    $tickets = Text::_('COM_TICKETSTATION_TICKETS');
-                                } else {
-                                    $tickets = Text::_('COM_TICKETSTATION_TICKET');
-                                } ?>
-
-                                <table style="width: 250px;">
-                                    <tr>
-                                        <td><?php  echo $this->ticket->total .' '.$tickets; ?></td>
-                                        <td style="text-align: right;"><?php  echo (new TicketstationFunctions)->showprice($this->config->priceformat, ($ordertotal - $fees), $this->config->valuta); ?></td>
-                                    </tr>
-                                    <tr style="height: 40px;">
-                                        <td><?php echo Text::_('COM_TICKETSTATION_FEES'); ?></td>
-                                        <td style="text-align: right;"><?php  echo (new TicketstationFunctions)->showprice($this->config->priceformat, $fees, $this->config->valuta); ?></td>
-                                    </tr>
-                                    <tr style="border-top: 1px solid #aaa;">
-                                        <td><strong><?php  echo Text::_('COM_TICKETSTATION_ORDERTOTAL_CART'); ?></strong></td>
-                                        <td style="text-align: right;"><strong><?php  echo (new TicketstationFunctions)->showprice($this->config->priceformat, $ordertotal, $this->config->valuta); ?></strong></td>
-                                    </tr>
-                                </table>
-
-                            <?php } ?>
-
-                        </div>
-
-                        <div id="cart-information" class="cart-box">
-
-                            <div id="cart-information-loader-2" style="width:100%; height:20px; margin-top:5px;">
-                                <div id = "cart-information-loader" style="display: none; margin:0px;" align="center">
-                                    <img src="components/com_ticketstation/assets/images/ajaxloader.gif" height="15px" />
-                                </div>
-                            </div>
-
-                        </div>
-
-                        <div id="cart-information-loader-1" style="font-size:115%; padding-top: 10px; width:15%; float:right; margin-top:2px; display: none;">
-                            <img src="components/com_ticketstation/assets/images/ajax-loader.gif" height="20px" />
-                        </div>
-
-                        <?php if (count($this->ordered) == 0) {
-                            $style_cart_button_div = 'display: none; margin-top: 20px;';
-                        } else {
-                            $style_cart_button_div = 'margin-top: 20px;';
-                        } ?>
-
-                        <div id="to-cart-button" style="<?= $style_cart_button_div; ?>">
-                            <a class="btn btn-primary pull-right" onClick="location.href='<?php echo $gotocart; ?>'">
-                                <span>Bekijken</span>
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
 </div>
 
 <script type="text/javascript">
 
     function updateCart(){
-
-        jQuery('#cart-information-loader').show();
 
         var order = 'ordercode=' + <?php echo $ordercode; ?> ;
 
@@ -535,14 +453,10 @@ $TicketstationFunctions = new TicketstationFunctions();
             //success
             success: function (html) {
                 //if process.php returned 1/true (send mail success)
-                jQuery("#cart-information").html(html);
-                jQuery('#cart-information-loader').delay(500).hide(0);
                 jQuery("#seatselection").delay(500).show(0);
                 if (!html.includes('empty_cart')) {
-                    jQuery("#to-cart-button").show(0);
                     jQuery("#continue-button").show(0);
                 } else {
-                    jQuery("#to-cart-button").hide(0);
                     jQuery("#continue-button").hide(0);
                 }
 

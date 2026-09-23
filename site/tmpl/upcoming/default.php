@@ -6,7 +6,6 @@ use Joomla\CMS\Plugin\PluginHelper;
 use Joomla\CMS\Router\Route;
 use Joomla\CMS\Uri\Uri;
 use Joomla\Registry\Registry;
-use Ticketstation\Component\Ticketstation\Administrator\Helper\getAmount;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Ticket;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\TicketstationFunctions;
 
@@ -47,30 +46,13 @@ if ($this->config->variable_transcosts == 0) {
     $transaction_costs = Text::sprintf('COM_TICKETSTATION_TRANSACTION_COSTS_PER_TICKET', $this->config->transcosts);
 }
 
-## Getting the global DB session
-$session = Factory::getApplication()->getSession();
-## Gettig the ordercode if there is one.
-$ordercode = $session->get('ordercode');
-
-## Total for this order:
-$getAmount = new getAmount();
-$ordertotal = $getAmount->_getAmount($ordercode);
-$fees = $getAmount->_getFees($ordercode);
-
-## Redirection link in JRoute:
+## Menu item for the links to the ticket views
 $itemid = TicketstationFunctions::getSiteItemid();
-$gotocart = Route::_('index.php?option=com_ticketstation&view=cart' . ($itemid ? '&Itemid=' . $itemid : ''));
 
-#class main column
-if ($this->ticket->total > 0) {
-    $class_main = 'col-xl-9';
-} else {
-    $class_main = 'col-12';
-}
 ?>
 
 <div class="row ticketstation">
-    <div class="col-lg-9">
+    <div class="col-12">
 
         <div class="page-header">
             <h1>Tickets</h1>
@@ -308,56 +290,6 @@ if ($this->ticket->total > 0) {
 
 
     </div>
-
-    <div class="col-lg-3">
-        <div class="module">
-            <div class="module-inner">
-                <h3 class="module-title "><?= Text::_('COM_TICKETSTATION_CART'); ?> </h3>
-                <div class="module-ct">
-                    <?php if ($this->ticket->total > 0) { ?>
-                        <div id="ticketmaster-cartdetails">
-
-                            <div id="cart-information" class="cart-information">
-
-                                <?php
-                                if ($this->ticket->total > 1) {
-                                    $tickets = Text::_('COM_TICKETSTATION_TICKETS');
-                                } else {
-                                    $tickets = Text::_('COM_TICKETSTATION_TICKET');
-                                } ?>
-
-                                <table style="width: 250px;">
-                                    <tr>
-                                        <td><?php  echo $this->ticket->total .' '.$tickets; ?></td>
-                                        <td style="text-align: right;"><?php  echo (new TicketstationFunctions)->showprice($this->config->priceformat, ($ordertotal - $fees), $this->config->valuta); ?></td>
-                                    </tr>
-                                    <tr style="height: 40px;">
-                                        <td><?= Text::_('COM_TICKETSTATION_FEES'); ?></td>
-                                        <td style="text-align: right;"><?php  echo (new TicketstationFunctions)->showprice($this->config->priceformat, $fees, $this->config->valuta); ?></td>
-                                    </tr>
-                                    <tr style="border-top: 1px solid #aaa;">
-                                        <td><strong><?php  echo Text::_('COM_TICKETSTATION_ORDERTOTAL_CART'); ?></strong></td>
-                                        <td style="text-align: right;"><strong><?php  echo (new TicketstationFunctions)->showprice($this->config->priceformat, $ordertotal, $this->config->valuta); ?></strong></td>
-                                    </tr>
-                                </table>
-
-                                <div style="margin-top: 20px;">
-                                    <a class="btn btn-primary pull-right" onClick="location.href='<?= $gotocart; ?>'">
-                                        <span>Bekijken</span>
-                                    </a>
-                                </div>
-
-                            </div>
-
-                        </div>
-                    <?php } else { ?>
-                        <div>Je winkelmand is leeg</div>
-                    <?php } ?>
-                </div>
-            </div>
-        </div>
-    </div>
-
 </div>
 
 

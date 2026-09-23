@@ -6,7 +6,6 @@ use Joomla\CMS\Language\Text;
 use Joomla\CMS\Router\Route;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Ordercode;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\TicketstationFunctions;
-use Ticketstation\Component\Ticketstation\Administrator\Helper\getAmount;
 
 /**
  * @package     Joomla.Administrator
@@ -57,15 +56,6 @@ if (file_exists($image)) {
 ## Redirection link in JRoute:
 $itemid = TicketstationFunctions::getSiteItemid();
 $gotocart = Route::_('index.php?option=com_ticketstation&view=cart' . ($itemid ? '&Itemid=' . $itemid : ''));
-
-## Total for this order:
-$getAmount = new getAmount();
-$ordertotal = $getAmount->_getAmount($session->get('ordercode'));
-$fees = $getAmount->_getFees($session->get('ordercode'));
-//$ordertotal = $total-$fees;
-
-## Load Ticketstation functions
-$TicketstationFunctions = new TicketstationFunctions();
 
 ## Venue website link (stored without scheme in the venue form, e.g. "www.example.nl")
 $venue_website_url = preg_match('#^https?://#i', $this->ticketdetails->website) ? $this->ticketdetails->website : 'https://' . $this->ticketdetails->website;
@@ -308,78 +298,6 @@ $venue_website_url = preg_match('#^https?://#i', $this->ticketdetails->website) 
                 </div>
             </div>
         </div>
-
-        <div class="module">
-            <div class="module-inner">
-                <h3 class="module-title "><?php echo Text::_('COM_TICKETSTATION_CART'); ?></h3>
-                <div class="module-ct">
-                    <div id="ticketmaster-cartdetails">
-
-                        <div id="cart-information" class="cart-information">
-
-                            <?php if (count($this->ordered) == 0) { ?>
-
-                                <p><strong><?php echo Text::_('COM_TICKETSTATION_EMPTY_CART'); ?></strong></p>
-
-                            <?php } else { ?>
-
-                                <?php
-                                if (count($this->ordered) > 1) {
-                                    $tickets = Text::_('COM_TICKETSTATION_TICKETS');
-                                } else {
-                                    $tickets = Text::_('COM_TICKETSTATION_TICKET');
-                                } ?>
-
-                                <table style="width: 250px;">
-                                    <tr>
-                                        <td><?php  echo count($this->ordered) . ' ' . $tickets; ?></td>
-                                        <td style="text-align: right;"><?php  echo $TicketstationFunctions->showprice($this->config->priceformat, ($ordertotal - $fees), $this->config->valuta); ?></td>
-                                    </tr>
-                                    <tr style="height: 40px;">
-                                        <td><?php echo Text::_('COM_TICKETSTATION_FEES'); ?></td>
-                                        <td style="text-align: right;"><?php  echo $TicketstationFunctions->showprice($this->config->priceformat, $fees, $this->config->valuta); ?></td>
-                                    </tr>
-                                    <tr style="border-top: 1px solid #aaa;">
-                                        <td><strong><?php  echo Text::_('COM_TICKETSTATION_ORDERTOTAL_CART'); ?></strong></td>
-                                        <td style="text-align: right;"><strong><?php  echo $TicketstationFunctions->showprice($this->config->priceformat, $ordertotal, $this->config->valuta); ?></strong></td>
-                                    </tr>
-                                </table>
-
-                            <?php } ?>
-
-                        </div>
-
-                        <div id="cart-information" class="cart-box">
-
-                            <div id="cart-information-loader-2" style="width:100%; height:20px; margin: 10px 0;">
-                                <div id = "cart-information-loader" style="display: none; margin:0px;" align="center">
-                                    <img src="components/com_ticketstation/assets/images/ajaxloader.gif" height="15px" />
-                                </div>
-                            </div>
-
-                        </div>
-
-                        <div id="cart-information-loader-1" style="font-size:115%; padding-top: 10px; width:15%; float:right; margin-top:2px; display: none;">
-                            <img src="components/com_ticketstation/assets/images/ajax-loader.gif" height="20px" />
-                        </div>
-
-                        <?php if (count($this->ordered) == 0) {
-                            $style_cart_button_div = 'display: none; margin-top: 20px;';
-                        } else {
-                            $style_cart_button_div = 'margin-top: 20px;';
-                        } ?>
-
-                        <div id="to-cart-button" style="<?= $style_cart_button_div; ?>">
-                            <a class="btn btn-primary pull-right" onClick="location.href='<?php echo $gotocart; ?>'">
-                                <span>Bekijken</span>
-                            </a>
-                        </div>
-
-                    </div>
-                </div>
-            </div>
-        </div>
-
     </div>
 </div>
 
@@ -620,8 +538,6 @@ $venue_website_url = preg_match('#^https?://#i', $this->ticketdetails->website) 
 
     function updateCart(){
 
-        jQuery('#cart-information-loader').show();
-
         var order = 'ordercode=' + <?php echo $ordercode; ?> ;
         
         jQuery.ajax({
@@ -655,14 +571,10 @@ $venue_website_url = preg_match('#^https?://#i', $this->ticketdetails->website) 
             cache: false,
             //success
             success: function (html) {
-                jQuery("#cart-information").html(html);
-                jQuery('#cart-information-loader').delay(500).hide(0);
                 jQuery("#seatselection").delay(500).show(0);
                 if (!html.includes('empty_cart')) {
-                    jQuery("#to-cart-button").show(0);
                     jQuery("#continue-button").show(0);
                 } else {
-                    jQuery("#to-cart-button").hide(0);
                     jQuery("#continue-button").hide(0);
                 }
 
