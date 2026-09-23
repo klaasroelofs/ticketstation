@@ -55,7 +55,8 @@ if (file_exists($image)) {
 
 
 ## Redirection link in JRoute:
-$gotocart = Route::_('index.php?view=cart');
+$itemid = TicketstationFunctions::getSiteItemid();
+$gotocart = Route::_('index.php?option=com_ticketstation&view=cart' . ($itemid ? '&Itemid=' . $itemid : ''));
 
 ## Total for this order:
 $getAmount = new getAmount();

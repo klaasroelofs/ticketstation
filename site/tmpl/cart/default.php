@@ -38,8 +38,9 @@ $discount   = (new getAmount)->_getDiscount($session->get('ordercode'));
 
 $ordertotal = $total;
 
-$link = Route::_('index.php?view=checkout');
-$shop_on = Route::_('index.php?view=upcoming');
+$itemid = TicketstationFunctions::getSiteItemid();
+$link = Route::_('index.php?option=com_ticketstation&view=checkout' . ($itemid ? '&Itemid=' . $itemid : ''));
+$shop_on = Route::_('index.php?option=com_ticketstation&view=upcoming' . ($itemid ? '&Itemid=' . $itemid : ''));
 
 $items   = count($this->items);
 $waiters = count($this->waiters);
@@ -290,7 +291,7 @@ $waiters = count($this->waiters);
                             </td>
                             <td>
                                 <div style="text-align: right;">
-                                    <a style="margin-right: 10px;" class="btn btn-danger btn-mini" href="<?php echo Route::_('index.php?option=com_ticketstation&controller=order&task=remove&orderid=' . $row->orderid . '&' . \Joomla\CMS\Session\Session::getFormToken() . '=1'); ?>">
+                                    <a style="margin-right: 10px;" class="btn btn-danger btn-mini" href="<?php echo Route::_('index.php?option=com_ticketstation&controller=order&task=remove&orderid=' . $row->orderid . '&' . \Joomla\CMS\Session\Session::getFormToken() . '=1' . ($itemid ? '&Itemid=' . $itemid : '')); ?>">
                                         <span class="fa fa-trash"></span>
                                     </a>
                                     <?php echo (new TicketstationFunctions)->showprice($this->config->priceformat, $row->ticketprice, $this->config->valuta); ?>
@@ -328,7 +329,7 @@ $waiters = count($this->waiters);
                                 <?php endif; ?>
 
                                 <div align="center">
-                                    <a class="btn btn-danger btn-xs btn-mini" href="<?php echo Route::_('index.php?option=com_ticketstation&controller=order&task=removeWaiting&id=' . $row->id . '&' . \Joomla\CMS\Session\Session::getFormToken() . '=1'); ?>">
+                                    <a class="btn btn-danger btn-xs btn-mini" href="<?php echo Route::_('index.php?option=com_ticketstation&controller=order&task=removeWaiting&id=' . $row->id . '&' . \Joomla\CMS\Session\Session::getFormToken() . '=1' . ($itemid ? '&Itemid=' . $itemid : '')); ?>">
                                         <span class="fa fa-trash"></span>
                                     </a>
                                 </div>

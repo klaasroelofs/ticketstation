@@ -14,6 +14,7 @@ use Mollie\Api\MollieApiClient;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\eTicketsMessage;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\getAmount;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\PaymentAPI;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\TicketstationFunctions;
 use Ticketstation\Component\Ticketstation\Site\View\Paymentresult\HtmlView;
 
 /**
@@ -128,7 +129,8 @@ class PaymentresultController extends BaseController
 
         } else {
 
-            Factory::getApplication()->redirect(Route::_('index.php?option=com_ticketstation&view=paymentresult&ordercode=' . $ordercode));
+            $itemid = TicketstationFunctions::getSiteItemid();
+            Factory::getApplication()->redirect(Route::_('index.php?option=com_ticketstation&view=paymentresult&ordercode=' . $ordercode . ($itemid ? '&Itemid=' . $itemid : '')));
             exit();
 
         }

@@ -264,7 +264,8 @@ class PaymentController extends BaseController
 
         $this->log('Payment processed. Customer redirected to payment result screen');
 
-        Factory::getApplication()->redirect(Route::_('index.php?option=com_ticketstation&task=paymentresult.return&ordercode=' . $temp_transaction->ordercode));
+        $itemid = TicketstationFunctions::getSiteItemid();
+        Factory::getApplication()->redirect(Route::_('index.php?option=com_ticketstation&task=paymentresult.return&ordercode=' . $temp_transaction->ordercode . ($itemid ? '&Itemid=' . $itemid : '')));
 
     }
 
@@ -313,7 +314,8 @@ class PaymentController extends BaseController
         ## Marking this browser session as authorized (see mollie() above).
         $session->set('ticketstation.authorized_ordercode', (int) $ordercode);
 
-        Factory::getApplication()->redirect(Route::_('index.php?option=com_ticketstation&view=paymentresult&ordercode=' . $ordercode));
+        $itemid = TicketstationFunctions::getSiteItemid();
+        Factory::getApplication()->redirect(Route::_('index.php?option=com_ticketstation&view=paymentresult&ordercode=' . $ordercode . ($itemid ? '&Itemid=' . $itemid : '')));
 
     }
 

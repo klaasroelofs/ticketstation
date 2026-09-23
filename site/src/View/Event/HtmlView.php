@@ -10,6 +10,7 @@ use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\View\HtmlView as BaseHtmlView;
 use Joomla\CMS\Router\Route;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Config;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\TicketstationFunctions;
 
 /**
  * @package     Joomla.Site
@@ -42,7 +43,8 @@ class HtmlView extends BaseHtmlView {
         if(!$items)
         {
             $app->enqueueMessage('Ticket niet beschikbaar.', 'error');
-            $app->redirect(Route::_('index.php?com_ticketstation&view=upcoming'));
+            $itemid = TicketstationFunctions::getSiteItemid();
+            $app->redirect(Route::_('index.php?option=com_ticketstation&view=upcoming' . ($itemid ? '&Itemid=' . $itemid : '')));
         }
 
         $n = count($childs);

@@ -31,8 +31,9 @@ $document->setTitle( 'Betalen - ' . $app->get('sitename') );
 $document->addStyleSheet( 'components/com_ticketstation/assets/css/component.css' );
 HTMLHelper::_('jquery.framework');
 
-$shop_on = Route::_('index.php?view=upcoming');
-$gotocheckout = Route::_('index.php?view=checkout');
+$itemid = TicketstationFunctions::getSiteItemid();
+$shop_on = Route::_('index.php?option=com_ticketstation&view=upcoming' . ($itemid ? '&Itemid=' . $itemid : ''));
+$gotocheckout = Route::_('index.php?option=com_ticketstation&view=checkout' . ($itemid ? '&Itemid=' . $itemid : ''));
 
 $getamount = new getAmount();
 

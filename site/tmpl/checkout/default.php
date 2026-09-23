@@ -5,6 +5,7 @@ use Joomla\CMS\HTML\HTMLHelper;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\Router\Route;
 use Joomla\Event\Event;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\TicketstationFunctions;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\User;
 
 /**
@@ -31,7 +32,8 @@ $document->addStyleSheet( 'components/com_ticketstation/assets/css/component.css
 HTMLHelper::_('jquery.framework');
 
 ## Redirection link in JRoute:
-$gotocart = Route::_('index.php?view=cart');
+$itemid = TicketstationFunctions::getSiteItemid();
+$gotocart = Route::_('index.php?option=com_ticketstation&view=cart' . ($itemid ? '&Itemid=' . $itemid : ''));
 
 ## Getting the userinfo
 $user = new User();
@@ -90,7 +92,7 @@ $info = $user->getClientByOrdercode($ordercode);
         </div>
 
         <div>
-            <form id="general" action="<?php echo Route::_('index.php?option=com_ticketstation&controller=checkout'); ?>" method="post" name="general">
+            <form id="general" action="<?php echo Route::_('index.php?option=com_ticketstation&controller=checkout' . ($itemid ? '&Itemid=' . $itemid : '')); ?>" method="post" name="general">
                 <div class="col-lg-6">
                     <?php if($this->config->show_salutation != 0 ): ?>
                         <div class="row-fluid">

@@ -131,7 +131,8 @@ $document->addScriptDeclaration('
 
                         <?php if ($this->mollieconfig->bypass_mode == '1') {
 
-                            $link_to_start = Route::_('index.php?view=upcoming');
+                            $itemid = TicketstationFunctions::getSiteItemid();
+                            $link_to_start = Route::_('index.php?option=com_ticketstation&view=upcoming' . ($itemid ? '&Itemid=' . $itemid : ''));
                             ?>
 
                             <a class="btn btn-primary pull-right" type="button" onClick="location.href='<?php echo $link_to_start; ?>'">Nieuwe bestelling</a>

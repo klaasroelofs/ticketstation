@@ -4,11 +4,13 @@ defined('_JEXEC') or die;
 
 use Joomla\CMS\Router\Route;
 use Joomla\CMS\Uri\Uri;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\TicketstationFunctions;
 
 $orderCode = $this->orderCode;
+$itemid = TicketstationFunctions::getSiteItemid();
 $pollUrl = Uri::root() . "index.php?option=com_ticketstation&task=paymentresult.poll&format=json";
 //$resultUrl = Uri::root() . "index.php?option=com_ticketstation&view=paymentresult&ordercode=" . $orderCode;
-$resultUrl = Route::_('index.php?option=com_ticketstation&view=paymentresult&ordercode=' . $orderCode, false);
+$resultUrl = Route::_('index.php?option=com_ticketstation&view=paymentresult&ordercode=' . $orderCode . ($itemid ? '&Itemid=' . $itemid : ''), false);
 
 ?>
 

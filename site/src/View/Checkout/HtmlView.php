@@ -10,6 +10,7 @@ use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\View\HtmlView as BaseHtmlView;
 use Joomla\CMS\Router\Route;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Config;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\TicketstationFunctions;
 
 /**
  * @package     Joomla.Site
@@ -47,7 +48,8 @@ class HtmlView extends BaseHtmlView {
 
             if (isset($require->total)?$require->total:0 > 0)
             {
-                $link = Route::_('index.php?option=com_ticketstation&view=cart');
+                $itemid = TicketstationFunctions::getSiteItemid();
+                $link = Route::_('index.php?option=com_ticketstation&view=cart' . ($itemid ? '&Itemid=' . $itemid : ''));
                 $app->redirect($link, $require->total.' '.Text::_( 'COM_TICKETSTATION_TICKETS_REQUIRES_SEAT' ));
             }
 

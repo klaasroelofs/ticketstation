@@ -57,7 +57,8 @@ $ordertotal = $getAmount->_getAmount($ordercode);
 $fees = $getAmount->_getFees($ordercode);
 
 ## Redirection link in JRoute:
-$gotocart = Route::_('index.php?option=com_ticketstation&view=cart');
+$itemid = TicketstationFunctions::getSiteItemid();
+$gotocart = Route::_('index.php?option=com_ticketstation&view=cart' . ($itemid ? '&Itemid=' . $itemid : ''));
 
 #class main column
 if ($this->ticket->total > 0) {
@@ -121,11 +122,11 @@ if ($this->ticket->total > 0) {
 
                                 if ($row->show_seatplans == 1)
                                 {
-                                    $link 		= Route::_('index.php?view=seatedevent&cid='.$row->ticketid);
+                                    $link 		= Route::_('index.php?option=com_ticketstation&view=seatedevent&cid='.$row->ticketid . ($itemid ? '&Itemid=' . $itemid : ''));
                                 }
                                 else
                                 {
-                                    $link 		= Route::_('index.php?view=event&id='.$row->ticketid);
+                                    $link 		= Route::_('index.php?option=com_ticketstation&view=event&id='.$row->ticketid . ($itemid ? '&Itemid=' . $itemid : ''));
                                 }
 
                                 $ticketbackgroundimage_css = '';

@@ -249,10 +249,6 @@ class TicketstationNomenuRules implements RulesInterface
 
                 unset($query['view']);
 
-                if (isset($query['Itemid'])) {
-                    unset($query['Itemid']);
-                }
-
             } else {
 
                 $segments[] = $query['view'];
@@ -269,11 +265,6 @@ class TicketstationNomenuRules implements RulesInterface
             }
 
             unset($query['task']);
-
-            if (isset($query['Itemid'])) {
-                unset($query['Itemid']);
-            }
-
         }
 
         if (isset($query['id']))
