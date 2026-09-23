@@ -212,9 +212,9 @@ if (version_compare(JVERSION, '4.999.999', 'gt')) {
                     <div style="margin-bottom: 10px; text-align: center;"><?= Text::_('COM_TICKETSTATION_ENJOYING') ?></div>
                     <div style="text-align: center;">
                         <a
-                                href="https://www.paypal.com/donate/?business=TSVSU67MCBM8W&no_recurring=1&item_name=Thank+you+for+appreciating+Ticketstation%21&currency_code=EUR"
-                                class="btn btn-outline-success mb-2" target="blank">
-                            <span class="fa fa-donate"></span>
+                                href="https://ko-fi.com/klaasroelofs"
+                                class="btn btn-outline-success mb-2" target="_blank" rel="noopener noreferrer">
+                            <span class="fa fa-mug-hot" aria-hidden="true"></span>
                             <?= Text::_('COM_TICKETSTATION_DONATE') ?>
                         </a>
                     </div>
@@ -364,10 +364,9 @@ if (version_compare(JVERSION, '4.999.999', 'gt')) {
         <div class="col">
             <div class="ticketstation-cpanel-footer small mt-3 p-3 bg-light border-top border-4 d-flex flex-column">
                 <p class="text-muted">
-                    <span style="color:#c53c88;"><b><em>Ticketstation for Joomla!™</em></b></span> is based on the original code of RD Ticketmaster by Robert Dam,
-                    which has been massively reworked and enhanced to make it Joomla! 6.x compatible and to suit the specific needs of <a href="https://www.huibuuke.nl">Stichting De Huibuuke</a>, Overloon, The Netherlands.
-                    <br/>
-                    <strong>Use it to your advantage, but please do not expect close support. This extension was developed with limited programming skills, merely as a hobby project.</strong>
+                    <span style="color:#c53c88;"><b><em>Ticketstation for Joomla!™</em></b></span> is loosely based on the original code of RD Ticketmaster by Robert Dam,
+                    which has been massively reworked and enhanced to make it Joomla! 6.x compatible.<br/>
+                    <strong>Use it to your advantage, but please do not expect close support. This extension was developed mainly as a hobby project and published for others to enjoy. I'll try to help out, fix bugs and add new functionality the best I can though.</strong>
                 </p>
 
                 <p class="text-muted">
