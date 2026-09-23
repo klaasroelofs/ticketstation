@@ -740,9 +740,9 @@ class Confirmation
         }
 
         $query = $db->getQuery(true);
-        $query->select(['c.userid', 'w.id AS waitinglist_id']);
+        $query->select(['c.clientid AS userid', 'w.id AS waitinglist_id']);
         $query->from($db->quoteName('#__ticketstation_waitinglist', 'w'));
-        $query->join('LEFT', $db->quoteName('#__ticketstation_clients', 'c') . ' ON (' . $db->quoteName('c.userid') . ' = ' . $db->quoteName('w.userid') . ')');
+        $query->join('LEFT', $db->quoteName('#__ticketstation_clients', 'c') . ' ON (' . $db->quoteName('c.clientid') . ' = ' . $db->quoteName('w.userid') . ')');
         $query->where($db->quoteName('w.ordercode') . ' = ' . (int) $this->eid);
         $query->group('w.ordercode');
         $db->setQuery($query);

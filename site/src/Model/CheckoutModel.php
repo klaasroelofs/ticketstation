@@ -69,9 +69,23 @@ class CheckoutModel extends BaseDatabaseModel
             return false;
         }
 
-        if ( ! (new Order)->update($userid, $ordercode))
+        $db = Factory::getContainer()->get('DatabaseDriver');
+
+        $query = $db->getQuery(true)
+            ->select('COUNT(*)')
+            ->from($db->quoteName('#__ticketstation_orders'))
+            ->where($db->quoteName('ordercode') . ' = ' . $db->quote($ordercode));
+
+        $db->setQuery($query);
+
+        // A customer with only waiting-list tickets has no order yet: skip the ordercode
+        // rewrite, as the waiting-list rows (and the payment screen) still use this ordercode.
+        if ((int) $db->loadResult() > 0)
         {
-            return false;
+            if ( ! (new Order)->update($userid, $ordercode))
+            {
+                return false;
+            }
         }
 
         // Getting the configuration option.
@@ -79,8 +93,6 @@ class CheckoutModel extends BaseDatabaseModel
 
         if ($config->show_waitinglist == 1)
         {
-            $db = Factory::getContainer()->get('DatabaseDriver');
-
             $query = $db->getQuery(true);
 
             // Fields to update

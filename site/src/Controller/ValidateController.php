@@ -89,8 +89,9 @@ class ValidateController extends BaseController
             return false;
         }
 
-        $msg = Text::_('COM_TICKETSTATION_VALIDATION_WAITINGLIST_COMPLETED');
-        $app->redirect(Route::_('index.php?option=com_ticketstation&view=upcoming' . ($itemid ? '&Itemid=' . $itemid : '')), $msg);
+        // Note: CMSApplication::redirect()'s 2nd argument is the HTTP status code, not a message.
+        $app->enqueueMessage(Text::_('COM_TICKETSTATION_VALIDATION_WAITINGLIST_COMPLETED'), 'success');
+        $app->redirect(Route::_('index.php?option=com_ticketstation&view=upcoming' . ($itemid ? '&Itemid=' . $itemid : '')));
 
         return true;
     }

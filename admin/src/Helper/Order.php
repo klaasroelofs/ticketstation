@@ -187,6 +187,13 @@ class Order
                 ->where($db->quoteName('ordercode') . " = " . $ordercode);
             //->group('ordercode');
 
+            // Waiting-list rows that were already promoted to a real order no longer count as
+            // waiting; this matches what the cart lists (WaitingList::getOrdersOnWaitingList()).
+            if ($table === '#__ticketstation_waitinglist')
+            {
+                $query->where($db->quoteName('processed') . ' = 0');
+            }
+
             $db->setQuery($query);
             $order = $db->loadObject();
 

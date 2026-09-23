@@ -152,7 +152,7 @@ $venue_website_url = preg_match('#^https?://#i', $this->items->website) ? $this-
 
             <?php } ?>
 
-            <div style="height:45px; color:#444; text-align:center; padding-bottom:2px;">
+            <div style="min-height:45px; color:#444; text-align:center; padding-bottom:2px;">
 
                 <div id="message" style="display:none;"><!-- Dont remove this container, it is used for ordering messages --></div>
 
@@ -394,7 +394,7 @@ $venue_website_url = preg_match('#^https?://#i', $this->items->website) ? $this-
 
             <div>
 
-                <?php if (count($this->ordered) == 0) {
+                <?php if (count($this->ordered) == 0 && $this->waiting == 0) {
                     $style_continue = 'display: none;';
                 } else {
                     $style_continue = '';
@@ -454,7 +454,7 @@ $venue_website_url = preg_match('#^https?://#i', $this->items->website) ? $this-
             success: function (html) {
                 //if process.php returned 1/true (send mail success)
                 jQuery("#seatselection").delay(500).show(0);
-                if (!html.includes('empty_cart')) {
+                if (!html.includes('empty_cart') || html.includes('waitinglist_items')) {
                     jQuery("#continue-button").show(0);
                 } else {
                     jQuery("#continue-button").hide(0);
@@ -564,16 +564,11 @@ $venue_website_url = preg_match('#^https?://#i', $this->items->website) ? $this-
             success: function (html) {
                 // We're done, show data
 
-                if(html.status == 666) {
-
-                    jQuery( '#message' ).html(html.msg);
-                    updateCart();
-
-                }else{
-                    jQuery( "#message" ).html(html.msg);
-                    updateCart();
-
-                }
+                // #message is display:none by default, so it has to be shown explicitly. It stays
+                // visible (no fade-out): it tells the customer to continue to leave their details.
+                jQuery( "#message" ).stop(true, true).show();
+                jQuery( "#message" ).html(html.msg);
+                updateCart();
 
             },
             error:function (xhr, ajaxOptions, thrownError){

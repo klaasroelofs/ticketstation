@@ -386,7 +386,8 @@ class OrderController extends BaseController
 								<td style="text-align: right;"><strong>' . $TicketstationFunctions->showprice($config->priceformat, $ordertotal, $config->valuta) . '</strong></td>
 							</tr>
 						</table>';
-        } else {
+        } elseif ($config->show_waitinglist != 1 || $waiting < 1) {
+            // Not "empty" when the customer only has tickets on the waiting list.
             $update .= '<p id="empty_cart"><strong>' . Text::_('COM_TICKETSTATION_EMPTY_CART') . '</strong></p>';
         }
 
@@ -394,7 +395,7 @@ class OrderController extends BaseController
         {
             $waitingtickets = ($waiting > 1) ? Text::_('COM_TICKETSTATION_TICKETS') : Text::_('COM_TICKETSTATION_TICKET');
 
-            $update .= '<br/><br/>' . $waiting . ' ' . $waitingtickets . ' <br/>' . Text::_('COM_TICKETSTATION_IN_WAITNGLIST');
+            $update .= '<br/><br/><span id="waitinglist_items">' . $waiting . ' ' . $waitingtickets . ' <br/>' . Text::_('COM_TICKETSTATION_IN_WAITNGLIST') . '</span>';
         }
 
         echo '<div>' . $update . '</div>';
@@ -517,8 +518,9 @@ class OrderController extends BaseController
 
     public function itemcount ()
     {
-        $itemcount = (new Order)->getOrdersCountByOrdercode();
+        $order = new Order;
 
-        echo $itemcount;
+        // Tickets on the waiting list count too, so the basket badge reacts when joining it.
+        echo (int) $order->getOrdersCountByOrdercode() + (int) $order->getOrdersCountByOrdercode('#__ticketstation_waitinglist');
     }
 }

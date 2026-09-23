@@ -241,10 +241,28 @@ class CheckoutController extends BaseController
         // Remove from data from the userstate
         //$app->setUserState('com_ticketmaster.registration', null);
 
+        // A customer with only waiting-list tickets has no order that a payment would close off.
+        $query = $db->getQuery(true)
+            ->select('COUNT(*)')
+            ->from($db->quoteName('#__ticketstation_orders'))
+            ->where($db->quoteName('ordercode') . ' = ' . $db->quote($this->ordercode));
+        $db->setQuery($query);
+        $waitingOnly = ((int) $db->loadResult() === 0);
+
         // Update the order with user information
         if (!$models->itemsupdate($clientid, $this->ordercode))
         {
             return false;
+        }
+
+        if ($waitingOnly)
+        {
+            // The signup is complete: start a fresh cart, so the next waiting-list signup is not
+            // mixed up with this one (a payment clears the ordercode the same way). The payment
+            // screen finds these rows again through the remembered ordercode.
+            $session = $app->getSession();
+            $session->set('ticketstation.waitinglist_ordercode', (int) $this->ordercode);
+            $session->clear('ordercode');
         }
 
         // Joomla's built-in "borrow the active menu item's Itemid" fallback (System - SEF

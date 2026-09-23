@@ -44,6 +44,26 @@ class HtmlView extends BaseHtmlView {
         $model	= $this->getModel('payment');
 
         $query = $db->getQuery(true);
+        ## Count the tickets in the order table.
+        $query->select(array('COUNT(orderid) AS total'));
+        $query->from($db->quoteName('#__ticketstation_orders'));
+        $query->where($db->quoteName('ordercode')." = ".$db->quote($ordercode));
+
+        $db->setQuery($query);
+        $orders = $db->loadObjectList();
+
+        ## A finished waiting-list-only signup clears the session ordercode (see
+        ## CheckoutController::save()), so look its rows up by the remembered ordercode, once.
+        $waitcode = $session->get('ticketstation.waitinglist_ordercode');
+
+        if ($waitcode && empty($orders[0]->total))
+        {
+            $ordercode = $waitcode;
+        }
+
+        $session->clear('ticketstation.waitinglist_ordercode');
+
+        $query = $db->getQuery(true);
         ## Check if there are any tickets on the waiting list.
         $query->select(array('COUNT(id) AS total'));
         $query->from($db->quoteName('#__ticketstation_waitinglist'));
@@ -52,15 +72,6 @@ class HtmlView extends BaseHtmlView {
 
         $db->setQuery($query);
         $waitlist = $db->loadObjectList();
-
-        $query = $db->getQuery(true);
-        ## Count the tickets in the order table.
-        $query->select(array('COUNT(orderid) AS total'));
-        $query->from($db->quoteName('#__ticketstation_orders'));
-        $query->where($db->quoteName('ordercode')." = ".$db->quote($ordercode));
-
-        $db->setQuery($query);
-        $orders = $db->loadObjectList();
 
         $items	        = $this->get('data');
         $config	        = $this->get('config');

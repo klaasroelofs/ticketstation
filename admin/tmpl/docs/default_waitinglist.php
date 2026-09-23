@@ -10,7 +10,7 @@ use Joomla\CMS\Language\Text;
  * @license     GNU General Public License version 3; see LICENSE
  *
  * Waiting list topic on the central documentation page. Seated events are
- * intentionally out of scope for this feature - see [[waitinglist-feature-status]].
+ * intentionally out of scope for this feature.
  */
 
 // No direct access to this file

@@ -5,6 +5,7 @@ use Joomla\CMS\HTML\HTMLHelper;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\Router\Route;
 use Joomla\CMS\Uri\Uri;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\Date;
 
 /**
  * @package     Joomla.Administrator
@@ -74,7 +75,7 @@ $wa->registerAndUseStyle('ticketstation', Uri::base() . 'components\com_ticketst
                                     <span class="badge bg-warning"><?php echo Text::_( 'JNO' ); ?></span>
                                 <?php } ?>
                             </td>
-                            <td class="small d-none d-lg-table-cell text-center"><?php echo date($this->config->dateformat . ' H:i', strtotime($row->date_added)); ?></td>
+                            <td class="small d-none d-lg-table-cell text-center"><?php echo Date::_($row->date_added, $this->config->dateformat . ' H:i'); ?></td>
                         </tr>
                     <?php }  ?>
                 </table>

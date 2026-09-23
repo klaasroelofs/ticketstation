@@ -103,9 +103,21 @@ class HtmlView extends BaseHtmlView {
         $db->setQuery($query);
         $ordered = $db->loadObjectList();
 
+        // Tickets on the waiting list also need the "Verder" button, so the customer can reach
+        // the checkout to leave their details.
+        $query = $db->getQuery(true)
+            ->select('COUNT(id)')
+            ->from($db->quoteName('#__ticketstation_waitinglist'))
+            ->where($db->quoteName('ordercode') . ' = ' . $db->quote($ordercode))
+            ->where($db->quoteName('processed') . ' = 0');
+
+        $db->setQuery($query);
+        $waiting = (int) $db->loadResult();
+
 
         $this->ticket       = $ticket;
         $this->ordered      = $ordered;
+        $this->waiting      = $waiting;
         $this->items        = $items;
         $this->childs       = $childs;
         $this->config       = $config;

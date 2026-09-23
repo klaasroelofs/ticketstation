@@ -43,6 +43,9 @@ $discount 	= $getamount->_getDiscount($ordercode);
 
 $count = count($this->items);
 
+## Tickets still on the waiting list for this ordercode (the view returns a one-row list).
+$waiting = (int) ($this->waitlist[0]->total ?? 0);
+
 $genderLabels = [
     '1' => Text::_('COM_TICKETSTATION_MR'),
     '2' => Text::_('COM_TICKETSTATION_MRS'),
@@ -93,7 +96,19 @@ $genderLabels = [
 <div class="row ticketstation">
     <div class="col-xl-9">
 
-        <?php if ($count == 0) { ?>
+        <?php if ($count == 0 && $waiting > 0) { ?>
+
+            <div style="min-height:250px;">
+                <h2 class="ticketmaster-header"><strong><?= Text::_('COM_TICKETSTATION_WAITINGLIST_REGISTERED'); ?></strong></h2>
+
+                <p style="margin:30px 0px;"><?= Text::_('COM_TICKETSTATION_WAITINGLIST_CHECK_MAIL'); ?></p>
+
+                <a class="btn btn-forward-back pull-left" onClick="location.href='<?php echo $shop_on; ?>'">
+                    <span><?= Text::_('COM_TICKETSTATION_AVAILABLE_EVENTS'); ?></span>
+                </a>
+            </div>
+
+        <?php } elseif ($count == 0) { ?>
 
             <div style="min-height:250px;">
                 <h2 class="ticketmaster-header"><strong><?= Text::_('COM_TICKETSTATION_YOUR_CART_EMPTY'); ?></strong></h2>
@@ -107,21 +122,12 @@ $genderLabels = [
 
         <?php } else { ?>
 
-            <?php if(isset($this->waitlist->total)?$this->waitlist->total:0 != 0) { ?>
+            <?php if ($waiting > 0) { ?>
 
-                <?php if ($count != 0) { ?>
-
-                    <div class="alert">
-                        <p><?= Text::_('COM_TICKETSTATION_PLEASE_CONFIRM_WAITINGLIST_TIKETS'); ?></p>
-                        <p style="margin-top: 8px;"><?= Text::_('COM_TICKETSTATION_PLEASE_CONFIRM_WAITINGLIST_TIKETS_DESC'); ?></p>
-                    </div>
-
-                <?php } else { ?>
-
-                    <h2><?= $this->msg->mailsubject; ?></h2>
-                    <?= $this->msg->mailbody; ?>
-
-                <?php } ?>
+                <div class="alert">
+                    <p><?= Text::_('COM_TICKETSTATION_PLEASE_CONFIRM_WAITINGLIST_TIKETS'); ?></p>
+                    <p style="margin-top: 8px;"><?= Text::_('COM_TICKETSTATION_PLEASE_CONFIRM_WAITINGLIST_TIKETS_DESC'); ?></p>
+                </div>
 
             <?php } ?>
 

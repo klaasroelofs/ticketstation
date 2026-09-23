@@ -124,13 +124,18 @@ $itemid = TicketstationFunctions::getSiteItemid();
                                 $ticketssold 	= (new Ticket)->getTicketsSoldById($row->ticketid);
                                 $available_tickets = $row->starting_total_tickets - $ticketssold;
 
+                                // A sold-out ticket stays clickable when the waiting list is on, so the
+                                // customer can reach the event page to join it. Seated tickets are excluded:
+                                // their seat-picker has no waiting list.
+                                $waitinglist_open = ($available_tickets < 1 && $this->config->show_waitinglist == 1 && $row->show_seatplans != 1);
+
                                 ?>
 
 
 
                                 <div class="ticketmaster_upcoming_ticket" style="<?= $ticketbackgroundimage_css; ?>">
 
-                                    <?php if ($available_tickets > 0) { ?>
+                                    <?php if ($available_tickets > 0 || $waitinglist_open) { ?>
                                         <a href="<?= $link; ?>">
                                             <span class="ticketmaster_upcoming_ticketlink"></span>
                                         </a>
@@ -194,6 +199,11 @@ $itemid = TicketstationFunctions::getSiteItemid();
                                                             <div class="label label-important ">
                                                                 <?= Text::_( 'COM_TICKETSTATION_SOLD_OUT2' ); ?>
                                                             </div>
+                                                            <?php if ($waitinglist_open) { ?>
+                                                                <div class="label label-info" style="margin-left: 5px;">
+                                                                    <?= Text::_( 'COM_TICKETSTATION_WAITINGLIST_AVAILABLE' ); ?>
+                                                                </div>
+                                                            <?php } ?>
                                                         </td>
                                                     </tr>
                                                 <?php } ?>

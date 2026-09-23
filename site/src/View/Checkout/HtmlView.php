@@ -50,7 +50,8 @@ class HtmlView extends BaseHtmlView {
             {
                 $itemid = TicketstationFunctions::getSiteItemid();
                 $link = Route::_('index.php?option=com_ticketstation&view=cart' . ($itemid ? '&Itemid=' . $itemid : ''));
-                $app->redirect($link, $require->total.' '.Text::_( 'COM_TICKETSTATION_TICKETS_REQUIRES_SEAT' ));
+                $app->enqueueMessage($require->total.' '.Text::_( 'COM_TICKETSTATION_TICKETS_REQUIRES_SEAT' ), 'warning');
+                $app->redirect($link);
             }
 
         }

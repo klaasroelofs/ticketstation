@@ -366,8 +366,7 @@ class PaymentAPI
     {
         $config = $this->getConfig();
 
-        $select = array('o.*', 't.*', 'e.eventname', 'c.*', 't.ticketdate', 't.starttime', 't.location',
-            't.locationinfo', 'e.groupname', 't.eventcode', 't.ticketprice AS price');
+        $select = array('o.*', 't.*', 'e.eventname', 'c.*', 't.startdate', 'e.eventcode', 't.ticketprice AS price');
 
         $db = Factory::getContainer()->get('DatabaseDriver');
 
@@ -378,7 +377,7 @@ class PaymentAPI
 
         $query->select($select);
         $query->from($db->quoteName('#__ticketstation_waitinglist', 'o'));
-        $query->join('LEFT', $db->quoteName('#__ticketstation_clients', 'c') . ' ON (' . $db->quoteName('c.userid') . ' = ' . $db->quoteName('o.userid') . ')');
+        $query->join('LEFT', $db->quoteName('#__ticketstation_clients', 'c') . ' ON (' . $db->quoteName('c.clientid') . ' = ' . $db->quoteName('o.userid') . ')');
         $query->join('LEFT', $db->quoteName('#__ticketstation_events', 'e') . ' ON (' . $db->quoteName('e.eventid') . ' = ' . $db->quoteName('o.eventid') . ')');
         $query->join('LEFT', $db->quoteName('#__ticketstation_tickets', 't') . ' ON (' . $db->quoteName('t.ticketid') . ' = ' . $db->quoteName('o.ticketid') . ')');
         $query->where($db->quoteName('o.ordercode') . ' = ' . $db->quote((int)$this->ordercode));
@@ -395,7 +394,7 @@ class PaymentAPI
             $row = $this->orderData[$i];
 
             $price = (new TicketstationFunctions)->showprice($config->priceformat, $row->ticketprice, $config->valuta);
-            $ticketdate = date($config->dateformat, strtotime($row->ticketdate));
+            $ticketdate = date($config->dateformat, strtotime($row->startdate));
 
             $orders .= '<li>[ ' . $row->id . ' ] - [ ' . $ticketdate . ' ] - <strong>' . $row->ticketname . '</strong> [ ' . $price . ' ]</li>';
         }
