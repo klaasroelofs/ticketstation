@@ -174,8 +174,7 @@ class PaymentController extends BaseController
             ## Process the order
             if ($this->ProcessBypassMollie($this->ordercode)) {
                 ## Bypass or amount = 0 >> redirect to mollieBypass with token
-                header("Location: index.php?option=com_ticketstation&controller=payment&task=molliebypass&token=" . $bypass_token);
-                exit();
+                Factory::getApplication()->redirect(Route::_('index.php?option=com_ticketstation&controller=payment&task=molliebypass&token=' . $bypass_token));
             }
 
         }
@@ -192,7 +191,7 @@ class PaymentController extends BaseController
         $order_id = $ordercode;
 
         ## Start the API to process everything.
-        $newPayment = new paymentAPI((int)$order_id);
+        $newPayment = new PaymentAPI((int)$order_id);
 
         ## Update the order state in the order table:
         $payment_state = $newPayment->updateOrder();
@@ -245,7 +244,7 @@ class PaymentController extends BaseController
         }
 
         ## Start the API to process everything.
-        $newPayment = new paymentAPI(0);
+        $newPayment = new PaymentAPI(0);
 
         ## Look up the temp transaction using the secure random token (not guessable md5).
         $temp_transaction = $newPayment->getTempTransactionResult($return_token);
@@ -255,7 +254,7 @@ class PaymentController extends BaseController
         }
 
         ## Clear session and mark this browser as authorized for this order.
-        $newPayment = new paymentAPI((int)$temp_transaction->ordercode);
+        $newPayment = new PaymentAPI((int)$temp_transaction->ordercode);
         $newPayment->clearSession();
 
         ## Marking this browser session as authorized to view/download this order's tickets.
@@ -351,7 +350,7 @@ class PaymentController extends BaseController
         $payment_details = http_build_query($payment);
 
         ## Start the API to process everything.
-        $newPayment = new paymentAPI((int)$order_id);
+        $newPayment = new PaymentAPI((int)$order_id);
         ## Look up temp transaction by ordercode (now returns the one with return_token).
         ## Webhooks only have the ordercode from metadata, not the token.
         $tmpTransaction = $newPayment->getTempTransactionByOrdercode($order_id);

@@ -21,7 +21,7 @@ use Ticketstation\Component\Ticketstation\Administrator\Helper\PDF\FPDI_EAN13;
 
 defined('_JEXEC') or die('Restricted access');
 
-class confirmation
+class Confirmation
 {
     private $eid;
     private $font;
@@ -654,12 +654,12 @@ class confirmation
     {
         $mainframe = Factory::getApplication();
 
-        if ( ! class_exists('paymentAPI'))
+        if ( ! class_exists(PaymentAPI::class))
         {
             exit("Class is not available to process transactions.");
         }
 
-        $payment_helper = new paymentAPI((int) $this->eid);
+        $payment_helper = new PaymentAPI((int) $this->eid);
 
         $db     = Factory::getContainer()->get('DatabaseDriver');
         $config = $payment_helper->getConfig();
@@ -728,12 +728,12 @@ class confirmation
     public function SendWaitingList()
     {
         ## Check if the class exsists:
-        if ( ! class_exists('paymentAPI'))
+        if ( ! class_exists(PaymentAPI::class))
         {
             exit("Class is not available to process transactions.");
         }
 
-        $payment_helper = new paymentAPI((int) $this->eid);
+        $payment_helper = new PaymentAPI((int) $this->eid);
         $db             = Factory::getContainer()->get('DatabaseDriver');
         $query          = $db->getQuery(true);
         $query->select(['COUNT(id) AS total']);

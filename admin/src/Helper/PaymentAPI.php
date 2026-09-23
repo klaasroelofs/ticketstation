@@ -9,7 +9,7 @@ use stdClass;
 
 defined('_JEXEC') or die;
 
-class paymentAPI
+class PaymentAPI
 {
     private $ordercode;
     private $orderCount;
@@ -350,7 +350,7 @@ class paymentAPI
     ## send the confirmation to the client.
     public function sendConfirmation()
     {
-        $sendconfirmation = new confirmation((int)$this->ordercode);
+        $sendconfirmation = new Confirmation((int)$this->ordercode);
         $sendconfirmation->doConfirm();
         $sendconfirmation->doSend();
 

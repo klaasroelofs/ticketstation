@@ -21,13 +21,13 @@ use Joomla\CMS\MVC\Model\ListModel;
 use Joomla\CMS\Pagination\Pagination;
 use Joomla\Utilities\ArrayHelper;
 use stdClass;
-use Ticketstation\Component\Ticketstation\Administrator\Helper\confirmation;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\Confirmation;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\QueryHelper;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\eTicketsMessage;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\getAmount;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\History;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Invoice;
-use Ticketstation\Component\Ticketstation\Administrator\Helper\paymentAPI;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\PaymentAPI;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\SendonPayment;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\SendTicketCopy;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\ticketcreator;
@@ -981,7 +981,7 @@ class BoxofficeModel extends ListModel
 
                 ## Start the API to process everything.
                 require_once JPATH_ADMINISTRATOR . '/components/com_ticketstation/src/Helper/PaymentAPI.php';
-                $newProcess = new paymentAPI((int) $ordercode);
+                $newProcess = new PaymentAPI((int) $ordercode);
 
                 ## Set order to paid:
                 $payment_state = $newProcess->updateOrder();
@@ -1199,7 +1199,7 @@ class BoxofficeModel extends ListModel
 
 
                 require_once JPATH_ADMINISTRATOR . '/components/com_ticketstation/src/Helper/PaymentAPI.php';
-                $processor = new paymentAPI((int) $row->ordercode);
+                $processor = new PaymentAPI((int) $row->ordercode);
                 $message   = new eTicketsMessage;
 
                 $variables = [
@@ -1361,7 +1361,7 @@ class BoxofficeModel extends ListModel
             {
                 $row = $data[$i];
 
-                $sendconfirmation = new confirmation((int) $row->ordercode);
+                $sendconfirmation = new Confirmation((int) $row->ordercode);
                 $sendconfirmation->doConfirm();
                 $sendconfirmation->doSend();
 

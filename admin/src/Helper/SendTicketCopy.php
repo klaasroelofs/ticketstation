@@ -99,7 +99,7 @@ class SendTicketCopy
 
         require_once __DIR__ . '/PaymentAPI.php';
 
-        $payment_helper = new paymentAPI((int) $this->eid);
+        $payment_helper = new PaymentAPI((int) $this->eid);
 
         // Clearing!
         $this->info  = '';

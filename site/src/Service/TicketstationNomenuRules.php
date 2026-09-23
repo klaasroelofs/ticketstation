@@ -70,6 +70,19 @@ class TicketstationNomenuRules implements RulesInterface
      */
     public function parse(&$segments, &$vars)
     {
+        // Nothing left for us to interpret (e.g. the request matched a menu item's own SEF
+        // route exactly). Keep whatever view StandardRules already resolved from that menu
+        // item's stored query, as long as it is actually one of ours; only wipe it when it
+        // isn't (e.g. an unrelated menu item's query bled through), matching the fallback
+        // behaviour below for requests with no matching menu item at all.
+        if (empty($segments)) {
+            if (!isset($vars['view']) || !array_key_exists($vars['view'], $this->router->getViews())) {
+                $vars = [];
+            }
+
+            return;
+        }
+
         $vars = [];
         switch (true) {
             case $segments[0] === 'upcoming':
@@ -130,12 +143,12 @@ class TicketstationNomenuRules implements RulesInterface
             case $segments[0] === 'ticketscanner':
                 $vars['view'] = 'ticketscanner';
 
-                if (strpos($segments[1], 't') === false) {
-                    $eventid = substr($segments[1], strpos($segments[1], '-') + 1);
-                    $vars['eventid'] = $eventid;
-                } else {
-                    $ticketid = substr($segments[1], strpos($segments[1], '-') + 1);
-                    $vars['ticketid'] = $ticketid;
+                if (!empty($segments[1])) {
+                    if (strpos($segments[1], 't-') === 0) {
+                        $vars['ticketid'] = substr($segments[1], strpos($segments[1], '-') + 1);
+                    } else {
+                        $vars['eventid'] = substr($segments[1], strpos($segments[1], '-') + 1);
+                    }
                 }
 
                 $vars['tmpl'] = 'component';
@@ -151,25 +164,31 @@ class TicketstationNomenuRules implements RulesInterface
             case $segments[0] === 'statistics':
                 $vars['view'] = 'statistics';
 
-                $id = explode(':', $segments[1]);
-                $vars['id'] = (int)$id[0];
+                if (isset($segments[1])) {
+                    $id = explode(':', $segments[1]);
+                    $vars['id'] = (int) $id[0];
+                }
 
-                $salesstats = explode(':', $segments[2]);
-                $vars['salesstats'] = $salesstats[0];
+                if (isset($segments[2])) {
+                    $salesstats = explode(':', $segments[2]);
+                    $vars['salesstats'] = $salesstats[0];
+                }
 
-                $salesperticket = explode(':', $segments[3]);
-                $vars['salesperticket'] = (int)$salesperticket[0];
+                if (isset($segments[3])) {
+                    $salesperticket = explode(':', $segments[3]);
+                    $vars['salesperticket'] = (int) $salesperticket[0];
+                }
 
-                $scanstats = explode(':', $segments[4]);
-                $vars['scanstats'] = $scanstats[0];
+                if (isset($segments[4])) {
+                    $scanstats = explode(':', $segments[4]);
+                    $vars['scanstats'] = $scanstats[0];
+                }
 
                 break;
         }
 
         // Empty array to prevent Router from throwing an exception
-        $segments = array_diff($segments, $segments);
-
-        return;
+        $segments = [];
     }
 
     /**
@@ -203,19 +222,19 @@ class TicketstationNomenuRules implements RulesInterface
 
             } elseif ($query['view'] === 'event') {
 
-                $segments[] = $query['view'] . '-' . $query['id'];
+                $segments[] = $query['view'] . '-' . ($query['id'] ?? '');
                 unset($query['view']);
                 unset($query['id']);
 
             } elseif ($query['view'] === 'seatedevent') {
 
-                $segments[] = $query['view'] . '-' . $query['cid'];
+                $segments[] = $query['view'] . '-' . ($query['cid'] ?? '');
                 unset($query['view']);
                 unset($query['cid']);
 
             } elseif ($query['view'] === 'scanchart') {
 
-                $segments[] = $query['view'] . '-' . $query['id'];
+                $segments[] = $query['view'] . '-' . ($query['id'] ?? '');
                 unset($query['view']);
                 unset($query['id']);
 

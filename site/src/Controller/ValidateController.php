@@ -10,7 +10,7 @@ use Joomla\CMS\Factory;
 use Joomla\CMS\Router\Route;
 use Joomla\CMS\Uri\Uri;
 use Mollie\Api\MollieApiClient;
-use Ticketstation\Component\Ticketstation\Administrator\Helper\confirmation;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\Confirmation;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\getAmount;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Order;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Ordercode;
@@ -88,7 +88,7 @@ class ValidateController extends BaseController
         }
 
         $msg = Text::_('COM_TICKETSTATION_VALIDATION_WAITINGLIST_COMPLETED');
-        $app->redirect('index.php?option=com_ticketstation&view=upcoming', $msg);
+        $app->redirect(Route::_('index.php?option=com_ticketstation&view=upcoming'), $msg);
 
         return true;
     }
@@ -238,7 +238,7 @@ class ValidateController extends BaseController
         {
             require_once  JPATH_ADMINISTRATOR . '/components/com_ticketstation/src/Helpers/confirmation.php';
 
-            $sendconfirmation = new confirmation((int) $this->ordercode);
+            $sendconfirmation = new Confirmation((int) $this->ordercode);
             $sendconfirmation->doConfirm();
             $sendconfirmation->doSend();
         }

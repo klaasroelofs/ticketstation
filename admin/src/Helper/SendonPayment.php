@@ -87,7 +87,7 @@ class SendonPayment
     {
 
         //Start helper:
-        $payment_helper = new paymentAPI( $this->eid );
+        $payment_helper = new PaymentAPI( $this->eid );
 
         $db = Factory::getContainer()->get('DatabaseDriver');
 

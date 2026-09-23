@@ -10,7 +10,7 @@ use Joomla\CMS\MVC\Model\BaseDatabaseModel;
 use Joomla\CMS\Pagination\Pagination;
 use Joomla\Database\DatabaseQuery;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Config;
-use Ticketstation\Component\Ticketstation\Administrator\Helper\confirmation;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\Confirmation;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Coupon;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Order;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\User;
@@ -99,7 +99,7 @@ class CheckoutModel extends BaseDatabaseModel
                 return false;
             }
 
-            $sendconfirmation = new confirmation((int) $ordercode);
+            $sendconfirmation = new Confirmation((int) $ordercode);
             $sendconfirmation->SendWaitingList();
         }
 

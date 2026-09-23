@@ -15,7 +15,6 @@ defined('_JEXEC') or die('Restricted access');
 
 use Joomla\CMS\Application\SiteApplication;
 use Joomla\CMS\Categories\CategoryFactoryInterface;
-use Joomla\CMS\Component\ComponentHelper;
 use Joomla\CMS\Component\Router\RouterView;
 use Joomla\CMS\Component\Router\RouterViewConfiguration;
 use Joomla\CMS\Component\Router\Rules\MenuRules;
@@ -31,8 +30,6 @@ use Joomla\Database\DatabaseInterface;
  */
 class Router extends RouterView
 {
-    protected $noIDs = false;
-
     /**
      * The category factory
      *
@@ -65,9 +62,6 @@ class Router extends RouterView
         $this->categoryFactory = $categoryFactory;
         $this->db              = $db;
 
-        $params = ComponentHelper::getParams('com_ticketstation');
-        $this->noIDs = (bool) $params->get('sef_ids');
-
         $upcoming = new RouterViewConfiguration('upcoming');
         $this->registerView($upcoming);
 
@@ -76,6 +70,9 @@ class Router extends RouterView
 
         $seatedevent = new RouterViewConfiguration('seatedevent');
         $this->registerView($seatedevent);
+
+        $scanchart = new RouterViewConfiguration('scanchart');
+        $this->registerView($scanchart);
 
         $cart = new RouterViewConfiguration('cart');
         $this->registerView($cart);

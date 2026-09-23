@@ -369,7 +369,7 @@ class Payment
     ## send the confirmation to the client.
     public function sendConfirmation()
     {
-        $sendconfirmation = new confirmation((int) $this->ordercode);
+        $sendconfirmation = new Confirmation((int) $this->ordercode);
         $sendconfirmation->doConfirm();
         $sendconfirmation->doSend();
 
@@ -557,7 +557,7 @@ class Payment
             $ordercode = $this->ordercode;
         }
 
-        return (new paymentAPI((int) $ordercode))->generatePaymentLink($ordercode);
+        return (new PaymentAPI((int) $ordercode))->generatePaymentLink($ordercode);
     }
 
     /**
@@ -570,6 +570,6 @@ class Payment
             $ordercode = $this->ordercode;
         }
 
-        return (new paymentAPI((int) $ordercode))->generateConfirmationLink($ordercode);
+        return (new PaymentAPI((int) $ordercode))->generateConfirmationLink($ordercode);
     }
 }

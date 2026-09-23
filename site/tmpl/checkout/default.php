@@ -90,7 +90,7 @@ $info = $user->getClientByOrdercode($ordercode);
         </div>
 
         <div>
-            <form id="general" action="index.php?option=com_ticketstation&controller=checkout" method="post" name="general">
+            <form id="general" action="<?php echo Route::_('index.php?option=com_ticketstation&controller=checkout'); ?>" method="post" name="general">
                 <div class="col-lg-6">
                     <?php if($this->config->show_salutation != 0 ): ?>
                         <div class="row-fluid">

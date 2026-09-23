@@ -478,7 +478,7 @@ $TicketstationFunctions = new TicketstationFunctions();
 
         jQuery.ajax({
             //this is the php file that processes the data and send mail
-            url: "index.php?option=com_ticketstation&controller=order&task=itemcount&format=raw",
+            url: "/index.php?option=com_ticketstation&controller=order&task=itemcount&format=raw",
             //POST method is used
             type: "POST",
             //pass the data

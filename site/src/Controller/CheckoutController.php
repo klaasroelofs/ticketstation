@@ -129,7 +129,7 @@ class CheckoutController extends BaseController
             if ( ! $res[0])
             {
                 $app->enqueueMessage(Text::_('COM_TICKETSTATION_CAPTCHA_INCORRECT'), 'error');
-                $app->redirect('index.php?option=com_ticketstation&view=checkout');
+                $app->redirect(Route::_('index.php?option=com_ticketstation&view=checkout'));
             }
         }
         */

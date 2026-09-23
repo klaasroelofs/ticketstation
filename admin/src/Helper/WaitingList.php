@@ -347,7 +347,7 @@ class WaitingList
     private function sendPayment($cids=array()){
 
         ## Check if the class exists:
-        if (!class_exists('paymentAPI')) {
+        if (!class_exists(PaymentAPI::class)) {
             exit("Class is not available to process transactions.");
         }
 
@@ -367,7 +367,7 @@ class WaitingList
 
             $row = $data[$i];
 
-            $payment_helper = new paymentAPI( (int)$row->ordercode );
+            $payment_helper = new PaymentAPI( (int)$row->ordercode );
             $config         = $payment_helper->getConfig();
 
             $query = $db->getQuery(true);

@@ -379,7 +379,7 @@ $TicketstationFunctions = new TicketstationFunctions();
 
         $.ajax({
             //this is the php file that processes the data
-            url: "index.php?option=com_ticketstation&controller=orderseated&task=updateSeat&format=raw",
+            url: "/index.php?option=com_ticketstation&controller=orderseated&task=updateSeat&format=raw",
             //POST method is used
             type: "POST",
             //pass the data
@@ -416,7 +416,7 @@ $TicketstationFunctions = new TicketstationFunctions();
 
         $.ajax({
             //this is the php file that processes the data
-            url: "index.php?option=com_ticketstation&controller=orderseated&task=removeseat&format=raw",
+            url: "/index.php?option=com_ticketstation&controller=orderseated&task=removeseat&format=raw",
             //POST method is used
             type: "POST",
             //pass the data
@@ -472,7 +472,7 @@ $TicketstationFunctions = new TicketstationFunctions();
 
         $.ajax({
             //this is the php file that processes the data
-            url: "index.php?option=com_ticketstation&controller=orderseated&task=loadSeat&format=raw",
+            url: "/index.php?option=com_ticketstation&controller=orderseated&task=loadSeat&format=raw",
             //POST method is used
             type: "POST",
             //pass the data
@@ -512,7 +512,7 @@ $TicketstationFunctions = new TicketstationFunctions();
 
             $.ajax({
                 //this is the php file that processes the data
-                url: "index.php?option=com_ticketstation&controller=orderseated&task=makeReservation&format=raw",
+                url: "/index.php?option=com_ticketstation&controller=orderseated&task=makeReservation&format=raw",
                 //POST method is used
                 type: "POST",
                 //pass the data
@@ -572,7 +572,7 @@ $TicketstationFunctions = new TicketstationFunctions();
 
         $.ajax({
             //this is the php file that processes the data
-            url: "index.php?option=com_ticketstation&controller=orderseated&task=loadCart&format=raw",
+            url: "/index.php?option=com_ticketstation&controller=orderseated&task=loadCart&format=raw",
             //POST method is used
             type: "POST",
             //Do not cache the page
@@ -602,7 +602,7 @@ $TicketstationFunctions = new TicketstationFunctions();
         
         jQuery.ajax({
             //this is the php file that processes the data and send mail
-            url: "index.php?option=com_ticketstation&controller=order&task=itemcount&format=raw",
+            url: "/index.php?option=com_ticketstation&controller=order&task=itemcount&format=raw",
             //POST method is used
             type: "POST",
             //pass the data
@@ -622,7 +622,7 @@ $TicketstationFunctions = new TicketstationFunctions();
 
         jQuery.ajax({
             //this is the php file that processes the data and send mail
-            url: "index.php?option=com_ticketstation&controller=order&task=updatecart&format=raw",
+            url: "/index.php?option=com_ticketstation&controller=order&task=updatecart&format=raw",
             //POST method is used
             type: "POST",
             //pass the data
