@@ -114,6 +114,17 @@ class PaymentController extends BaseController
                 ## Transaction already exists for this ordercode; look it up to get the token
                 $existing = $newPayment->getTempTransactionByOrdercode($this->ordercode);
                 $return_token = $existing->return_token;
+
+                ## Existing rows created before the return_token column existed (or otherwise
+                ## missing a token) would otherwise send the customer to Mollie with an empty
+                ## 'order=' redirect parameter. Backfill a fresh token onto that row instead.
+                if (!$return_token) {
+                    $return_token = $newPayment->refreshReturnToken($existing->id);
+
+                    if (!$return_token) {
+                        exit(Text::_('COM_TICKETSTATION_MOLLIE_ERROR_1000'));
+                    }
+                }
             }
 
             try {

@@ -97,6 +97,38 @@ class paymentAPI
         return count($temp_transaction);
     }
 
+    ## Backfill a return_token for a temp transaction row that doesn't have one yet
+    ## (e.g. a legacy row created before the return_token column existed). Generates
+    ## a fresh cryptographically random token, persists it by row id, and returns it.
+    public function refreshReturnToken($id)
+    {
+        $db = Factory::getContainer()->get('DatabaseDriver');
+
+        $token = bin2hex(random_bytes(32));
+
+        $query = $db->getQuery(true);
+
+        $fields = array(
+            $db->quoteName('return_token') . ' = ' . $db->quote($token)
+        );
+
+        $conditions = array(
+            $db->quoteName('id') . ' = ' . $db->quote((int)$id)
+        );
+
+        $query->update($db->quoteName('#__ticketstation_transactions_temp'))
+            ->set($fields)
+            ->where($conditions);
+
+        $db->setQuery($query);
+
+        if (!$db->execute()) {
+            return false;
+        }
+
+        return $token;
+    }
+
     ## Get temp transaction result by return_token.
     ## Now looks up by the cryptographically random return_token instead of the guessable transaction_number.
     public function getTempTransactionResult($intTrxId)
