@@ -109,13 +109,13 @@ $TicketstationFunctions = new TicketstationFunctions();
                         <td><?php echo $this->items->venue; ?> - <?php echo $this->items->city; ?></td>
                     </tr>
                 <?php } ?>
-                <?php if ($this->config->show_venue_address == 1 && ($this->items->street != '' || $this->items->zipcode != '')) { ?>
+                <?php if ($this->config->show_venue == 1 && $this->config->show_venue_address == 1 && ($this->items->street != '' || $this->items->zipcode != '')) { ?>
                     <tr>
                         <td style="font-weight:bold;">Adres:</td>
                         <td><?php echo htmlspecialchars(trim($this->items->street . ', ' . $this->items->zipcode . ' ' . $this->items->city, ', '), ENT_QUOTES, 'UTF-8'); ?></td>
                     </tr>
                 <?php } ?>
-                <?php if ($this->config->show_venue_website == 1 && $this->items->website != '') { ?>
+                <?php if ($this->config->show_venue == 1 && $this->config->show_venue_website == 1 && $this->items->website != '') { ?>
                     <tr>
                         <td style="font-weight:bold;">Website:</td>
                         <td><a href="<?php echo htmlspecialchars($venue_website_url, ENT_QUOTES, 'UTF-8'); ?>" target="_blank" rel="noopener"><?php echo htmlspecialchars($this->items->website, ENT_QUOTES, 'UTF-8'); ?></a></td>
@@ -123,7 +123,7 @@ $TicketstationFunctions = new TicketstationFunctions();
                 <?php } ?>
             </table>
 
-            <?php if ($this->config->show_venue_description == 1 && trim(strip_tags($this->items->venuedescription)) != '') { ?>
+            <?php if ($this->config->show_venue == 1 && $this->config->show_venue_description == 1 && trim(strip_tags($this->items->venuedescription)) != '') { ?>
                 <div class="ticketstation_venue_description">
                     <?php echo $this->items->venuedescription; ?>
                 </div>
