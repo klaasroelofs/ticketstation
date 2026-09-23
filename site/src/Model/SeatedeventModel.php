@@ -43,7 +43,7 @@ class SeatedeventModel extends BaseDatabaseModel {
             $db = Factory::getContainer()->get('DatabaseDriver');
 
             ## Making the query for showing all the clients in list function
-            $query = 'SELECT priceformat, valuta FROM #__ticketstation_config WHERE configid = 1';
+            $query = 'SELECT priceformat, valuta, show_venue FROM #__ticketstation_config WHERE configid = 1';
 
             $db->setQuery($query);
             $this->data = $db->loadObject();

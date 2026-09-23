@@ -176,10 +176,12 @@ if ($this->ticket->total > 0) {
                                                     <td>Aanvang:</td>
                                                     <td><?= date('H:i', strtotime($row->startdate)); ?> uur</td>
                                                 </tr>
-                                                <tr>
-                                                    <td>Locatie:</td>
-                                                    <td><?= $row->venue; ?> - <?= $row->city; ?></td>
-                                                </tr>
+                                                <?php if ($this->config->show_venue == 1) { ?>
+                                                    <tr>
+                                                        <td>Locatie:</td>
+                                                        <td><?= $row->venue; ?> - <?= $row->city; ?></td>
+                                                    </tr>
+                                                <?php } ?>
                                                 <?php if($this->config->show_price_eventlist == 1) { ?>
                                                     <tr>
                                                         <td>Prijs:</td>

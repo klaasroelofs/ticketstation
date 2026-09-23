@@ -33,7 +33,7 @@ class HtmlView extends BaseHtmlView {
         $isadmin = $user->authorise('core.manage');
 
         $this->config = (new Config)->getPartialConfig([
-            'show_waitinglist', 'dateformat', 'priceformat', 'valuta', 'show_quantity_eventlist', 'show_price_eventlist', 'transactioncosts', 'transcosts', 'variable_transcosts',
+            'show_waitinglist', 'dateformat', 'priceformat', 'valuta', 'show_quantity_eventlist', 'show_price_eventlist', 'show_venue', 'transactioncosts', 'transcosts', 'variable_transcosts',
         ]);
 
         $items      = $this->get('list');

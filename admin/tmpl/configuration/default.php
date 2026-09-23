@@ -139,6 +139,19 @@ $document->setTitle(Text::_('COM_TICKETSTATION_VIEW_CONFIGURATION_TITLE') . ' - 
                 </div>
             </div>
             <div class="row mb-3">
+                <label for="show_venue" class="col-sm-3 col-form-label"
+                       rel="popover"
+                       title="<?= Text::_('COM_TICKETSTATION_SHOW_VENUE') ?>">
+                    <?= Text::_('COM_TICKETSTATION_SHOW_VENUE') ?>
+                </label>
+                <div class="col-sm-9">
+                    <?= $this->lists['show_venue']; ?>
+                    <small class="form-text">
+                        <?= Text::_('COM_TICKETSTATION_SHOW_VENUE_DESC') ?>
+                    </small>
+                </div>
+            </div>
+            <div class="row mb-3">
                 <label for="use_coupons" class="col-sm-3 col-form-label"
                        rel="popover"
                        title="<?= Text::_('COM_TICKETSTATION_SHOW_COUPON_SYSTEM') ?>">

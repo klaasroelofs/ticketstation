@@ -132,10 +132,12 @@ $TicketstationFunctions = new TicketstationFunctions();
                     <td style="padding-right:5px;font-weight:bold;">Datum:</td>
                     <td><?php echo date('d-m-Y H:i', strtotime($this->ticketdetails->startdate)); ?></td>
                 </tr>
-                <tr>
-                    <td style="font-weight:bold;">Locatie:</td>
-                    <td><?php echo $this->ticketdetails->venue; ?> - <?php echo $this->ticketdetails->city; ?></td>
-                </tr>
+                <?php if ($this->config->show_venue == 1) { ?>
+                    <tr>
+                        <td style="font-weight:bold;">Locatie:</td>
+                        <td><?php echo $this->ticketdetails->venue; ?> - <?php echo $this->ticketdetails->city; ?></td>
+                    </tr>
+                <?php } ?>
             </table>
 
             <div style="height:45px; margin:8px 0px 10px 0px; color:#000; text-align:center; padding-bottom:2px;">

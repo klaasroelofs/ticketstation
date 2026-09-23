@@ -86,6 +86,9 @@ class HtmlView extends BaseHtmlView {
         $lists['show_price_eventlist'] = HTMLHelper::_('select.genericList', $yesno, 'show_price_eventlist', ' class="form-select" ' . '',
             'value', 'text', $config->show_price_eventlist);
 
+        $lists['show_venue'] = HTMLHelper::_('select.genericList', $yesno, 'show_venue', ' class="form-select" ' . '',
+            'value', 'text', $config->show_venue);
+
         $lists['show_google_maps'] = HTMLHelper::_('select.genericList', $yesno, 'show_google_maps', ' class="form-select" ' . '',
             'value', 'text', $config->show_google_maps);
 

@@ -152,6 +152,7 @@ CREATE TABLE IF NOT EXISTS `#__ticketstation_config` (
   `show_downoad_button_in_myorders` tinyint(1) NOT NULL,
   `next_ordercode` varchar(20) NOT NULL DEFAULT '',
   `invoice_logo` varchar(255) NOT NULL DEFAULT '',
+  `show_venue` tinyint(1) NOT NULL DEFAULT 1,
   PRIMARY KEY (`configid`)
 )  ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 DEFAULT COLLATE=utf8mb4_unicode_ci;
 
@@ -849,4 +850,5 @@ INSERT IGNORE INTO `#__ticketstation_config` VALUES(
 "test@yourdomain.com, welcome@yourdomain.com, name@yourdomain.com",
 "0",
 "",
-"");
+"",
+"1");
