@@ -49,6 +49,11 @@ class HtmlView extends BaseHtmlView {
             '1' => ['value' => '1', 'text' => Text::_('COM_TICKETSTATION_YES')],
         ];
 
+        $variablefixed = [
+            '0' => ['value' => '0', 'text' => Text::_('COM_TICKETSTATION_FIXED')],
+            '1' => ['value' => '1', 'text' => Text::_('COM_TICKETSTATION_VARIABLE')],
+        ];
+
         $lists = [];
 
         $lists['show_thirdaddress'] = HTMLHelper::_('select.genericList', $yesno, 'show_thirdaddress', ' class="form-select" ' . '',
@@ -69,7 +74,7 @@ class HtmlView extends BaseHtmlView {
         $lists['show_cancel'] = HTMLHelper::_('select.genericList', $yesno, 'show_cancel', ' class="form-select" ' . '',
             'value', 'text', $config->show_cancel);
 
-        $lists['variable_transcosts'] = HTMLHelper::_('select.genericList', $yesno, 'variable_transcosts', ' class="form-select" ' . '',
+        $lists['variable_transcosts'] = HTMLHelper::_('select.genericList', $variablefixed, 'variable_transcosts', ' class="form-select" ' . '',
             'value', 'text', $config->variable_transcosts);
 
         $lists['show_available_tickets'] = HTMLHelper::_('select.genericList', $yesno, 'show_available_tickets', ' class="form-select" ' . '',

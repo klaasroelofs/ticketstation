@@ -34,12 +34,12 @@ $wa->registerAndUseStyle('ticketstation', Uri::base() . 'components\com_ticketst
                             <td class="w-1 text-center">
                                 <input class="form-check-input" type="checkbox" name="checkall-toggle" value="" title="Check All Items" onclick="Joomla.checkAll(this)" data-original-title="Check All">
                             </td>
-                            <th scope="col"><?php echo Text::_( 'COM_TICKETSTATION_EVENT' ); ?></th>
-                            <th scope="col"><?php echo Text::_( 'COM_TICKETSTATION_TICKET' ); ?></th>
-                            <th scope="col"><?php echo Text::_( 'COM_TICKETSTATION_CLIENT' ); ?></th>
-                            <th scope="col" class="w-10 text-center"><?php echo Text::_( 'COM_TICKETSTATION_WAITINGLIST_ORDER' ); ?></th>
-                            <th scope="col" class="w-10 text-center"><?php echo Text::_( 'COM_TICKETSTATION_CONFIRMED' ); ?></th>
-                            <th scope="col" class="w-10 d-none d-lg-table-cell text-center"><?php echo Text::_( 'COM_TICKETSTATION_COUPON_ADDED' ); ?></th>
+                            <th scope="col" class="w-10"><?php echo Text::_( 'COM_TICKETSTATION_EVENT' ); ?></th>
+                            <th scope="col" class="w-10"><?php echo Text::_( 'COM_TICKETSTATION_TICKET' ); ?></th>
+                            <th scope="col" class="w-10"><?php echo Text::_( 'COM_TICKETSTATION_CLIENT' ); ?></th>
+                            <th scope="col" class="w-5 d-none d-lg-table-cell text-center"><?php echo Text::_( 'COM_TICKETSTATION_WAITINGLIST_ORDER' ); ?></th>
+                            <th scope="col" class="w-3 text-center"><?php echo Text::_( 'COM_TICKETSTATION_CONFIRMED' ); ?></th>
+                            <th scope="col" class="w-6 d-none d-lg-table-cell text-center"><?php echo Text::_( 'COM_TICKETSTATION_COUPON_ADDED' ); ?></th>
                         </tr>
                     </thead>
                     <?php if (count($this->items) == 0) { ?>
@@ -56,9 +56,6 @@ $wa->registerAndUseStyle('ticketstation', Uri::base() . 'components\com_ticketst
 
                         if ($row->client_name != '' || $row->client_firstname != '') {
                             $client = trim($row->client_firstname . ' ' . $row->client_name);
-                            if ($row->client_email != '') {
-                                $client .= ' (' . $row->client_email . ')';
-                            }
                         } else {
                             $client = Text::_( 'COM_TICKETSTATION_WAITINGLIST_NO_CLIENT_YET' ) . ' - ' . $row->ip_address;
                         }
@@ -69,7 +66,7 @@ $wa->registerAndUseStyle('ticketstation', Uri::base() . 'components\com_ticketst
                             <td><?php echo htmlspecialchars($row->eventname, ENT_QUOTES, 'UTF-8'); ?></td>
                             <td><?php echo htmlspecialchars($row->ticketname, ENT_QUOTES, 'UTF-8'); ?></td>
                             <td><?php echo htmlspecialchars($client, ENT_QUOTES, 'UTF-8'); ?></td>
-                            <td class="text-center"><?php echo (int) $row->ordercode; ?></td>
+                            <td class="d-none d-lg-table-cell text-center"><?php echo (int) $row->ordercode; ?></td>
                             <td class="text-center">
                                 <?php if ($row->confirmed == 1) { ?>
                                     <span class="badge bg-success"><?php echo Text::_( 'JYES' ); ?></span>

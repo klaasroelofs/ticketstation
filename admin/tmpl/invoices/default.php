@@ -33,13 +33,13 @@ $wa->registerAndUseStyle('ticketstation', Uri::base() . 'components\com_ticketst
                 <table class="table itemList">
                     <thead>
                         <tr>
-                            <th scope="col"><?php echo Text::_( 'COM_TICKETSTATION_INVOICE_ID' ); ?></th>
-                            <th scope="col"><?php echo Text::_( 'COM_TICKETSTATION_ORDERCODE' ); ?></th>
-                            <th scope="col"><?php echo Text::_( 'COM_TICKETSTATION_CLIENT' ); ?></th>
-                            <th scope="col" class="text-center"><?php echo Text::_( 'COM_TICKETSTATION_INVOICE_AMOUNT' ); ?></th>
-                            <th scope="col" class="text-center"><?php echo Text::_( 'COM_TICKETSTATION_COUPON_ADDED' ); ?></th>
-                            <th scope="col" class="text-center"><?php echo Text::_( 'COM_TICKETSTATION_SENT' ); ?></th>
-                            <th scope="col" class="text-center"><?php echo Text::_( 'COM_TICKETSTATION_INVOICE_DOWNLOAD' ); ?></th>
+                            <th scope="col" class="w-3"><?php echo Text::_( 'COM_TICKETSTATION_INVOICE_ID' ); ?></th>
+                            <th scope="col" class="w-3"><?php echo Text::_( 'COM_TICKETSTATION_ORDERCODE' ); ?></th>
+                            <th scope="col" class="w-10"><?php echo Text::_( 'COM_TICKETSTATION_CLIENT' ); ?></th>
+                            <th scope="col" class="w-5 d-none d-md-table-cell text-center"><?php echo Text::_( 'COM_TICKETSTATION_INVOICE_AMOUNT' ); ?></th>
+                            <th scope="col" class="w-6 d-none d-md-table-cell text-center"><?php echo Text::_( 'COM_TICKETSTATION_COUPON_ADDED' ); ?></th>
+                            <th scope="col" class="w-3 text-center"><?php echo Text::_( 'COM_TICKETSTATION_SENT' ); ?></th>
+                            <th scope="col" class="w-3 d-none d-md-table-cell text-center"><?php echo Text::_( 'COM_TICKETSTATION_INVOICE_DOWNLOAD' ); ?></th>
                         </tr>
                     </thead>
                     <?php if (count($this->items) == 0) { ?>
@@ -53,19 +53,15 @@ $wa->registerAndUseStyle('ticketstation', Uri::base() . 'components\com_ticketst
 
                         $row       = $this->items[$i];
                         $orderlink = 'index.php?option=com_ticketstation&controller=boxoffice&task=edit&cid=' . $row->ordercode;
-                        $client    = trim($row->client_firstname . ' ' . $row->client_name);
-
-                        if ($row->client_email != '') {
-                            $client .= ' (' . $row->client_email . ')';
-                        }
+                        $clientlink = 'index.php?option=com_ticketstation&controller=clients&task=edit&cid='.$row->userid;
 
                         ?>
                         <tr class="row<?= $i;?>">
                             <td><?php echo (new Invoice)->getInvoiceNumber($row->invoiceid, $this->config->invoice_prefix); ?></td>
                             <td><a href="<?php echo $orderlink; ?>"><?php echo (int) $row->ordercode; ?></a></td>
-                            <td><?php echo htmlspecialchars($client, ENT_QUOTES, 'UTF-8'); ?></td>
-                            <td class="text-center"><?php echo TicketstationFunctions::showprice($this->config->priceformat, $row->netto + $row->fees, $this->config->valuta); ?></td>
-                            <td class="text-center small"><?php echo Date::_($row->invoicedate, $this->config->dateformat . ' H:i'); ?></td>
+                            <td><a href="<?php echo $clientlink; ?>"><?= $row->client_firstname ?> <?= $row->client_name ?></a><br/><small><?= $row->client_email ?></small></td>
+                            <td class="d-none d-md-table-cell text-center"><?php echo TicketstationFunctions::showprice($this->config->priceformat, $row->netto + $row->fees, $this->config->valuta); ?></td>
+                            <td class="d-none d-md-table-cell text-center small"><?php echo Date::_($row->invoicedate, $this->config->dateformat . ' H:i'); ?></td>
                             <td class="text-center">
                                 <?php if ($row->sent == 1) { ?>
                                     <span class="badge bg-success"><?php echo Text::_( 'JYES' ); ?></span>
@@ -73,8 +69,8 @@ $wa->registerAndUseStyle('ticketstation', Uri::base() . 'components\com_ticketst
                                     <span class="badge bg-warning"><?php echo Text::_( 'COM_TICKETSTATION_INVOICE_NOT_SENT' ); ?></span>
                                 <?php } ?>
                             </td>
-                            <td class="text-center">
-                                <a class="btn btn-sm btn-secondary" target="_blank" href="<?php echo Uri::root() . 'administrator/components/com_ticketstation/invoices/' . (new Invoice)->getPdfFilename($row->invoiceid); ?>">
+                            <td class="d-none d-md-table-cell text-center">
+                                <a class="btn btn-sm btn-secondary" target="blank" href="<?php echo Uri::root() . 'administrator/components/com_ticketstation/invoices/' . (new Invoice)->getPdfFilename($row->invoiceid); ?>">
                                     <span class="fa fa-download"></span>
                                 </a>
                             </td>
