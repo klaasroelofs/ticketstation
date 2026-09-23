@@ -358,7 +358,7 @@ class OrderController extends BaseController
         $TicketstationFunctions = new TicketstationFunctions();
 
         // Getting the config
-        $config  = (new Config)->getPartialConfig(['priceformat', 'valuta', 'show_waitinglist']);
+        $config  = (new Config)->getPartialConfig(['priceformat', 'valuta', 'show_waitinglist', 'variable_transcosts']);
         $ordered = $order->getOrdersCountByOrdercode('#__ticketstation_orders');
         $waiting = $order->getOrdersCountByOrdercode('#__ticketstation_waitinglist');
 
@@ -371,16 +371,23 @@ class OrderController extends BaseController
 
         $update = '';
 
+        // Transaction costs switched off in the configuration: no fees row at all.
+        $feesRow = '';
+
+        if ($config->variable_transcosts != 2) {
+            $feesRow = '<tr style="height: 40px;">
+								<td>' . Text::_('COM_TICKETSTATION_FEES') . '</td>
+								<td style="text-align: right;">' . $TicketstationFunctions->showprice($config->priceformat, $fees, $config->valuta) . '</td>
+							</tr>';
+        }
+
         if ($ordered > 0) {
             $update .= '<table style="width: 250px;">
 							<tr>
 								<td>' . $ordered . ' ' . $tickets . '</td>
 								<td style="text-align: right;">' . $TicketstationFunctions->showprice($config->priceformat, ($ordertotal - $fees), $config->valuta) . '</td>
 							</tr>
-							<tr style="height: 40px;">
-								<td>' . Text::_('COM_TICKETSTATION_FEES') . '</td>
-								<td style="text-align: right;">' . $TicketstationFunctions->showprice($config->priceformat, $fees, $config->valuta) . '</td>
-							</tr>
+							' . $feesRow . '
 							<tr style="border-top: 1px solid #aaa;">
 								<td><strong>' . Text::_('COM_TICKETSTATION_ORDERTOTAL_CART') . '</strong></td>
 								<td style="text-align: right;"><strong>' . $TicketstationFunctions->showprice($config->priceformat, $ordertotal, $config->valuta) . '</strong></td>

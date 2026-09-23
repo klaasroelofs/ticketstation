@@ -418,6 +418,7 @@ class Confirmation
 
         ### IF DISCOUNT == TRUE == WRITE AN EXTRA LINE WITH THE DISCOUNT ###
         $discount = 0;
+        $totalfee = 0;
 
         if ($session->get('coupon') != '')
         {
@@ -560,7 +561,8 @@ class Confirmation
         }
         else
         {
-            if ($config->transactioncosts != 0)
+            ## variable_transcosts == 2: transaction costs are switched off, so no fee line at all.
+            if ($config->variable_transcosts != 2 && $config->transactioncosts != 0)
             {
                 $pdf->SetXY(150, $y + 15);
                 $pdf->Write(0, $decode(Text::_('COM_TICKETSTATION_TOTALFEE')));

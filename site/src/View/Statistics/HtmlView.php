@@ -128,9 +128,12 @@ class HtmlView extends BaseHtmlView {
         $this->mollie     = $this->get('mollie');
 
         //Transactioncosts
-        $this->transcost_received = round($this->ordercount * $this->config->transactioncosts, 2);
+        // variable_transcosts == 2: transaction costs are switched off, so none are received.
+        $transcost_fee = ($this->config->variable_transcosts == 2) ? 0 : $this->config->transactioncosts;
+
+        $this->transcost_received = round($this->ordercount * $transcost_fee, 2);
         $this->transcost_paid = round($this->ordercount * $this->mollie->trans_cost, 2);
-        $this->transcost_profit = round($this->ordercount * ($this->config->transactioncosts - $this->mollie->trans_cost), 2);
+        $this->transcost_profit = round($this->ordercount * ($transcost_fee - $this->mollie->trans_cost), 2);
 
         // Call the parent display to display the layout file
         parent::display($tpl);

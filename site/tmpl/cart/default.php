@@ -361,7 +361,7 @@ $waiters = count($this->waiters);
                         </tr>
                     <?php endif; ?>
 
-                    <?php if ($fees > 0): ?>
+                    <?php if ($fees > 0 && $this->config->variable_transcosts != 2): ?>
                         <tr>
                             <td>
                                 <div style="text-align:right;"><?php echo Text::_('COM_TICKETSTATION_FEES'); ?><?php if ($this->config->variable_transcosts == '1') { ?> (<?php echo $this->config->transcosts ?>%) <?php } ?></div>

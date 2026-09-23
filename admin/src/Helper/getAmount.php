@@ -150,7 +150,10 @@ class getAmount
             }
 
             ## Now let's do the counting of the price again.
-            if ($config->variable_transcosts != 1) {
+            if ($config->variable_transcosts == 2) {
+                ## Transaction costs are switched off completely.
+                $transcost = 0;
+            } elseif ($config->variable_transcosts != 1) {
                 ## When no variable transaction costs are here.
                 $transcost = $config->transactioncosts;
             } else {
@@ -367,7 +370,10 @@ class getAmount
             }
 
             ## Now let's do the counting of the price again.
-            if ($config->variable_transcosts != 1) {
+            if ($config->variable_transcosts == 2) {
+                ## Transaction costs are switched off completely.
+                $transcost = 0;
+            } elseif ($config->variable_transcosts != 1) {
                 ## When no variable transaction costs are here.
                 $transcost = $config->transactioncosts;
             } else {

@@ -144,7 +144,12 @@ class Amount
     {
         $config = (new Config)->getPartialConfig(['variable_transcosts', 'transactioncosts', 'transcosts']);
 
-        if ($config->variable_transcosts != 1)
+        if ($config->variable_transcosts == 2)
+        {
+            // Transaction costs are switched off completely.
+            $this->order_fees = 0;
+        }
+        elseif ($config->variable_transcosts != 1)
         {
             // When no variable transaction costs are here.
             $this->order_fees = $config->transactioncosts;

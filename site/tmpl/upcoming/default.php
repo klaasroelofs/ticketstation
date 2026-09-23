@@ -39,10 +39,12 @@ $fmt = datefmt_create(
     'EEEE d MMMM YYYY'
 );
 
+$show_transaction_costs = $this->config->variable_transcosts != 2;
+
 if ($this->config->variable_transcosts == 0) {
     $transaction_costs = Text::sprintf('COM_TICKETSTATION_TRANSACTION_COSTS_PER_ORDER',
         (new TicketstationFunctions)->showprice($this->config->priceformat ,$this->config->transactioncosts,$this->config->valuta));
-} else {
+} elseif ($show_transaction_costs) {
     $transaction_costs = Text::sprintf('COM_TICKETSTATION_TRANSACTION_COSTS_PER_TICKET', $this->config->transcosts);
 }
 
@@ -215,7 +217,7 @@ $itemid = TicketstationFunctions::getSiteItemid();
                         <?php endfor; ?>
                     </div>
                 </div>
-                <?php if($this->config->show_price_eventlist == 1) { ?>
+                <?php if($this->config->show_price_eventlist == 1 && $show_transaction_costs) { ?>
                     <div>
                         <p class="ticketmaster_upcoming_event_footer"><?= Text::sprintf('COM_TICKETSTATION_PRICES_EXCLUDE_TRANSACTION_COSTS', $transaction_costs); ?></p>
                     </div>

@@ -260,6 +260,7 @@ $genderLabels = [
 
                                     </tr>
                                 <?php } ?>
+                                <?php if ($this->config->variable_transcosts != 2) { ?>
                                 <tr>
                                     <td>
                                         <div style="text-align: right;"><?= Text::_('COM_TICKETSTATION_FEES'); ?><?php if ($this->config->variable_transcosts == '1') { ?> (<?= $this->config->transcosts ?>%) <?php } ?></div>
@@ -268,6 +269,7 @@ $genderLabels = [
                                         <div style="text-align: right;"><?= (new TicketstationFunctions)->showprice($this->config->priceformat , $fees, $this->config->valuta); ?></div>
                                     </td>
                                 </tr>
+                                <?php } ?>
                                 <tr>
                                     <td>
                                         <div style="font-weight:bold;text-align: right"><?= Text::_('COM_TICKETSTATION_ORDERTOTAL'); ?></div>
