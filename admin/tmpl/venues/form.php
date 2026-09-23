@@ -92,6 +92,8 @@ $editor = Editor::getInstance()
                            value="<?= isset($this->data->website)?$this->data->website:null; ?>"/>
                 </div>
             </div>
+            <h4 class="mt-4"><?= Text::_('COM_TICKETSTATION_VENUE_INTERNAL_CONTACT') ?></h4>
+            <p class="form-text"><?= Text::_('COM_TICKETSTATION_VENUE_INTERNAL_CONTACT_DESC') ?></p>
             <div class="row mb-3">
                 <label for="contact_person" class="col-sm-3 col-form-label"
                        rel="popover"

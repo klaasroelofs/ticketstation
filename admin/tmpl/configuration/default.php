@@ -152,6 +152,45 @@ $document->setTitle(Text::_('COM_TICKETSTATION_VIEW_CONFIGURATION_TITLE') . ' - 
                 </div>
             </div>
             <div class="row mb-3">
+                <label for="show_venue_address" class="col-sm-3 col-form-label"
+                       rel="popover"
+                       title="<?= Text::_('COM_TICKETSTATION_SHOW_VENUE_ADDRESS') ?>">
+                    <?= Text::_('COM_TICKETSTATION_SHOW_VENUE_ADDRESS') ?>
+                </label>
+                <div class="col-sm-9">
+                    <?= $this->lists['show_venue_address']; ?>
+                    <small class="form-text">
+                        <?= Text::_('COM_TICKETSTATION_SHOW_VENUE_ADDRESS_DESC') ?>
+                    </small>
+                </div>
+            </div>
+            <div class="row mb-3">
+                <label for="show_venue_description" class="col-sm-3 col-form-label"
+                       rel="popover"
+                       title="<?= Text::_('COM_TICKETSTATION_SHOW_VENUE_DESCRIPTION') ?>">
+                    <?= Text::_('COM_TICKETSTATION_SHOW_VENUE_DESCRIPTION') ?>
+                </label>
+                <div class="col-sm-9">
+                    <?= $this->lists['show_venue_description']; ?>
+                    <small class="form-text">
+                        <?= Text::_('COM_TICKETSTATION_SHOW_VENUE_DESCRIPTION_DESC') ?>
+                    </small>
+                </div>
+            </div>
+            <div class="row mb-3">
+                <label for="show_venue_website" class="col-sm-3 col-form-label"
+                       rel="popover"
+                       title="<?= Text::_('COM_TICKETSTATION_SHOW_VENUE_WEBSITE') ?>">
+                    <?= Text::_('COM_TICKETSTATION_SHOW_VENUE_WEBSITE') ?>
+                </label>
+                <div class="col-sm-9">
+                    <?= $this->lists['show_venue_website']; ?>
+                    <small class="form-text">
+                        <?= Text::_('COM_TICKETSTATION_SHOW_VENUE_WEBSITE_DESC') ?>
+                    </small>
+                </div>
+            </div>
+            <div class="row mb-3">
                 <label for="use_coupons" class="col-sm-3 col-form-label"
                        rel="popover"
                        title="<?= Text::_('COM_TICKETSTATION_SHOW_COUPON_SYSTEM') ?>">

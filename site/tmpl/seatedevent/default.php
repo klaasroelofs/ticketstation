@@ -66,6 +66,9 @@ $fees = $getAmount->_getFees($session->get('ordercode'));
 
 ## Load Ticketstation functions
 $TicketstationFunctions = new TicketstationFunctions();
+
+## Venue website link (stored without scheme in the venue form, e.g. "www.example.nl")
+$venue_website_url = preg_match('#^https?://#i', $this->ticketdetails->website) ? $this->ticketdetails->website : 'https://' . $this->ticketdetails->website;
 ?>
 
 <style>
@@ -138,7 +141,25 @@ $TicketstationFunctions = new TicketstationFunctions();
                         <td><?php echo $this->ticketdetails->venue; ?> - <?php echo $this->ticketdetails->city; ?></td>
                     </tr>
                 <?php } ?>
+                <?php if ($this->config->show_venue_address == 1 && ($this->ticketdetails->street != '' || $this->ticketdetails->zipcode != '')) { ?>
+                    <tr>
+                        <td style="font-weight:bold;">Adres:</td>
+                        <td><?php echo htmlspecialchars(trim($this->ticketdetails->street . ', ' . $this->ticketdetails->zipcode . ' ' . $this->ticketdetails->city, ', '), ENT_QUOTES, 'UTF-8'); ?></td>
+                    </tr>
+                <?php } ?>
+                <?php if ($this->config->show_venue_website == 1 && $this->ticketdetails->website != '') { ?>
+                    <tr>
+                        <td style="font-weight:bold;">Website:</td>
+                        <td><a href="<?php echo htmlspecialchars($venue_website_url, ENT_QUOTES, 'UTF-8'); ?>" target="_blank" rel="noopener"><?php echo htmlspecialchars($this->ticketdetails->website, ENT_QUOTES, 'UTF-8'); ?></a></td>
+                    </tr>
+                <?php } ?>
             </table>
+
+            <?php if ($this->config->show_venue_description == 1 && trim(strip_tags($this->ticketdetails->venuedescription)) != '') { ?>
+                <div class="ticketstation_venue_description">
+                    <?php echo $this->ticketdetails->venuedescription; ?>
+                </div>
+            <?php } ?>
 
             <div style="height:45px; margin:8px 0px 10px 0px; color:#000; text-align:center; padding-bottom:2px;">
 

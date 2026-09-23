@@ -91,14 +91,11 @@ CREATE TABLE IF NOT EXISTS `#__ticketstation_config` (
   `redirect_after_login` tinyint(1) NOT NULL,
   `redirect_after_registration` tinyint(1) NOT NULL,
   `use_euros_in_pdf` tinyint(1) NOT NULL,
-  `google_maps_key` varchar(100) NOT NULL,
-  `show_google_maps` tinyint(1) NOT NULL,
   `removal_days` tinyint(2) NOT NULL,
   `position_logo_confirmation` varchar(15) NOT NULL,
   `send_profile_mail` tinyint(1) NOT NULL,
   `tos_tpl` int(11) NOT NULL,
   `send_confirmation_pdf` tinyint(1) NOT NULL,
-  `show_venuebox` tinyint(1) NOT NULL,
   `use_automatic_login` tinyint(1) NOT NULL,
   `remove_unfinished` tinyint(1) NOT NULL,
   `removal_hours` double NOT NULL,
@@ -153,6 +150,9 @@ CREATE TABLE IF NOT EXISTS `#__ticketstation_config` (
   `next_ordercode` varchar(20) NOT NULL DEFAULT '',
   `invoice_logo` varchar(255) NOT NULL DEFAULT '',
   `show_venue` tinyint(1) NOT NULL DEFAULT 1,
+  `show_venue_address` tinyint(1) NOT NULL DEFAULT 0,
+  `show_venue_description` tinyint(1) NOT NULL DEFAULT 0,
+  `show_venue_website` tinyint(1) NOT NULL DEFAULT 0,
   PRIMARY KEY (`configid`)
 )  ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 DEFAULT COLLATE=utf8mb4_unicode_ci;
 
@@ -790,13 +790,10 @@ INSERT IGNORE INTO `#__ticketstation_config` VALUES(
 "1",
 "1",
 "2",
-"",
-"0",
 "1",
 "135-12",
 "0",
 "13",
-"0",
 "0",
 "1",
 "1",
@@ -851,4 +848,7 @@ INSERT IGNORE INTO `#__ticketstation_config` VALUES(
 "0",
 "",
 "",
-"1");
+"1",
+"0",
+"0",
+"0");

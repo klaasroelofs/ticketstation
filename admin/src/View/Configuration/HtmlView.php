@@ -89,14 +89,17 @@ class HtmlView extends BaseHtmlView {
         $lists['show_venue'] = HTMLHelper::_('select.genericList', $yesno, 'show_venue', ' class="form-select" ' . '',
             'value', 'text', $config->show_venue);
 
-        $lists['show_google_maps'] = HTMLHelper::_('select.genericList', $yesno, 'show_google_maps', ' class="form-select" ' . '',
-            'value', 'text', $config->show_google_maps);
+        $lists['show_venue_address'] = HTMLHelper::_('select.genericList', $yesno, 'show_venue_address', ' class="form-select" ' . '',
+            'value', 'text', $config->show_venue_address);
+
+        $lists['show_venue_description'] = HTMLHelper::_('select.genericList', $yesno, 'show_venue_description', ' class="form-select" ' . '',
+            'value', 'text', $config->show_venue_description);
+
+        $lists['show_venue_website'] = HTMLHelper::_('select.genericList', $yesno, 'show_venue_website', ' class="form-select" ' . '',
+            'value', 'text', $config->show_venue_website);
 
         $lists['send_profile_mail'] = HTMLHelper::_('select.genericList', $yesno, 'send_profile_mail', ' class="form-select" ' . '',
             'value', 'text', $config->send_profile_mail);
-
-        $lists['show_venuebox'] = HTMLHelper::_('select.genericList', $yesno, 'show_venuebox', ' class="form-select" ' . '',
-            'value', 'text', $config->show_venuebox);
 
         $lists['show_country'] = HTMLHelper::_('select.genericList', $yesno, 'show_country', ' class="form-select" ' . '',
             'value', 'text', $config->show_country);
