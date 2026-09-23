@@ -28,6 +28,7 @@ $topics = [
     'scanning'      => ['icon' => 'fa-qrcode',          'title' => 'COM_TICKETSTATION_DOCS_NAV_SCANNING'],
     'invoicing'     => ['icon' => 'fa-file-invoice',    'title' => 'COM_TICKETSTATION_DOCS_NAV_INVOICING'],
     'waitinglist'   => ['icon' => 'fa-hourglass-half',  'title' => 'COM_TICKETSTATION_DOCS_NAV_WAITINGLIST'],
+    'basket'        => ['icon' => 'fa-shopping-basket', 'title' => 'COM_TICKETSTATION_DOCS_NAV_BASKET'],
 ];
 ?>
 
