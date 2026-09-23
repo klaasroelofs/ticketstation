@@ -10,8 +10,8 @@ use Joomla\CMS\Uri\Uri;
  * @copyright   Copyright (C) 2022 Klaas Roelofs. All rights reserved.
  * @license     GNU General Public License version 3; see LICENSE
  *
- * Documentation below the scanner list: setting up and using website scanning
- * and scanning hardware / external apps (see CodescannerController).
+ * Ticket scanning topic on the central documentation page. Content lives here now;
+ * the Scanners list screen (admin/tmpl/scanners/default.php) only links to it.
  */
 
 // No direct access to this file
@@ -19,9 +19,6 @@ defined('_JEXEC') or die('Restricted Access');
 
 $scanningUrl = Uri::root() . 'index.php?option=com_ticketstation&view=ticketscanning';
 $endpoint    = Uri::root() . 'index.php?option=com_ticketstation&controller=codescanner&task=validation';
-
-// Opened by default until the first scanner exists.
-$open = empty($this->items) ? ' open' : '';
 
 $steps = function (string $prefix, int $count, array $args = []) {
     echo '<ol>';
@@ -48,12 +45,13 @@ XML;
 
 ?>
 
-<div class="card mt-4">
+<div class="card">
     <div class="card-body">
-        <h2 class="h4"><span class="fa fa-book me-2" aria-hidden="true"></span><?= Text::_('COM_TICKETSTATION_SCANNING_DOCS_TITLE') ?></h2>
+        <h2 class="h4"><span class="fa fa-qrcode me-2" aria-hidden="true"></span><?= Text::_('COM_TICKETSTATION_SCANNING_DOCS_TITLE') ?></h2>
         <p><?= Text::_('COM_TICKETSTATION_SCANNING_DOCS_INTRO') ?></p>
+        <p class="text-muted small"><?= Text::sprintf('COM_TICKETSTATION_DOCS_SCREEN_LINK', '<a href="index.php?option=com_ticketstation&view=scanners">' . Text::_('COM_TICKETSTATION_VIEW_SCANNERS_TITLE') . '</a>') ?></p>
 
-        <details class="mb-3 border rounded p-3"<?= $open ?>>
+        <details class="mb-3 border rounded p-3">
             <summary class="h5 mb-0"><span class="fa fa-mobile-alt me-2" aria-hidden="true"></span><?= Text::_('COM_TICKETSTATION_SCANNING_DOCS_WEB_TITLE') ?></summary>
 
             <h3 class="h6 mt-3"><?= Text::_('COM_TICKETSTATION_SCANNING_DOCS_SETUP') ?></h3>
@@ -63,7 +61,7 @@ XML;
             <?php $steps('COM_TICKETSTATION_SCANNING_DOCS_WEB_USE_', 5); ?>
         </details>
 
-        <details class="mb-3 border rounded p-3"<?= $open ?>>
+        <details class="mb-3 border rounded p-3">
             <summary class="h5 mb-0"><span class="fa fa-barcode me-2" aria-hidden="true"></span><?= Text::_('COM_TICKETSTATION_SCANNING_DOCS_HW_TITLE') ?></summary>
 
             <p class="mt-3"><?= Text::_('COM_TICKETSTATION_SCANNING_DOCS_HW_INTRO') ?></p>
@@ -124,7 +122,7 @@ XML;
             </table>
         </details>
 
-        <details class="border rounded p-3"<?= $open ?>>
+        <details class="border rounded p-3">
             <summary class="h5 mb-0"><span class="fa fa-check-double me-2" aria-hidden="true"></span><?= Text::_('COM_TICKETSTATION_SCANNING_DOCS_CHECKS_TITLE') ?></summary>
             <p class="mt-3 mb-0"><?= Text::_('COM_TICKETSTATION_SCANNING_DOCS_CHECKS') ?></p>
         </details>

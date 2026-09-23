@@ -52,6 +52,7 @@ class CsrfGate
         'coupons'          => ['display', 'edit', 'controlpanel'],
         'venues'           => ['display', 'edit', 'cancel', 'controlpanel'],
         'waitinglist'      => ['display', 'controlpanel'],
+        'docs'             => ['main', 'controlpanel'],
         'transactions'     => ['display', 'edit', 'cancel', 'controlpanel'],
         'reservation'      => ['start', 'finishseats'],
         'ticket'           => ['display', 'cancel', 'ticketlayout', 'previewticket'],

@@ -69,7 +69,11 @@ $wa->registerAndUseStyle('ticketstation', Uri::base() . 'components\com_ticketst
                 <?php // load the pagination. ?>
                 <?php echo $this->pagination->getListFooter(); ?>
 
-                <?php echo $this->loadTemplate('docs'); ?>
+                <p class="mt-3">
+                    <a class="btn btn-outline-secondary btn-sm" href="index.php?option=com_ticketstation&view=docs#docs-scanning">
+                        <span class="fa fa-book me-1" aria-hidden="true"></span><?php echo Text::_('COM_TICKETSTATION_SCANNING_DOCS_LINK'); ?>
+                    </a>
+                </p>
 
             </div>
         </div>

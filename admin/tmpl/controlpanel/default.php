@@ -168,6 +168,13 @@ if (version_compare(JVERSION, '4.999.999', 'gt')) {
                             </div>
                             <span><?= Text::_('COM_TICKETSTATION_MOLLIE_CONFIG') ?></span>
                         </a>
+
+                        <a class="ticketstation-cpanel-button text-center align-self-stretch btn btn-outline-primary border-0" style="width: 10em;" href="index.php?option=com_ticketstation&view=docs">
+                            <div class="bg-primary text-white d-block text-center p-3 h2">
+                                <span class="fa fa-book"></span>
+                            </div>
+                            <span><?= Text::_('COM_TICKETSTATION_VIEW_DOCS_TITLE') ?></span>
+                        </a>
                     </div>
                 </div>
 
@@ -373,9 +380,7 @@ if (version_compare(JVERSION, '4.999.999', 'gt')) {
                                 ?>
                                 <tr>
                                     <td>
-                                        <a href="index.php?option=com_ticketstation&controller=tickets&task=edit&cid=<?= (int) $row->ticketid; ?>">
-                                            <?= $row->eventname; ?> - <?= $row->ticketname; ?>
-                                        </a>
+                                        <a href="index.php?option=com_ticketstation&controller=tickets&task=edit&cid=<?= (int) $row->ticketid; ?>"><?= $row->eventname; ?> - <?= $row->ticketname; ?></a>
                                         <?php if ($row->show_seatplans == 1) { ?>
                                             <span class="fa fa-chair text-muted small" title="<?= Text::_('COM_TICKETSTATION_SEATPLANS') ?>"></span>
                                         <?php } ?>
