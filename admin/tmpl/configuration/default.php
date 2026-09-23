@@ -164,19 +164,6 @@ $document->getWebAssetManager()->addInlineScript("
             </h3>
             <div class="card-body">
                 <div class="row mb-3">
-                    <label for="show_eventlistnote" class="col-sm-3 col-form-label"
-                           rel="popover"
-                           title="<?= Text::_('COM_TICKETSTATION_SHOW_NOTE_EVENT') ?>">
-                        <?= Text::_('COM_TICKETSTATION_SHOW_NOTE_EVENT') ?>
-                    </label>
-                    <div class="col-sm-9">
-                        <?= $this->lists['show_eventlistnote']; ?>
-                        <small class="form-text">
-                            <?= Text::_('COM_TICKETSTATION_SHOW_NOTE_EVENT_DESC') ?>
-                        </small>
-                    </div>
-                </div>
-                <div class="row mb-3">
                     <label for="show_quantity_eventlist" class="col-sm-3 col-form-label"
                            rel="popover"
                            title="<?= Text::_('COM_TICKETSTATION_SHOW_QUANTITY') ?>">

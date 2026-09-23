@@ -41,9 +41,10 @@ $fmt = datefmt_create(
 );
 
 if ($this->config->variable_transcosts == 0) {
-    $transaction_costs = (new TicketstationFunctions)->showprice($this->config->priceformat ,$this->config->transactioncosts,$this->config->valuta) . ' per bestelling';
+    $transaction_costs = Text::sprintf('COM_TICKETSTATION_TRANSACTION_COSTS_PER_ORDER',
+        (new TicketstationFunctions)->showprice($this->config->priceformat ,$this->config->transactioncosts,$this->config->valuta));
 } else {
-    $transaction_costs = $this->config->transcosts . '% per ticket';
+    $transaction_costs = Text::sprintf('COM_TICKETSTATION_TRANSACTION_COSTS_PER_TICKET', $this->config->transcosts);
 }
 
 ## Getting the global DB session
@@ -224,7 +225,7 @@ if ($this->ticket->total > 0) {
                 </div>
                 <?php if($this->config->show_price_eventlist == 1) { ?>
                     <div>
-                        <p class="ticketmaster_upcoming_event_footer">De getoonde prijzen zijn exclusief administratiekosten (<?= $transaction_costs; ?>).</p>
+                        <p class="ticketmaster_upcoming_event_footer"><?= Text::sprintf('COM_TICKETSTATION_PRICES_EXCLUDE_TRANSACTION_COSTS', $transaction_costs); ?></p>
                     </div>
                 <?php } ?>
             <?php } ?>

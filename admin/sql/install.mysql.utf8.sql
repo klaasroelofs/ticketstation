@@ -51,7 +51,6 @@ CREATE TABLE IF NOT EXISTS `#__ticketstation_clients` (
 DROP TABLE IF EXISTS `#__ticketstation_config`;
 CREATE TABLE IF NOT EXISTS `#__ticketstation_config` (
   `configid` int(1) NOT NULL AUTO_INCREMENT,
-  `show_eventlistnote` tinyint(1) NOT NULL,
   `show_secondaddress` tinyint(1) NOT NULL,
   `show_thirdaddress` tinyint(1) NOT NULL,
   `valuta` varchar(8) NOT NULL,
@@ -750,7 +749,6 @@ INSERT IGNORE INTO `#__ticketstation_mollie` VALUES(
 
 INSERT IGNORE INTO `#__ticketstation_config` VALUES(
 "1",
-"0",
 "0",
 "0",
 "€",

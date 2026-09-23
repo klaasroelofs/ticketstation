@@ -62,9 +62,6 @@ class HtmlView extends BaseHtmlView {
         $lists['show_secondaddress'] = HTMLHelper::_('select.genericList', $yesno, 'show_secondaddress', ' class="form-select" ' . '',
             'value', 'text', $config->show_secondaddress);
 
-        $lists['show_eventlistnote'] = HTMLHelper::_('select.genericList', $yesno, 'show_eventlistnote', ' class="form-select" ' . '',
-            'value', 'text', $config->show_eventlistnote);
-
         $lists['payments_on'] = HTMLHelper::_('select.genericList', $yesno, 'payments_on', ' class="form-select" ' . '',
             'value', 'text', $config->payments_on);
 
