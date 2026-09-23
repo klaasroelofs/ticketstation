@@ -186,7 +186,7 @@ if ($this->ticket->total > 0) {
                                                         <td><strong><?= (new TicketstationFunctions)->showprice($this->config->priceformat ,$row->ticketprice,$this->config->valuta); ?></strong></td>
                                                     </tr>
                                                 <?php } ?>
-                                                <?php if (($this->config->show_quantity_eventlist == 1) && ($row->show_seatplans == 1) && ($available_tickets > 0)) { ?>
+                                                <?php if (($this->config->show_quantity_eventlist == 1) && ($available_tickets > 0)) { ?>
                                                     <tr>
                                                         <?php if ($available_tickets < 50) { ?>
                                                             <td style="vertical-align:middle; height:40px;" colspan="2">

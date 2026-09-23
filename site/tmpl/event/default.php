@@ -44,7 +44,10 @@ $fees = $getAmount->_getFees($ordercode);
 $available_tickets = $this->items->starting_total_tickets - $this->soldtickets;
 
 ## Calculate percentage available tickets
-$percentage_available = round((($available_tickets / $this->items->starting_total_tickets) * 100), 0);
+## (guard against a ticket without a starting total, which would divide by zero)
+$percentage_available = ($this->items->starting_total_tickets > 0)
+    ? round((($available_tickets / $this->items->starting_total_tickets) * 100), 0)
+    : 0;
 
 ## Load Ticketstation functions
 $TicketstationFunctions = new TicketstationFunctions();
@@ -103,7 +106,7 @@ $TicketstationFunctions = new TicketstationFunctions();
                 </tr>
             </table>
 
-            <?php if ($this->config->show_quantity_eventlist == 1) { ?>
+            <?php if ($this->config->show_available_tickets == 1) { ?>
 
                 <h4><strong>Tickets beschikbaar:</strong></h4>
 
