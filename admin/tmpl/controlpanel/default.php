@@ -213,7 +213,7 @@ if (version_compare(JVERSION, '4.999.999', 'gt')) {
                     <div style="text-align: center;">
                         <a
                                 href="https://ko-fi.com/klaasroelofs"
-                                class="btn btn-outline-success mb-2" target="_blank" rel="noopener noreferrer">
+                                class="btn btn-outline-success mb-2" target="blank" rel="noopener noreferrer">
                             <span class="fa fa-mug-hot" aria-hidden="true"></span>
                             <?= Text::_('COM_TICKETSTATION_DONATE') ?>
                         </a>
