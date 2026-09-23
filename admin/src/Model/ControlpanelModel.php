@@ -241,7 +241,7 @@ class ControlpanelModel extends BaseDatabaseModel
      *
      * @return  array
      */
-    function getAttention($config)
+    function getAttention($config, $mollie)
     {
         $db    = Factory::getContainer()->get('DatabaseDriver');
         $now   = $this->getLocalNow();
@@ -254,6 +254,27 @@ class ControlpanelModel extends BaseDatabaseModel
                 $items[] = (object) ['key' => $key, 'count' => (int) $count, 'link' => $link, 'icon' => $icon, 'level' => $level];
             }
         };
+
+        // Mollie configuration: bypass mode, test mode and the live API key each get their own, specific warning.
+        $mollieLink = 'index.php?option=com_ticketstation&view=mollie';
+
+        $add('COM_TICKETSTATION_CPANEL_ATTENTION_MOLLIE_BYPASS', $mollie->bypass_mode == '1' ? 1 : 0,
+            $mollieLink, 'fa-exclamation-circle', 'danger');
+        $add('COM_TICKETSTATION_CPANEL_ATTENTION_MOLLIE_TEST', $mollie->test_mode == '1' ? 1 : 0,
+            $mollieLink, 'fa-exclamation-circle', 'danger');
+
+        if ($mollie->api_key == '')
+        {
+            $add('COM_TICKETSTATION_CPANEL_ATTENTION_MOLLIE_KEY_MISSING', 1, $mollieLink, 'fa-exclamation-circle', 'danger');
+        }
+        elseif (substr($mollie->api_key, 0, 5) === 'test_')
+        {
+            $add('COM_TICKETSTATION_CPANEL_ATTENTION_MOLLIE_KEY_IS_TEST', 1, $mollieLink, 'fa-exclamation-circle', 'danger');
+        }
+        elseif (substr($mollie->api_key, 0, 5) !== 'live_')
+        {
+            $add('COM_TICKETSTATION_CPANEL_ATTENTION_MOLLIE_KEY_INVALID', 1, $mollieLink, 'fa-exclamation-circle', 'danger');
+        }
 
         // Payments still pending (Mollie status open/pending).
         $query = $db->getQuery(true)

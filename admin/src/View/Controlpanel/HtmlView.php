@@ -47,7 +47,7 @@ class HtmlView extends BaseHtmlView {
 
         $this->stats        = $model->getStats();
         $this->availability = $model->getAvailability();
-        $this->attention    = $model->getAttention($this->config);
+        $this->attention    = $model->getAttention($this->config, $this->mollie);
 
 
         parent::display($tpl);
