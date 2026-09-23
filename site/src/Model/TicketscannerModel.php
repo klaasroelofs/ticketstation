@@ -6,8 +6,7 @@ defined('_JEXEC') or die;
 
 use Joomla\CMS\Factory;
 use Joomla\CMS\MVC\Model\BaseDatabaseModel;
-use Joomla\CMS\Pagination\Pagination;
-use Joomla\Database\DatabaseQuery;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\Scanner;
 
 /**
  * @package     Joomla.Site
@@ -23,10 +22,12 @@ use Joomla\Database\DatabaseQuery;
  */
 class TicketscannerModel extends BaseDatabaseModel
 {
+    protected $eventid;
+    protected $ticketid;
 
-    function __construct()
+    function __construct($config = [], $factory = null)
     {
-        parent::__construct();
+        parent::__construct($config, $factory);
 
         $jinput   = Factory::getApplication()->getInput();
         $this->eventid = $jinput->get('eventid', '0', 'int');
@@ -96,34 +97,16 @@ class TicketscannerModel extends BaseDatabaseModel
         return $db->loadResult();
     }
 
-    function getApprovedfor()
+    /**
+     * Scanner assignment of the current user (null when the user isn't a scanner).
+     *
+     * @return object|null
+     *
+     * @since 2.2.1
+     */
+    function getScanner()
     {
-        $user = $this->getCurrentUser();
-        $db   = Factory::getContainer()->get('DatabaseDriver');
-        
-        $query = $db->getQuery(true)
-            ->select(['events', 'tickets'])
-            ->from($db->quoteName('#__ticketstation_scannermap'))
-            ->where($db->quoteName('userid') . ' = '. $db->quote($user->id));
-
-        $db->setQuery($query);
-
-        return $db->loadObject();
-    }
-
-    function getScannerpermissions()
-    {
-        $user = $this->getCurrentUser();
-        $db   = Factory::getContainer()->get('DatabaseDriver');
-
-        $query = $db->getQuery(true)
-            ->select(['totals_visible', 'manual_entry'])
-            ->from($db->quoteName('#__ticketstation_scannermap'))
-            ->where($db->quoteName('userid') . ' = '. $db->quote($user->id));
-
-        $db->setQuery($query);
-
-        return $db->loadObject();
+        return Scanner::getByUserId((int) $this->getCurrentUser()->id);
     }
 
 }

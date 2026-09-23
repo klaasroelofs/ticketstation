@@ -5,6 +5,7 @@ use Joomla\CMS\Factory;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\Router\Route;
 use Joomla\CMS\Uri\Uri;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\Scanner;
 
 /**
  * @package     Joomla.Administrator
@@ -46,15 +47,16 @@ $wa->registerAndUseStyle('ticketstation', Uri::base() . 'components\com_ticketst
                         $row        = $this->items[$i];
                         $checked    = HTMLHelper::_('grid.id', $i, $row->id );
                         $link		= 'index.php?option=com_ticketstation&controller=scanners&task=edit&cid=' . $row->id;
+                        $assigned   = count(Scanner::idList($row->tickets)) + count(Scanner::idList($row->events));
 
                         ?>
                         <tr class="row<?php echo $i;?>">
                             <td class="text-center"><?php echo $checked; ?></td>
-                            <td><div align="left"><a href="<?php echo $link; ?>"><?php echo $row->name; ?></a></div></td>
+                            <td><div align="left"><a href="<?php echo $link; ?>"><?php echo $this->escape($row->name); ?></a></div></td>
                             <td>
                                 <div align="left">
-                                    <?php if ((count(json_decode($row->tickets)) + count(json_decode($row->events))) > 0): ?>
-                                        <span class="label label-success"><?php echo (count(json_decode($row->tickets)) + count(json_decode($row->events))); ?></span>
+                                    <?php if ($assigned > 0): ?>
+                                        <span class="label label-success"><?php echo $assigned; ?></span>
                                     <?php else: ?>
                                         <span class="label label-important">Geen</span>
                                     <?php endif; ?>
@@ -66,6 +68,8 @@ $wa->registerAndUseStyle('ticketstation', Uri::base() . 'components\com_ticketst
 
                 <?php // load the pagination. ?>
                 <?php echo $this->pagination->getListFooter(); ?>
+
+                <?php echo $this->loadTemplate('docs'); ?>
 
             </div>
         </div>

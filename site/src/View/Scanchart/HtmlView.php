@@ -9,6 +9,8 @@ use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\View\HtmlView as BaseHtmlView;
 use Joomla\CMS\Router\Route;
 use Joomla\CMS\Uri\Uri;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\Scanner;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\TicketstationFunctions;
 
 /**
  * @package     Joomla.Site
@@ -49,8 +51,19 @@ class HtmlView extends BaseHtmlView {
             $app->redirect($login_url_with_return, 403);
         }
 
+        // Only the seat chart of a ticket assigned to this scanner.
+        $scanner  = Scanner::getByUserId((int) $user->id);
+        $ticketid = $app->getInput()->getInt('id', 0);
 
-        $this->items	= $this->get('items');
+        $this->items	= $scanner && Scanner::mayScanTicket($scanner, $ticketid) ? $this->get('items') : [];
+
+        if (empty($this->items))
+        {
+            $app->enqueueMessage(Text::_('COM_TICKETSTATION_TICKETSCANNING_SCAN_NOT_ASSIGNED'), 'error');
+            $itemid = TicketstationFunctions::getSiteItemid();
+            $app->redirect(Route::_('index.php?option=com_ticketstation&view=ticketscanning' . ($itemid ? '&Itemid=' . $itemid : ''), false));
+        }
+
         $this->user		= $user;
 
         // Call the parent display to display the layout file

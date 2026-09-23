@@ -13,6 +13,7 @@ namespace Ticketstation\Component\Ticketstation\Administrator\Helper;
 
 ## no direct access
 use Joomla\CMS\Factory;
+use Joomla\Database\ParameterType;
 
 
 defined('_JEXEC') or die('Restricted access');
@@ -45,49 +46,50 @@ class Barcode
     }
 
     /**
-     * Order has been validated by the customer. Update it now.
+     * Marks a paid, not yet scanned ticket as scanned.
      *
-     * @param null $ordercode
+     * The check and the update are one atomic UPDATE, so when the same ticket is
+     * scanned at two entrances at the same moment only one of them succeeds.
      *
-     * @return bool
+     * @param   int  $orderid  The ticket (order row) to mark as scanned
+     * @param   int  $scanner  User id of the scanner, stored for reference
      *
-     * @since 1.0.0
+     * @return  bool  True when this call marked the ticket as scanned
+     *
+     * @since 2.2.1
      */
-    public function updateScanningState($barcode = null, $state = 1)
+    public function claimScan(int $orderid, int $scanner): bool
     {
-        if (empty($barcode))
+        if ($orderid <= 0)
         {
             return false;
         }
 
-        $user 	= Factory::getApplication()->getIdentity();
+        $app  = Factory::getApplication();
+        $user = $app->getIdentity();
+        $tz   = new \DateTimeZone($user ? $user->getParam('timezone', $app->get('offset', 'UTC')) : $app->get('offset', 'UTC'));
 
-        $tz       = new \DateTimeZone($user->getParam('timezone', Factory::getApplication()->get('offset', 'UTC')));
         $scandate = (new \DateTime('now', $tz))->format('Y-m-d H:i:s');
 
-        $db   = Factory::getContainer()->get('DatabaseDriver');
+        $db    = Factory::getContainer()->get('DatabaseDriver');
+        $query = $db->getQuery(true)
+            ->update($db->quoteName('#__ticketstation_orders'))
+            ->set([
+                $db->quoteName('scanned') . ' = 1',
+                $db->quoteName('scandate') . ' = :scandate',
+                $db->quoteName('scanner') . ' = :scanner',
+            ])
+            ->where([
+                $db->quoteName('orderid') . ' = :orderid',
+                $db->quoteName('scanned') . ' = 0',
+                $db->quoteName('paid') . ' = 1',
+            ])
+            ->bind(':scandate', $scandate)
+            ->bind(':scanner', $scanner, ParameterType::INTEGER)
+            ->bind(':orderid', $orderid, ParameterType::INTEGER);
 
-        $query = $db->getQuery(true);
+        $db->setQuery($query)->execute();
 
-        $fields = [
-            $db->quoteName('scanned') . ' = ' . $state,
-            $db->quoteName('scandate') . ' = ' . $db->quote($scandate),
-            $db->quoteName('scanner') . ' = ' . $db->quote($user->id),
-        ];
-
-        $conditions = [$db->quoteName('barcode') . ' = ' . $db->quote($barcode)];
-
-        $query->update($db->quoteName('#__ticketstation_orders'))
-            ->set($fields)
-            ->where($conditions);
-
-        $db->setQuery($query);
-
-        if ( ! $db->execute())
-        {
-            return false;
-        }
-
-        return true;
+        return $db->getAffectedRows() === 1;
     }
 }

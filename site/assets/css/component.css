@@ -38,40 +38,27 @@
     margin: 0;
 }
 
+/* Positioned and sized on the scan region by qr-scanner */
 #scan-region-highlight {
-    margin: auto;
-    height: 100vh;
-    position: fixed;
-    top: 45%;
-    left: 50%;
-    margin-right: -50%;
-    transform: translate(-50%, -50%);
-    width: 75%;
-    height: 75vw;
     pointer-events: none;
     z-index: 2;
 }
 
-#qr-canvas {
-    margin: auto;
-    height: 100vh;
+#qr-video {
     position: fixed;
-    top: 50%;
-    left: 50%;
-    margin-right: -50%;
-    transform: translate(-50%, -50%);
+    left: 0;
+    top: 0;
+    width: 100vw;
+    height: 100vh;
+    height: 100dvh;
+    object-fit: cover;
+    background: #000;
+    visibility: hidden;
     z-index: 1;
 }
 
-#qr-video {
-    margin: auto;
-    height: 100vh;
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    margin-right: -50%;
-    transform: translate(-50%, -50%);
-    z-index: 1;
+#qr-video.is-active {
+    visibility: visible;
 }
 
 .control-bar {
@@ -120,8 +107,13 @@
     backdrop-filter: blur(4px);
     -webkit-backdrop-filter: blur(4px);
     z-index: 20;
+    transition: top .75s ease-out;
     color: #eee;
     text-shadow: 1px 1px 0px #444;
+}
+
+.scanpage-title-underlay.is-visible {
+    top: 0;
 }
 
 .scanpage-title-underlay h3, .scanpage-title-underlay h4 {
@@ -198,45 +190,6 @@
 
 #scanresulttext {
     font-size: 18px;
-}
-
-#getscoinstitle {
-    left: 5px;
-    bottom: 190px;
-    padding: 3px;
-    background: rgb(0 0 0 / 25%);
-    backdrop-filter: blur(4px);
-    -webkit-backdrop-filter: blur(4px);
-    position: fixed;
-    z-index: 11;
-    font-size: 20px;
-    font-weight: bold;
-    color: yellow;
-    border-radius: 5px;
-}
-
-#getscoinsbox {
-    left: 20px;
-    bottom: 135px;
-    position: fixed;
-    width: 60px;
-    height: 60px;
-    background: white;
-    z-index: 11;
-    border-radius: 40px;
-    font-weight: bold;
-}
-
-.negative-coins {
-    border: 5px solid red;
-    padding-top: 13px;
-    font-size: 17px;
-}
-
-.positive-coins {
-    border: 5px solid green;
-    padding-top: 7px;
-    font-size: 27px;
 }
 
 #scanhistorycontainer {
@@ -359,29 +312,6 @@
     background-color: #0000002b !important;
     box-shadow: inset 0px 5px 10px -7px #444 !important;
 
-}
-
-#fullscreen {
-    z-index: 20;
-    position: fixed;
-    top: 70px;
-    right: 5px;
-    width: 45px;
-    height: 45px;
-}
-
-.btn-fullscreen{
-    pointer-events: none;
-    width: 45px;
-    height: 45px;
-    font-size: 25px;
-    padding: 3px 0px;
-    font-weight: bold;
-    border: 1px solid #4e4e4e;
-    border-radius: 10px;
-    background-color: #0000002b;
-    color: #eee;
-    box-shadow: inset 0px 5px 10px -7px #ccc;
 }
 
 .scanpage-copyright {

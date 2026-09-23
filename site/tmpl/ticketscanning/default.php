@@ -28,6 +28,10 @@ $document->addStyleSheet( 'components/com_ticketstation/assets/css/component.css
 HTMLHelper::_('jquery.framework');
 $document->addScript('components/com_ticketstation/assets/javascripts/showLogout.js');
 
+// After logging out, come back here (which then asks to log in again).
+$itemid = TicketstationFunctions::getSiteItemid();
+$return = base64_encode(Route::_('index.php?option=com_ticketstation&view=ticketscanning' . ($itemid ? '&Itemid=' . $itemid : ''), false));
+
 ?>
 
 <div class="row ticketstation">
@@ -42,7 +46,7 @@ $document->addScript('components/com_ticketstation/assets/javascripts/showLogout
         </div>
         <div style="margin-bottom:25px;">
             <div class="userinfo" style="display: block;margin: 0 auto;">
-                <i class="bi bi-shield-lock"></i> Je bent ingelogd als <strong><?php echo $this->user->name; ?></strong>
+                <i class="bi bi-shield-lock"></i> Je bent ingelogd als <strong><?php echo $this->escape($this->user->name); ?></strong>
                 <span class="userinfo-icon"><i id="arrow" class="bi bi-chevron-down"></i></span>
             </div>
             <div class="userinfo-logout" style="display: none;margin: 0 auto;">
@@ -52,7 +56,7 @@ $document->addScript('components/com_ticketstation/assets/javascripts/showLogout
                         <input type="submit" name="Submit" class="btn btn-danger" value="<?php echo Text::_('JLOGOUT'); ?>" />
                         <input type="hidden" name="option" value="com_users" />
                         <input type="hidden" name="task" value="user.logout" />
-                        <input type="hidden" name="return" value="<?php echo $return; ?>" />
+                        <input type="hidden" name="return" value="<?php echo $this->escape($return); ?>" />
                         <?php echo HTMLHelper::_('form.token'); ?>
                     </div>
                 </form>
@@ -94,7 +98,7 @@ $document->addScript('components/com_ticketstation/assets/javascripts/showLogout
                                             <span class="ticketmaster_upcoming_ticketlink"></span>
                                         </a>
                                         <div class="ticketmaster_upcoming_ticket_heading" style="border-radius: 10px;">
-                                            <h4 style="margin-left: 10px;"><strong><?php echo $event->eventname; ?> (<?php echo $event->eventcode; ?>)</strong></h4>
+                                            <h4 style="margin-left: 10px;"><strong><?php echo $this->escape($event->eventname); ?> (<?php echo $this->escape($event->eventcode); ?>)</strong></h4>
                                         </div>
                                     </div>
                                 </div>
@@ -128,7 +132,7 @@ $document->addScript('components/com_ticketstation/assets/javascripts/showLogout
                                                 <span class="ticketmaster_upcoming_ticketlink"></span>
                                             </a>
                                             <div class="ticketmaster_upcoming_ticket_heading" style="border-radius: 10px;">
-                                                <h4 style="margin-left: 10px;"><strong><?php echo $ticket->eventcode; ?> | <?php echo $ticket->ticketname; ?></strong></h4>
+                                                <h4 style="margin-left: 10px;"><strong><?php echo $this->escape($ticket->eventcode); ?> | <?php echo $this->escape($ticket->ticketname); ?></strong></h4>
                                             </div>
                                         </div>
                                     </div>
@@ -153,7 +157,7 @@ $document->addScript('components/com_ticketstation/assets/javascripts/showLogout
                                                 <span class="ticketmaster_upcoming_ticketlink"></span>
                                             </a>
                                             <div class="ticketmaster_upcoming_ticket_heading" style="border-radius: 10px;">
-                                                <h4 style="margin-left: 10px;"><strong><?php echo $ticket->eventcode; ?> | <?php echo $ticket->ticketname; ?></strong></h4>
+                                                <h4 style="margin-left: 10px;"><strong><?php echo $this->escape($ticket->eventcode); ?> | <?php echo $this->escape($ticket->ticketname); ?></strong></h4>
                                             </div>
                                         </div>
                                     </div>

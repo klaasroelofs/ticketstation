@@ -9,7 +9,7 @@ use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\View\HtmlView as BaseHtmlView;
 use Joomla\CMS\Router\Route;
 use Joomla\CMS\Uri\Uri;
-use Ticketstation\Component\Ticketstation\Administrator\Helper\Config;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\Scanner;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\TicketstationFunctions;
 
 /**
@@ -26,6 +26,7 @@ class HtmlView extends BaseHtmlView {
     public $event;
     public $sold;
     public $user;
+    public $scanner;
 
     /**
      * Display the view
@@ -38,13 +39,7 @@ class HtmlView extends BaseHtmlView {
         $app = Factory::getApplication();
         $user = $this->getCurrentUser();
 
-        if ($user->id == 0) {
-            $loggedIn = false;
-        } else {
-            $loggedIn = true;
-        }
-
-        if (!$loggedIn)
+        if ($user->guest)
         {
             $return = base64_encode(Uri::getInstance());
             $login_url_with_return = Route::_('index.php?option=com_users&view=login&return=' . $return, false);
@@ -52,37 +47,36 @@ class HtmlView extends BaseHtmlView {
             $app->redirect($login_url_with_return, 403);
         }
 
-        $jinput   = Factory::getApplication()->getInput();
-        $eventid = $jinput->get('eventid', '0', 'int');
-        $ticketid = $jinput->get('ticketid', '0', 'int');
-        $approved_for = $this->get('approvedfor');
+        $jinput   = $app->getInput();
+        $eventid  = $jinput->getInt('eventid', 0);
+        $ticketid = $jinput->getInt('ticketid', 0);
+        $scanner  = $this->get('scanner');
 
-        if (!empty($eventid)) {
-            $this->event	= $this->get('eventdata');
-            $this->sold = $this->get('SoldbyEvent');
+        // Only an assigned event or ticket can be opened in the scanner.
+        $allowed = $scanner && (
+            ($eventid > 0 && Scanner::mayScanEvent($scanner, $eventid))
+            || ($eventid === 0 && $ticketid > 0 && Scanner::mayScanTicket($scanner, $ticketid))
+        );
 
-            if(!in_array($eventid, json_decode($approved_for->events)))
-            {
-                Factory::getApplication()->enqueueMessage('Scan niet aan jou toegewezen!', 'error');
-                $itemid = TicketstationFunctions::getSiteItemid();
-                $app->redirect(Route::_('index.php?option=com_ticketstation&view=ticketscanning' . ($itemid ? '&Itemid=' . $itemid : '')));
+        if ($allowed) {
+            if ($eventid > 0) {
+                $this->event = $this->get('eventdata');
+                $this->sold  = $this->get('SoldbyEvent');
+            } else {
+                $this->ticket = $this->get('ticketdata');
+                $this->sold   = $this->get('SoldbyTicket');
             }
         }
 
-        if (!empty($ticketid)) {
-            $this->ticket	= $this->get('ticketdata');
-            $this->sold = $this->get('SoldbyTicket');
-
-            if(!in_array($ticketid, json_decode($approved_for->tickets)))
-            {
-                Factory::getApplication()->enqueueMessage('Scan niet aan jou toegewezen!', 'error');
-                $itemid = TicketstationFunctions::getSiteItemid();
-                $app->redirect(Route::_('index.php?option=com_ticketstation&view=ticketscanning' . ($itemid ? '&Itemid=' . $itemid : '')));
-            }
+        if (!$allowed || (!$this->event && !$this->ticket))
+        {
+            $app->enqueueMessage(Text::_('COM_TICKETSTATION_TICKETSCANNING_SCAN_NOT_ASSIGNED'), 'error');
+            $itemid = TicketstationFunctions::getSiteItemid();
+            $app->redirect(Route::_('index.php?option=com_ticketstation&view=ticketscanning' . ($itemid ? '&Itemid=' . $itemid : ''), false));
         }
 
-
-        $this->scanner_permissions = $this->get('scannerpermissions');
+        $this->scanner = $scanner;
+        $this->user    = $user;
 
         // Call the parent display to display the layout file
         parent::display($tpl);

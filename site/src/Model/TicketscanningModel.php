@@ -6,8 +6,8 @@ defined('_JEXEC') or die;
 
 use Joomla\CMS\Factory;
 use Joomla\CMS\MVC\Model\BaseDatabaseModel;
-use Joomla\CMS\Pagination\Pagination;
 use Joomla\Database\DatabaseQuery;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\Scanner;
 
 /**
  * @package     Joomla.Site
@@ -23,37 +23,30 @@ use Joomla\Database\DatabaseQuery;
  */
 class TicketscanningModel extends BaseDatabaseModel
 {
-    function __construct()
+    /**
+     * Scanner assignment of the current user (null when the user isn't a scanner).
+     *
+     * @return object|null
+     *
+     * @since 2.2.1
+     */
+    private function getScanner()
     {
-        parent::__construct();
-
-
+        return Scanner::getByUserId((int) $this->getCurrentUser()->id);
     }
 
     /**
      * Returning the query to the getList function.
      *
+     * @param   int[]  $ticketids
+     *
      * @return DatabaseQuery
      *
      * @since 1.0.0
      */
-    private function getListQuery()
+    private function getListQuery(array $ticketids)
     {
-        $user 	= $this->getCurrentUser();
         $db = Factory::getContainer()->get('DatabaseDriver');
-
-        $query = $db->getQuery(true)
-            ->select(['tickets'])
-            ->from($db->quoteName('#__ticketstation_scannermap'))
-            ->where($db->quoteName('userid') . ' = '. $db->quote($user->id));
-
-        $db->setQuery($query);
-
-        if (count(json_decode($db->loadResult())) > 0) {
-            $approved_for = json_decode($db->loadResult());
-        } else {
-            $approved_for = array(0);
-        }
 
         $query = $db->getQuery(true)
             ->select([
@@ -63,62 +56,58 @@ class TicketscanningModel extends BaseDatabaseModel
             ->from($db->quoteName('#__ticketstation_tickets', 't'))
             ->join('LEFT', $db->quoteName('#__ticketstation_events', 'e') . ' ON ' . $db->quoteName('t.eventid') . ' = ' . $db->quoteName('e.eventid'))
             ->join('LEFT', $db->quoteName('#__ticketstation_venues', 'v') . ' ON ' . $db->quoteName('t.venue') . ' = ' . $db->quoteName('v.id'))
-            ->where($db->quoteName('t.ticketid') . ' IN (' . implode(",",$approved_for) . ')')
+            ->whereIn($db->quoteName('t.ticketid'), $ticketids)
             ->where($db->quoteName('t.enddate') . ' > '. $db->quote(date("Y-m-d H:i:s")))
             ->order('t.startdate ASC');
 
         return $query;
     }
 
-
-
     /**
-     * Returning all ticket which are published and upcoming.
+     * Returning the assigned tickets which are upcoming.
      *
-     * @return mixed
+     * @return array
      *
      * @since 1.0.0
      */
     function getList()
     {
+        $scanner = $this->getScanner();
+
+        if (!$scanner || !$scanner->tickets) {
+            return [];
+        }
+
         $db = Factory::getContainer()->get('DatabaseDriver');
 
-        $db->setQuery($this->getListQuery(), $this->getState('limitstart'), $this->getState('limit'));
+        $db->setQuery($this->getListQuery($scanner->tickets), $this->getState('limitstart'), $this->getState('limit'));
 
         return $db->loadObjectList();
     }
 
     /**
-     * Getting the published events
+     * Getting the assigned events
      *
-     * @return mixed
+     * @return array
      *
      * @since 1.0.0
      */
     function getEvents()
     {
-        $user 	= $this->getCurrentUser();
-        $db = Factory::getContainer()->get('DatabaseDriver');
+        $scanner = $this->getScanner();
 
-        $query = $db->getQuery(true)
-            ->select(['events'])
-            ->from($db->quoteName('#__ticketstation_scannermap'))
-            ->where($db->quoteName('userid') . ' = '. $db->quote($user->id));
-
-        $db->setQuery($query);
-
-        if (count(json_decode($db->loadResult())) > 0) {
-            $approved_for = json_decode($db->loadResult());
-        } else {
-            $approved_for = array(0);
+        if (!$scanner || !$scanner->events) {
+            return [];
         }
+
+        $db = Factory::getContainer()->get('DatabaseDriver');
 
         $query = $db->getQuery(true)
             ->select([
                 'eventname', 'eventid', 'published', 'eventcode',
             ])
             ->from($db->quoteName('#__ticketstation_events'))
-            ->where($db->quoteName('eventid') . ' IN (' . implode(',', $approved_for) . ')')
+            ->whereIn($db->quoteName('eventid'), $scanner->events)
             ->order('eventdate ASC');
 
         $db->setQuery($query);
