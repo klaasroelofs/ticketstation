@@ -30,6 +30,12 @@ class HtmlView extends BaseHtmlView {
 
     public $data = [];
 
+    public $stats = [];
+
+    public $availability = [];
+
+    public $attention = [];
+
     function display($tpl = null) {
 
         ToolbarHelper::title(Text::_('COM_TICKETSTATION_VIEW_CPANEL_TITLE'), 'icon-home');
@@ -38,6 +44,10 @@ class HtmlView extends BaseHtmlView {
         $this->data 	= $model->getData();
 		$this->mollie   = $model->getMollie();
         $this->config   = $model->getConfig();
+
+        $this->stats        = $model->getStats();
+        $this->availability = $model->getAvailability();
+        $this->attention    = $model->getAttention($this->config);
 
 
         parent::display($tpl);

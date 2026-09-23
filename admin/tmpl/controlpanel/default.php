@@ -1,7 +1,10 @@
 <?php
 
 use Joomla\CMS\Factory;
+use Joomla\CMS\HTML\HTMLHelper;
 use Joomla\CMS\Language\Text;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\Date;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\Price;
 
 /**
  * @package     Joomla.Administrator
@@ -284,6 +287,146 @@ if (version_compare(JVERSION, '4.999.999', 'gt')) {
             </div>
         </div>
     </div>
+
+    <?php // STATISTICS (full width) ?>
+    <?php
+    $stats     = $this->stats;
+    $weekDiff  = $stats['week']->tickets - $stats['prev_week']->tickets;
+    ?>
+    <div class="row mt-4">
+        <div class="col">
+            <h2 class="mb-0"><span class="fa fa-chart-line text-primary me-2" aria-hidden="true"></span><?= Text::_('COM_TICKETSTATION_CPANEL_STATS_TITLE') ?></h2>
+            <p class="text-muted"><?= Text::sprintf('COM_TICKETSTATION_CPANEL_STATS_SUBTITLE', HTMLHelper::_('date', 'now', 'W'), HTMLHelper::_('date', 'now', 'F Y')) ?></p>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-6 col-lg-3 mb-2">
+            <div class="card h-100">
+                <div class="card-body">
+                    <div class="text-muted small"><?= Text::_('COM_TICKETSTATION_CPANEL_STATS_SOLD_WEEK') ?></div>
+                    <div class="fs-2 fw-bold"><?= $stats['week']->tickets; ?></div>
+                    <div class="small <?= $weekDiff > 0 ? 'text-success' : ($weekDiff < 0 ? 'text-danger' : 'text-muted'); ?>">
+                        <?= Text::sprintf('COM_TICKETSTATION_CPANEL_STATS_PREV_WEEK', $stats['prev_week']->tickets); ?>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3 mb-2">
+            <div class="card h-100">
+                <div class="card-body">
+                    <div class="text-muted small"><?= Text::_('COM_TICKETSTATION_CPANEL_STATS_REVENUE_WEEK') ?></div>
+                    <div class="fs-2 fw-bold"><?= Price::_($stats['week']->revenue); ?></div>
+                    <div class="small text-muted"><?= Text::plural('COM_TICKETSTATION_CPANEL_STATS_N_ORDERS', $stats['week']->orders); ?></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3 mb-2">
+            <div class="card h-100">
+                <div class="card-body">
+                    <div class="text-muted small"><?= Text::_('COM_TICKETSTATION_CPANEL_STATS_REVENUE_MONTH') ?></div>
+                    <div class="fs-2 fw-bold"><?= Price::_($stats['month']->revenue); ?></div>
+                    <div class="small text-muted"><?= Text::plural('COM_TICKETSTATION_CPANEL_STATS_N_TICKETS', $stats['month']->tickets); ?></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3 mb-2">
+            <div class="card h-100">
+                <div class="card-body">
+                    <div class="text-muted small"><?= Text::_('COM_TICKETSTATION_CPANEL_STATS_ON_SALE') ?></div>
+                    <div class="fs-2 fw-bold"><?= $stats['on_sale_events']; ?> / <?= $stats['on_sale_tickets']; ?></div>
+                    <div class="small text-muted"><?= Text::_('COM_TICKETSTATION_CPANEL_STATS_EVENTS_TICKETS') ?></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-12 col-lg-8">
+            <div class="card mb-2">
+                <h3 class="card-header">
+                    <?= Text::_('COM_TICKETSTATION_CPANEL_AVAILABILITY_HEADER') ?>
+                </h3>
+                <div class="card-body">
+                    <?php if (empty($this->availability)) { ?>
+                        <p class="text-muted mb-0"><?= Text::_('COM_TICKETSTATION_CPANEL_AVAILABILITY_NONE') ?></p>
+                    <?php } else { ?>
+                        <table class="table table-sm align-middle mb-2">
+                            <thead>
+                            <tr>
+                                <th scope="col"><?= Text::_('COM_TICKETSTATION_CPANEL_AVAILABILITY_TICKET') ?></th>
+                                <th scope="col" class="d-none d-md-table-cell"><?= Text::_('COM_TICKETSTATION_CPANEL_AVAILABILITY_DATE') ?></th>
+                                <th scope="col" class="w-25"><?= Text::_('COM_TICKETSTATION_CPANEL_AVAILABILITY_SOLD') ?></th>
+                                <th scope="col" class="text-end"><?= Text::_('COM_TICKETSTATION_CPANEL_AVAILABILITY_LEFT') ?></th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <?php foreach ($this->availability as $row) {
+                                $percentageLeft = 100 - $row->percentage_sold;
+                                if ($row->available <= 0) {
+                                    $barClass  = 'bg-danger';
+                                    $leftClass = 'text-danger';
+                                } elseif ($percentageLeft < 11) {
+                                    $barClass  = 'bg-warning';
+                                    $leftClass = 'text-warning';
+                                } else {
+                                    $barClass  = 'bg-primary';
+                                    $leftClass = '';
+                                }
+                                ?>
+                                <tr>
+                                    <td>
+                                        <a href="index.php?option=com_ticketstation&controller=tickets&task=edit&cid=<?= (int) $row->ticketid; ?>">
+                                            <?= htmlspecialchars($row->eventname, ENT_QUOTES, 'UTF-8'); ?> - <?= htmlspecialchars($row->ticketname, ENT_QUOTES, 'UTF-8'); ?>
+                                        </a>
+                                        <?php if ($row->show_seatplans == 1) { ?>
+                                            <span class="fa fa-chair text-muted small" title="<?= Text::_('COM_TICKETSTATION_SEATPLANS') ?>"></span>
+                                        <?php } ?>
+                                    </td>
+                                    <td class="d-none d-md-table-cell text-nowrap"><?= Date::_($row->startdate, 'd-m-Y H:i'); ?></td>
+                                    <td>
+                                        <div class="progress" role="progressbar" aria-valuenow="<?= $row->percentage_sold; ?>" aria-valuemin="0" aria-valuemax="100"
+                                             title="<?= $row->sold; ?> / <?= $row->total; ?>">
+                                            <div class="progress-bar <?= $barClass; ?>" style="width: <?= $row->percentage_sold; ?>%"></div>
+                                        </div>
+                                        <span class="small text-muted"><?= $row->sold; ?> / <?= $row->total; ?></span>
+                                    </td>
+                                    <td class="text-end text-nowrap <?= $leftClass; ?>">
+                                        <?= $row->available <= 0 ? Text::_('COM_TICKETSTATION_CPANEL_AVAILABILITY_SOLD_OUT') : $row->available; ?>
+                                    </td>
+                                </tr>
+                            <?php } ?>
+                            </tbody>
+                        </table>
+                        <a href="index.php?option=com_ticketstation&view=tickets" class="small"><?= Text::_('COM_TICKETSTATION_CPANEL_AVAILABILITY_ALL') ?></a>
+                    <?php } ?>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-lg-4">
+            <div class="card mb-2">
+                <h3 class="card-header">
+                    <?= Text::_('COM_TICKETSTATION_CPANEL_ATTENTION_HEADER') ?>
+                </h3>
+                <div class="card-body">
+                    <?php if (empty($this->attention)) { ?>
+                        <p class="text-muted mb-0">
+                            <span class="fa fa-check-circle text-success"></span>
+                            <?= Text::_('COM_TICKETSTATION_CPANEL_ATTENTION_NONE') ?>
+                        </p>
+                    <?php } else { ?>
+                        <ul class="list-unstyled mb-0">
+                            <?php foreach ($this->attention as $item) { ?>
+                                <li class="mb-2">
+                                    <span class="fa <?= $item->icon; ?> text-<?= $item->level; ?> me-1" aria-hidden="true"></span>
+                                    <a href="<?= $item->link; ?>"><?= Text::plural($item->key, $item->count); ?></a>
+                                </li>
+                            <?php } ?>
+                        </ul>
+                    <?php } ?>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="row">
         <div class="col">
             <div class="ticketstation-cpanel-footer small mt-3 p-3 bg-light border-top border-4 d-flex flex-column">
