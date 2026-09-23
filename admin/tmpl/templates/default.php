@@ -61,20 +61,6 @@ $wa->registerAndUseStyle('ticketstation', Uri::base() . 'components\com_ticketst
                             </div>
                         </div>
                         <div class="col-sm-3 templates-title">
-                            <?= Text::_('COM_TICKETSTATION_TEMPLATE_FROM_NAME') ?>
-                        </div>
-                        <div class="col-sm-9 templates-content">
-                            <code><?= $row->from_name; ?></code>
-                        </div>
-                        <hr/>
-                        <div class="col-sm-3 templates-title">
-                            <?= Text::_('COM_TICKETSTATION_TEMPLATE_FROM_MAILADDRESS') ?>
-                        </div>
-                        <div class="col-sm-9 templates-content">
-                            <code><?= $row->from_email; ?></code>
-                        </div>
-                        <hr/>
-                        <div class="col-sm-3 templates-title">
                             <?= Text::_('COM_TICKETSTATION_TEMPLATE_MAILSUBJECT') ?>
                         </div>
                         <div class="col-sm-9 templates-content">

@@ -152,6 +152,8 @@ CREATE TABLE IF NOT EXISTS `#__ticketstation_config` (
   `show_venue_address` tinyint(1) NOT NULL DEFAULT 0,
   `show_venue_description` tinyint(1) NOT NULL DEFAULT 0,
   `show_venue_website` tinyint(1) NOT NULL DEFAULT 0,
+  `from_name` varchar(255) NOT NULL DEFAULT '',
+  `from_email` varchar(255) NOT NULL DEFAULT '',
   PRIMARY KEY (`configid`)
 )  ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 DEFAULT COLLATE=utf8mb4_unicode_ci;
 
@@ -463,8 +465,6 @@ CREATE TABLE IF NOT EXISTS `#__ticketstation_templates` (
   `alias` varchar(255) NOT NULL DEFAULT '',
   `mailbody` varchar(5000) NOT NULL DEFAULT '',
   `mailsubject` varchar(255) NOT NULL DEFAULT '',
-  `from_email` varchar(255) NOT NULL DEFAULT '',
-  `from_name` varchar(255) NOT NULL DEFAULT '',
   PRIMARY KEY (`mailid`)
 )  ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 DEFAULT COLLATE=utf8mb4_unicode_ci;
 
@@ -727,11 +727,11 @@ INSERT IGNORE INTO `#__ticketstation_country` VALUES("244","Canary Islands","XCA
 INSERT IGNORE INTO `#__ticketstation_country` VALUES("245","Montenegro","MNE","ME","0","1");
 INSERT IGNORE INTO `#__ticketstation_country` VALUES("249","Afghanistan","AFG","AF","0","1");
 
-INSERT IGNORE INTO `#__ticketstation_templates` VALUES("1","sending Tickets after successful Payment","<p>Hi {firstname},</p><p>Thank you for your purchase!<br />Your order number is <strong>{ordercode}</strong>.</p><p>Please find your tickets attached to this e-mail.<br />Please don't hesitate to contact us in case of any questions.</p><p>Kind regards,</p><p>{company_name}<br />{company_website}</p>","Here are your tickets!","info@yourdomain.com","Sender Name");
-INSERT IGNORE INTO `#__ticketstation_templates` VALUES("2","resending Tickets","<p>Hi {firstname},</p><p>We are hereby sending you the tickets you ordered once again.<br />Please don't hesitate to contact us in case of any questions.</p><p>Kind regards,</p><p>{company_name}<br />{company_website}</p>","Here are your tickets!","info@yourdomain.com","Sender Name");
-INSERT IGNORE INTO `#__ticketstation_templates` VALUES("3","Sending Payment Link","<p>Hi {firstname},</p><p>We are sending you the payment link for the tickets you ordered:</p><p>{paymentlink}</p><p>Click on the link (or copy and paste it into your browser) to make your payment.<br/>After successful payment, the tickets will be sent directly to this email address.</p><p>Please don't hesitate to contact us in case of any questions.</p><p>Kind regards,</p><p>{company_name}<br />{company_website}</p>","Payment link for your tickets","info@yourdomain.com","Sender Name");
-INSERT IGNORE INTO `#__ticketstation_templates` VALUES("4","Waiting list confirmation","<p>Hi {firstname},</p><p>You are on the waiting list for:</p><p>{orderlist}</p><p>Please confirm your spot on this waiting list. As soon as tickets become available, you will receive a separate email with a payment link — we cannot guarantee your spot on the waiting list without confirmation.</p><p>{confirmationlink}</p><p>Please don't hesitate to contact us in case of any questions.</p><p>Kind regards,</p><p>{company_name}<br />{company_website}</p>","Confirm your spot on the waiting list","info@yourdomain.com","Sender Name");
-INSERT IGNORE INTO `#__ticketstation_templates` VALUES("5","Invoice","<p>Hi {firstname},</p><p>Attached you will find the invoice for your order <strong>{ordercode}</strong>.</p><p>Invoice number: {invoice_id}<br />Amount: {price}</p><p>Please don't hesitate to contact us in case of any questions.</p><p>Kind regards,</p><p>{company_name}<br />{company_website}</p>","Invoice for your ordered tickets","info@yourdomain.com","Sender Name");
+INSERT IGNORE INTO `#__ticketstation_templates` VALUES("1","sending Tickets after successful Payment","<p>Hi {firstname},</p><p>Thank you for your purchase!<br />Your order number is <strong>{ordercode}</strong>.</p><p>Please find your tickets attached to this e-mail.<br />Please don't hesitate to contact us in case of any questions.</p><p>Kind regards,</p><p>{company_name}<br />{company_website}</p>","Here are your tickets!");
+INSERT IGNORE INTO `#__ticketstation_templates` VALUES("2","resending Tickets","<p>Hi {firstname},</p><p>We are hereby sending you the tickets you ordered once again.<br />Please don't hesitate to contact us in case of any questions.</p><p>Kind regards,</p><p>{company_name}<br />{company_website}</p>","Here are your tickets!");
+INSERT IGNORE INTO `#__ticketstation_templates` VALUES("3","Sending Payment Link","<p>Hi {firstname},</p><p>We are sending you the payment link for the tickets you ordered:</p><p>{paymentlink}</p><p>Click on the link (or copy and paste it into your browser) to make your payment.<br/>After successful payment, the tickets will be sent directly to this email address.</p><p>Please don't hesitate to contact us in case of any questions.</p><p>Kind regards,</p><p>{company_name}<br />{company_website}</p>","Payment link for your tickets");
+INSERT IGNORE INTO `#__ticketstation_templates` VALUES("4","Waiting list confirmation","<p>Hi {firstname},</p><p>You are on the waiting list for:</p><p>{orderlist}</p><p>Please confirm your spot on this waiting list. As soon as tickets become available, you will receive a separate email with a payment link — we cannot guarantee your spot on the waiting list without confirmation.</p><p>{confirmationlink}</p><p>Please don't hesitate to contact us in case of any questions.</p><p>Kind regards,</p><p>{company_name}<br />{company_website}</p>","Confirm your spot on the waiting list");
+INSERT IGNORE INTO `#__ticketstation_templates` VALUES("5","Invoice","<p>Hi {firstname},</p><p>Attached you will find the invoice for your order <strong>{ordercode}</strong>.</p><p>Invoice number: {invoice_id}<br />Amount: {price}</p><p>Please don't hesitate to contact us in case of any questions.</p><p>Kind regards,</p><p>{company_name}<br />{company_website}</p>","Invoice for your ordered tickets");
 
 INSERT IGNORE INTO `#__ticketstation_mollie` VALUES(
 "1",
@@ -850,4 +850,6 @@ INSERT IGNORE INTO `#__ticketstation_config` VALUES(
 "1",
 "0",
 "0",
-"0");
+"0",
+"",
+"");

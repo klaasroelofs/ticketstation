@@ -774,6 +774,44 @@ $document->getWebAssetManager()->addInlineScript("
             </div>
         </div>
 
+        <div class="card mt-3 rounded-to">
+            <h3 class="card-header">
+                <?= Text::_('COM_TICKETSTATION_MAIL_SETTINGS') ?>
+            </h3>
+            <div class="card-body">
+                <div class="row mb-3">
+                    <label for="from_name" class="col-sm-3 col-form-label"
+                           rel="popover"
+                           title="<?= Text::_('COM_TICKETSTATION_CONFIG_FROM_NAME') ?>">
+                        <?= Text::_('COM_TICKETSTATION_CONFIG_FROM_NAME') ?>
+                    </label>
+                    <div class="col-sm-9">
+                        <input type="text" name="from_name" id="from_name"
+                               class="form-control"
+                               value="<?= htmlspecialchars($this->config->from_name ?? '', ENT_QUOTES, 'UTF-8'); ?>"/>
+                        <small class="form-text">
+                            <?= Text::_('COM_TICKETSTATION_CONFIG_FROM_NAME_DESC') ?>
+                        </small>
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <label for="from_email" class="col-sm-3 col-form-label"
+                           rel="popover"
+                           title="<?= Text::_('COM_TICKETSTATION_CONFIG_FROM_EMAIL') ?>">
+                        <?= Text::_('COM_TICKETSTATION_CONFIG_FROM_EMAIL') ?>
+                    </label>
+                    <div class="col-sm-9">
+                        <input type="email" name="from_email" id="from_email"
+                               class="form-control"
+                               value="<?= htmlspecialchars($this->config->from_email ?? '', ENT_QUOTES, 'UTF-8'); ?>"/>
+                        <small class="form-text">
+                            <?= Text::_('COM_TICKETSTATION_CONFIG_FROM_EMAIL_DESC') ?>
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
     <?= HTMLHelper::_('uitab.endTab'); ?>
 
     <?= HTMLHelper::_('uitab.endTabSet'); ?>

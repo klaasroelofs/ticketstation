@@ -14,6 +14,7 @@ namespace Ticketstation\Component\Ticketstation\Administrator\Helper;
 ## no direct access
 use Joomla\CMS\Factory;
 use Joomla\CMS\Language\Text;
+use Joomla\CMS\Mail\MailHelper;
 use Joomla\CMS\Uri\Uri;
 
 defined('_JEXEC') or die('Restricted access');
@@ -57,13 +58,12 @@ class eTicketsMessage
     {
         $this->setTemplate($alias);
 
-        // Gets the default information:
+        // The sender is configured centrally; fall back on the company details when left empty
         $config = $this->getConfig();
 
-        // Set variables regarding the message
         $variables = [
-            'from_name'      => $this->template->from_name,
-            'from_email'     => $this->template->from_email,
+            'from_name'  => trim((string) $config->from_name) ?: trim((string) $config->companyname),
+            'from_email' => trim((string) $config->from_email) ?: trim((string) $config->email),
         ];
 
         $this->variables = array_merge($this->variables, $variables);
@@ -306,14 +306,18 @@ class eTicketsMessage
         // Should the email be sent to the user or the shop owner?
         $send_to_email = $this->variables['emailaddress'];
         $send_to_name  = $this->variables['firstname'] . ' ' . $this->variables['name'];
-        $sender = array($this->variables['from_email'], $this->variables['from_name']);
-
 
         // Compile mailer function:
         $mailer = Factory::getMailer();
         $mailer->setSubject($this->getSubject());
         $mailer->setBody($body);
-        $mailer->setSender($sender);
+
+        // Without a usable sender address the mailer keeps the global Joomla sender
+        if (MailHelper::isEmailAddress($this->variables['from_email']))
+        {
+            $mailer->setSender([$this->variables['from_email'], $this->variables['from_name']]);
+        }
+
         $mailer->addRecipient($send_to_email, $send_to_name);
         //$mailer->addReplyTo($this->variables['reply_to_email'], $this->variables['reply_to_name']);
         $mailer->isHTML(true);

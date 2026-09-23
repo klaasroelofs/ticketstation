@@ -35,25 +35,11 @@ $editor = Editor::getInstance($user->getParam('editor', Factory::getConfig()->ge
                     <h3 class="card-header bg-primary text-white">
                         Mail Template
                     </h3>
-                    <label for="from_name" class="col-sm-3 col-form-label"
-                           rel="popover"
-                           title="<?= Text::_('COM_TICKETSTATION_TEMPLATE_FROM_NAME') ?>">
-                        <?= Text::_('COM_TICKETSTATION_TEMPLATE_FROM_NAME') ?>
-                    </label>
-                    <div class="col-sm-9">
-                        <input type="text" name="from_name" id="from_name"
-                               class="form-control"
-                               value="<?= isset($this->data->from_name)?$this->data->from_name:null; ?>"/>
-                    </div>
-                    <label for="from_email" class="col-sm-3 col-form-label"
-                           rel="popover"
-                           title="<?= Text::_('COM_TICKETSTATION_TEMPLATE_FROM_MAILADDRESS') ?>">
-                        <?= Text::_('COM_TICKETSTATION_TEMPLATE_FROM_MAILADDRESS') ?>
-                    </label>
-                    <div class="col-sm-9">
-                        <input type="text" name="from_email" id="from_email"
-                               class="form-control"
-                               value="<?= isset($this->data->from_email)?$this->data->from_email:null; ?>"/>
+                    <div class="alert alert-info mt-3">
+                        <?= Text::sprintf(
+                            'COM_TICKETSTATION_TEMPLATE_SENDER_MOVED',
+                            Route::_('index.php?option=com_ticketstation&view=configuration')
+                        ) ?>
                     </div>
                     <label for="mailsubject" class="col-sm-3 col-form-label"
                            rel="popover"
