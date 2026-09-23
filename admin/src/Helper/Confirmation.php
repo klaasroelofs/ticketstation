@@ -42,14 +42,6 @@ class Confirmation
     {
         $config = (new Config)->get();
 
-        if ($config->send_confirmation_pdf == 2)
-        {
-            $confirmation = new ConfirmationPDF;
-            $confirmation->create($this->eid);
-
-            return true;
-        }
-
         $db      = Factory::getContainer()->get('DatabaseDriver');
         $app     = Factory::getApplication();
         $session = $app->getSession();

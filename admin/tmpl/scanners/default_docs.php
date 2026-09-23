@@ -42,7 +42,6 @@ $exampleResponse = <<<XML
         <text>Ticket goedgekeurd</text>
         <order>ABC123-10234</order>
         <totalscanned>57</totalscanned>
-        <getscoins>GEEN</getscoins>
     </message>
 </xml>
 XML;
@@ -120,10 +119,6 @@ XML;
                     <tr>
                         <th scope="row"><code>totalscanned</code></th>
                         <td><?= Text::_('COM_TICKETSTATION_SCANNING_DOCS_HW_TOTAL_DESC') ?></td>
-                    </tr>
-                    <tr>
-                        <th scope="row"><code>getscoins</code></th>
-                        <td><?= Text::_('COM_TICKETSTATION_SCANNING_DOCS_HW_COINS_DESC') ?></td>
                     </tr>
                 </tbody>
             </table>

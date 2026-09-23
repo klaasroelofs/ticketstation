@@ -8,6 +8,7 @@ use Joomla\CMS\Factory;
 use Joomla\CMS\MVC\Model\BaseDatabaseModel;
 use Joomla\CMS\Pagination\Pagination;
 use Joomla\Database\DatabaseQuery;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\Date;
 
 /**
  * @package     Joomla.Site
@@ -150,7 +151,7 @@ class UpcomingModel extends BaseDatabaseModel {
     function getUpcomingevents()
     {
         //set horizon to only show upcoming events that will be published within 1 month from now
-        $horizon = date('Y-m-d H:i:s', strtotime("+1 month"));
+        $horizon = Date::localNow('Y-m-d H:i:s', '+1 month');
 
         $db = Factory::getContainer()->get('DatabaseDriver');
 
@@ -162,7 +163,7 @@ class UpcomingModel extends BaseDatabaseModel {
             ->where($db->quoteName('published') . " = 0")
             ->where($db->quoteName('automatic_change_state') . " = 1")
             ->where($db->quoteName('startdate') . ' < '. $db->quote($horizon))
-            ->where($db->quoteName('closingdate') . ' > '. $db->quote(date('Y-m-d H:i:s')))
+            ->where($db->quoteName('closingdate') . ' > '. $db->quote(Date::localNow()))
             ->order('eventdate ASC');
 
         $db->setQuery($query);

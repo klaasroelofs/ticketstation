@@ -3,7 +3,6 @@
 use Joomla\CMS\Factory;
 use Joomla\CMS\HTML\HTMLHelper;
 use Joomla\CMS\Language\Text;
-use Ticketstation\Component\Ticketstation\Administrator\Helper\Date;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Price;
 
 /**
@@ -375,13 +374,13 @@ if (version_compare(JVERSION, '4.999.999', 'gt')) {
                                 <tr>
                                     <td>
                                         <a href="index.php?option=com_ticketstation&controller=tickets&task=edit&cid=<?= (int) $row->ticketid; ?>">
-                                            <?= htmlspecialchars($row->eventname, ENT_QUOTES, 'UTF-8'); ?> - <?= htmlspecialchars($row->ticketname, ENT_QUOTES, 'UTF-8'); ?>
+                                            <?= $row->eventname; ?> - <?= $row->ticketname; ?>
                                         </a>
                                         <?php if ($row->show_seatplans == 1) { ?>
                                             <span class="fa fa-chair text-muted small" title="<?= Text::_('COM_TICKETSTATION_SEATPLANS') ?>"></span>
                                         <?php } ?>
                                     </td>
-                                    <td class="d-none d-md-table-cell text-nowrap"><?= Date::_($row->startdate, 'd-m-Y H:i'); ?></td>
+                                    <td class="small d-none d-md-table-cell text-nowrap"><?= date($this->config->dateformat . ' ' . $this->config->time_format, strtotime($row->startdate)); ?></td>
                                     <td>
                                         <div class="progress" role="progressbar" aria-valuenow="<?= $row->percentage_sold; ?>" aria-valuemin="0" aria-valuemax="100"
                                              title="<?= $row->sold; ?> / <?= $row->total; ?>">

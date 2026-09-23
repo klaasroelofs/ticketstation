@@ -13,6 +13,7 @@ defined('_JEXEC') or die;
 
 use Joomla\CMS\Factory;
 use Joomla\CMS\MVC\Model\BaseDatabaseModel;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\Date;
 
 /**
  * Ticketstation ControlPanel Model
@@ -72,6 +73,29 @@ class ControlpanelModel extends BaseDatabaseModel
     }
 
     /**
+     * Timezone of the current user, falling back to the site timezone.
+     *
+     * @return  \DateTimeZone
+     */
+    private function getZone()
+    {
+        $app = Factory::getApplication();
+
+        return new \DateTimeZone($app->getIdentity()->getParam('timezone') ?: ($app->get('offset') ?: 'UTC'));
+    }
+
+    /**
+     * "Now" (SQL format) for comparing with ticket dates (startdate, sale_stop, publish_date_time),
+     * which are stored in the site's local time. See Date::localNow().
+     *
+     * @return  string
+     */
+    private function getLocalNow($modify = null)
+    {
+        return Date::localNow('Y-m-d H:i:s', $modify);
+    }
+
+    /**
      * Start and end (UTC, SQL format) of the current and previous week (monday - sunday)
      * and of the current calendar month, based on the site/user timezone.
      *
@@ -81,8 +105,7 @@ class ControlpanelModel extends BaseDatabaseModel
      */
     private function getPeriods()
     {
-        $app  = Factory::getApplication();
-        $zone = new \DateTimeZone($app->getIdentity()->getParam('timezone') ?: ($app->get('offset') ?: 'UTC'));
+        $zone = $this->getZone();
 
         $weekStart     = new \DateTime('monday this week 00:00:00', $zone);
         $prevWeekStart = (clone $weekStart)->modify('-1 week');
@@ -158,7 +181,7 @@ class ControlpanelModel extends BaseDatabaseModel
             ->where($db->quoteName('t.parent') . ' = 0')
             ->where($db->quoteName('t.published') . ' = 1')
             ->where($db->quoteName('e.published') . ' = 1')
-            ->where($db->quoteName('t.startdate') . ' >= ' . $db->quote(Factory::getDate()->toSql()));
+            ->where($db->quoteName('t.startdate') . ' >= ' . $db->quote($this->getLocalNow()));
 
         $db->setQuery($query);
         $onSale = $db->loadObject();
@@ -195,7 +218,7 @@ class ControlpanelModel extends BaseDatabaseModel
             ->where($db->quoteName('t.parent') . ' = 0')
             ->where($db->quoteName('t.published') . ' = 1')
             ->where($db->quoteName('e.published') . ' = 1')
-            ->where($db->quoteName('t.startdate') . ' >= ' . $db->quote(Factory::getDate()->toSql()))
+            ->where($db->quoteName('t.startdate') . ' >= ' . $db->quote($this->getLocalNow()))
             ->order($db->quoteName('t.startdate') . ' ASC');
 
         $db->setQuery($query, 0, (int) $limit);
@@ -221,8 +244,8 @@ class ControlpanelModel extends BaseDatabaseModel
     function getAttention($config)
     {
         $db    = Factory::getContainer()->get('DatabaseDriver');
-        $now   = Factory::getDate();
-        $soon  = Factory::getDate('+7 days');
+        $now   = $this->getLocalNow();
+        $soon  = $this->getLocalNow('+7 days');
         $items = [];
 
         $add = static function ($key, $count, $link, $icon, $level = 'warning') use (&$items) {
@@ -248,7 +271,7 @@ class ControlpanelModel extends BaseDatabaseModel
             ->join('INNER', $db->quoteName('#__ticketstation_tickets', 't') . ' ON ' . $db->quoteName('o.ticketid') . ' = ' . $db->quoteName('t.ticketid'))
             ->where($db->quoteName('o.paid') . ' = 1')
             ->where($db->quoteName('o.pdfsent') . ' = 0')
-            ->where($db->quoteName('t.startdate') . ' >= ' . $db->quote($now->toSql()));
+            ->where($db->quoteName('t.startdate') . ' >= ' . $db->quote($now));
         $db->setQuery($query);
         $add('COM_TICKETSTATION_CPANEL_ATTENTION_NOT_SENT', $db->loadResult(),
             'index.php?option=com_ticketstation&view=boxoffice&filter_ordering_paid=1', 'fa-envelope', 'danger');
@@ -283,7 +306,7 @@ class ControlpanelModel extends BaseDatabaseModel
             ->select('COUNT(coupon_id)')
             ->from($db->quoteName('#__ticketstation_coupons'))
             ->where($db->quoteName('published') . ' = 1')
-            ->where('((' . $db->quoteName('coupon_valid_to') . ' BETWEEN ' . $db->quote($now->format('Y-m-d')) . ' AND ' . $db->quote($soon->format('Y-m-d')) . ')'
+            ->where('((' . $db->quoteName('coupon_valid_to') . ' BETWEEN ' . $db->quote(substr($now, 0, 10)) . ' AND ' . $db->quote(substr($soon, 0, 10)) . ')'
                 . ' OR (' . $db->quoteName('coupon_limit') . ' > 0 AND ' . $db->quoteName('coupon_used') . ' >= 0.9 * ' . $db->quoteName('coupon_limit') . '))');
         $db->setQuery($query);
         $add('COM_TICKETSTATION_CPANEL_ATTENTION_COUPONS', $db->loadResult(),
@@ -294,9 +317,9 @@ class ControlpanelModel extends BaseDatabaseModel
             ->select('COUNT(ticketid)')
             ->from($db->quoteName('#__ticketstation_tickets'))
             ->where('((' . $db->quoteName('use_sale_stop') . ' = 1 AND ' . $db->quoteName('published') . ' = 1'
-                . ' AND ' . $db->quoteName('sale_stop') . ' BETWEEN ' . $db->quote($now->toSql()) . ' AND ' . $db->quote($soon->toSql()) . ')'
+                . ' AND ' . $db->quoteName('sale_stop') . ' BETWEEN ' . $db->quote($now) . ' AND ' . $db->quote($soon) . ')'
                 . ' OR (' . $db->quoteName('use_auto_publish') . ' = 1 AND ' . $db->quoteName('published') . ' = 0'
-                . ' AND ' . $db->quoteName('publish_date_time') . ' BETWEEN ' . $db->quote($now->toSql()) . ' AND ' . $db->quote($soon->toSql()) . '))');
+                . ' AND ' . $db->quoteName('publish_date_time') . ' BETWEEN ' . $db->quote($now) . ' AND ' . $db->quote($soon) . '))');
         $db->setQuery($query);
         $add('COM_TICKETSTATION_CPANEL_ATTENTION_SCHEDULED', $db->loadResult(),
             'index.php?option=com_ticketstation&view=tickets', 'fa-calendar-alt', 'secondary');

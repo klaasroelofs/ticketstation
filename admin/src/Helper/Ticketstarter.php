@@ -43,7 +43,7 @@ defined('_JEXEC') or die('Restricted access');
         $conditions = array(
             $db->quoteName('use_auto_publish') . ' = 1',
             $db->quoteName('published') . ' = 0',
-            $db->quoteName('publish_date_time') . ' <= ' . $db->quote( date('Y-m-d H:i:s') )
+            $db->quoteName('publish_date_time') . ' <= ' . $db->quote( Date::localNow() )
         );
 
         $query->update($db->quoteName('#__ticketstation_tickets'))->set($fields)->where($conditions);
@@ -76,7 +76,7 @@ defined('_JEXEC') or die('Restricted access');
 
         $conditions = array(
             $db->quoteName('use_sale_stop') . ' = 1',
-            $db->quoteName('sale_stop') . ' < ' . $db->quote( date('Y-m-d H:i:s') )
+            $db->quoteName('sale_stop') . ' < ' . $db->quote( Date::localNow() )
         );
 
         $query->update($db->quoteName('#__ticketstation_tickets'))->set($fields)->where($conditions);
@@ -108,7 +108,7 @@ defined('_JEXEC') or die('Restricted access');
 
         $conditions = array(
             $db->quoteName('automatic_change_state') . ' = 1',
-            $db->quoteName('closingdate') . ' < ' . $db->quote( date('Y-m-d H:i:s') )
+            $db->quoteName('closingdate') . ' < ' . $db->quote( Date::localNow() )
         );
 
         $query->update($db->quoteName('#__ticketstation_events'))->set($fields)->where($conditions);
@@ -139,7 +139,7 @@ defined('_JEXEC') or die('Restricted access');
 
         $conditions = array(
             $db->quoteName('automatic_change_state') . ' = 1',
-            $db->quoteName('startdate') . ' <= ' . $db->quote( date('Y-m-d H:i:s') )
+            $db->quoteName('startdate') . ' <= ' . $db->quote( Date::localNow() )
         );
 
         $query->update($db->quoteName('#__ticketstation_events'))->set($fields)->where($conditions);

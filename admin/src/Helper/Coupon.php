@@ -53,7 +53,7 @@ class Coupon
             }
         }
 
-        if (!empty($coupon->coupon_valid_to) && $coupon->coupon_valid_to < date('Y-m-d'))
+        if (!empty($coupon->coupon_valid_to) && $coupon->coupon_valid_to < Date::localNow('Y-m-d'))
         {
             Factory::getApplication()->enqueueMessage(Text::_('COM_TICKETSTATION_COUPON_EXPIRED'), 'error');
             return false;

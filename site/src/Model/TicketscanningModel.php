@@ -7,6 +7,7 @@ defined('_JEXEC') or die;
 use Joomla\CMS\Factory;
 use Joomla\CMS\MVC\Model\BaseDatabaseModel;
 use Joomla\Database\DatabaseQuery;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\Date;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Scanner;
 
 /**
@@ -57,7 +58,7 @@ class TicketscanningModel extends BaseDatabaseModel
             ->join('LEFT', $db->quoteName('#__ticketstation_events', 'e') . ' ON ' . $db->quoteName('t.eventid') . ' = ' . $db->quoteName('e.eventid'))
             ->join('LEFT', $db->quoteName('#__ticketstation_venues', 'v') . ' ON ' . $db->quoteName('t.venue') . ' = ' . $db->quoteName('v.id'))
             ->whereIn($db->quoteName('t.ticketid'), $ticketids)
-            ->where($db->quoteName('t.enddate') . ' > '. $db->quote(date("Y-m-d H:i:s")))
+            ->where($db->quoteName('t.enddate') . ' > '. $db->quote(Date::localNow()))
             ->order('t.startdate ASC');
 
         return $query;

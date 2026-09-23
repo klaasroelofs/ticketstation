@@ -13,6 +13,7 @@ defined('_JEXEC') or die;
 
 use Joomla\CMS\Factory;
 use Joomla\CMS\MVC\Model\BaseDatabaseModel;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\Date;
 
 /**
  * Model backing the admin "new reservation" wizard.
@@ -51,7 +52,7 @@ class ReservationModel extends BaseDatabaseModel
             ->select(['ticketid', 'ticketname', 'ticketprice', 'show_seatplans', 'totaltickets'])
             ->from($db->quoteName('#__ticketstation_tickets'))
             ->where($db->quoteName('eventid') . ' = ' . (int) $eventid)
-            ->where($db->quoteName('enddate') . ' > ' . $db->quote(date('Y-m-d H:i:s')))
+            ->where($db->quoteName('enddate') . ' > ' . $db->quote(Date::localNow()))
             ->order($db->quoteName('ticketname') . ' ASC');
 
         $db->setQuery($query);
