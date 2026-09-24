@@ -39,7 +39,7 @@ $counts = [
     'DISPLAY'   => 3,
     'ORDERS'    => 2,
     'CHECKOUT'  => 2,
-    'DOCUMENTS' => 5,
+    'DOCUMENTS' => 6,
     'COMPANY'   => 3,
 ];
 
