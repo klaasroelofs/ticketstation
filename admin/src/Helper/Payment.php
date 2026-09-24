@@ -366,15 +366,6 @@ class Payment
         return true;
     }
 
-    ## send the confirmation to the client.
-    public function sendConfirmation()
-    {
-        $sendconfirmation = new Confirmation((int) $this->ordercode);
-        $sendconfirmation->doConfirm();
-        $sendconfirmation->doSend();
-
-        return true;
-    }
 
     ## Creating an order list which can be used in emails.
     public function getWaitingList()

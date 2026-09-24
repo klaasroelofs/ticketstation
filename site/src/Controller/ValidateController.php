@@ -10,7 +10,6 @@ use Joomla\CMS\Factory;
 use Joomla\CMS\Router\Route;
 use Joomla\CMS\Uri\Uri;
 use Mollie\Api\MollieApiClient;
-use Ticketstation\Component\Ticketstation\Administrator\Helper\Confirmation;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\getAmount;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Order;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Ordercode;
@@ -32,20 +31,6 @@ use Ticketstation\Component\Ticketstation\Administrator\Helper\WaitingList;
  */
 class ValidateController extends BaseController
 {
-    private $id;
-    private $ordercode;
-    private $validationToken;
-
-    function __construct()
-    {
-        parent::__construct();
-
-        $jinput          = Factory::getApplication()->getInput();
-        $this->ordercode = $jinput->get('oc', '', 'int');
-        $this->id        = $jinput->get('cid', '', 'int');
-        $this->validationToken = $jinput->get('token', '', 'string');
-    }
-
     /**
      * Below the option for paylater will be checked.
      * Check if this is an payment order
@@ -170,82 +155,6 @@ class ValidateController extends BaseController
 
         $this->setMessage(Text::_('COM_TICKETSTATION_THANK_YOU_FOR_MAKING_PAYMENT'), 'message');
         $this->setRedirect(Route::_('index.php?option=com_ticketstation&view=cart' . ($itemid ? '&Itemid=' . $itemid : '')));
-
-        return true;
-    }
-
-    /**
-     * Validating an order by request.
-     *
-     * @since 1.0.0
-     */
-    public function validate()
-    {
-        $app = Factory::getApplication();
-        $db  = Factory::getContainer()->get('DatabaseDriver');
-        $itemid = TicketstationFunctions::getSiteItemid();
-
-        // If token is provided (new secure method), use it to look up ordercode
-        if (!empty($this->validationToken))
-        {
-            $query = $db->getQuery(true);
-            $query->select('ordercode')
-                ->from($db->quoteName('#__ticketstation_orders'))
-                ->where($db->quoteName('validation_token') . ' = ' . $db->quote($this->validationToken));
-            $db->setQuery($query);
-            $result = $db->loadObject();
-
-            if (!$result)
-            {
-                $app->enqueueMessage(Text::_('COM_TICKETSTATION_NO_VALID_ID'), 'error');
-                $this->setRedirect(Route::_('index.php?option=com_ticketstation&view=upcoming' . ($itemid ? '&Itemid=' . $itemid : '')));
-
-                return false;
-            }
-
-            $this->ordercode = $result->ordercode;
-        }
-        else
-        {
-            // Fallback to old method (oc/cid params) for backward compatibility
-            // If ordercode or id is empty.. Stop here.
-            if ($this->ordercode == 0 || $this->id == 0)
-            {
-                $app->enqueueMessage(Text::_('COM_TICKETSTATION_NO_VALID_ID'), 'error');
-                $this->setRedirect(Route::_('index.php?option=com_ticketstation&view=upcoming' . ($itemid ? '&Itemid=' . $itemid : '')));
-
-                return false;
-            }
-        }
-
-        if ( ! (new Order)->setOrderToValidated($this->ordercode))
-        {
-            $app->enqueueMessage(Text::_('COM_TICKETSTATION_VALIDATION_FAILED'), 'error');
-            $this->setRedirect(Route::_('index.php?option=com_ticketstation&view=upcoming' . ($itemid ? '&Itemid=' . $itemid : '')));
-
-            return false;
-        }
-
-        // Clear validation token after successful validation (single-use)
-        if (!empty($this->validationToken))
-        {
-            $query = $db->getQuery(true);
-            $query->update($db->quoteName('#__ticketstation_orders'))
-                ->set($db->quoteName('validation_token') . ' = NULL')
-                ->where($db->quoteName('ordercode') . ' = ' . $db->quote((int)$this->ordercode));
-            $db->setQuery($query);
-            $db->execute();
-        }
-
-        if (isset($this->ordercode))
-        {
-            $sendconfirmation = new Confirmation((int) $this->ordercode);
-            $sendconfirmation->doConfirm();
-            $sendconfirmation->doSend();
-        }
-
-        $app->enqueueMessage(Text::_('COM_TICKETSTATION_VALIDATED'), 'success');
-        $this->setRedirect(Route::_('index.php?option=com_ticketstation&view=upcoming' . ($itemid ? '&Itemid=' . $itemid : '')));
 
         return true;
     }

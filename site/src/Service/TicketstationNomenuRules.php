@@ -160,31 +160,6 @@ class TicketstationNomenuRules implements RulesInterface
                 $vars['id'] = substr($segments[0],strpos($segments[0],'-') + 1);
 
                 break;
-
-            case $segments[0] === 'statistics':
-                $vars['view'] = 'statistics';
-
-                if (isset($segments[1])) {
-                    $id = explode(':', $segments[1]);
-                    $vars['id'] = (int) $id[0];
-                }
-
-                if (isset($segments[2])) {
-                    $salesstats = explode(':', $segments[2]);
-                    $vars['salesstats'] = $salesstats[0];
-                }
-
-                if (isset($segments[3])) {
-                    $salesperticket = explode(':', $segments[3]);
-                    $vars['salesperticket'] = (int) $salesperticket[0];
-                }
-
-                if (isset($segments[4])) {
-                    $scanstats = explode(':', $segments[4]);
-                    $vars['scanstats'] = $scanstats[0];
-                }
-
-                break;
         }
 
         // Empty array to prevent Router from throwing an exception

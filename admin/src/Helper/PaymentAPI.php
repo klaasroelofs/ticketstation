@@ -347,19 +347,6 @@ class PaymentAPI
         return true;
     }
 
-    ## send the confirmation to the client.
-    public function sendConfirmation()
-    {
-        $sendconfirmation = new Confirmation((int)$this->ordercode);
-        $sendconfirmation->doConfirm();
-        $sendconfirmation->doSend();
-
-        $client = $this->getUserInformation();
-        $email  = is_object($client) ? $client->emailaddress : null;
-        History::log($this->ordercode, 'confirmation_sent', 'Confirmation sent to ' . ($email ?: 'customer'), ['email' => $email]);
-
-        return true;
-    }
 
     ## Creating an order list which can be used in emails.
     public function getWaitingList()

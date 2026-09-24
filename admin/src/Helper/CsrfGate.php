@@ -87,9 +87,9 @@ class CsrfGate
         'codescanner' => ['validation'],
 
         // Reached only via single-use tokens embedded in emailed links
-        // (waiting-list confirmation, pay-later, order validation) that are
-        // opened outside any Joomla browser session and authenticate themselves.
-        'validate' => ['waitinglist', 'pay', 'validate'],
+        // (waiting-list confirmation, pay-later) that are opened outside any
+        // Joomla browser session and authenticate themselves.
+        'validate' => ['waitinglist', 'pay'],
     ];
 
     /**

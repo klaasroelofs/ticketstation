@@ -373,40 +373,6 @@ class Order
     }
 
     /**
-     * Order has been validated by the customer. Update it now.
-     *
-     * @param null $ordercode
-     *
-     * @return bool
-     *
-     * @since 1.0.0
-     */
-    public function setOrderToValidated($ordercode = null)
-    {
-        if ($ordercode)
-        {
-            return false;
-        }
-
-        $db = Factory::getContainer()->get('DatabaseDriver');
-
-        $query = $db->getQuery(true);
-
-        $fields     = [$db->quoteName('published') . ' = 1'];
-        $conditions = [$db->quoteName('ordercode') . ' = ' . (int) $ordercode];
-        $query->update($db->quoteName('#__ticketstation_orders'))->set($fields)->where($conditions);
-
-        $db->setQuery($query);
-
-        if ( ! $db->execute())
-        {
-            return false;
-        }
-
-        return true;
-    }
-
-    /**
      * Getting an order by the barcode. Returning the order object.
      *
      * @param $barcode

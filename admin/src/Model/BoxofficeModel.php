@@ -21,7 +21,6 @@ use Joomla\CMS\MVC\Model\ListModel;
 use Joomla\CMS\Pagination\Pagination;
 use Joomla\Utilities\ArrayHelper;
 use stdClass;
-use Ticketstation\Component\Ticketstation\Administrator\Helper\Confirmation;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\QueryHelper;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\eTicketsMessage;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\getAmount;
@@ -970,8 +969,6 @@ class BoxofficeModel extends ListModel
         if (count($cid))
         {
 
-            $config = $this->getConfig();
-
             ## Make cids safe, against SQL injections
             ArrayHelper::toInteger($cid);
 
@@ -988,12 +985,6 @@ class BoxofficeModel extends ListModel
 
                 ## Create th tickets:
                 $ticket_creator = $newProcess->createTickets();
-
-                ## if send confirmation is on:
-                if ($config->send_confirmation_pdf == 1)
-                {
-                    $newProcess->sendConfirmation();
-                }
 
                 ## if tickets has been created:
                 if ($ticket_creator == true)
@@ -1329,47 +1320,6 @@ class BoxofficeModel extends ListModel
         }
 
         return false;
-    }
-
-    function createconfirmation($cid = [])
-    {
-
-        ## Count the cids
-        if (count($cid))
-        {
-
-            ## Make cids safe, against SQL injections
-            ArrayHelper::toInteger($cid);
-
-            ## Implode cids for more actions (when more selected)
-            $cids = implode(',', $cid);
-
-            $db = Factory::getContainer()->get('DatabaseDriver');
-
-            $query = $db->getQuery(true);
-
-            $query->select(['ordercode']);
-            $query->from($db->quoteName('#__ticketstation_orders'));
-            $query->where($db->quoteName('ordercode') . ' IN (' . $cids . ')');
-            $query->group('ordercode');
-
-            $db->setQuery($query);
-            $data = $db->loadObjectList();
-            
-
-            for ($i = 0, $n = count($data); $i < $n; $i++)
-            {
-                $row = $data[$i];
-
-                $sendconfirmation = new Confirmation((int) $row->ordercode);
-                $sendconfirmation->doConfirm();
-                $sendconfirmation->doSend();
-
-                History::log($row->ordercode, 'confirmation_sent', 'Confirmation sent');
-            }
-        }
-
-        return true;
     }
 
     function ticketprocessor($ordercode)

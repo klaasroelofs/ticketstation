@@ -459,37 +459,6 @@ class BoxofficeController extends BaseController {
 
     }
 
-    function sendconfirmation()
-    {
-
-        $app  = Factory::getApplication();
-        $post = $app->getInput()->post->getArray();
-        $link = 'index.php?option=com_ticketstation&controller=boxoffice';
-
-        $cid = $this->input->get('cid', array(), 'array');
-        ArrayHelper::toInteger($cid);
-
-        if (count( $cid ) < 1)
-        {
-            $app->enqueueMessage(Text::_('COM_TICKETSTATION_PLEASE_SELECT_ORDER'), 'error');
-            $this->setRedirect($link);
-        }
-
-        $model = $this->getModel('boxoffice');
-
-        if(!$model->createconfirmation($cid))
-        {
-            $app->enqueueMessage(Text::_( 'COM_TICKETSTATION_ERROR_CREATING_CONFIRMATION'), 'error');
-            $app->redirect($link);
-        }
-        else
-        {
-            $app->enqueueMessage(Text::_( 'COM_TICKETSTATION_CONFIRMATIONS_SEND'));
-        }
-
-        $app->redirect($link);
-    }
-
     function sendingticket()
     {
 
