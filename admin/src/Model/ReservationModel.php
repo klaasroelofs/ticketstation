@@ -14,6 +14,7 @@ defined('_JEXEC') or die;
 use Joomla\CMS\Factory;
 use Joomla\CMS\MVC\Model\BaseDatabaseModel;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Date;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\SeatplanSettings;
 
 /**
  * Model backing the admin "new reservation" wizard.
@@ -61,21 +62,20 @@ class ReservationModel extends BaseDatabaseModel
     }
 
     /**
-     * All seat coordinates for a (non multi-seat) ticket, with their display settings.
-     * Mirrors site/src/Model/SeatedeventModel.php::getNochilds().
+     * All seat coordinates on a ticket's seat chart - its own seats, or for a parent with
+     * Multi Seat = No the seats of its child tickets - with their display settings.
      */
     public function getSeats(int $ticketid)
     {
         $db = Factory::getContainer()->get('DatabaseDriver');
 
         $query = $db->getQuery(true)
-            ->select(['c.*', 't.ticketname', 'tt.background_color', 'tt.font_color', 'tt.border_color'])
+            ->select(['c.*', 't.ticketname'])
             ->from($db->quoteName('#__ticketstation_seatplancoords', 'c'))
             ->join('INNER', $db->quoteName('#__ticketstation_tickets', 't') . ' ON ' . $db->quoteName('c.ticketid') . ' = ' . $db->quoteName('t.ticketid'))
-            ->join('INNER', $db->quoteName('#__ticketstation_seatplansettings', 'tt') . ' ON ' . $db->quoteName('c.ticketid') . ' = ' . $db->quoteName('tt.ticketid'))
-            ->where($db->quoteName('c.ticketid') . ' = ' . (int) $ticketid);
+            ->where('(' . $db->quoteName('c.ticketid') . ' = ' . (int) $ticketid . ' OR ' . $db->quoteName('c.parent') . ' = ' . (int) $ticketid . ')');
 
-        $db->setQuery($query);
+        $db->setQuery(SeatplanSettings::apply($query));
 
         return $db->loadObjectList();
     }
@@ -85,17 +85,7 @@ class ReservationModel extends BaseDatabaseModel
      */
     public function getSeatWithSettings(int $coordId)
     {
-        $db = Factory::getContainer()->get('DatabaseDriver');
-
-        $query = $db->getQuery(true)
-            ->select(['c.*', 't.multi_seat', 't.type', 't.background_color', 't.border_color'])
-            ->from($db->quoteName('#__ticketstation_seatplancoords', 'c'))
-            ->join('INNER', $db->quoteName('#__ticketstation_seatplansettings', 't') . ' ON ' . $db->quoteName('c.ticketid') . ' = ' . $db->quoteName('t.ticketid'))
-            ->where($db->quoteName('c.id') . ' = ' . (int) $coordId);
-
-        $db->setQuery($query);
-
-        return $db->loadObject();
+        return SeatplanSettings::forSeat($coordId);
     }
 
     /**

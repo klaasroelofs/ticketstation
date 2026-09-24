@@ -30,10 +30,10 @@ $document->addScript('https://code.jquery.com/jquery-3.7.1.js');
 $document->addScript('https://code.jquery.com/ui/1.13.2/jquery-ui.js');
 
 ## The image of the seat chart
-$seatchart_png = '/administrator/components/com_ticketstation/assets/seatcharts/seatchart'.$this->items[0]->ticketid.'.png';
-$image_png = JPATH_ADMINISTRATOR.DIRECTORY_SEPARATOR.'components'.DIRECTORY_SEPARATOR.'com_ticketstation'.DIRECTORY_SEPARATOR.'assets'.DIRECTORY_SEPARATOR.'seatcharts'.DIRECTORY_SEPARATOR.'seatchart'.$this->items[0]->ticketid.'.png';
-$seatchart_jpg = '/administrator/components/com_ticketstation/assets/seatcharts/seatchart'.$this->items[0]->ticketid.'.jpg';
-$image_jpg = JPATH_ADMINISTRATOR.DIRECTORY_SEPARATOR.'components'.DIRECTORY_SEPARATOR.'com_ticketstation'.DIRECTORY_SEPARATOR.'assets'.DIRECTORY_SEPARATOR.'seatcharts'.DIRECTORY_SEPARATOR.'seatchart'.$this->items[0]->ticketid.'.jpg';
+$seatchart_png = '/administrator/components/com_ticketstation/assets/seatcharts/seatchart'.$this->items[0]->chart_ticketid.'.png';
+$image_png = JPATH_ADMINISTRATOR.DIRECTORY_SEPARATOR.'components'.DIRECTORY_SEPARATOR.'com_ticketstation'.DIRECTORY_SEPARATOR.'assets'.DIRECTORY_SEPARATOR.'seatcharts'.DIRECTORY_SEPARATOR.'seatchart'.$this->items[0]->chart_ticketid.'.png';
+$seatchart_jpg = '/administrator/components/com_ticketstation/assets/seatcharts/seatchart'.$this->items[0]->chart_ticketid.'.jpg';
+$image_jpg = JPATH_ADMINISTRATOR.DIRECTORY_SEPARATOR.'components'.DIRECTORY_SEPARATOR.'com_ticketstation'.DIRECTORY_SEPARATOR.'assets'.DIRECTORY_SEPARATOR.'seatcharts'.DIRECTORY_SEPARATOR.'seatchart'.$this->items[0]->chart_ticketid.'.jpg';
 
 if (file_exists($image_png)) {
     $seatchart = $seatchart_png;

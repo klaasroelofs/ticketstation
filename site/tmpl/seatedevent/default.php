@@ -181,10 +181,10 @@ $venue_website_url = preg_match('#^https?://#i', $this->ticketdetails->website) 
                                 ?>
 
                                 <div id="<?php echo $row->seat_sector; ?>" class="item" style="margin:0px; padding:2px; z-index:5;">
-                                    <div id="seat-choice" class="seat-choice" style="background-color:<?php echo htmlspecialchars($row->background_color, ENT_QUOTES, 'UTF-8'); ?>;
-                                            float:left; border-color:<?php echo htmlspecialchars($row->border_color, ENT_QUOTES, 'UTF-8'); ?>; cursor:pointer; font-size:80%; margin:0px;
-                                            color:<?php echo htmlspecialchars($row->font_color, ENT_QUOTES, 'UTF-8'); ?>;">
-                                        <?php echo $row->seatid; ?>
+                                    <div id="seat-choice" class="seat-choice" style="background-color:#<?php echo htmlspecialchars($row->background_color, ENT_QUOTES, 'UTF-8'); ?>;
+                                            float:left; border-color:#<?php echo htmlspecialchars($row->border_color, ENT_QUOTES, 'UTF-8'); ?>; cursor:pointer; font-size:80%; margin:0px;
+                                            color:#<?php echo htmlspecialchars($row->font_color, ENT_QUOTES, 'UTF-8'); ?>;">
+                                        <?php echo htmlspecialchars($row->row_name . $row->seatid, ENT_QUOTES, 'UTF-8'); ?>
                                     </div>
                                 </div>
 

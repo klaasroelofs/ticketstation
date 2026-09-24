@@ -8,6 +8,7 @@ use Joomla\CMS\Factory;
 use Joomla\CMS\MVC\Model\BaseDatabaseModel;
 use Joomla\CMS\Pagination\Pagination;
 use Joomla\Database\DatabaseQuery;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\SeatplanSettings;
 
 /**
  * @package     Joomla.Site
@@ -36,15 +37,16 @@ class ScanchartModel extends BaseDatabaseModel
 
         $db = Factory::getContainer()->get('DatabaseDriver');
 
-        ## Making the query for showing all the clients in list function
-        $sql = 'SELECT c.*, t.*, e.*, tt.background_color, o.scanned
-                FROM (#__ticketstation_seatplancoords AS c,  #__ticketstation_tickets AS t, #__ticketstation_seatplansettings AS tt, #__ticketstation_events AS e)
-                LEFT JOIN #__ticketstation_orders as o
-                ON (c.id = o.seat_sector)
-                WHERE c.ticketid = t.ticketid
-                AND c.ticketid = tt.ticketid
-                AND t.eventid = e.eventid
-                AND c.ticketid = '.(int)$this->id.'';
+        ## The seats of this ticket, or - for a parent with Multi Seat = No - of all its child
+        ## tickets. chart_ticketid is the ticket that owns the chart and its background image.
+        $sql = 'SELECT t.*, e.*, ' . SeatplanSettings::COLUMNS . ', c.*, o.scanned,
+                    IF(c.parent > 0, c.parent, c.ticketid) AS chart_ticketid
+                FROM #__ticketstation_seatplancoords AS c
+                INNER JOIN #__ticketstation_tickets AS t ON t.ticketid = c.ticketid
+                INNER JOIN #__ticketstation_events AS e ON e.eventid = t.eventid'
+            . SeatplanSettings::JOINS . '
+                LEFT JOIN #__ticketstation_orders AS o ON o.seat_sector = c.id
+                WHERE (c.ticketid = '.(int)$this->id.' OR c.parent = '.(int)$this->id.')';
 
         $db->setQuery($sql);
         $this->data = $db->loadObjectList();

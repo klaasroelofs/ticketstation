@@ -73,6 +73,48 @@ if (file_exists($image_png)) {
         </div>
     </div>
 
+    <?php if (!empty($this->childColours)) { ?>
+        <div class="card mt-3">
+            <div class="card-body">
+                <h2 class="h5"><?= Text::_('COM_TICKETSTATION_SEATPLANSETTING_CHILD_COLOURS'); ?></h2>
+                <p class="text-muted"><?= Text::_('COM_TICKETSTATION_SEATPLANSETTING_CHILD_COLOURS_DESC'); ?></p>
+
+                <table class="table table-sm align-middle">
+                    <thead>
+                        <tr>
+                            <th scope="col"><?= Text::_('COM_TICKETSTATION_TICKETNAME'); ?></th>
+                            <th scope="col"><?= Text::_('COM_TICKETSTATION_SEATPLANSETTING_BACKGROUND_COLOR'); ?></th>
+                            <th scope="col"><?= Text::_('COM_TICKETSTATION_SEATPLANSETTING_BORDER_COLOR'); ?></th>
+                            <th scope="col"><?= Text::_('COM_TICKETSTATION_SEATPLANSETTING_FONT_COLOR'); ?></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($this->childColours as $child) { ?>
+                            <tr>
+                                <td>
+                                    <?= htmlspecialchars($child->ticketname, ENT_QUOTES, 'UTF-8'); ?>
+                                    <?php if (!$child->published) { ?><span class="badge bg-secondary ms-1"><?= Text::_('JUNPUBLISHED'); ?></span><?php } ?>
+                                </td>
+                                <?php foreach (['background_color', 'border_color', 'font_color'] as $field) { ?>
+                                    <td>
+                                        <div class="input-group input-group-sm" style="max-width: 10em;">
+                                            <span class="input-group-text"
+                                                  <?php if ($child->$field !== '') { ?>style="background-color:#<?= htmlspecialchars($child->$field, ENT_QUOTES, 'UTF-8'); ?>;"<?php } ?>>#</span>
+                                            <input type="text" class="form-control" maxlength="6"
+                                                   name="childcolours[<?= (int) $child->ticketid; ?>][<?= $field; ?>]"
+                                                   value="<?= htmlspecialchars($child->$field, ENT_QUOTES, 'UTF-8'); ?>"
+                                                   aria-label="<?= htmlspecialchars($child->ticketname, ENT_QUOTES, 'UTF-8'); ?>">
+                                        </div>
+                                    </td>
+                                <?php } ?>
+                            </tr>
+                        <?php } ?>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    <?php } ?>
+
     <input type="hidden" name="option" value="com_ticketstation" />
     <input type="hidden" name="controller" value="seatplansettings" />
     <input type="hidden" name="task" value="" />

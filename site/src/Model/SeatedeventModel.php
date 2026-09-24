@@ -8,6 +8,7 @@ use Joomla\CMS\Factory;
 use Joomla\CMS\MVC\Model\BaseDatabaseModel;
 use Joomla\CMS\Pagination\Pagination;
 use Joomla\Database\DatabaseQuery;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\SeatplanSettings;
 
 /**
  * @package     Joomla.Site
@@ -100,12 +101,13 @@ class SeatedeventModel extends BaseDatabaseModel {
 
             $db = Factory::getContainer()->get('DatabaseDriver');
 
-            ## Making the query for showing all the clients in list function
-            $sql = 'SELECT c.*, t.ticketname, tt.background_color, tt.font_color, tt.border_color
-					FROM #__ticketstation_seatplancoords AS c,  #__ticketstation_tickets AS t, #__ticketstation_seatplansettings AS tt
-					WHERE c.parent ='.(int)$this->id.'
-					AND c.ticketid = t.ticketid
-					AND c.ticketid = tt.ticketid';
+            ## Seats of the child tickets (Multi Seat = No). The chart settings come from
+            ## this parent; a child's own settings row only overrides the colours.
+            $sql = 'SELECT c.*, t.ticketname, ' . SeatplanSettings::COLUMNS . '
+					FROM #__ticketstation_seatplancoords AS c
+					INNER JOIN #__ticketstation_tickets AS t ON t.ticketid = c.ticketid'
+                . SeatplanSettings::JOINS . '
+					WHERE c.parent = '.(int)$this->ticketid;
 
             $db->setQuery($sql);
             $this->data = $db->loadObjectList();
@@ -226,12 +228,12 @@ class SeatedeventModel extends BaseDatabaseModel {
 
             $db = Factory::getContainer()->get('DatabaseDriver');
 
-            ## Making the query for showing all the clients in list function
-            $sql='SELECT *
-			      FROM #__ticketstation_orders AS a, #__ticketstation_seatplancoords AS c, #__ticketstation_seatplansettings AS tt
-				  WHERE a.orderid = c.orderid
-				  AND c.ticketid = tt.ticketid
-				  AND a.ordercode = '.(int)$this->ordercode;
+            ## The seats already picked in this order, with the colours they have on the chart.
+            $sql='SELECT a.seat_sector, c.seatid, c.row_name, ' . SeatplanSettings::COLUMNS . '
+			      FROM #__ticketstation_orders AS a
+			      INNER JOIN #__ticketstation_seatplancoords AS c ON c.orderid = a.orderid'
+                . SeatplanSettings::JOINS . '
+				  WHERE a.ordercode = '.(int)$this->ordercode;
 
             $db->setQuery($sql);
             $this->data = $db->loadObjectList();

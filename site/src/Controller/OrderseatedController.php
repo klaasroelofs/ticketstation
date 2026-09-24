@@ -8,9 +8,10 @@ use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\Controller\BaseController;
 use Joomla\CMS\Factory;
 use Joomla\CMS\Uri\Uri;
-use Joomla\Component\Finder\Administrator\Indexer\Parser\Html;
+use Joomla\CMS\HTML\HTMLHelper;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Amount;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\getAmount;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\SeatplanSettings;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\TicketstationFunctions;
 use Ticketstation\Component\Ticketstation\Site\Model\OrderModel;
 use Ticketstation\Component\Ticketstation\Site\Model\SeatedeventModel;
@@ -57,221 +58,221 @@ class OrderseatedController extends BaseController {
 
         ## Getting the id
         $id     = $jinput->get('id', '0', 'int');
+
         ## Get database information
         $db     = Factory::getContainer()->get('DatabaseDriver');
-        ## Loading the application Joomla
-        $app 	= Factory::getApplication();
-        ## Setting error to nothing!
-        $error 	= '';
 
         ## Check if there are any orders, otherwise stop the script.
-        $query = 'SELECT orderid, ticketid FROM #__ticketstation_orders 
+        $query = 'SELECT orderid, ticketid FROM #__ticketstation_orders
 				  WHERE ordercode = '.(int)$this->ordercode.'
-				  AND seat_sector = "'.(int)$id.'"';
+				  AND seat_sector = '.(int)$id;
 
         $db->setQuery($query);
         $item = $db->loadObject();
 
-        $sql = 'SELECT * 
-				FROM #__ticketstation_seatplansettings 
-				WHERE ticketid = '.(int)$item->ticketid.'';
-
-        $db->setQuery($sql);
-        $coords = $db->loadObject();
-
-
         ## Check if order is valid
-        if($item->orderid == 0){
+        if(empty($item) || $item->orderid == 0){
 
-            $error = '1';
             $msg = Text::_( 'COM_TICKETSTATION_THIS_IS_NOT_YOUR_ORDER' );
-
-            $arr = array('error' => $error, 'msg' => $msg, 'id' => $id);
+            $arr = array('error' => '1', 'msg' => $msg, 'id' => $id);
             echo json_encode($arr);
             exit();
-
-        }else{
-
-            $query = 'DELETE FROM #__ticketstation_orders WHERE orderid = '.(int)$item->orderid.'';
-
-            ## Do the query now
-            $db->setQuery( $query );
-
-            ## When query goes wrong.. Show message with error.
-            if (!$db->execute()) {
-                //$this->setError($db->getErrorMsg());
-
-                $error = '1';
-                $msg = Text::_( 'COM_TICKETSTATION_COULD_NOT_UPDATE_ORDER_TABLE' );
-
-                $arr = array('error' => $error, 'msg' => $msg, 'id' => $id);
-                echo json_encode($arr);
-                exit();
-            }
-
-            ## Update the tickets-totals that where removed.
-            $query = 'UPDATE #__ticketstation_tickets SET totaltickets = totaltickets+1
-					  WHERE ticketid = '.$item->ticketid.'';
-
-            ## Do the query now
-            $db->setQuery( $query );
-
-            ## When query goes wrong.. Show message with error.
-            if (!$db->execute()) {
-                //$this->setError($db->getErrorMsg());
-
-                $error = '1';
-                $msg = Text::_( 'COM_TICKETSTATION_COULD_NOT_UPDATE_ORDER_TABLE' );
-
-                $arr = array('error' => $error, 'msg' => $msg, 'id' => $id);
-                echo json_encode($arr);
-                exit();
-            }
-
-            ### NOW UPADTE THE COORDS TABLE
-            $query = 'UPDATE #__ticketstation_seatplancoords 
-					  SET orderid = 0, booked = 0 
-					  WHERE id = '.(int)$id.' ';
-
-            ## Do the query now
-            $db->setQuery( $query );
-
-            ## When query goes wrong.. Show message with error.
-            if (!$db->execute()) {
-                //$this->setError($db->getErrorMsg());
-
-                $error = '1';
-                $msg = Text::_( 'COM_TICKETSTATION_COULD_NOT_UPDATE_COORDS_TABLE' );
-
-                $arr = array('error' => $error, 'msg' => $msg, 'id' => $id);
-                echo json_encode($arr);
-                exit();
-
-            }
-
-            $error = '0';
-            $msg = Text::_( 'COM_TICKETSTATION_THIS_SEAT_IS_REMOVED' );
-
-            $arr = array('error' => $error, 'msg' => $msg, 'id' => $id, 'background' => $coords->background_color, 'color' => $coords->border_color );
-            echo json_encode($arr);
-            exit();
-
         }
 
+        $seat = SeatplanSettings::forSeat((int) $id);
+
+        $query = 'DELETE FROM #__ticketstation_orders WHERE orderid = '.(int)$item->orderid.'';
+
+        ## Do the query now
+        $db->setQuery( $query );
+
+        ## When query goes wrong.. Show message with error.
+        if (!$db->execute()) {
+
+            $msg = Text::_( 'COM_TICKETSTATION_COULD_NOT_UPDATE_ORDER_TABLE' );
+            $arr = array('error' => '1', 'msg' => $msg, 'id' => $id);
+            echo json_encode($arr);
+            exit();
+        }
+
+        ## Give the seat back to the counter makeReservation() took it from: the seat's own
+        ## ticket, whatever price category the order ended up with.
+        $counterid = $seat ? (int) $seat->ticketid : (int) $item->ticketid;
+
+        $query = 'UPDATE #__ticketstation_tickets SET totaltickets = totaltickets+1
+				  WHERE ticketid = '.$counterid;
+
+        ## Do the query now
+        $db->setQuery( $query );
+
+        ## When query goes wrong.. Show message with error.
+        if (!$db->execute()) {
+
+            $msg = Text::_( 'COM_TICKETSTATION_COULD_NOT_UPDATE_ORDER_TABLE' );
+            $arr = array('error' => '1', 'msg' => $msg, 'id' => $id);
+            echo json_encode($arr);
+            exit();
+        }
+
+        ### NOW UPADTE THE COORDS TABLE
+        $query = 'UPDATE #__ticketstation_seatplancoords
+				  SET orderid = 0, booked = 0
+				  WHERE id = '.(int)$id.' ';
+
+        ## Do the query now
+        $db->setQuery( $query );
+
+        ## When query goes wrong.. Show message with error.
+        if (!$db->execute()) {
+
+            $msg = Text::_( 'COM_TICKETSTATION_COULD_NOT_UPDATE_COORDS_TABLE' );
+            $arr = array('error' => '1', 'msg' => $msg, 'id' => $id);
+            echo json_encode($arr);
+            exit();
+        }
+
+        $msg = Text::_( 'COM_TICKETSTATION_THIS_SEAT_IS_REMOVED' );
+        $arr = array('error' => '0', 'msg' => $msg, 'id' => $id,
+            'background' => $seat ? $seat->background_color : '', 'color' => $seat ? $seat->font_color : '');
+        echo json_encode($arr);
+        exit();
     }
 
+    /**
+     * Switches a picked seat to another price category (Multi Seat = Yes with child
+     * tickets) and re-prices its order row accordingly.
+     */
     function updateSeat(){
 
         $db     = Factory::getContainer()->get('DatabaseDriver');
-
         $jinput = Factory::getApplication()->getInput();
+
         ## Getting the values from the POST.
         $ticketid  = $jinput->get('ticketid', '0', 'INT');
         $orderid   = $jinput->get('orderid', '0', 'INT');
-
         $ordercode = $this->ordercode; // from session, set in the constructor — ignore the client-supplied 'ordercode' param entirely
 
         $query = $db->getQuery(true)
-            ->update($db->quoteName('#__ticketstation_orders'))
-            ->set($db->quoteName('ticketid') . ' = ' . (int) $ticketid)
+            ->select(['orderid', 'seat_sector'])
+            ->from($db->quoteName('#__ticketstation_orders'))
             ->where($db->quoteName('orderid') . ' = ' . (int) $orderid)
             ->where($db->quoteName('ordercode') . ' = ' . (int) $ordercode);
 
         $db->setQuery($query);
+        $order = $db->loadObject();
 
-        if (!$db->execute() || $db->getAffectedRows() === 0) {
-            // treat as failure — either the order doesn't exist or doesn't belong to this session
-            $msg = Text::_('COM_TICKETSTATION_DB_QUERY_FAILED') . ' (Error: #101)';
-            echo $msg;
+        $seat = ($order && $order->seat_sector) ? SeatplanSettings::forSeat((int) $order->seat_sector) : null;
+
+        ## Only a published child ticket of the seat's own ticket is a valid price category,
+        ## so a visitor can't put an arbitrary (cheaper) ticket on the seat.
+        $ticket = null;
+
+        if ($seat && $seat->multi_seat == 1) {
+
+            $query = $db->getQuery(true)
+                ->select(['ticketid', 'ticketprice', 'vat_percentage'])
+                ->from($db->quoteName('#__ticketstation_tickets'))
+                ->where($db->quoteName('ticketid') . ' = ' . (int) $ticketid)
+                ->where($db->quoteName('parent') . ' = ' . (int) $seat->ticketid)
+                ->where($db->quoteName('published') . ' = 1');
+
+            $db->setQuery($query);
+            $ticket = $db->loadObject();
+        }
+
+        if (!$ticket) {
+            echo Text::_('COM_TICKETSTATION_DB_QUERY_FAILED') . ' (Error: #101)';
             exit();
         }
 
-        $msg = Text::_('COM_TICKETSTATION_CHANGED_TICKET');
-        echo $msg;
-        exit();
+        $pricing = (new Amount)->calculateVatFromPrice($ticket->ticketprice, $ticket->vat_percentage);
 
+        $query = $db->getQuery(true)
+            ->update($db->quoteName('#__ticketstation_orders'))
+            ->set($db->quoteName('ticketid') . ' = ' . (int) $ticket->ticketid)
+            ->set($db->quoteName('price') . ' = ' . $db->quote($ticket->ticketprice))
+            ->set($db->quoteName('fees') . ' = ' . $db->quote($this->getSeatFee($ticket->ticketprice)))
+            ->set($db->quoteName('vat') . ' = ' . $db->quote($pricing['vat_amount']))
+            ->set($db->quoteName('price_excluding_vat') . ' = ' . $db->quote($pricing['price_excluding_vat']))
+            ->set($db->quoteName('vat_percentage') . ' = ' . $db->quote($pricing['vat_percentage']))
+            ->where($db->quoteName('orderid') . ' = ' . (int) $order->orderid)
+            ->where($db->quoteName('ordercode') . ' = ' . (int) $ordercode);
+
+        $db->setQuery($query);
+
+        if (!$db->execute()) {
+            echo Text::_('COM_TICKETSTATION_DB_QUERY_FAILED') . ' (Error: #101)';
+            exit();
+        }
+
+        echo Text::_('COM_TICKETSTATION_CHANGED_TICKET');
+        exit();
     }
 
     function loadSeat(){
 
         $db     = Factory::getContainer()->get('DatabaseDriver');
-
         $jinput = Factory::getApplication()->getInput();
+
         ## Getting the values from the POST.
         $id = $jinput->get('id', '0', 'INT');
-        $ordercode = $jinput->get('ordercode', '0', 'CMD');
 
-        $sql = 'SELECT c.*, t.multi_seat, t.type, t.background_color, t.border_color
-				FROM #__ticketstation_seatplancoords AS c, #__ticketstation_seatplansettings AS t
-				WHERE c.ticketid = t.ticketid
-				AND c.id = '.(int)$id.'';
+        $item = SeatplanSettings::forSeat((int) $id);
 
-        $db->setQuery($sql);
-        $item = $db->loadObject();
-
-        if ($item->multi_seat == 1){
-
-            $sql = 'SELECT COUNT( ticketid ) AS total, totaltickets
-		    		FROM #__ticketstation_tickets
-		   		    WHERE parent = '.(int)$item->ticketid.'';
-
-            $db->setQuery($sql);
-            $obj = $db->loadObject();
-
-            if($obj->total == 0) {
-
-                ## ONLY A REMOVE BUTTON IS NEEDED -- NO EXTRA OPTIONS TO CHOOSE
-                echo '<button id="'.$id.'" class="btn btn-block btn-danger remove">'.Text::_( 'COM_TICKETSTATION_REMOVE_SEAT' ).' '.$item->row_name.$item->seatid.' '.Text::_( 'COM_TICKETSTATION_REMOVE_FROM' ).'</button>';
-
-
-            }else{
-
-                ## A DROPDOWN IS NEEDED TO CHOOSE PRICE/TICKET
-                $sql = 'SELECT ticketid
-			    		FROM #__ticketstation_orders
-			   		    WHERE orderid = '.(int)$item->orderid.'';
-
-                $db->setQuery($sql);
-                $t = $db->loadObject();
-
-
-                $query = 'SELECT ticketid, ticketname, ticketprice
-						  FROM #__ticketstation_tickets
-						  WHERE published = 1 
-						  AND parent = '.(int)$item->ticketid.'';
-
-                $db->setQuery($query);
-                $items = $db->loadObjectList() ;
-
-                $query = 'SELECT priceformat, valuta 
-						  FROM #__ticketstation_config 
-						  WHERE configid = 1';
-
-                $db->setQuery($query);
-                $config = $db->loadObject();
-
-                for ($i2 = 0, $n2 = count($items); $i2 < $n2; $i2++ ){
-
-                    $row        = $items[$i2];
-                    $price      = (new TicketstationFunctions)->showprice($config->priceformat, $row->ticketprice, $config->valuta);
-                    $options[]  = HTML::_('select.option', $row->ticketid, $row->ticketname .' - '.$price);
-
-                }
-                $lists['ticketid'] = HTML::_('select.genericlist', $options, ''.$item->orderid.'', 'class="input ticketid" style="width:100%;"', 'value', 'text', $t->ticketid);
-
-                echo $lists['ticketid'];
-
-                echo '<button id="'.$id.'" class="btn btn-block btn-danger remove">'.Text::_( 'COM_TICKETSTATION_REMOVE_SEAT' ).''.$item->row_name.$item->seatid.' '.Text::_( 'COM_TICKETSTATION_REMOVE_FROM' ).'</button>';
-
-
-            }
-
-        }else{
-            ## THIS IS A NORMAL TICKET WITH ROW PRICING
-            echo '<button id="'.$id.'" class="btn btn-block btn-danger remove">'.Text::_( 'COM_TICKETSTATION_REMOVE_SEAT' ).' '.$item->seatid.' '.Text::_( 'COM_TICKETSTATION_REMOVE_FROM' ).'</button>';
-
+        if (!$item) {
+            exit();
         }
 
+        $label  = htmlspecialchars($item->row_name . $item->seatid, ENT_QUOTES, 'UTF-8');
+        $remove = '<button id="'.(int)$id.'" class="btn btn-block btn-danger remove">'.Text::_( 'COM_TICKETSTATION_REMOVE_SEAT' ).' '.$label.' '.Text::_( 'COM_TICKETSTATION_REMOVE_FROM' ).'</button>';
+
+        ## With Multi Seat = Yes, the published child tickets are the price categories to choose from.
+        $items = [];
+
+        if ($item->multi_seat == 1) {
+
+            $query = $db->getQuery(true)
+                ->select(['ticketid', 'ticketname', 'ticketprice'])
+                ->from($db->quoteName('#__ticketstation_tickets'))
+                ->where($db->quoteName('parent') . ' = ' . (int) $item->ticketid)
+                ->where($db->quoteName('published') . ' = 1')
+                ->order($db->quoteName('ticketprice') . ' DESC');
+
+            $db->setQuery($query);
+            $items = $db->loadObjectList();
+        }
+
+        if (count($items) == 0) {
+            ## ONLY A REMOVE BUTTON IS NEEDED -- NO EXTRA OPTIONS TO CHOOSE
+            echo $remove;
+            exit();
+        }
+
+        ## A DROPDOWN IS NEEDED TO CHOOSE PRICE/TICKET
+        $sql = 'SELECT ticketid
+				FROM #__ticketstation_orders
+				WHERE orderid = '.(int)$item->orderid.'';
+
+        $db->setQuery($sql);
+        $current = (int) $db->loadResult();
+
+        $query = 'SELECT priceformat, valuta
+				  FROM #__ticketstation_config
+				  WHERE configid = 1';
+
+        $db->setQuery($query);
+        $config = $db->loadObject();
+
+        $options = [];
+
+        foreach ($items as $row) {
+            $price     = (new TicketstationFunctions)->showprice($config->priceformat, $row->ticketprice, $config->valuta);
+            $options[] = HTMLHelper::_('select.option', $row->ticketid, $row->ticketname .' - '.$price);
+        }
+
+        echo HTMLHelper::_('select.genericlist', $options, (string) (int) $item->orderid, 'class="input ticketid" style="width:100%;"', 'value', 'text', $current);
+        echo $remove;
+        exit();
     }
 
     function loadCart(){
@@ -337,17 +338,32 @@ class OrderseatedController extends BaseController {
 
     }
 
+    /**
+     * Reserves the clicked seat: adds an order row for it to the session's order and marks
+     * the seat as booked.
+     *
+     * Which ticket is sold, and which Total Tickets counter it draws on, follows from the
+     * seat plan set-up (see the Seated tickets topic on the Documentation page):
+     * - Multi Seat = Yes, no child tickets: the seat's own ticket; its counter.
+     * - Multi Seat = Yes, with child tickets (price per person): the most expensive published
+     *   child, which the customer can change afterwards (updateSeat()); the counter of the
+     *   seat's own (parent) ticket, shared by all price categories.
+     * - Multi Seat = No (price per section): the child ticket the seat belongs to; its counter.
+     * In every case the counter is that of the seat's own ticket (seatplancoords.ticketid).
+     */
     function makeReservation(){
 
         $jinput = Factory::getApplication()->getInput();
+
         ## Getting the values from the POST.
-        $id = $jinput->get('id', '0', 'INT');
+        $id = (int) $jinput->get('id', '0', 'INT');
         $ordercode = $jinput->get('ordercode', '0', 'CMD');
 
         ## Getting the global DB session
         $session = Factory::getApplication()->getSession();
 
         if( $ordercode != $session->get('ordercode') ){
+
             $msg = Text::_( 'COM_TICKETSTATION_NO_DATABASE_SESSION' );
             $arr = array('error' => '1', 'msg' => $msg, 'id' => 0);
             echo json_encode($arr);
@@ -357,334 +373,144 @@ class OrderseatedController extends BaseController {
         ## Get database information
         $db     = Factory::getContainer()->get('DatabaseDriver');
 
-        ## Get the availabillity:
-        $sql = 'SELECT c.*, t.multi_seat, t.type, t.background_color, t.border_color
-				FROM #__ticketstation_seatplancoords AS c, #__ticketstation_seatplansettings AS t
-				WHERE c.ticketid = t.ticketid
-				AND c.id = '.(int)$id.'';
+        $item = SeatplanSettings::forSeat($id);
 
-        $db->setQuery($sql);
-        $item = $db->loadObject();
+        if (!$item) {
+            $arr = array('error' => '1', 'msg' => Text::_( 'COM_TICKETSTATION_ORDER_FAILED' ), 'id' => $id, 'multiseat' => '1');
+            echo json_encode($arr);
+            exit();
+        }
+
+        $multiseat = $item->multi_seat == 1 ? '1' : '0';
 
         if($item->booked == 1){
 
             $msg = Text::_('COM_TICKETSTATION_THIS_SEAT_IS_TAKEN');
-
-            $arr = array('error' => '1', 'msg' => $msg, 'id' => $id, 'multiseat' => '1');
-
+            $arr = array('error' => '1', 'msg' => $msg, 'id' => $id, 'multiseat' => $multiseat);
             echo json_encode($arr);
             exit();
-
         }
 
-
-        if($item->multi_seat == 1){
-
-            $sql = 'SELECT COUNT( ticketid ) AS total, totaltickets
-				    FROM #__ticketstation_tickets
-				    WHERE parent = '.(int)$item->ticketid.'';
-
-            $db->setQuery($sql);
-            $obj = $db->loadObject();
-
-            if($obj->total == 0) {
-
-                $sql = 'SELECT totaltickets, eventid, ticketprice, vat_percentage
-				        FROM #__ticketstation_tickets
-				        WHERE ticketid = '.(int)$item->ticketid.'';
-
-                $db->setQuery($sql);
-                $obj = $db->loadObject();
-
-                $ticketcounter = $item->ticketid;
-                $obj->total   = 0;
-                $totaltickets = $obj->totaltickets;
-                $eventid      = $obj->eventid;
-                $ticketprice  = $obj->ticketprice;
-                $vat_percentage = $obj->vat_percentage;
-
-            }else{
-
-                $totaltickets = $obj->totaltickets;
-
-            }
-
-            if($totaltickets > 0){
-
-                if($obj->total > 1){
-
-                    ## OK, by default we select the most expensive ticket.
-                    $sql = 'SELECT ticketid, eventid, ticketprice, vat_percentage
-							FROM #__ticketstation_tickets
-				    		WHERE parent = '.(int)$item->ticketid.'
-				    		ORDER BY ticketprice DESC';
-
-                    $db->setQuery($sql);
-                    $ticket = $db->loadObject();
-
-                    $ticketid     = $ticket->ticketid;
-                    $eventid      = $ticket->eventid;
-                    // $ticketprice/vat_percentage were previously never (re)assigned here, so a
-                    // ticket with more than one price tier fell through using a leftover/undefined
-                    // $ticketprice and no VAT at all.
-                    $ticketprice    = $ticket->ticketprice;
-                    $vat_percentage = $ticket->vat_percentage;
-
-                    $sql = 'SELECT parent
-							FROM #__ticketstation_tickets
-				    		WHERE ticketid = '.(int)$ticketid.'';
-
-                    $db->setQuery($sql);
-                    $temp = $db->loadObject();
-                    $ticketcounter = $temp->parent;
-
-                } else {
-
-                    $ticketid = $item->ticketid;
-
-                    // This "exactly one child ticket" branch never set $ticketprice/
-                    // $vat_percentage at all (they'd be left undefined) - fetch them for the
-                    // ticket actually being ordered, same as the other branches above.
-                    $sql = 'SELECT ticketprice, vat_percentage
-								FROM #__ticketstation_tickets
-					    		WHERE ticketid = '.(int)$ticketid.'';
-
-                    $db->setQuery($sql);
-                    $priceRow = $db->loadObject();
-
-                    $ticketprice    = $priceRow->ticketprice;
-                    $vat_percentage = $priceRow->vat_percentage;
-
-                }
-
-
-                ## Ticket available -> proceed with order.
-
-                $query = 'SELECT variable_transcosts, transactioncosts, transcosts FROM #__ticketstation_config WHERE configid = 1';
-
-                $db->setQuery($query);
-                $config = $db->loadObject();
-
-                if ($config->variable_transcosts == 1)
-                {
-                    $ticket_fee = (($ticketprice / 100) * $config->transcosts);
-                } else {
-                    $ticket_fee = '0';
-                }
-
-                // Never computed in this branch before, so every seated order created here
-                // stored vat/vat_percentage/price_excluding_vat as NULL - invoices for these
-                // orders always showed 0% VAT regardless of what's configured on the ticket.
-                $pricing = (new Amount)->calculateVatFromPrice($ticketprice, $vat_percentage);
-
-                ## Lets prepare some variables.
-                $post['requires_seat'] = '1';
-                ## Creating a proper time stamp
-                $now = time();
-                ## Output: $now = "1074176782";
-                $orderdate            = date('Y-m-d H:i:s', $now);
-                $post['orderdate']    = $orderdate;
-                $post['ordercode']    = $session->get('ordercode');
-                $post['ipaddress']    = $_SERVER['REMOTE_ADDR'];
-                $post['ticketid']     = $ticketid;
-                $post['price']     	  = $ticketprice;
-                $post['fees']     	  = $ticket_fee;
-                $post['vat']                 = $pricing['vat_amount'];
-                $post['price_excluding_vat'] = $pricing['price_excluding_vat'];
-                $post['vat_percentage']      = $pricing['vat_percentage'];
-                $post['eventid']      = $eventid;
-                $post['seat_sector']  = $id;
-
-                //if ($this->userid) {
-                //    $post['userid']   = $this->userid;
-                //}
-
-                $model	     = $this->getModel('order');
-
-                $models = new OrderModel();
-                ##$orderTicket = $model->store($post);
-
-                if ($models->store($post)) {
-
-                    $orderid     = $models->getOrderid();
-
-                    ### WE NEED TO UPDATE THE SEAT NUMBER NOW ### --> ORDERID NEEDS TO BE ENTERED IN SEAT!
-                    $models->updateCoords($orderid, $id);
-
-
-                    ## Update the tickets-totals that where removed.
-                    $query = 'UPDATE #__ticketstation_tickets'
-                        . ' SET totaltickets = totaltickets-1'
-                        . ' WHERE ticketid = '.(int) $ticketcounter.' ';
-
-                    ## Do the query now
-                    $db->setQuery( $query );
-
-                    ## When query goes wrong.. Show message with error.
-                    if (!$db->execute()) {
-
-                        ## End of checks --> order is added:
-                        $msg = Text::_('COM_TICKETSTATION_DB_QUERY_FAILED').' (Error: #101)';
-
-                        $arr = array('error' => '0', 'msg' => $msg, 'id' => $id, 'multiseat' => '1');
-
-                        echo json_encode($arr);
-                        exit();
-
-                    }
-
-                    $sql = 'SELECT * FROM #__ticketstation_seatplancoords WHERE orderid = '.(int)$orderid.'';
-
-                    $db->setQuery($sql);
-                    $coords_table = $db->loadObject();
-
-                    if($coords_table->row_name == ''){
-                        $seatid = $coords_table->seatid;
-                    }else{
-                        $seatid = $coords_table->row_name.$coords_table->seatid;
-                    }
-
-
-                    //if($obj->total > 1) {
-                    //    $msg = Text::_( 'COM_TICKETSTATION_SEAT_HAS_BEEN_ORDERED_CHOOSE_PRICE' );
-                    //}else{
-                        $msg = Text::_( 'COM_TICKETSTATION_SEAT_HAS_BEEN_ORDERED' );
-                    //}
-
-                    $arr = array('error' => '0', 'msg' => $msg, 'id' => $id, 'multiseat' => '1', 'seatid' => $seatid);
-                    echo json_encode($arr);
-                    exit();
-
-                }else{
-
-                    #### OOOOPS --> MOVE ALONG, IT WENT WRONG!
-
-                    $msg = Text::_( 'COM_TICKETSTATION_ORDER_FAILED' );
-                    $arr = array('error' => '1', 'msg' => $msg, 'id' => $id, 'multiseat' => '1');
-                    echo json_encode($arr);
-                    exit();
-
-                }
-
-            }else{
-
-                ## Not enough tickets available.
-                $msg = Text::_( 'COM_TICKETSTATION_NO_SEATS_AVAILABLE' );
-                $arr = array('error' => '1', 'msg' => $msg, 'id' => '', 'multiseat' => '1');
-                echo json_encode($arr);
-                exit();
-
-            }
-
-        }else{
-
-            $sql = 'SELECT totaltickets, eventid, ticketprice, vat_percentage
-				    FROM #__ticketstation_tickets
-				    WHERE ticketid = '.(int)$item->ticketid.'';
-
-            $db->setQuery($sql);
-            $obj = $db->loadObject();
-
-            if( $obj->totaltickets == 0 ) {
-
-                ## These are normal tickets! (Prices are per row)
-                $msg = Text::_( 'COM_TICKETSTATION_SOLD_OUT' );
-                $arr = array('error' => '1', 'msg' => $msg, 'id' => $id, 'multiseat' => '0');
-                echo json_encode($arr);
-                exit();
-
-            }else{
-
-                ## Ticket available -> proceed with order.
-
-                ## This branch never set price/vat/fees at all - an order created here would
-                ## get price=NULL, meaning the sale amount itself was never recorded, not just
-                ## missing VAT. Compute it the same way every other purchase path does.
-                $vatQuery = 'SELECT variable_transcosts, transactioncosts, transcosts FROM #__ticketstation_config WHERE configid = 1';
-                $db->setQuery($vatQuery);
-                $feeConfig = $db->loadObject();
-
-                $ticket_fee = $feeConfig->variable_transcosts == 1 ? (($obj->ticketprice / 100) * $feeConfig->transcosts) : 0;
-                $pricing    = (new Amount)->calculateVatFromPrice($obj->ticketprice, $obj->vat_percentage);
-
-                ## Lets prepare some variables.
-                $post['requires_seat'] = '1';
-                ## Creating a proper time stamp
-                $now = time();
-                ## Output: $now = "1074176782";
-                $orderdate            = date('Y-m-d H:i:s', $now);
-                $post['orderdate']    = $orderdate;
-                $post['ordercode']    = $session->get('ordercode');
-                $post['ipaddress']    = $_SERVER['REMOTE_ADDR'];
-                $post['ticketid']     = $item->ticketid;
-                ##$post['named_ticket'] = $obj->named_tickets_required;
-                $post['price']               = $obj->ticketprice;
-                $post['fees']                = $ticket_fee;
-                $post['vat']                 = $pricing['vat_amount'];
-                $post['price_excluding_vat'] = $pricing['price_excluding_vat'];
-                $post['vat_percentage']      = $pricing['vat_percentage'];
-                $post['eventid']      = $obj->eventid;
-                $post['seat_sector']  = $id;
-
-                if ($this->userid) {
-                    $post['userid']   = $this->userid;
-                }
-
-                $model	     = $this->getModel('order');
-                ##$orderTicket = $model->store($post);
-
-                if ($model->store($post)) {
-
-                    $orderid     = $model->getOrderid();
-
-                    ### WE NEED TO UPDATE THE SEAT NUMBER NOW ### --> ORDERID NEEDS TO BE ENTERED IN SEAT!
-                    $model->updateCoords($orderid, $id);
-
-
-                    ## Update the tickets-totals that where removed.
-                    $query = 'UPDATE #__ticketstation_tickets'
-                        . ' SET totaltickets = totaltickets-1'
-                        . ' WHERE ticketid = '.(int)$item->ticketid.' ';
-
-                    ## Do the query now
-                    $db->setQuery( $query );
-
-                    ## When query goes wrong.. Show message with error.
-                    if (!$db->execute()) {
-
-                        ## End of checks --> order is added:
-                        $msg = Text::_('COM_TICKETSTATION_DB_QUERY_FAILED').' (Error: #102)';
-                        $arr = array('error' => '1', 'msg' => $msg, 'id' => $id, 'multiseat' => '0');
-                        echo json_encode($arr);
-                        exit();
-
-                    }
-
-                }
-
-                $sql = 'SELECT * FROM #__ticketstation_seatplancoords WHERE orderid = '.(int)$orderid.'';
-
-                $db->setQuery($sql);
-                $coords_table = $db->loadObject();
-
-                if($coords_table->row_name == ''){
-                    $seatid = $coords_table->seatid;
-                }else{
-                    $seatid = $coords_table->row_name.$coords_table->seatid;
-                }
-
-                ## These are normal tickets! (Prices are per row)
-                $msg = Text::_( 'COM_TICKETSTATION_SEAT_HAS_BEEN_ORDERED' );
-                $arr = array('error' => '0', 'msg' => $msg, 'id' => $id, 'multiseat' => '0', 'seatid' => $seatid);
-                echo json_encode($arr);
-                exit();
-
-            }
-
-
+        $counterid = (int) $item->ticketid;
+        $ticketid  = $counterid;
+
+        if ($item->multi_seat == 1) {
+
+            ## Price per person: start at the most expensive published child ticket, if any.
+            $query = $db->getQuery(true)
+                ->select('ticketid')
+                ->from($db->quoteName('#__ticketstation_tickets'))
+                ->where($db->quoteName('parent') . ' = ' . $counterid)
+                ->where($db->quoteName('published') . ' = 1')
+                ->order($db->quoteName('ticketprice') . ' DESC');
+
+            $db->setQuery($query, 0, 1);
+            $ticketid = (int) $db->loadResult() ?: $counterid;
         }
 
+        $sql = 'SELECT eventid, ticketprice, vat_percentage
+				FROM #__ticketstation_tickets
+				WHERE ticketid = '.$ticketid;
 
+        $db->setQuery($sql);
+        $ticket = $db->loadObject();
+
+        $sql = 'SELECT totaltickets
+				FROM #__ticketstation_tickets
+				WHERE ticketid = '.$counterid;
+
+        $db->setQuery($sql);
+        $totaltickets = (int) $db->loadResult();
+
+        if (!$ticket || $totaltickets <= 0) {
+
+            ## Not enough tickets available.
+            $msg = Text::_( $item->multi_seat == 1 ? 'COM_TICKETSTATION_NO_SEATS_AVAILABLE' : 'COM_TICKETSTATION_SOLD_OUT' );
+            $arr = array('error' => '1', 'msg' => $msg, 'id' => $id, 'multiseat' => $multiseat);
+            echo json_encode($arr);
+            exit();
+        }
+
+        ## Claim the seat in one statement before anything else, so two visitors clicking the
+        ## same seat at the same moment can never both get it.
+        $query = 'UPDATE #__ticketstation_seatplancoords SET booked = 1 WHERE id = '.$id.' AND booked = 0';
+        $db->setQuery($query);
+
+        if (!$db->execute() || $db->getAffectedRows() === 0) {
+
+            $msg = Text::_('COM_TICKETSTATION_THIS_SEAT_IS_TAKEN');
+            $arr = array('error' => '1', 'msg' => $msg, 'id' => $id, 'multiseat' => $multiseat);
+            echo json_encode($arr);
+            exit();
+        }
+
+        ## Ticket prices are entered VAT-inclusive; split the VAT off for the order row.
+        $pricing = (new Amount)->calculateVatFromPrice($ticket->ticketprice, $ticket->vat_percentage);
+
+        ## Lets prepare some variables.
+        $post['requires_seat']       = '1';
+        $post['orderdate']           = date('Y-m-d H:i:s');
+        $post['ordercode']           = $session->get('ordercode');
+        $post['ipaddress']           = $_SERVER['REMOTE_ADDR'];
+        $post['ticketid']            = $ticketid;
+        $post['price']               = $ticket->ticketprice;
+        $post['fees']                = $this->getSeatFee($ticket->ticketprice);
+        $post['vat']                 = $pricing['vat_amount'];
+        $post['price_excluding_vat'] = $pricing['price_excluding_vat'];
+        $post['vat_percentage']      = $pricing['vat_percentage'];
+        $post['eventid']             = $ticket->eventid;
+        $post['seat_sector']         = $id;
+
+        $model = new OrderModel();
+
+        if (!$model->store($post)) {
+
+            ## Release the claimed seat again.
+            $db->setQuery('UPDATE #__ticketstation_seatplancoords SET booked = 0, orderid = 0 WHERE id = '.$id);
+            $db->execute();
+
+            $msg = Text::_( 'COM_TICKETSTATION_ORDER_FAILED' );
+            $arr = array('error' => '1', 'msg' => $msg, 'id' => $id, 'multiseat' => $multiseat);
+            echo json_encode($arr);
+            exit();
+        }
+
+        ### WE NEED TO UPDATE THE SEAT NUMBER NOW ### --> ORDERID NEEDS TO BE ENTERED IN SEAT!
+        $model->updateCoords($model->getOrderid(), $id);
+
+        ## Update the tickets-totals that where removed.
+        $query = 'UPDATE #__ticketstation_tickets'
+            . ' SET totaltickets = totaltickets-1'
+            . ' WHERE ticketid = '.$counterid;
+
+        $db->setQuery( $query );
+
+        if (!$db->execute()) {
+
+            $msg = Text::_('COM_TICKETSTATION_DB_QUERY_FAILED').' (Error: #101)';
+            $arr = array('error' => '1', 'msg' => $msg, 'id' => $id, 'multiseat' => $multiseat);
+            echo json_encode($arr);
+            exit();
+        }
+
+        $msg = Text::_( 'COM_TICKETSTATION_SEAT_HAS_BEEN_ORDERED' );
+        $arr = array('error' => '0', 'msg' => $msg, 'id' => $id, 'multiseat' => $multiseat, 'seatid' => $item->row_name.$item->seatid);
+        echo json_encode($arr);
+        exit();
+    }
+
+    /**
+     * The per-ticket transaction costs for a seat of the given price: a percentage when
+     * transaction costs are variable, otherwise nothing (fixed costs are added per order).
+     */
+    private function getSeatFee($ticketprice)
+    {
+        $db = Factory::getContainer()->get('DatabaseDriver');
+
+        $db->setQuery('SELECT variable_transcosts, transcosts FROM #__ticketstation_config WHERE configid = 1');
+        $config = $db->loadObject();
+
+        return ($config && $config->variable_transcosts == 1) ? (($ticketprice / 100) * $config->transcosts) : 0;
     }
 
     function saveseat(){

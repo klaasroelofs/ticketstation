@@ -16,6 +16,7 @@ use Joomla\CMS\Factory;
 use Joomla\CMS\MVC\Model\BaseDatabaseModel;
 use Joomla\CMS\Pagination\Pagination;
 use Joomla\Utilities\ArrayHelper;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\SeatplanSettings;
 
 /**
  * Ticketstation Seatplans Model
@@ -275,12 +276,14 @@ class SeatplansModel extends BaseDatabaseModel
 
             $db = Factory::getContainer()->get('DatabaseDriver');
 
-            ## Making the query for showing all the clients in list function
-            $sql = 'SELECT t.*, tt.*, c.*
-					FROM #__ticketstation_seatplancoords AS c,  #__ticketstation_tickets AS t, #__ticketstation_seatplansettings AS tt
-					WHERE c.parent ='.(int)$this->id.'
-					AND c.ticketid = t.ticketid
-					AND c.ticketid = tt.ticketid';
+            ## Seats of the child tickets (Multi Seat = No). The chart settings come from
+            ## this parent; a child's own settings row only overrides the colours.
+            $sql = 'SELECT t.*, ' . SeatplanSettings::COLUMNS . ', c.*, o.scanned
+					FROM #__ticketstation_seatplancoords AS c
+					INNER JOIN #__ticketstation_tickets AS t ON t.ticketid = c.ticketid'
+                . SeatplanSettings::JOINS . '
+					LEFT JOIN #__ticketstation_orders AS o ON o.seat_sector = c.id
+					WHERE c.parent = '.(int)$this->id;
 
             $db->setQuery($sql);
             $this->data = $db->loadObjectList();

@@ -17,6 +17,7 @@ use Joomla\Filesystem\File;
 use Joomla\CMS\Form\Form;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\Model\AdminModel;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\SeatplanSettings;
 
 /**
  * Ticketstation Seatplansettings Model
@@ -110,6 +111,9 @@ class SeatplansettingsModel extends AdminModel
             $app->enqueueMessage('Store failed ' . $table->getError(), 'error');
             return false;
         }
+
+        // Colour overrides for the child tickets (sections when Multi Seat = No)
+        SeatplanSettings::saveChildColours($ticketid, $jinput->post->get('childcolours', [], 'array'));
 
         // Store files on server
         $files = $jinput->files->get('jform');

@@ -9,6 +9,7 @@ use Joomla\CMS\HTML\HTMLHelper;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\View\HtmlView as BaseHtmlView;
 use Joomla\CMS\Toolbar\ToolbarHelper;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\SeatplanSettings;
 
 /**
  * @package     Joomla.Administrator
@@ -37,6 +38,9 @@ class HtmlView extends BaseHtmlView
         $model       = $this->getModel();
         $this->form  = $model->getForm();
         $this->item  = $model->getData();
+
+        ## Child tickets (sections when Multi Seat = No) with their own colour overrides.
+        $this->childColours = empty($this->item->ticketid) ? [] : SeatplanSettings::getChildColours((int) $this->item->ticketid);
 
         // Set up the toolbar
         $title_text = empty($this->item->ticketid) ? Text::_('COM_TICKETSTATION_VIEW_SEATPLANS_SETTINGS') : Text::_('COM_TICKETSTATION_VIEW_SEATPLANS_SETTINGS') . ' ' . $this->item->ticketname . ' <small>(' . $this->item->ticketcode . ')</small>';
