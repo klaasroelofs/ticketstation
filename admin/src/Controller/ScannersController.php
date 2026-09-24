@@ -75,14 +75,14 @@ class ScannersController extends BaseController
         if(!$model->remove($post['cid'])) {
 
             if( $model->getError()  == null ){
-                Factory::getApplication()->enqueueMessage('Kon scanner niet verwijderen', 'error');
+                Factory::getApplication()->enqueueMessage(Text::_('COM_TICKETSTATION_SCANNER_DELETE_FAILED'), 'error');
             }else{
                 Factory::getApplication()->enqueueMessage($model->getError(), 'error');
             }
 
         }else{
 
-            Factory::getApplication()->enqueueMessage('Scanner verwijderd');
+            Factory::getApplication()->enqueueMessage(Text::_('COM_TICKETSTATION_SCANNER_DELETED'));
         }
 
         $this->setRedirect('index.php?option=com_ticketstation&controller=scanners');

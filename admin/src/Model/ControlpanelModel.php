@@ -13,6 +13,7 @@ defined('_JEXEC') or die;
 
 use Joomla\CMS\Factory;
 use Joomla\CMS\MVC\Model\BaseDatabaseModel;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\Availability;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Date;
 
 /**
@@ -193,8 +194,8 @@ class ControlpanelModel extends BaseDatabaseModel
     }
 
     /**
-     * Availability of the upcoming published tickets. Counts every order row for the ticket,
-     * exactly like the frontend does (Ticket::getTicketsSoldById()), so "left" matches the site.
+     * Availability of the upcoming published tickets, computed by the Availability helper
+     * exactly like the storefront does, so "left" matches the site.
      *
      * @return  array
      */
@@ -202,19 +203,13 @@ class ControlpanelModel extends BaseDatabaseModel
     {
         $db = Factory::getContainer()->get('DatabaseDriver');
 
-        $sold = $db->getQuery(true)
-            ->select(['ticketid', 'COUNT(orderid) AS sold'])
-            ->from($db->quoteName('#__ticketstation_orders'))
-            ->group($db->quoteName('ticketid'));
-
         $query = $db->getQuery(true)
             ->select([
                 't.ticketid', 't.ticketname', 't.startdate', 't.starting_total_tickets', 't.show_seatplans',
-                'e.eventname', 'COALESCE(s.sold, 0) AS sold',
+                'e.eventname',
             ])
             ->from($db->quoteName('#__ticketstation_tickets', 't'))
             ->join('INNER', $db->quoteName('#__ticketstation_events', 'e') . ' ON ' . $db->quoteName('t.eventid') . ' = ' . $db->quoteName('e.eventid'))
-            ->join('LEFT', '(' . $sold . ') AS s ON ' . $db->quoteName('s.ticketid') . ' = ' . $db->quoteName('t.ticketid'))
             ->where($db->quoteName('t.parent') . ' = 0')
             ->where($db->quoteName('t.published') . ' = 1')
             ->where($db->quoteName('e.published') . ' = 1')
@@ -226,9 +221,12 @@ class ControlpanelModel extends BaseDatabaseModel
 
         foreach ($rows as $row)
         {
-            $row->total     = (int) $row->starting_total_tickets;
-            $row->sold      = (int) $row->sold;
-            $row->available = max(0, $row->total - $row->sold);
+            // Over all variants of a parent and following their counter settings (seated
+            // tickets: free seats), the same figures as the storefront.
+            $availability   = Availability::summary((int) $row->ticketid);
+            $row->total     = $availability->capacity;
+            $row->available = $availability->available;
+            $row->sold      = max(0, $row->total - $row->available);
             $row->percentage_sold = $row->total > 0 ? min(100, round($row->sold / $row->total * 100)) : 100;
         }
 

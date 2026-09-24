@@ -120,7 +120,7 @@ class TicketPreviewCreator
             $pdf->SetTextColor($rgb['r'], $rgb['g'], $rgb['b']);
             $pdf->SetXY($position[0], $position[1]);
 
-            $pdf->Write(0, Text::_('COM_TICKETSTATION_PDF_DATE') . ' ' . date("d-m-Y", strtotime($dummy['startdate'])) . ' || ' . Text::_('COM_TICKETSTATION_PDF_START') . ' ' . date("H:i", strtotime($dummy['startdate'])) . 'u');
+            $pdf->Write(0, TicketLanguage::_('COM_TICKETSTATION_PDF_DATE') . ' ' . date("d-m-Y", strtotime($dummy['startdate'])) . ' || ' . TicketLanguage::_('COM_TICKETSTATION_PDF_START') . ' ' . TicketLanguage::sprintf('COM_TICKETSTATION_PDF_TIME', date("H:i", strtotime($dummy['startdate']))));
         }
 
         ## PRICE
@@ -134,11 +134,11 @@ class TicketPreviewCreator
             $price = TicketstationFunctions::showprice($config->priceformat, $dummy['ticketprice'], '');
 
             if ($config->use_euros_in_pdf == 2) {
-                $pdf->Write(0, Text::_('COM_TICKETSTATION_PDF_PRICE') . ' ' . chr(128) . ' ' . $price);
+                $pdf->Write(0, TicketLanguage::_('COM_TICKETSTATION_PDF_PRICE') . ' ' . chr(128) . ' ' . $price);
             } elseif ($config->use_euros_in_pdf == 3) {
-                $pdf->Write(0, Text::_('COM_TICKETSTATION_PDF_PRICE') . ' ' . chr(0x00A3) . ' ' . $price);
+                $pdf->Write(0, TicketLanguage::_('COM_TICKETSTATION_PDF_PRICE') . ' ' . chr(0x00A3) . ' ' . $price);
             } else {
-                $pdf->Write(0, Text::_('COM_TICKETSTATION_PDF_PRICE') . ' ' . $price);
+                $pdf->Write(0, TicketLanguage::_('COM_TICKETSTATION_PDF_PRICE') . ' ' . $price);
             }
         }
 
@@ -166,12 +166,12 @@ class TicketPreviewCreator
 
             if (($data['ticket_size'] ?? '') == 'A5') {
                 $pdf->SetFont($this->font, 'B', $fontsize + 1);
-                $pdf->Write(0, 'Besteld door:');
+                $pdf->Write(0, PdfEncoding::toLatin1(TicketLanguage::_('COM_TICKETSTATION_PDF_ORDERED_BY')));
                 $pdf->SetFont($this->font, '', $fontsize);
                 $pdf->SetXY($position[0], $position[1] + 5);
                 $pdf->Write(0, substr(PdfEncoding::toLatin1($dummy['firstname'] . ' ' . $dummy['name']), 0, 35));
             } else {
-                $pdf->Write(0, 'Besteld door: ' . PdfEncoding::toLatin1($dummy['firstname'] . ' ' . $dummy['name']));
+                $pdf->Write(0, PdfEncoding::toLatin1(TicketLanguage::_('COM_TICKETSTATION_PDF_ORDERED_BY') . ' ' . $dummy['firstname'] . ' ' . $dummy['name']));
             }
         }
 
@@ -207,7 +207,7 @@ class TicketPreviewCreator
             $rgb = $creator->hexToRgb(($data['seatnumber_fontcolor'] ?? '') ?: '000000');
             $pdf->SetTextColor($rgb['r'], $rgb['g'], $rgb['b']);
             $pdf->SetXY($position[0], $position[1]);
-            $pdf->Write(0, Text::_('COM_TICKETSTATION_PDF_SEAT_NUMBER') . ' ' . $dummy['seat_row'] . $dummy['seat_id']);
+            $pdf->Write(0, TicketLanguage::_('COM_TICKETSTATION_PDF_SEAT_NUMBER') . ' ' . $dummy['seat_row'] . $dummy['seat_id']);
         }
 
         ## QR CODE - a fixed dummy payload, never a real barcode, and never stored on an order.
@@ -250,15 +250,15 @@ class TicketPreviewCreator
     private function getDummyContent()
     {
         return [
-            'eventname'         => 'Voorbeeld Evenement',
-            'ticketname'        => 'Voorbeeld Ticket',
-            'freetext_1'        => 'Voorbeeld vrije tekst',
+            'eventname'         => Text::_('COM_TICKETSTATION_PREVIEW_SAMPLE_EVENT'),
+            'ticketname'        => Text::_('COM_TICKETSTATION_PREVIEW_SAMPLE_TICKET'),
+            'freetext_1'        => Text::_('COM_TICKETSTATION_PREVIEW_SAMPLE_FREETEXT'),
             'startdate'         => date('Y-m-d H:i:s'),
             'ticketprice'       => 25,
             'orderdate'         => date('Y-m-d H:i:s'),
             'firstname'         => 'Jan',
             'name'              => 'Janssen',
-            'remarks'           => 'Voorbeeld referentie',
+            'remarks'           => Text::_('COM_TICKETSTATION_PREVIEW_SAMPLE_REFERENCE'),
             'ticket_volgnummer' => 2,
             'tickets_in_order'  => 4,
             'eventcode'         => 'EVT',

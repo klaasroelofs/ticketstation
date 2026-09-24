@@ -2,6 +2,7 @@
 
 defined('_JEXEC') or die;
 
+use Joomla\CMS\Language\Text;
 use Joomla\CMS\Router\Route;
 use Joomla\CMS\Uri\Uri;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\TicketstationFunctions;
@@ -15,8 +16,8 @@ $resultUrl = Route::_('index.php?option=com_ticketstation&view=paymentresult&ord
 ?>
 
 <div style="text-align:center; padding:40px;">
-    <h2>We controleren je betaling…</h2>
-    <p>Even geduld aub</p>
+    <h2><?php echo Text::_('COM_TICKETSTATION_PAYMENTRESULT_CHECKING'); ?></h2>
+    <p><?php echo Text::_('COM_TICKETSTATION_PAYMENTRESULT_PLEASE_WAIT'); ?></p>
     <div class="spinner" style="margin-top:20px;"></div>
 </div>
 

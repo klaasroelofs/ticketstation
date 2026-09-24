@@ -268,17 +268,17 @@ if (file_exists($image)) {
                     ?>
                     <div style="border:1px solid #aaa; padding: 5px 5px 5px 5px; border-radius: 3px; background-color: #ddd;">
                         <div id="totals" style="margin-bottom:10px;">
-                            <div style="margin-bottom:8px;font-size:16px;font-weight:bold;width: 100%; padding:8px 0px 4px 0px;color:#3071a9;">Totalen:</div>
+                            <div style="margin-bottom:8px;font-size:16px;font-weight:bold;width: 100%; padding:8px 0px 4px 0px;color:#3071a9;"><?= Text::_('COM_TICKETSTATION_TOTALS'); ?>:</div>
                             <table width="100%">
                                 <tr>
                                     <td style="font-size:11px;font-weight:bold; text-align:center; border:1px solid #198d02 ; background-color:#FFF; color:#000; width: 25px; height:25px;"><?php echo $countFree ?></td>
-                                    <td style="color:#3071a9; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 13px;">&nbsp;&nbsp;&nbsp;= Vrij</td>
+                                    <td style="color:#3071a9; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 13px;">&nbsp;&nbsp;&nbsp;= <?= Text::_('COM_TICKETSTATION_SEATS_FREE'); ?></td>
                                 </tr>
                                 <tr>
                                     <td style="width: 22px; height:10px; line-height:10px;"></td>
                                 </tr><tr>
                                     <td style="font-size:11px;font-weight:bold; text-align:center; border:1px solid #000; background-color:#FF0000; color:#fff; width: 25px; height:25px;"><?php echo $countSold ?></td>
-                                    <td style="color:#3071a9; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 13px;">&nbsp;&nbsp;&nbsp;= Verkocht</td>
+                                    <td style="color:#3071a9; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 13px;">&nbsp;&nbsp;&nbsp;= <?= Text::_('COM_TICKETSTATION_SEATS_SOLD'); ?></td>
                                     <td style="color:#3071a9; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 10px;">(<?php echo ($countSold != 0 ? round(($countSold/($countSold+$countFree))*100) : 0)?>%)</td>
                                 </tr>
                                 <tr>
@@ -286,25 +286,25 @@ if (file_exists($image)) {
                                 </tr>
                                 <tr>
                                     <td style="font-size:11px;font-weight:bold; text-align:center; border:1px solid #000; background-color:#198d02 ; color:#fff; width: 25px; height:25px;"><?php echo $countScanned ?></td>
-                                    <td style="color:#3071a9; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 13px;">&nbsp;&nbsp;&nbsp;= Gescand</td>
+                                    <td style="color:#3071a9; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 13px;">&nbsp;&nbsp;&nbsp;= <?= Text::_('COM_TICKETSTATION_SEATS_SCANNED'); ?></td>
                                     <td style="color:#3071a9; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 10px;">(<?php echo ($countSold != 0 ? round(($countScanned/$countSold)*100) : 0)?>%)</td>
                                 </tr>
                                 <tr>
                                     <td style="width: 22px; height:10px; line-height:10px;"></td>
                                 </tr>
                                 <tr>
-                                    <td colspan="2"><span class="nietgescand">Niet gescand:  <?php echo $countNotScanned ?></span></td>
+                                    <td colspan="2"><span class="nietgescand"><?= Text::_('COM_TICKETSTATION_SEATS_NOT_SCANNED'); ?>:  <?php echo $countNotScanned ?></span></td>
                                 </tr>
                             </table>
                         </div>
                     </div>
                     <div class="refreshdiv" style="margin-top:15px;border:1px solid #aaa; padding: 5px 0px 5px 0px; border-radius: 3px; background-color: #ddd;">
-                        <div style="margin-bottom:8px;font-size:16px;font-weight:bold;width: 100%; padding:8px 0px 4px 5px;color:#3071a9;">Realtime weergave:</div>
+                        <div style="margin-bottom:8px;font-size:16px;font-weight:bold;width: 100%; padding:8px 0px 4px 5px;color:#3071a9;"><?= Text::_('COM_TICKETSTATION_REALTIME_VIEW'); ?>:</div>
                         <div style="text-align:center;">
                             <div type="button" class="btn btn-primary startrefresh">Start</div>
                             <div type="button" class="btn btn-primary stoprefresh">Stop</div>
                         </div>
-                        <div style="padding:15px 0 15px 0;text-align:center;"><span class="refreshmsg" style="opacity:0.25;font-weight:bold;padding:5px;border:1px solid #555;border-radius: 3px;background-color:#fff;color:#555;">Realtime actief</span></div>
+                        <div style="padding:15px 0 15px 0;text-align:center;"><span class="refreshmsg" style="opacity:0.25;font-weight:bold;padding:5px;border:1px solid #555;border-radius: 3px;background-color:#fff;color:#555;"><?= Text::_('COM_TICKETSTATION_REALTIME_ACTIVE'); ?></span></div>
                     </div>
                 </div>
             </div>
@@ -342,7 +342,7 @@ if (file_exists($image)) {
                                 }
                             }else{
                                 ## stoel vrij
-                                $style = 'color:#000; border-color:#000;';
+                                $style = 'color:#' . ($row->font_color ?: '000') . '; border-color:#' . ($row->border_color ?: '000') . ';';
                                 if ($row->background_color != ''){
                                     $background = $row->background_color;
                                 }else{
@@ -598,7 +598,7 @@ if (file_exists($image)) {
                 }
 
                 // Create a new div in the glassbox div.
-                if(data.row_name === ''){
+                if(!data.row_name){
                     var elm = $('<div id="'+data.id+'" class="seat-element" style="left:30px; top:30px; position:absolute;">'+data.seatid+'</div>').appendTo("#glassbox");
                 }else{
                     var elm = $('<div id="'+data.id+'" class="seat-element" style="left:30px; top:30px; position:absolute;">'+data.row_name+''+data.seatid+'</div>').appendTo("#glassbox");
@@ -644,7 +644,7 @@ if (file_exists($image)) {
                 $.each(htmlparsed, function(idx, data) {
 
                     // Create a new div in the glassbox div.
-                    if(data.row_name === ''){
+                    if(!data.row_name){
                         var elm = $('<div id="'+data.added_database_id+'" class="seat-element" style="left:'+data.x_pos+'px; top:'+data.y_pos+'px; position:absolute;">'+data.seatid+'</div>').appendTo("#glassbox");
                     }else{
                         var elm = $('<div id="'+data.added_database_id+'" class="seat-element" style="left:'+data.x_pos+'px; top:'+data.y_pos+'px; position:absolute;">'+data.row_name+''+data.seatid+'</div>').appendTo("#glassbox");
@@ -743,7 +743,7 @@ if (file_exists($image)) {
                     $.each(htmlparsed, function (idx, data) {
 
                         // Create a new div in the glassbox div.
-                        if (data.row_name === '') {
+                        if (!data.row_name) {
                             var elm = $('<div id="' + data.added_database_id + '" class="seat-element seat-element-cursor" style="left:' + data.x_pos + 'px; top:' + data.y_pos + 'px; position:absolute;">' + data.seatid + '</div>').appendTo("#glassbox");
                         } else {
                             var elm = $('<div id="' + data.added_database_id + '" class="seat-element seat-element-cursor" style="left:' + data.x_pos + 'px; top:' + data.y_pos + 'px; position:absolute;">' + data.row_name + '' + data.seatid + '</div>').appendTo("#glassbox");

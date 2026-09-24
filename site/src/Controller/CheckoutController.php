@@ -338,7 +338,7 @@ class CheckoutController extends BaseController
         {
             if ($jinput->get('phonenumber', '', 'string') == '')
             {
-                $app->enqueueMessage('Je hebt geen telefoonnummer ingevoerd', 'error');
+                $app->enqueueMessage(Text::_('COM_TICKETSTATION_CHECKOUT_PHONE_NOT_FILLED'), 'error');
 
                 return false;
             }

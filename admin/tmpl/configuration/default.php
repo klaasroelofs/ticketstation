@@ -771,6 +771,36 @@ $document->getWebAssetManager()->addInlineScript("
                                value="<?= isset($this->config->website)?$this->config->website:null; ?>"/>
                     </div>
                 </div>
+                <div class="row mb-3">
+                    <label for="terms_url" class="col-sm-3 col-form-label"
+                           rel="popover"
+                           title="<?= Text::_('COM_TICKETSTATION_CONFIG_TERMS_URL') ?>">
+                        <?= Text::_('COM_TICKETSTATION_CONFIG_TERMS_URL') ?>
+                    </label>
+                    <div class="col-sm-9">
+                        <input type="text" name="terms_url" id="terms_url"
+                               class="form-control"
+                               value="<?= htmlspecialchars($this->config->terms_url ?? '', ENT_QUOTES, 'UTF-8'); ?>"/>
+                        <small class="form-text">
+                            <?= Text::_('COM_TICKETSTATION_CONFIG_TERMS_URL_DESC') ?>
+                        </small>
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <label for="privacy_url" class="col-sm-3 col-form-label"
+                           rel="popover"
+                           title="<?= Text::_('COM_TICKETSTATION_CONFIG_PRIVACY_URL') ?>">
+                        <?= Text::_('COM_TICKETSTATION_CONFIG_PRIVACY_URL') ?>
+                    </label>
+                    <div class="col-sm-9">
+                        <input type="text" name="privacy_url" id="privacy_url"
+                               class="form-control"
+                               value="<?= htmlspecialchars($this->config->privacy_url ?? '', ENT_QUOTES, 'UTF-8'); ?>"/>
+                        <small class="form-text">
+                            <?= Text::_('COM_TICKETSTATION_CONFIG_PRIVACY_URL_DESC') ?>
+                        </small>
+                    </div>
+                </div>
             </div>
         </div>
 

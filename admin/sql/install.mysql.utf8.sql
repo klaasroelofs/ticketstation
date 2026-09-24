@@ -154,6 +154,8 @@ CREATE TABLE IF NOT EXISTS `#__ticketstation_config` (
   `show_venue_website` tinyint(1) NOT NULL DEFAULT 0,
   `from_name` varchar(255) NOT NULL DEFAULT '',
   `from_email` varchar(255) NOT NULL DEFAULT '',
+  `terms_url` varchar(255) NOT NULL DEFAULT '',
+  `privacy_url` varchar(255) NOT NULL DEFAULT '',
   PRIMARY KEY (`configid`)
 )  ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 DEFAULT COLLATE=utf8mb4_unicode_ci;
 
@@ -851,5 +853,7 @@ INSERT IGNORE INTO `#__ticketstation_config` VALUES(
 "0",
 "0",
 "0",
+"",
+"",
 "",
 "");

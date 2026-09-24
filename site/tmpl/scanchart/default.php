@@ -23,7 +23,7 @@ defined('_JEXEC') or die('Restricted Access');
 
 $app        = Factory::getApplication();
 $document   = $app->getDocument();
-$document->setTitle( 'Scan Chart' . ' - ' . $app->get('sitename'));
+$document->setTitle( Text::_('COM_TICKETSTATION_SCANCHART_TITLE') . ' - ' . $app->get('sitename'));
 
 $document->addStyleSheet( 'components/com_ticketstation/assets/css/component.css' );
 $document->addScript('https://code.jquery.com/jquery-3.7.1.js');
@@ -93,7 +93,7 @@ $linkback = Route::_('index.php?option=com_ticketstation&view=ticketscanning' . 
 <div class="row ticketstation">
 
     <div class="page-header">
-        <h2><strong>SCANOVERZICHT</strong></h2>
+        <h2 style="text-transform:uppercase;"><strong><?= Text::_('COM_TICKETSTATION_SCANCHART_TITLE'); ?></strong></h2>
         <h3><?= $this->items[0]->eventcode; ?> | <?= $this->items[0]->ticketname; ?></h3>
     </div>
 
@@ -101,7 +101,7 @@ $linkback = Route::_('index.php?option=com_ticketstation&view=ticketscanning' . 
         <div>
 
             <a class="btn btn-primary pull-left" onClick="location.href='<?= $linkback; ?>'">
-                <span>Terug</span>
+                <span><?= Text::_('COM_TICKETSTATION_BACK'); ?></span>
             </a>
 
         </div>
@@ -195,7 +195,7 @@ $linkback = Route::_('index.php?option=com_ticketstation&view=ticketscanning' . 
                 <div class="ticketmaster_upcoming_event">
                     <div class="ticketmaster_upcoming_event_heading" style="padding:7px 25px;">
                         <h3>
-                            <strong>Totalen</strong>
+                            <strong><?= Text::_('COM_TICKETSTATION_TOTALS'); ?></strong>
                         </h3>
                     </div>
                     <div class="ticketmaster_upcoming_event_content">
@@ -203,26 +203,26 @@ $linkback = Route::_('index.php?option=com_ticketstation&view=ticketscanning' . 
                             <table width="100%">
                                 <tr>
                                     <td style="font-size:11px; text-align:center; border:1px solid #000 !important; background-color:#FFF; color:#000; width: 25px; height:25px;padding: 5px 0px;"><?php echo $countFree ?></td>
-                                    <td>&nbsp;&nbsp;&nbsp;= Vrij</td>
+                                    <td>&nbsp;&nbsp;&nbsp;= <?= Text::_('COM_TICKETSTATION_SEATS_FREE'); ?></td>
                                 </tr>
                                 <tr>
                                     <td style="width: 22px; height:10px; line-height:10px;"></td>
                                 </tr><tr>
                                     <td style="font-size:11px; text-align:center; border:1px solid #000 !important; background-color:#FF0000; color:#fff; width: 25px; height:25px;padding: 5px 0px;"><?php echo $countSold ?></td>
-                                    <td>&nbsp;&nbsp;&nbsp;= Verkocht</td>
+                                    <td>&nbsp;&nbsp;&nbsp;= <?= Text::_('COM_TICKETSTATION_SEATS_SOLD'); ?></td>
                                 </tr>
                                 <tr>
                                     <td style="width: 22px; height:10px; line-height:10px;"></td>
                                 </tr>
                                 <tr>
                                     <td style="font-size:11px; text-align:center; border:1px solid #000 !important; background-color:#198d02 ; color:#fff; width: 25px; height:25px;padding: 5px 0px;"><?php echo $countScanned ?></td>
-                                    <td>&nbsp;&nbsp;&nbsp;= Gescand</td>
+                                    <td>&nbsp;&nbsp;&nbsp;= <?= Text::_('COM_TICKETSTATION_SEATS_SCANNED'); ?></td>
                                 </tr>
                                 <tr>
                                     <td style="width: 22px; height:10px; line-height:10px;"></td>
                                 </tr>
                                 <tr>
-                                    <td colspan="2"><span class="label-notscanned">Niet gescand:  <?php echo $countNotScanned ?></span></td>
+                                    <td colspan="2"><span class="label-notscanned"><?= Text::_('COM_TICKETSTATION_SEATS_NOT_SCANNED'); ?>:  <?php echo $countNotScanned ?></span></td>
                                 </tr>
                             </table>
                         </div>
@@ -231,12 +231,12 @@ $linkback = Route::_('index.php?option=com_ticketstation&view=ticketscanning' . 
 
             </div>
             <div style="margin-bottom: 25px;text-align: center;" class="refreshdiv">
-                <h4 style="margin-bottom:8px;font-weight:bold;">Auto refresh:</h4>
+                <h4 style="margin-bottom:8px;font-weight:bold;"><?= Text::_('COM_TICKETSTATION_AUTO_REFRESH'); ?>:</h4>
                 <div>
-                    <div class="btn btn-primary startrefresh">Start</div>
-                    <div class="btn btn-primary stoprefresh">Stop</div>
+                    <div class="btn btn-primary startrefresh"><?= Text::_('COM_TICKETSTATION_START'); ?></div>
+                    <div class="btn btn-primary stoprefresh"><?= Text::_('COM_TICKETSTATION_STOP'); ?></div>
                 </div>
-                <div style="padding:15px 0 15px 0;"><span class="refreshmsg" style="opacity:0.25;font-weight:bold;padding:5px;border:1px solid #555;border-radius: 3px;background-color:#fff;color:#555;">actief</span></div>
+                <div style="padding:15px 0 15px 0;"><span class="refreshmsg" style="opacity:0.25;font-weight:bold;padding:5px;border:1px solid #555;border-radius: 3px;background-color:#fff;color:#555;"><?= Text::_('COM_TICKETSTATION_ACTIVE'); ?></span></div>
             </div>
         </div>
     </div>

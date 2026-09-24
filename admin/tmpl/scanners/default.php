@@ -58,7 +58,7 @@ $wa->registerAndUseStyle('ticketstation', Uri::base() . 'components\com_ticketst
                                     <?php if ($assigned > 0): ?>
                                         <span class="label label-success"><?php echo $assigned; ?></span>
                                     <?php else: ?>
-                                        <span class="label label-important">Geen</span>
+                                        <span class="label label-important"><?php echo Text::_('JNONE'); ?></span>
                                     <?php endif; ?>
                                 </div>
                             </td>

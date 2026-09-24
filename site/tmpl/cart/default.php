@@ -27,7 +27,7 @@ $btndanger = 'btn btn-small btn-danger';
 ## Get document type and add it.
 $app        = Factory::getApplication();
 $document   = $app->getDocument();
-$document->setTitle( 'Winkelmand - ' . $app->get('sitename') );
+$document->setTitle( Text::_('COM_TICKETSTATION_CART') . ' - ' . $app->get('sitename') );
 $document->addStyleSheet( 'components/com_ticketstation/assets/css/component.css' );
 HTMLHelper::_('jquery.framework');
 
@@ -204,14 +204,14 @@ $waiters = count($this->waiters);
                         <ul class="checkout-bar">
 
                             <li class="visited previous">
-                                <span class="progress-bar-text">Tickets kiezen</span>
+                                <span class="progress-bar-text"><?php echo Text::_('COM_TICKETSTATION_STEP_CHOOSE_TICKETS'); ?></span>
                             </li>
 
-                            <li class="active"><span class="progress-bar-text">Winkelmand</span></li>
+                            <li class="active"><span class="progress-bar-text"><?php echo Text::_('COM_TICKETSTATION_CART'); ?></span></li>
 
-                            <li class="next"><span class="progress-bar-text">Bestelgegevens</span></li>
+                            <li class="next"><span class="progress-bar-text"><?php echo Text::_('COM_TICKETSTATION_ORDER_DETAILS'); ?></span></li>
 
-                            <li class=""><span class="progress-bar-text">Betalen</span></li>
+                            <li class=""><span class="progress-bar-text"><?php echo Text::_('COM_TICKETSTATION_STEP_PAYMENT'); ?></span></li>
 
                         </ul>
                     </div>
@@ -242,7 +242,7 @@ $waiters = count($this->waiters);
 
         <?php } else { ?>
 
-            <h2 class="ticketmaster-header"><strong>Winkelmand</strong></h2>
+            <h2 class="ticketmaster-header"><strong><?php echo Text::_('COM_TICKETSTATION_CART'); ?></strong></h2>
 
             <div id="tm-cart-text">
                 <p><?php echo Text::_('COM_TICKETSTATION_YOUR_CART_TEXT'); ?></p>
@@ -306,7 +306,7 @@ $waiters = count($this->waiters);
                             <td colspan="3">
                                 <div class="waitinglist_message">
                                     <?php echo Text::_('COM_TICKETSTATION_ITEMS_ON_WAITINGLIST'); ?><br />
-                                    <?php echo Text::_('COM_TICKETSTATION_A PAYMENT_REQUEST_WILL_BE_SENT'); ?>
+                                    <?php echo Text::_('COM_TICKETSTATION_A_PAYMENT_REQUEST_WILL_BE_SENT'); ?>
                                 </div>
                             </td>
                         </tr>
@@ -434,10 +434,10 @@ $waiters = count($this->waiters);
                 <div>
 
                     <a class="btn btn-primary pull-right" id="checkout">
-                        <span>Naar afrekenen</span>
+                        <span><?php echo Text::_('COM_TICKETSTATION_TO_CHECKOUT'); ?></span>
                     </a>
                     <a class="btn btn-primary pull-left" onClick="document.location.href='<?php echo $shop_on; ?>'">
-                        <span>Verder winkelen</span>
+                        <span><?php echo Text::_('COM_TICKETSTATION_CONTINUE_SHOPPING'); ?></span>
                     </a>
 
                 </div>

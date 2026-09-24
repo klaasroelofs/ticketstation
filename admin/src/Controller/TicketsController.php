@@ -166,11 +166,11 @@ class TicketsController extends BaseController
 
         if(!$model->resetScanstate($cid))
         {
-            $app->enqueueMessage('Scanstatus niet aangepast!', 'error');
+            $app->enqueueMessage(Text::_('COM_TICKETSTATION_SCANSTATUS_NOT_CHANGED'), 'error');
         }
         else
         {
-            $app->enqueueMessage('Reset scanstatus gelukt!');
+            $app->enqueueMessage(Text::_('COM_TICKETSTATION_SCANSTATUS_RESET'));
         }
 
         $this->setRedirect('index.php?option=com_ticketstation&view=Tickets');

@@ -155,11 +155,11 @@ class BoxofficeController extends BaseController {
 
         if(!$model->resetScanstate($cid))
         {
-            $app->enqueueMessage('Scanstatus niet aangepast!', 'error');
+            $app->enqueueMessage(Text::_('COM_TICKETSTATION_SCANSTATUS_NOT_CHANGED'), 'error');
         }
         else
         {
-            $app->enqueueMessage('Reset scanstatus gelukt!');
+            $app->enqueueMessage(Text::_('COM_TICKETSTATION_SCANSTATUS_RESET'));
         }
 
         $this->setRedirect('index.php?option=com_ticketstation&controller=boxoffice&task=edit&cid=' . $ordercode);
@@ -187,11 +187,11 @@ class BoxofficeController extends BaseController {
 
         if(!$model->markasScanned($cid))
         {
-            $app->enqueueMessage('Scanstatus niet aangepast!', 'error');
+            $app->enqueueMessage(Text::_('COM_TICKETSTATION_SCANSTATUS_NOT_CHANGED'), 'error');
         }
         else
         {
-            $app->enqueueMessage('Gemarkeerd als gescand!');
+            $app->enqueueMessage(Text::_('COM_TICKETSTATION_MARKED_AS_SCANNED'));
         }
 
         $this->setRedirect('index.php?option=com_ticketstation&controller=boxoffice&task=edit&cid=' . $ordercode);
@@ -572,7 +572,7 @@ class BoxofficeController extends BaseController {
 
         if ($newremark == '')
         {
-            $app->enqueueMessage('Opmerking is leeg!', 'error');
+            $app->enqueueMessage(Text::_('COM_TICKETSTATION_REMARK_EMPTY'), 'error');
 
         } else {
 
@@ -580,19 +580,19 @@ class BoxofficeController extends BaseController {
 
             if($response == 'FAIL_NO_DIFF')
             {
-                $app->enqueueMessage('Geen wijziging!', 'error');
+                $app->enqueueMessage(Text::_('COM_TICKETSTATION_REMARK_NOT_CHANGED'), 'error');
 
             } elseif ($response == 'DONE_INSERT')
             {
-                $app->enqueueMessage('Invoegen opmerking gelukt!');
+                $app->enqueueMessage(Text::_('COM_TICKETSTATION_REMARK_ADDED'));
 
             } elseif($response == 'DONE_UPDATE')
             {
-                $app->enqueueMessage('Bijwerken opmerking gelukt!');
+                $app->enqueueMessage(Text::_('COM_TICKETSTATION_REMARK_UPDATED'));
 
             } elseif($response == 'FAIL')
             {
-                $app->enqueueMessage('Bijwerken opmerking mislukt!', 'error');
+                $app->enqueueMessage(Text::_('COM_TICKETSTATION_REMARK_UPDATE_FAILED'), 'error');
             }
         }
 
@@ -612,15 +612,15 @@ class BoxofficeController extends BaseController {
 
         if($response == 'NA')
         {
-            $app->enqueueMessage('Opmerking niet aanwezig!', 'error');
+            $app->enqueueMessage(Text::_('COM_TICKETSTATION_REMARK_NOT_PRESENT'), 'error');
 
         } elseif($response == 'DONE_DELETE')
         {
-            $app->enqueueMessage('Verwijderen opmerking gelukt!');
+            $app->enqueueMessage(Text::_('COM_TICKETSTATION_REMARK_DELETED'));
 
         } elseif($response == 'FAIL')
         {
-            $app->enqueueMessage('Verwijderen opmerking mislukt!', 'error');
+            $app->enqueueMessage(Text::_('COM_TICKETSTATION_REMARK_DELETE_FAILED'), 'error');
         }
 
         $this->setRedirect('index.php?option=com_ticketstation&controller=boxoffice&task=edit&cid=' . $ordercode);

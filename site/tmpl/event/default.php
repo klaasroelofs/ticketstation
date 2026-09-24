@@ -4,6 +4,7 @@ use Joomla\CMS\Factory;
 use Joomla\CMS\HTML\HTMLHelper;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\Router\Route;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\Availability;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Ordercode;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\TicketstationFunctions;
 
@@ -20,7 +21,7 @@ defined('_JEXEC') or die('Restricted Access');
 
 $app        = Factory::getApplication();
 $document   = $app->getDocument();
-$document->setTitle( 'Tickets kiezen - ' . $app->get('sitename') );
+$document->setTitle( Text::_('COM_TICKETSTATION_STEP_CHOOSE_TICKETS') . ' - ' . $app->get('sitename') );
 $document->addStyleSheet( 'components/com_ticketstation/assets/css/component.css' );
 HTMLHelper::_('jquery.framework');
 
@@ -33,13 +34,15 @@ $ordercode = $session->get('ordercode');
 $itemid = TicketstationFunctions::getSiteItemid();
 $gotocart = Route::_('index.php?option=com_ticketstation&view=cart' . ($itemid ? '&Itemid=' . $itemid : ''));
 
-## Determine available tickets
-$available_tickets = $this->items->starting_total_tickets - $this->soldtickets;
+## Determine available tickets: for a parent with child tickets the total over all published
+## variants, following their counter settings (the same figure as in the upcoming-events list)
+$availability      = Availability::summary((int) $this->items->ticketid);
+$available_tickets = $availability->available;
 
 ## Calculate percentage available tickets
-## (guard against a ticket without a starting total, which would divide by zero)
-$percentage_available = ($this->items->starting_total_tickets > 0)
-    ? round((($available_tickets / $this->items->starting_total_tickets) * 100), 0)
+## (guard against a ticket without a capacity, which would divide by zero)
+$percentage_available = ($availability->capacity > 0)
+    ? round((($available_tickets / $availability->capacity) * 100), 0)
     : 0;
 
 ## Venue website link (stored without scheme in the venue form, e.g. "www.example.nl")
@@ -63,13 +66,13 @@ $venue_website_url = preg_match('#^https?://#i', $this->items->website) ? $this-
             <div class="checkout-wrap">
                 <ul class="checkout-bar first">
 
-                    <li class="active"><span class="progress-bar-text">Tickets kiezen</span></li>
+                    <li class="active"><span class="progress-bar-text"><?php echo Text::_('COM_TICKETSTATION_STEP_CHOOSE_TICKETS'); ?></span></li>
 
-                    <li class="next"><span class="progress-bar-text">Winkelmand</span></li>
+                    <li class="next"><span class="progress-bar-text"><?php echo Text::_('COM_TICKETSTATION_CART'); ?></span></li>
 
-                    <li class=""><span class="progress-bar-text">Bestelgegevens</span></li>
+                    <li class=""><span class="progress-bar-text"><?php echo Text::_('COM_TICKETSTATION_ORDER_DETAILS'); ?></span></li>
 
-                    <li class=""><span class="progress-bar-text">Betalen</span></li>
+                    <li class=""><span class="progress-bar-text"><?php echo Text::_('COM_TICKETSTATION_STEP_PAYMENT'); ?></span></li>
 
                 </ul>
             </div>
@@ -81,34 +84,34 @@ $venue_website_url = preg_match('#^https?://#i', $this->items->website) ? $this-
 
     <div class="col-12" style="padding-left: 5px;padding-right: 5px;">
 
-        <h2 class="ticketmaster-header"><strong>Tickets kiezen</strong></h2>
+        <h2 class="ticketmaster-header"><strong><?php echo Text::_('COM_TICKETSTATION_STEP_CHOOSE_TICKETS'); ?></strong></h2>
 
         <div class="ticketmaster_event_info">
-            <h4><strong>Ticketinformatie:</strong></h4>
+            <h4><strong><?php echo Text::_('COM_TICKETSTATION_TICKET_INFORMATION'); ?>:</strong></h4>
             <table>
                 <tr>
-                    <td width="130px" style="font-weight:bold;">Evenement:</td>
+                    <td width="130px" style="font-weight:bold;"><?php echo Text::_('COM_TICKETSTATION_EVENT'); ?>:</td>
                     <td><?php echo htmlspecialchars($this->items->eventname, ENT_QUOTES, 'UTF-8'); ?></td>
                 </tr>
                 <tr>
-                    <td style="padding-right:5px;font-weight:bold;">Datum:</td>
+                    <td style="padding-right:5px;font-weight:bold;"><?php echo Text::_('COM_TICKETSTATION_DATE'); ?>:</td>
                     <td><?php echo date('d-m-Y H:i', strtotime($this->items->startdate)); ?></td>
                 </tr>
                 <?php if ($this->config->show_venue == 1) { ?>
                     <tr>
-                        <td style="font-weight:bold;">Locatie:</td>
+                        <td style="font-weight:bold;"><?php echo Text::_('COM_TICKETSTATION_VENUE'); ?>:</td>
                         <td><?php echo $this->items->venue; ?> - <?php echo $this->items->city; ?></td>
                     </tr>
                 <?php } ?>
                 <?php if ($this->config->show_venue == 1 && $this->config->show_venue_address == 1 && ($this->items->street != '' || $this->items->zipcode != '')) { ?>
                     <tr>
-                        <td style="font-weight:bold;">Adres:</td>
+                        <td style="font-weight:bold;"><?php echo Text::_('COM_TICKETSTATION_ADDRESS'); ?>:</td>
                         <td><?php echo htmlspecialchars(trim($this->items->street . ', ' . $this->items->zipcode . ' ' . $this->items->city, ', '), ENT_QUOTES, 'UTF-8'); ?></td>
                     </tr>
                 <?php } ?>
                 <?php if ($this->config->show_venue == 1 && $this->config->show_venue_website == 1 && $this->items->website != '') { ?>
                     <tr>
-                        <td style="font-weight:bold;">Website:</td>
+                        <td style="font-weight:bold;"><?php echo Text::_('COM_TICKETSTATION_WEBSITE'); ?>:</td>
                         <td><a href="<?php echo htmlspecialchars($venue_website_url, ENT_QUOTES, 'UTF-8'); ?>" target="_blank" rel="noopener"><?php echo htmlspecialchars($this->items->website, ENT_QUOTES, 'UTF-8'); ?></a></td>
                     </tr>
                 <?php } ?>
@@ -122,13 +125,13 @@ $venue_website_url = preg_match('#^https?://#i', $this->items->website) ? $this-
 
             <?php if ($this->config->show_available_tickets == 1) { ?>
 
-                <h4><strong>Tickets beschikbaar:</strong></h4>
+                <h4><strong><?php echo Text::_('COM_TICKETSTATION_TICKETS_AVAILABLE'); ?>:</strong></h4>
 
                 <div id="percentage-available" class="percentage-available" style="max-width: 500px;">
 
                     <?php if($available_tickets <= 0) { ?>
 
-                        <div id="percentage-available-bar" class="percentage-available-bar percentage-available-bar-striped  percentage-available-bar-bg-soldout" style="width:100%;" role="progressbar" aria-valuenow="<?php echo $percentage_available; ?>" aria-valuemin="0" aria-valuemax="100"><span id="percentage-available-bar-text">Uitverkocht</span>
+                        <div id="percentage-available-bar" class="percentage-available-bar percentage-available-bar-striped  percentage-available-bar-bg-soldout" style="width:100%;" role="progressbar" aria-valuenow="<?php echo $percentage_available; ?>" aria-valuemin="0" aria-valuemax="100"><span id="percentage-available-bar-text"><?php echo Text::_('COM_TICKETSTATION_SOLD_OUT2'); ?></span>
                         </div>
 
                     <?php } elseif($percentage_available < 11) { ?>
@@ -169,23 +172,18 @@ $venue_website_url = preg_match('#^https?://#i', $this->items->website) ? $this-
                     <th>
                     </th>
                     <th>
-                        Prijs:
+                        <?php echo Text::_('COM_TICKETSTATION_PRICE'); ?>:
                     </th>
                     <th>
-                        Aantal:
+                        <?php echo Text::_('COM_TICKETSTATION_QUANTITY'); ?>:
                     </th>
                     <th>
                     </th>
                     </thead>
                     <?php foreach ($this->childs as $row ) {
 
-                        ## For the ticket totals -- If parent:
-                        if ($row->counter_choice == 0) {
-                            $total_tickets = $available_tickets;
-                        } else {
-                            ## using the child counter:
-                            $total_tickets = $row->totaltickets;
-                        }
+                        ## Tickets left for this variant: the shared parent pool or its own cap.
+                        $total_tickets = Availability::forPurchase((int) $row->ticketid);
 
                         ?>
 
@@ -280,10 +278,10 @@ $venue_website_url = preg_match('#^https?://#i', $this->items->website) ? $this-
                     <th>
                     </th>
                     <th>
-                        Prijs:
+                        <?php echo Text::_('COM_TICKETSTATION_PRICE'); ?>:
                     </th>
                     <th>
-                        Aantal:
+                        <?php echo Text::_('COM_TICKETSTATION_QUANTITY'); ?>:
                     </th>
                     <th>
                     </th>
@@ -346,7 +344,7 @@ $venue_website_url = preg_match('#^https?://#i', $this->items->website) ? $this-
                     <?php if (($percentage_available < 0.5) && ($available_tickets > 0)) { ?>
                         <tr>
                             <td colspan="4" style="border-top:none !important;background-color: antiquewhite; text-align: center;">
-                                <span style="font-weight:normal;color:#BB2721;"><em>Nog slechts enkele tickets beschikbaar!</em></span>
+                                <span style="font-weight:normal;color:#BB2721;"><em><?php echo Text::_('COM_TICKETSTATION_FEW_TICKETS_LEFT'); ?></em></span>
                             </td>
                         </tr>
 
@@ -401,12 +399,12 @@ $venue_website_url = preg_match('#^https?://#i', $this->items->website) ? $this-
                 } ?>
                 <div id="continue-button" style="<?= $style_continue; ?>">
                     <a class="btn btn-primary pull-right" onClick="location.href='<?php echo $gotocart; ?>'">
-                        <span>Verder</span>
+                        <span><?php echo Text::_('COM_TICKETSTATION_CONTINUE'); ?></span>
                     </a>
                 </div>
 
                 <a class="btn btn-primary pull-left" onClick="history.back()">
-                    <span>Terug</span>
+                    <span><?php echo Text::_('COM_TICKETSTATION_BACK'); ?></span>
                 </a>
 
             </div>

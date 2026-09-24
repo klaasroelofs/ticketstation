@@ -27,7 +27,7 @@ $ordercode = $session->get('ordercode');
 ## Get document type and add it.
 $app        = Factory::getApplication();
 $document   = $app->getDocument();
-$document->setTitle( 'Bestelgegevens - ' . $app->get('sitename') );
+$document->setTitle( Text::_('COM_TICKETSTATION_ORDER_DETAILS') . ' - ' . $app->get('sitename') );
 $document->addStyleSheet( 'components/com_ticketstation/assets/css/component.css' );
 HTMLHelper::_('jquery.framework');
 
@@ -68,15 +68,15 @@ $info = $user->getClientByOrdercode($ordercode);
         <div class="checkout-wrap">
             <ul class="checkout-bar">
 
-                <li class="visited"><span class="progress-bar-text">Tickets kiezen</span></li>
+                <li class="visited"><span class="progress-bar-text"><?php echo Text::_('COM_TICKETSTATION_STEP_CHOOSE_TICKETS'); ?></span></li>
 
                 <li class="visited previous ">
-                    <span class="progress-bar-text">Winkelmand</span>
+                    <span class="progress-bar-text"><?php echo Text::_('COM_TICKETSTATION_CART'); ?></span>
                 </li>
 
-                <li class="active"><span class="progress-bar-text">Bestelgegevens</span></li>
+                <li class="active"><span class="progress-bar-text"><?php echo Text::_('COM_TICKETSTATION_ORDER_DETAILS'); ?></span></li>
 
-                <li class="next"><span class="progress-bar-text">Betalen</span></li>
+                <li class="next"><span class="progress-bar-text"><?php echo Text::_('COM_TICKETSTATION_STEP_PAYMENT'); ?></span></li>
 
             </ul>
         </div>
@@ -85,7 +85,7 @@ $info = $user->getClientByOrdercode($ordercode);
 
 <div class="row ticketstation">
     <div class="col-xl-9">
-        <h2 class="ticketmaster-header"><strong>Bestelgegevens</strong></h2>
+        <h2 class="ticketmaster-header"><strong><?php echo Text::_('COM_TICKETSTATION_ORDER_DETAILS'); ?></strong></h2>
 
         <div id="tm-cart-text" style="margin-bottom:15px;">
             <p><?php echo Text::_('COM_TICKETSTATION_CREATEACCOUNT_NOW2'); ?></p>
@@ -194,10 +194,10 @@ $info = $user->getClientByOrdercode($ordercode);
 
                 <div style="margin-top: 20px;">
 
-                    <input type="submit" value="Verder" class="btn btn-primary pull-right">
+                    <input type="submit" value="<?php echo Text::_('COM_TICKETSTATION_CONTINUE'); ?>" class="btn btn-primary pull-right">
 
                     <a class="btn btn-primary pull-left" onclick="document.location.href='<?php echo $gotocart; ?>'">
-                        <span>Terug</span>
+                        <span><?php echo Text::_('COM_TICKETSTATION_BACK'); ?></span>
                     </a>
 
                 </div>

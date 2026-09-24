@@ -49,24 +49,24 @@ function initializeClock(id, deadline) {
         secondsSpan.innerText = t.seconds;
 
         if (t.days == 1) {
-            daysCaption.innerText = "dag";
+            daysCaption.innerText = countdownText('COM_TICKETSTATION_COUNTDOWN_DAY', 'day');
         } else {
-            daysCaption.innerText = "dagen";
+            daysCaption.innerText = countdownText('COM_TICKETSTATION_COUNTDOWN_DAYS', 'days');
         }
         if (t.hours == 1) {
-            hoursCaption.innerText = "uur";
+            hoursCaption.innerText = countdownText('COM_TICKETSTATION_COUNTDOWN_HOUR', 'hour');
         } else {
-            hoursCaption.innerText = "uren";
+            hoursCaption.innerText = countdownText('COM_TICKETSTATION_COUNTDOWN_HOURS', 'hours');
         }
         if (t.minutes == 1) {
-            minutesCaption.innerText = "minuut";
+            minutesCaption.innerText = countdownText('COM_TICKETSTATION_COUNTDOWN_MINUTE', 'minute');
         } else {
-            minutesCaption.innerText = "minuten";
+            minutesCaption.innerText = countdownText('COM_TICKETSTATION_COUNTDOWN_MINUTES', 'minutes');
         }
         if (t.seconds == 1) {
-            secondsCaption.innerText = "seconde";
+            secondsCaption.innerText = countdownText('COM_TICKETSTATION_COUNTDOWN_SECOND', 'second');
         } else {
-            secondsCaption.innerText = "seconden";
+            secondsCaption.innerText = countdownText('COM_TICKETSTATION_COUNTDOWN_SECONDS', 'seconds');
         }
 
         if (t.days <= 0) {
@@ -86,7 +86,7 @@ function initializeClock(id, deadline) {
                             document.getElementById('secondsdiv'+id).remove();
                             document.getElementById('startverkooptiteldiv'+id).remove();
                             document.getElementById('startverkoopdatumtijddiv'+id).remove();
-                            renewpageSpan.innerText = "MOMENT... DEZE PAGINA WORDT VERNIEUWD";
+                            renewpageSpan.innerText = countdownText('COM_TICKETSTATION_COUNTDOWN_RELOADING', 'ONE MOMENT... THIS PAGE IS BEING REFRESHED');
                             setTimeout(
                                 function() {
                                     window.location.reload();
@@ -105,6 +105,16 @@ function initializeClock(id, deadline) {
 
     updateClock();
     const timeinterval = setInterval(updateClock, 1000);
+}
+
+// Language strings are handed over by the upcoming view through Text::script();
+// the fallback only shows when Joomla's core.js is missing.
+function countdownText(key, fallback) {
+    if (window.Joomla && Joomla.Text) {
+        return Joomla.Text._(key, fallback);
+    }
+
+    return fallback;
 }
 
 function parseDate(date) {

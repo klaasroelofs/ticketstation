@@ -40,7 +40,7 @@ $counts = [
     'ORDERS'    => 2,
     'CHECKOUT'  => 2,
     'DOCUMENTS' => 5,
-    'COMPANY'   => 1,
+    'COMPANY'   => 3,
 ];
 
 ?>

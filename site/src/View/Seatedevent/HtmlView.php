@@ -5,6 +5,7 @@ namespace Ticketstation\Component\Ticketstation\Site\View\Seatedevent;
 defined('_JEXEC') or die;
 
 use Joomla\CMS\Factory;
+use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\View\HtmlView as BaseHtmlView;
 use Joomla\CMS\Router\Route;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Config;
@@ -42,7 +43,7 @@ class HtmlView extends BaseHtmlView {
 
         if(!$ticketdetails)
         {
-            $app->enqueueMessage('Ticket niet beschikbaar.', 'error');
+            $app->enqueueMessage(Text::_('COM_TICKETSTATION_TICKET_NOT_AVAILABLE'), 'error');
             $itemid = TicketstationFunctions::getSiteItemid();
             $app->redirect(Route::_('index.php?option=com_ticketstation&view=upcoming' . ($itemid ? '&Itemid=' . $itemid : '')));
         }
@@ -87,6 +88,21 @@ class HtmlView extends BaseHtmlView {
         $db->setQuery($query);
         $ordered = $db->loadObjectList();
 
+        ## Multi Seat = Yes with published child tickets: the customer picks a price category per seat.
+        $pricechoice = false;
+
+        if ($data->multi_seat == 1) {
+            $query = $db->getQuery(true)
+                ->select('COUNT(*)')
+                ->from($db->quoteName('#__ticketstation_tickets'))
+                ->where($db->quoteName('parent') . ' = ' . (int) $ticketdetails->ticketid)
+                ->where($db->quoteName('published') . ' = 1');
+
+            $db->setQuery($query);
+            $pricechoice = (int) $db->loadResult() > 0;
+        }
+
+        $this->pricechoice      = $pricechoice;
 
         $this->tickets          = $tickets;
         $this->ticketdetails    = $ticketdetails;

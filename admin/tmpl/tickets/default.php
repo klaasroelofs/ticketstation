@@ -6,6 +6,7 @@ use Joomla\CMS\Factory;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\Router\Route;
 use Joomla\CMS\Uri\Uri;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\Availability;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\TicketstationFunctions;
 
 
@@ -26,12 +27,12 @@ $wa = $document->getWebAssetManager();
 $wa->registerAndUseStyle('ticketstation', Uri::base() . 'components\com_ticketstation\assets\css\ticketstation.css');
 $wa->registerAndUseStyle('searchtools', Uri::root() . 'media/templates/administrator/atum/css/system/searchtools/searchtools.css');
 
-$sold_tickets = array();
-for ($i = 0; $i < count($this->sold); $i++)
-{
-    $row = $this->sold[$i];
-    $sold_tickets[$row->ticketid] = $row->soldtickets;
-}
+## Tickets left / capacity as a coloured badge (see Availability).
+$availabilityBadge = function (object $availability) {
+    $class = $availability->available <= 5 ? 'bg-danger' : ($availability->available < 25 ? 'bg-warning' : 'bg-success');
+
+    return '<span class="badge ' . $class . '">' . (int) $availability->available . ' / ' . (int) $availability->capacity . '</span>';
+};
 ?>
 
 <form action="<?= Route::_('index.php?option=com_ticketstation&view=Tickets'); ?>" method="post" name="adminForm" id="adminForm">
@@ -96,11 +97,9 @@ for ($i = 0; $i < count($this->sold); $i++)
                     $link       = 'index.php?option=com_ticketstation&controller=tickets&task=edit&cid='.$row->ticketid;
                     $charts     = 'index.php?option=com_ticketstation&controller=seatplans&task=displaychart&cid='.$row->ticketid;
 
-                    if (!empty($sold_tickets[$row->ticketid])) {
-                        $availabletickets = $row->starting_total_tickets - $sold_tickets[$row->ticketid];
-                    } else {
-                        $availabletickets = $row->starting_total_tickets;
-                    }
+                    ## The same figure the storefront shows: for a parent with child tickets the total
+                    ## over all published variants, for a seated ticket the free seats.
+                    $availability = Availability::summary((int) $row->ticketid);
 
                     $start_time = date($this->config->time_format, strtotime($row->startdate));
 
@@ -139,13 +138,7 @@ for ($i = 0; $i < count($this->sold); $i++)
                             <?php } ?>
                         </td>
                         <td class="text-center">
-                            <?php if ($availabletickets < 25 && $availabletickets > 5) { ?>
-                                <div><span class="label badge bg-warning"><?php echo $availabletickets; ?> / <?php echo $row->starting_total_tickets; ?></span></div>
-                            <?php } else if ($availabletickets <= 5) { ?>
-                                <div><span class="label badge bg-danger"><?php echo $availabletickets; ?> / <?php echo $row->starting_total_tickets; ?></span></div>
-                            <?php }else{ ?>
-                                <div><span class="label badge bg-success"><?php echo $availabletickets; ?> / <?php echo $row->starting_total_tickets; ?></span></div>
-                            <?php } ?>
+                            <div><?= $availabilityBadge($availability); ?></div>
                         </td>
                         <td class="d-none d-lg-table-cell text-center">
                             <?php  if ($row->use_sale_stop == 1){ ?>
@@ -202,16 +195,10 @@ for ($i = 0; $i < count($this->sold); $i++)
                             <td class="d-none d-lg-table-cell">
                             </td>
                             <td class="text-center">
-                                <?php if ($second->counter_choice == 1) { ?>
-                                    <?php if ($second->totaltickets < 50 && $second->totaltickets > 25) { ?>
-                                        <span class="badge badge-warning"><?= $second->totaltickets; ?> / <?= $second->starting_total_tickets; ?></span>
-                                    <?php } else if ($second->totaltickets <= 25) { ?>
-                                        <span class="badge badge-important"><?= $second->totaltickets; ?> / <?= $second->starting_total_tickets; ?></span>
-                                    <?php }else{ ?>
-                                        <span class="badge badge-success"><?= $second->totaltickets; ?> / <?= $second->starting_total_tickets; ?></span>
-                                    <?php } ?>
-                                <?php }else{ ?>
-                                    <span title="<?= Text::_( 'COM_TICKETSTATION_USING_PARENT_COUNTER' ); ?>" class="fa fa-arrow-up" ></span>
+                                <?php $variant = Availability::forVariant((int) $second->ticketid); ?>
+                                <?= $availabilityBadge($variant); ?>
+                                <?php if ($variant->shared) { ?>
+                                    <span title="<?= Text::_( 'COM_TICKETSTATION_USING_PARENT_COUNTER' ); ?>" class="fa fa-arrow-up ms-1" ></span>
                                 <?php } ?>
                             </td>
                             <td class="small d-none d-lg-table-cell text-center">

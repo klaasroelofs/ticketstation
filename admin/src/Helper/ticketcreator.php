@@ -303,7 +303,7 @@ class ticketcreator
             $pdf->SetTextColor($rgb['r'], $rgb['g'], $rgb['b']);
             $pdf->SetXY($position[0], $position[1]);
 
-            $pdf->Write(0, Text::_('COM_TICKETSTATION_PDF_DATE') . ' ' . date("d-m-Y", strtotime($order->startdate)) . ' || ' . Text::_('COM_TICKETSTATION_PDF_START') . ' ' . date("H:i", strtotime($order->startdate)) . 'u');
+            $pdf->Write(0, TicketLanguage::_('COM_TICKETSTATION_PDF_DATE') . ' ' . date("d-m-Y", strtotime($order->startdate)) . ' || ' . TicketLanguage::_('COM_TICKETSTATION_PDF_START') . ' ' . TicketLanguage::sprintf('COM_TICKETSTATION_PDF_TIME', date("H:i", strtotime($order->startdate))));
         }
 
         ## PRICE
@@ -319,15 +319,15 @@ class ticketcreator
 
             if($config->use_euros_in_pdf == 2)
             {
-                $pdf->Write(0, Text::_('COM_TICKETSTATION_PDF_PRICE') . ' ' . chr(128) . ' ' . $price);
+                $pdf->Write(0, TicketLanguage::_('COM_TICKETSTATION_PDF_PRICE') . ' ' . chr(128) . ' ' . $price);
             }
             elseif($config->use_euros_in_pdf == 3)
             {
-                $pdf->Write(0, Text::_('COM_TICKETSTATION_PDF_PRICE') . ' ' . chr(0x00A3) . ' ' . $price);
+                $pdf->Write(0, TicketLanguage::_('COM_TICKETSTATION_PDF_PRICE') . ' ' . chr(0x00A3) . ' ' . $price);
             }
             else
             {
-                $pdf->Write(0, Text::_('COM_TICKETSTATION_PDF_PRICE') . ' ' . $price);
+                $pdf->Write(0, TicketLanguage::_('COM_TICKETSTATION_PDF_PRICE') . ' ' . $price);
             }
         }
 
@@ -357,12 +357,12 @@ class ticketcreator
             // Bij formaat A5 wordt "Besteld door" en Clientname onder elkaar gezet, anders past het niet
             if ($order->ticket_size == 'A5') {
                 $pdf->SetFont($this->font, 'B', $order->client_fontsize + 1);
-                $pdf->Write(0, 'Besteld door:');
+                $pdf->Write(0, PdfEncoding::toLatin1(TicketLanguage::_('COM_TICKETSTATION_PDF_ORDERED_BY')));
                 $pdf->SetFont($this->font, '', $order->client_fontsize);
                 $pdf->SetXY($position[0], $position[1] + 5);
                 $pdf->Write(0, substr((PdfEncoding::toLatin1($order->firstname) . ' ' . PdfEncoding::toLatin1($order->name)), 0, 35)); // naam afkorten op 35 tekens, anders past het niet
             } else {
-                $pdf->Write(0, 'Besteld door: ' . PdfEncoding::toLatin1($order->firstname) . ' ' . PdfEncoding::toLatin1($order->name));
+                $pdf->Write(0, PdfEncoding::toLatin1(TicketLanguage::_('COM_TICKETSTATION_PDF_ORDERED_BY')) . ' ' . PdfEncoding::toLatin1($order->firstname) . ' ' . PdfEncoding::toLatin1($order->name));
             }
         }
 
@@ -416,7 +416,7 @@ class ticketcreator
                 $rgb = $this->hexToRgb($order->seatnumber_fontcolor);
                 $pdf->SetTextColor($rgb['r'], $rgb['g'], $rgb['b']);
                 $pdf->SetXY($position[0], $position[1]);
-                $pdf->Write(0, Text::_('COM_TICKETSTATION_PDF_SEAT_NUMBER') . ' ' . $seat->row_name . $seat->seatid);
+                $pdf->Write(0, TicketLanguage::_('COM_TICKETSTATION_PDF_SEAT_NUMBER') . ' ' . $seat->row_name . $seat->seatid);
             }
         }
 
@@ -473,7 +473,7 @@ class ticketcreator
             if ($mollie_test == '1') {
 
                 ## te printen tekst definiëren
-                $mark_unreadable = 'ONGELDIG'; // LET OP: een langere tekst heeft tot gevolg dat ook het bijstellen van de posities enigszins aangepast moeten worden!
+                $mark_unreadable = PdfEncoding::toLatin1(TicketLanguage::_('COM_TICKETSTATION_PDF_INVALID')); // LET OP: een langere tekst heeft tot gevolg dat ook het bijstellen van de posities enigszins aangepast moeten worden!
 
                 ## startpositie bepalen, hoek linksonder in QR-code
                 ## (1 pixel ≈ 0,2646 mm / image is 96 dpi)

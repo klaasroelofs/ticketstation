@@ -100,7 +100,7 @@ $document->setTitle(Text::_('COM_TICKETSTATION_VIEW_TRANSACTION_DETAILS') . ' - 
             <div class="row mb-1">
                 <div class="row-fluid">
                     <div class="span5">
-                        <h3><b>Informatie van Mollie</b></h3>
+                        <h3><b><?php echo Text::_('COM_TICKETSTATION_MOLLIE_INFORMATION'); ?></b></h3>
                         <table>
                             <?php parse_str($this->data->details, $paymentdetails); ?>
                             <?php foreach ($paymentdetails as $key => $value) { ?>

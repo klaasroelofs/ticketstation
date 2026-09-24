@@ -22,7 +22,7 @@ defined('_JEXEC') or die('Restricted Access');
 
 $app        = Factory::getApplication();
 $document   = $app->getDocument();
-$document->setTitle( 'Ticket Scanning' . ' - ' . $app->get('sitename'));
+$document->setTitle( Text::_('COM_TICKETSTATION_TICKETSCANNING_TITLE') . ' - ' . $app->get('sitename'));
 
 $document->addStyleSheet( 'components/com_ticketstation/assets/css/component.css' );
 HTMLHelper::_('jquery.framework');
@@ -32,21 +32,30 @@ $document->addScript('components/com_ticketstation/assets/javascripts/showLogout
 $itemid = TicketstationFunctions::getSiteItemid();
 $return = base64_encode(Route::_('index.php?option=com_ticketstation&view=ticketscanning' . ($itemid ? '&Itemid=' . $itemid : ''), false));
 
+## Instruction depends on what is assigned: events, tickets or both
+if (count($this->events) > 0 && count($this->tickets) > 0) {
+    $selectText = Text::_('COM_TICKETSTATION_TICKETSCANNING_SELECT_EVENT_OR_TICKET');
+} elseif (count($this->events) > 0) {
+    $selectText = Text::_('COM_TICKETSTATION_TICKETSCANNING_SELECT_EVENT');
+} else {
+    $selectText = Text::_('COM_TICKETSTATION_TICKETSCANNING_SELECT_TICKET');
+}
+
 ?>
 
 <div class="row ticketstation">
 
     <div class="page-header">
-        <h1>Ticket scanning</h1>
+        <h1><?php echo Text::_('COM_TICKETSTATION_TICKETSCANNING_TITLE'); ?></h1>
     </div>
 
     <div>
         <div style="max-width:750px;margin-left:auto;margin-right:auto;display: block;">
-            <p>Selecteer het <?php echo count($this->events)>0?'<b>evenement</b>':'';?> <?php echo count($this->events)>0&&count($this->tickets)>0?'of':'';?> <?php echo count($this->tickets)>0?'<b>ticket</b>':'';?> waarvoor je wilt scannen.</p>
+            <p><?php echo $selectText; ?></p>
         </div>
         <div style="margin-bottom:25px;">
             <div class="userinfo" style="display: block;margin: 0 auto;">
-                <i class="bi bi-shield-lock"></i> Je bent ingelogd als <strong><?php echo $this->escape($this->user->name); ?></strong>
+                <i class="bi bi-shield-lock"></i> <?php echo Text::sprintf('COM_TICKETSTATION_TICKETSCANNING_LOGGED_IN_AS', '<strong>' . $this->escape($this->user->name) . '</strong>'); ?>
                 <span class="userinfo-icon"><i id="arrow" class="bi bi-chevron-down"></i></span>
             </div>
             <div class="userinfo-logout" style="display: none;margin: 0 auto;">
@@ -69,10 +78,10 @@ $return = base64_encode(Route::_('index.php?option=com_ticketstation&view=ticket
         <div class="col-12">
             <div class="ticketmaster_upcoming_event">
                 <div class="ticketmaster_upcoming_event_heading" style="padding: 7px 25px;">
-                    <h3><strong>Geen evenementen!</strong></h3>
+                    <h3><strong><?php echo Text::_('COM_TICKETSTATION_TICKETSCANNING_NO_EVENTS'); ?></strong></h3>
                 </div>
                 <div class="ticketmaster_upcoming_event_content" style="padding: 7px 25px;">
-                    <p><strong>Er zijn op dit moment geen evenementen en/of tickets aan je toegewezen.</strong></p>
+                    <p><strong><?php echo Text::_('COM_TICKETSTATION_TICKETSCANNING_NO_EVENTS_DESC'); ?></strong></p>
                 </div>
             </div>
         </div>
@@ -83,7 +92,7 @@ $return = base64_encode(Route::_('index.php?option=com_ticketstation&view=ticket
             <div class="col-12">
                 <div class="ticketmaster_upcoming_event">
                     <div class="ticketmaster_upcoming_event_heading" style="padding: 7px 25px;">
-                        <h3><strong>Evenementen</strong></h3>
+                        <h3><strong><?php echo Text::_('COM_TICKETSTATION_EVENTS'); ?></strong></h3>
                     </div>
                     <div class="ticketmaster_upcoming_event_content">
                         <?php foreach ($this->events as $event) { ?>
@@ -114,7 +123,7 @@ $return = base64_encode(Route::_('index.php?option=com_ticketstation&view=ticket
             <div class="col-12">
                 <div class="ticketmaster_upcoming_event">
                     <div class="ticketmaster_upcoming_event_heading" style="padding: 7px 25px;">
-                        <h3><strong>Tickets</strong></h3>
+                        <h3><strong><?php echo Text::_('COM_TICKETSTATION_PAGE_HEADING_TICKETS'); ?></strong></h3>
                     </div>
                     <div class="ticketmaster_upcoming_event_content">
                         <?php foreach ($this->tickets as $ticket) { ?>
@@ -142,7 +151,7 @@ $return = base64_encode(Route::_('index.php?option=com_ticketstation&view=ticket
                                                 <span class="ticketmaster_upcoming_ticketlink"></span>
                                             </a>
                                             <div class="ticketmaster_upcoming_ticket_heading" style="border-radius: 10px;">
-                                                <h4 style="text-align:center;"><strong>Kaart</strong></h4>
+                                                <h4 style="text-align:center;"><strong><?php echo Text::_('COM_TICKETSTATION_TICKETSCANNING_SEAT_MAP'); ?></strong></h4>
                                             </div>
                                         </div>
                                     </div>

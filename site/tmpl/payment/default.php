@@ -5,6 +5,7 @@ use Joomla\CMS\HTML\HTMLHelper;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\Plugin\PluginHelper;
 use Joomla\CMS\Router\Route;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\Config;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\getAmount;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\TicketstationFunctions;
 
@@ -27,7 +28,7 @@ $ordercode = $session->get('ordercode');
 ## Get document type and add it.
 $app        = Factory::getApplication();
 $document   = $app->getDocument();
-$document->setTitle( 'Betalen - ' . $app->get('sitename') );
+$document->setTitle( Text::_('COM_TICKETSTATION_STEP_PAYMENT') . ' - ' . $app->get('sitename') );
 $document->addStyleSheet( 'components/com_ticketstation/assets/css/component.css' );
 HTMLHelper::_('jquery.framework');
 
@@ -50,6 +51,17 @@ $genderLabels = [
     '1' => Text::_('COM_TICKETSTATION_MR'),
     '2' => Text::_('COM_TICKETSTATION_MRS'),
 ];
+
+## Terms and privacy statement links (Configuration > Company); a link that is not set is left out
+$termsLinks = [];
+
+foreach (['terms_url' => 'COM_TICKETSTATION_TERMS_AND_CONDITIONS', 'privacy_url' => 'COM_TICKETSTATION_PRIVACY_STATEMENT'] as $field => $label) {
+    $url = Config::toAbsoluteLink($this->config->$field ?? '');
+
+    if ($url !== '') {
+        $termsLinks[] = '<a style="font-weight:bold;" href="' . htmlspecialchars($url, ENT_QUOTES, 'UTF-8') . '" target="_blank" rel="noopener">' . Text::_($label) . '</a>';
+    }
+}
 ?>
 
     <script language="javascript">
@@ -74,17 +86,17 @@ $genderLabels = [
                 <div class="checkout-wrap">
                     <ul class="checkout-bar">
 
-                        <li class="visited"><span class="progress-bar-text">Tickets kiezen</span></li>
+                        <li class="visited"><span class="progress-bar-text"><?= Text::_('COM_TICKETSTATION_STEP_CHOOSE_TICKETS'); ?></span></li>
 
                         <li class="visited">
-                            <span class="progress-bar-text">Winkelmand</span>
+                            <span class="progress-bar-text"><?= Text::_('COM_TICKETSTATION_CART'); ?></span>
                         </li>
 
                         <li class="visited previous">
-                            <span class="progress-bar-text">Bestelgegevens</span>
+                            <span class="progress-bar-text"><?= Text::_('COM_TICKETSTATION_ORDER_DETAILS'); ?></span>
                         </li>
 
-                        <li class="active complete"><span class="progress-bar-text">Betalen</span></li>
+                        <li class="active complete"><span class="progress-bar-text"><?= Text::_('COM_TICKETSTATION_STEP_PAYMENT'); ?></span></li>
 
                     </ul>
                 </div>
@@ -133,7 +145,7 @@ $genderLabels = [
 
             <?php if ($count > 0) {?>
 
-                <h2 class="ticketmaster-header"><strong>Controleren & Betalen</strong></h2>
+                <h2 class="ticketmaster-header"><strong><?= Text::_('COM_TICKETSTATION_CHECK_AND_PAY'); ?></strong></h2>
 
                 <div id = "tm-cart-text">
                     <p><?= Text::_( 'COM_TICKETSTATION_YOUR_PAYMENT_TEXT' ); ?></p>
@@ -142,63 +154,63 @@ $genderLabels = [
                 <div>
                     <div class="ticketmaster_event_info">
                         <div class="row-fluid">
-                            <div class="span8"><h3 style="color: #008C39;"><strong>Bestelnummer <?= $ordercode; ?></strong></h3></div>
-                            <div class="span8"><h4><strong>Bestelgegevens:</strong></h4></div>
+                            <div class="span8"><h3 style="color: #008C39;"><strong><?= Text::sprintf('COM_TICKETSTATION_ORDER_NUMBER_N', $ordercode); ?></strong></h3></div>
+                            <div class="span8"><h4><strong><?= Text::_('COM_TICKETSTATION_ORDER_DETAILS'); ?>:</strong></h4></div>
                             <table style="margin-bottom:30px;">
                                 <?php if($this->config->show_salutation != 0 && isset($genderLabels[$this->items[0]->gender])): ?>
                                 <tr>
-                                    <td style="width: 130px;font-weight:bold;">Aanhef:</td>
+                                    <td style="width: 130px;font-weight:bold;"><?= Text::_('COM_TICKETSTATION_YOUR_GENDER'); ?>:</td>
                                     <td><?= $genderLabels[$this->items[0]->gender]; ?></td>
                                 </tr>
                                 <?php endif; ?>
                                 <tr>
-                                    <td style="width: 130px;font-weight:bold;">Naam:</td>
+                                    <td style="width: 130px;font-weight:bold;"><?= Text::_('COM_TICKETSTATION_NAME'); ?>:</td>
                                     <td><?= $this->items[0]->firstname; ?> <?= $this->items[0]->name; ?></td>
                                 </tr>
                                 <?php if($this->config->show_address != 0 ): ?>
                                 <tr>
-                                    <td style="font-weight:bold;">Adres:</td>
+                                    <td style="font-weight:bold;"><?= Text::_('COM_TICKETSTATION_ADDRESS'); ?>:</td>
                                     <td><?= htmlspecialchars($this->items[0]->address, ENT_QUOTES, 'UTF-8'); ?></td>
                                 </tr>
                                 <?php endif; ?>
                                 <?php if($this->config->show_secondaddress != 0 ): ?>
                                 <tr>
-                                    <td style="font-weight:bold;">Adres 2:</td>
+                                    <td style="font-weight:bold;"><?= Text::_('COM_TICKETSTATION_ADDRESS_2'); ?>:</td>
                                     <td><?= htmlspecialchars($this->items[0]->address2, ENT_QUOTES, 'UTF-8'); ?></td>
                                 </tr>
                                 <?php endif; ?>
                                 <?php if($this->config->show_thirdaddress != 0 ): ?>
                                 <tr>
-                                    <td style="font-weight:bold;">Adres 3:</td>
+                                    <td style="font-weight:bold;"><?= Text::_('COM_TICKETSTATION_ADDRESS_3'); ?>:</td>
                                     <td><?= htmlspecialchars($this->items[0]->address3, ENT_QUOTES, 'UTF-8'); ?></td>
                                 </tr>
                                 <?php endif; ?>
                                 <?php if($this->config->show_zipcode != 0 ): ?>
                                 <tr>
-                                    <td style="font-weight:bold;">Postcode:</td>
+                                    <td style="font-weight:bold;"><?= Text::_('COM_TICKETSTATION_YOUR_ZIPCODE'); ?>:</td>
                                     <td><?= htmlspecialchars($this->items[0]->zipcode, ENT_QUOTES, 'UTF-8'); ?></td>
                                 </tr>
                                 <?php endif; ?>
                                 <?php if($this->config->show_city != 0 ): ?>
                                 <tr>
-                                    <td style="font-weight:bold;">Plaats:</td>
+                                    <td style="font-weight:bold;"><?= Text::_('COM_TICKETSTATION_CITY'); ?>:</td>
                                     <td><?= htmlspecialchars($this->items[0]->city, ENT_QUOTES, 'UTF-8'); ?></td>
                                 </tr>
                                 <?php endif; ?>
                                 <?php if($this->config->show_country != 0 && !empty($this->items[0]->country) ): ?>
                                 <tr>
-                                    <td style="font-weight:bold;">Land:</td>
+                                    <td style="font-weight:bold;"><?= Text::_('COM_TICKETSTATION_YOUR_COUNTRY'); ?>:</td>
                                     <td><?= htmlspecialchars($this->items[0]->country, ENT_QUOTES, 'UTF-8'); ?></td>
                                 </tr>
                                 <?php endif; ?>
                                 <?php if($this->config->show_phone != 0 ): ?>
                                 <tr>
-                                    <td style="padding-right:5px;font-weight:bold;">Telefoonnummer:</td>
+                                    <td style="padding-right:5px;font-weight:bold;"><?= Text::_('COM_TICKETSTATION_YOUR_PHONE'); ?>:</td>
                                     <td><?= $this->items[0]->phonenumber; ?></td>
                                 </tr>
                                 <?php endif; ?>
                                 <tr>
-                                    <td style="font-weight:bold;">E-mailadres:</td>
+                                    <td style="font-weight:bold;"><?= Text::_('COM_TICKETSTATION_YOUR_EMAIL'); ?>:</td>
                                     <td><?= $this->items[0]->emailaddress; ?></td>
                                 </tr>
                             </table>
@@ -282,26 +294,32 @@ $genderLabels = [
                         </div>
 
                         <div>
-                            <div style="margin-bottom:20px;">
-                                Door op 'Betalen' te klikken ga je akkoord met onze <a style="font-weight:bold;" href="downloads/Ticketshop-AlgemeneVoorwaarden.pdf" target="_blank">Algemene Voorwaarden</a> en <a style="font-weight:bold;" href="downloads/Ticketshop-Privacyverklaring.pdf" target="_blank">Privacyverklaring</a>.
-                            </div>
+                            <?php if (count($termsLinks) == 2) { ?>
+                                <div style="margin-bottom:20px;">
+                                    <?= Text::sprintf('COM_TICKETSTATION_AGREE_TO_TERMS', $termsLinks[0], $termsLinks[1]); ?>
+                                </div>
+                            <?php } elseif (count($termsLinks) == 1) { ?>
+                                <div style="margin-bottom:20px;">
+                                    <?= Text::sprintf('COM_TICKETSTATION_AGREE_TO_TERMS_SINGLE', $termsLinks[0]); ?>
+                                </div>
+                            <?php } ?>
                             <div>
 
                                 <form action = "index.php" method="POST" name="adminForm" id="adminForm">
 
                                     <?php if ($ordertotal == 0) { ?>
-                                        <div>Het totale bedrag is € 0,-. Klik op onderstaande knop om je bestelling af te ronden.</div>
+                                        <div><?= Text::sprintf('COM_TICKETSTATION_ZERO_TOTAL', (new TicketstationFunctions)->showprice($this->config->priceformat, 0, $this->config->valuta)); ?></div>
                                     <?php } ?>
 
 
                                     <a class="btn btn-primary pull-left" onclick="document.location.href='<?php echo $gotocheckout; ?>'">
-                                        <span>Terug</span>
+                                        <span><?= Text::_('COM_TICKETSTATION_BACK'); ?></span>
                                     </a>
 
                                     <?php if (($this->mollieconfig->bypass_mode == 0) && ($ordertotal > 0)) { ?>
                                         <button class="btn btn-primary pull-right" id="payment_button" type="submit"><?= Text::_( 'COM_TICKETSTATION_MOLLIE_MAKE_PAYMENT' )?></button>
                                     <?php } else { ?>
-                                        <button class="btn btn-primary pull-right" id="order_button" type="submit">Bestellen</button>
+                                        <button class="btn btn-primary pull-right" id="order_button" type="submit"><?= Text::_('COM_TICKETSTATION_PLACE_ORDER'); ?></button>
                                     <?php } ?>
 
                                     <input type="hidden" name="option" value="com_ticketstation" />

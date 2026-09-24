@@ -22,7 +22,7 @@ defined('_JEXEC') or die('Restricted Access');
 $app        = Factory::getApplication();
 $wa         = $app->getDocument()->getWebAssetManager();
 $document   = $app->getDocument();
-$document->setTitle( 'Ticket Scanner' . ' - ' . $app->get('sitename'));
+$document->setTitle( Text::_('COM_TICKETSTATION_TICKETSCANNER_TITLE') . ' - ' . $app->get('sitename'));
 $document->setMetaData('viewport', 'width=device-width, initial-scale=1, viewport-fit=cover');
 
 $document->addStyleSheet( 'components/com_ticketstation/assets/css/component.css' );
@@ -70,7 +70,7 @@ $config = [
     <div id="container">
         <div class="btn-scan-background">
             <div id="btn-scan-qr">
-                START
+                <?php echo Text::_('COM_TICKETSTATION_TICKETSCANNER_START'); ?>
             </div>
         </div>
 
@@ -105,19 +105,19 @@ $config = [
         </div>
 
         <div hidden id="manualentrycontainer">
-            <h3 style="text-align:left;text-transform:uppercase;"><strong>Handmatige controle</strong></h3>
+            <h3 style="text-align:left;text-transform:uppercase;"><strong><?php echo Text::_('COM_TICKETSTATION_TICKETSCANNER_MANUAL_CHECK'); ?></strong></h3>
             <form class="manualentryform">
-                <label for="manualentryInput" style="font-size:initial;">Ticket ID: </label>
+                <label for="manualentryInput" style="font-size:initial;"><?php echo Text::_('COM_TICKETSTATION_TICKETSCANNER_TICKET_ID'); ?>: </label>
                 <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="9" autocomplete="off" name="manualentryInput" id="manualentryInput" required>
 
                 <button type="submit" class="btn btn-primary btn-manualsubmit" style="margin-top:20px;">
-                    Controleer
+                    <?php echo Text::_('COM_TICKETSTATION_TICKETSCANNER_CHECK'); ?>
                 </button>
             </form>
         </div>
 
         <div hidden id="scanhistorycontainer">
-            <h4 id="scanhistorytitle" class="scanpage-textshadow"><strong>Resultaat vorige scan:</strong></h4>
+            <h4 id="scanhistorytitle" class="scanpage-textshadow"><strong><?php echo Text::_('COM_TICKETSTATION_TICKETSCANNER_PREVIOUS_RESULT'); ?>:</strong></h4>
             <div id="scanhistory" class="scanhistory scanpage-boxshadow">
                 <div>
                     <span id="scanhistoryorder"></span>
@@ -131,41 +131,41 @@ $config = [
         <div id="control-bar" class="control-bar">
 			<span id="backbutton">
 				<a class="btn btn-primary btn-back" href="<?php echo $this->escape($linkback); ?>">
-					<span>TERUG</span>
+					<span><?php echo Text::_('COM_TICKETSTATION_TICKETSCANNER_BACK'); ?></span>
 				</a>
 			</span>
             <span hidden id="stopscanning">
 				<a class="btn btn-primary btn-stopscanning">
-					<span>STOP</span>
+					<span><?php echo Text::_('COM_TICKETSTATION_TICKETSCANNER_STOP'); ?></span>
 				</a>
 			</span>
             <span id="controls">
 				<span hidden id="manualentry">
-					<a id="btn-manualentry" class="btn btn-manualentry" aria-label="Handmatige invoer">
+					<a id="btn-manualentry" class="btn btn-manualentry" aria-label="<?php echo $this->escape(Text::_('COM_TICKETSTATION_TICKETSCANNER_MANUAL_ENTRY')); ?>">
 						<span id="manualentry-icon" class="bi bi-pen"></span>
 					</a>
 				</span>
 				<span hidden id="torch">
-					<a id="btn-torch" class="btn btn-torch" aria-label="Lamp">
+					<a id="btn-torch" class="btn btn-torch" aria-label="<?php echo $this->escape(Text::_('COM_TICKETSTATION_TICKETSCANNER_TORCH')); ?>">
 						<span id="torch-icon" class="bi bi-lightbulb-off"></span>
 					</a>
 				</span>
 				<span id="sound">
-					<a id="btn-sound" class="btn btn-sound sound-on" aria-label="Geluid">
+					<a id="btn-sound" class="btn btn-sound sound-on" aria-label="<?php echo $this->escape(Text::_('COM_TICKETSTATION_TICKETSCANNER_SOUND')); ?>">
 						<span id="sound-icon" class="fas fa-volume-up"></span>
 					</a>
 				</span>
 				<span hidden id="vibrate">
-					<a id="btn-vibrate" class="btn btn-vibrate vibrate-on" aria-label="Trillen">
+					<a id="btn-vibrate" class="btn btn-vibrate vibrate-on" aria-label="<?php echo $this->escape(Text::_('COM_TICKETSTATION_TICKETSCANNER_VIBRATE')); ?>">
 						<span id="vibrate-icon" class="bi bi-phone-vibrate"></span>
 					</a>
 				</span>
 			</span>
             <span hidden id="scanned-tickets">
-				Totaal gescand: <span id="total-scanned"></span>/<?php echo (int) $this->sold; ?>
+				<?php echo Text::_('COM_TICKETSTATION_TICKETSCANNER_TOTAL_SCANNED'); ?>: <span id="total-scanned"></span>/<?php echo (int) $this->sold; ?>
 			</span>
             <span hidden id="scanned-tickets-session">
-				Gescand door jou: <span id="total-scanned-session">0</span>
+				<?php echo Text::_('COM_TICKETSTATION_TICKETSCANNER_SCANNED_BY_YOU'); ?>: <span id="total-scanned-session">0</span>
 			</span>
         </div>
 

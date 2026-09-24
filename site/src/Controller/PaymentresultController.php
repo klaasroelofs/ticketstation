@@ -11,6 +11,7 @@ use Joomla\CMS\MVC\Factory\MVCFactoryInterface;
 use Joomla\CMS\Router\Route;
 use Joomla\CMS\Uri\Uri;
 use Mollie\Api\MollieApiClient;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\Config;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\eTicketsMessage;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\getAmount;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\PaymentAPI;
@@ -65,7 +66,7 @@ class PaymentresultController extends BaseController
 
         if ($authorized_ordercode === null || (int) $authorized_ordercode !== $ordercode)
         {
-            exit(Text::_('COM_TICKETSTATION_DOWNLOAD_NOT_AUTHORIZED'));
+            exit(Text::sprintf('COM_TICKETSTATION_DOWNLOAD_NOT_AUTHORIZED', (new Config)->getContactEmail()));
         }
 
         // Get orderid's from the database.

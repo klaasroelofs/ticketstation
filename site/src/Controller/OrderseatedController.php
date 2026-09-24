@@ -270,6 +270,7 @@ class OrderseatedController extends BaseController {
             $options[] = HTMLHelper::_('select.option', $row->ticketid, $row->ticketname .' - '.$price);
         }
 
+        echo '<label for="' . (int) $item->orderid . '">' . Text::_('COM_TICKETSTATION_PRICE_CATEGORY') . ' ' . $label . ':</label>';
         echo HTMLHelper::_('select.genericlist', $options, (string) (int) $item->orderid, 'class="input ticketid" style="width:100%;"', 'value', 'text', $current);
         echo $remove;
         exit();
@@ -316,11 +317,7 @@ class OrderseatedController extends BaseController {
         }else{
 
             echo '<div style="float:left; width:60%;">';
-            if (count($orders) == 1) {
-                echo count($orders) .' stoel';
-            } else {
-                echo count($orders) .' stoelen';
-            }
+            echo Text::plural('COM_TICKETSTATION_N_SEATS', count($orders));
             echo '</div>';
             echo '<div style="float:right; width:39%; text-align:right;">';
             echo (new TicketstationFunctions)->showprice($config->priceformat, $ordertotal, $config->valuta);
@@ -493,8 +490,11 @@ class OrderseatedController extends BaseController {
             exit();
         }
 
-        $msg = Text::_( 'COM_TICKETSTATION_SEAT_HAS_BEEN_ORDERED' );
-        $arr = array('error' => '0', 'msg' => $msg, 'id' => $id, 'multiseat' => $multiseat, 'seatid' => $item->row_name.$item->seatid);
+        ## With price categories the page opens the category choice for this seat straight away.
+        $pricechoice = $ticketid !== $counterid ? '1' : '0';
+
+        $msg = Text::_( $pricechoice === '1' ? 'COM_TICKETSTATION_SEAT_HAS_BEEN_ORDERED_CHOOSE_PRICE' : 'COM_TICKETSTATION_SEAT_HAS_BEEN_ORDERED' );
+        $arr = array('error' => '0', 'msg' => $msg, 'id' => $id, 'multiseat' => $multiseat, 'pricechoice' => $pricechoice, 'seatid' => $item->row_name.$item->seatid);
         echo json_encode($arr);
         exit();
     }

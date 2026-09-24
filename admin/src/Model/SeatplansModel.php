@@ -298,7 +298,7 @@ class SeatplansModel extends BaseDatabaseModel
             $db = Factory::getContainer()->get('DatabaseDriver');
 
             ## Making the query for showing all the clients in list function
-            $sql = 'SELECT c.*, t.*, tt.background_color, o.scanned
+            $sql = 'SELECT c.*, t.*, tt.background_color, tt.border_color, tt.font_color, o.scanned
 					FROM (#__ticketstation_seatplancoords AS c,  #__ticketstation_tickets AS t, #__ticketstation_seatplansettings AS tt)
 					LEFT JOIN #__ticketstation_orders as o
 					ON (c.id = o.seat_sector)

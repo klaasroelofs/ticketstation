@@ -42,7 +42,7 @@ class HtmlView extends BaseHtmlView {
 
         if(!$items)
         {
-            $app->enqueueMessage('Ticket niet beschikbaar.', 'error');
+            $app->enqueueMessage(Text::_('COM_TICKETSTATION_TICKET_NOT_AVAILABLE'), 'error');
             $itemid = TicketstationFunctions::getSiteItemid();
             $app->redirect(Route::_('index.php?option=com_ticketstation&view=upcoming' . ($itemid ? '&Itemid=' . $itemid : '')));
         }

@@ -20,7 +20,7 @@ defined('_JEXEC') or die('Restricted Access');
 
 $app        = Factory::getApplication();
 $document   = $app->getDocument();
-$document->setTitle( 'Stoelen selecteren - ' . $app->get('sitename') );
+$document->setTitle( Text::_('COM_TICKETSTATION_SELECT_SEATS') . ' - ' . $app->get('sitename') );
 $document->addStyleSheet( 'components/com_ticketstation/assets/css/component.css' );
 HTMLHelper::_('jquery.framework');
 
@@ -57,6 +57,9 @@ if (file_exists($image)) {
 $itemid = TicketstationFunctions::getSiteItemid();
 $gotocart = Route::_('index.php?option=com_ticketstation&view=cart' . ($itemid ? '&Itemid=' . $itemid : ''));
 
+## Hint under "chosen seats": with price categories the customer also picks the category there.
+$seatHint = Text::_($this->pricechoice ? 'COM_TICKETSTATION_CLICK_TO_CHOOSE_PRICE' : 'COM_TICKETSTATION_CLICK_TO_SEE_OPTIONS');
+
 ## Venue website link (stored without scheme in the venue form, e.g. "www.example.nl")
 $venue_website_url = preg_match('#^https?://#i', $this->ticketdetails->website) ? $this->ticketdetails->website : 'https://' . $this->ticketdetails->website;
 ?>
@@ -92,13 +95,13 @@ $venue_website_url = preg_match('#^https?://#i', $this->ticketdetails->website) 
             <div class="checkout-wrap">
                 <ul class="checkout-bar first">
 
-                    <li class="active"><span class="progress-bar-text">Tickets kiezen</span></li>
+                    <li class="active"><span class="progress-bar-text"><?php echo Text::_('COM_TICKETSTATION_STEP_CHOOSE_TICKETS'); ?></span></li>
 
-                    <li class="next"><span class="progress-bar-text">Winkelmand</span></li>
+                    <li class="next"><span class="progress-bar-text"><?php echo Text::_('COM_TICKETSTATION_CART'); ?></span></li>
 
-                    <li class=""><span class="progress-bar-text">Bestelgegevens</span></li>
+                    <li class=""><span class="progress-bar-text"><?php echo Text::_('COM_TICKETSTATION_ORDER_DETAILS'); ?></span></li>
 
-                    <li class=""><span class="progress-bar-text">Betalen</span></li>
+                    <li class=""><span class="progress-bar-text"><?php echo Text::_('COM_TICKETSTATION_STEP_PAYMENT'); ?></span></li>
 
                 </ul>
             </div>
@@ -112,34 +115,34 @@ $venue_website_url = preg_match('#^https?://#i', $this->ticketdetails->website) 
 
 
 
-        <h2 class="ticketmaster-header"><strong>Stoelen selecteren</strong></h2>
+        <h2 class="ticketmaster-header"><strong><?php echo Text::_('COM_TICKETSTATION_SELECT_SEATS'); ?></strong></h2>
 
         <div class="ticketmaster_event_info">
-            <h4><strong>Ticketinformatie:</strong></h4>
+            <h4><strong><?php echo Text::_('COM_TICKETSTATION_TICKET_INFORMATION'); ?>:</strong></h4>
             <table>
                 <tr>
-                    <td width="130px" style="font-weight:bold;">Evenement:</td>
+                    <td width="130px" style="font-weight:bold;"><?php echo Text::_('COM_TICKETSTATION_EVENT'); ?>:</td>
                     <td><?php echo $this->ticketdetails->eventname; ?> - <?php echo $this->ticketdetails->ticketname; ?></td>
                 </tr>
                 <tr>
-                    <td style="padding-right:5px;font-weight:bold;">Datum:</td>
+                    <td style="padding-right:5px;font-weight:bold;"><?php echo Text::_('COM_TICKETSTATION_DATE'); ?>:</td>
                     <td><?php echo date('d-m-Y H:i', strtotime($this->ticketdetails->startdate)); ?></td>
                 </tr>
                 <?php if ($this->config->show_venue == 1) { ?>
                     <tr>
-                        <td style="font-weight:bold;">Locatie:</td>
+                        <td style="font-weight:bold;"><?php echo Text::_('COM_TICKETSTATION_VENUE'); ?>:</td>
                         <td><?php echo $this->ticketdetails->venue; ?> - <?php echo $this->ticketdetails->city; ?></td>
                     </tr>
                 <?php } ?>
                 <?php if ($this->config->show_venue == 1 && $this->config->show_venue_address == 1 && ($this->ticketdetails->street != '' || $this->ticketdetails->zipcode != '')) { ?>
                     <tr>
-                        <td style="font-weight:bold;">Adres:</td>
+                        <td style="font-weight:bold;"><?php echo Text::_('COM_TICKETSTATION_ADDRESS'); ?>:</td>
                         <td><?php echo htmlspecialchars(trim($this->ticketdetails->street . ', ' . $this->ticketdetails->zipcode . ' ' . $this->ticketdetails->city, ', '), ENT_QUOTES, 'UTF-8'); ?></td>
                     </tr>
                 <?php } ?>
                 <?php if ($this->config->show_venue == 1 && $this->config->show_venue_website == 1 && $this->ticketdetails->website != '') { ?>
                     <tr>
-                        <td style="font-weight:bold;">Website:</td>
+                        <td style="font-weight:bold;"><?php echo Text::_('COM_TICKETSTATION_WEBSITE'); ?>:</td>
                         <td><a href="<?php echo htmlspecialchars($venue_website_url, ENT_QUOTES, 'UTF-8'); ?>" target="_blank" rel="noopener"><?php echo htmlspecialchars($this->ticketdetails->website, ENT_QUOTES, 'UTF-8'); ?></a></td>
                     </tr>
                 <?php } ?>
@@ -162,8 +165,8 @@ $venue_website_url = preg_match('#^https?://#i', $this->ticketdetails->website) 
 
                 <div class="col-lg-6">
                     <div class="ticketstation_seat_panel">
-                        <h3 class="ticketstation_seat_panel_title">Instructie:</h3>
-                        <div>We verzoeken je vriendelijk om je gekozen plaatsen zoveel mogelijk aan te sluiten aan reeds verkochte plaatsen:</div>
+                        <h3 class="ticketstation_seat_panel_title"><?php echo Text::_('COM_TICKETSTATION_INSTRUCTIONS'); ?>:</h3>
+                        <div><?php echo Text::_('COM_TICKETSTATION_SEAT_INSTRUCTION'); ?></div>
                         <div><img src="components/com_ticketstation/assets/images/stoelkeuze.png" style="max-width: 300px; width:100%; margin:10px 0;" alt=""></div>
                         <div style="font-size:95%;">
                             <div>&#8226; <?php echo Text::_( 'COM_TICKETSTATION_DROPPABLE_ORDERED_INFO' ); ?><br />&#8226; <?php echo Text::_( 'COM_TICKETSTATION_DROPPABLE_ORDERED_SEATS' ); ?></div>
@@ -192,16 +195,16 @@ $venue_website_url = preg_match('#^https?://#i', $this->ticketdetails->website) 
 
                         </div>
 
-                        <!-- Shows the remove hint by default; filled with the seat options/remove button when a chosen seat is clicked -->
+                        <!-- Shows the hint by default; filled with the seat options (price category, remove button) when a chosen seat is clicked -->
                         <div id="ticket-options" class="note-multi-ticket">
-                            <?php echo Text::_( 'COM_TICKETSTATION_CLICK_TO_SEE_OPTIONS' ); ?>
+                            <?php echo $seatHint; ?>
                         </div>
                     </div>
                 </div>
 
             </div>
 
-            <h4><strong>Plattegrond:</strong></h4>
+            <h4><strong><?php echo Text::_('COM_TICKETSTATION_SEATING_PLAN'); ?>:</strong></h4>
 
         </div>
 
@@ -209,7 +212,7 @@ $venue_website_url = preg_match('#^https?://#i', $this->ticketdetails->website) 
 
             <div class="ticketmaster_turn_phone" style="display: none;">
                 <img src="/components/com_ticketstation/assets/images/rotate-phone.gif" alt="" style="width:50%;margin-left:auto;margin-right:auto;">
-                <p>Draai je telefoon.<br/>Het scherm is te smal om de plattegrond weer te geven.</p>
+                <p><?php echo Text::_('COM_TICKETSTATION_ROTATE_PHONE'); ?></p>
             </div>
 
             <div class="ticketmaster_box_content" style="padding-bottom: 25px; width:<?php echo $width+12; ?>px; margin: 0 auto;">
@@ -279,12 +282,12 @@ $venue_website_url = preg_match('#^https?://#i', $this->ticketdetails->website) 
             } ?>
             <div id="continue-button" style="<?= $style_continue; ?>">
                 <a class="btn btn-primary pull-right" onClick="location.href='<?php echo $gotocart; ?>'">
-                    <span>Verder</span>
+                    <span><?php echo Text::_('COM_TICKETSTATION_CONTINUE'); ?></span>
                 </a>
             </div>
 
             <a class="btn btn-primary pull-left" onClick="history.back()">
-                <span>Terug</span>
+                <span><?php echo Text::_('COM_TICKETSTATION_BACK'); ?></span>
             </a>
 
         </div>
@@ -296,6 +299,8 @@ $venue_website_url = preg_match('#^https?://#i', $this->ticketdetails->website) 
 
 
 <script type="text/javascript">
+
+    var seatHint = <?php echo json_encode($seatHint); ?>;
 
     $("#close").bind("click", function(e){
         window.parent.document.location.reload();
@@ -329,7 +334,7 @@ $venue_website_url = preg_match('#^https?://#i', $this->ticketdetails->website) 
                 $( "#ajaxMessage" ).show();
                 $( '#ajaxMessage').html('<div class="alert alert-message" style="color:green;">'+ data +'</div>');
                 setTimeout(function(){ $('#ajaxMessage').fadeOut(500); }, 3000);
-                $( "#ticket-options" ).html('<?php echo Text::_( 'COM_TICKETSTATION_CLICK_TO_SEE_OPTIONS' ); ?>');
+                $( "#ticket-options" ).html(seatHint);
                 updateCart();
 
             },
@@ -382,7 +387,7 @@ $venue_website_url = preg_match('#^https?://#i', $this->ticketdetails->website) 
 
                     setTimeout(function(){ $('#ajaxMessage').fadeOut(500); }, 3000);
 
-                    $( "#ticket-options" ).html('<?php echo Text::_( 'COM_TICKETSTATION_CLICK_TO_SEE_OPTIONS' ); ?>');
+                    $( "#ticket-options" ).html(seatHint);
 
                     updateCart();
                 }
@@ -399,7 +404,12 @@ $venue_website_url = preg_match('#^https?://#i', $this->ticketdetails->website) 
     $('#items').on('click', '.item', function (event) {
 
         $( "#multi-ticket" ).hide();
-        var currentId = $(this).attr('id');
+        loadSeatOptions($(this).attr('id'));
+
+    });
+
+    // Shows the options of a chosen seat (price category, remove button) under "chosen seats".
+    function loadSeatOptions(currentId) {
 
         var data = 'id=' + currentId  + '&ordercode=' + <?php echo $ordercode; ?> +'';
 
@@ -428,7 +438,7 @@ $venue_website_url = preg_match('#^https?://#i', $this->ticketdetails->website) 
         });
 
 
-    });
+    }
 
     $(document).ready(function () {
 
@@ -487,6 +497,11 @@ $venue_website_url = preg_match('#^https?://#i', $this->ticketdetails->website) 
                         }
 
                         updateCart();
+
+                        // Price categories: open the category choice for the new seat right away.
+                        if (data.pricechoice == 1) {
+                            loadSeatOptions(data.id);
+                        }
 
                     }
 

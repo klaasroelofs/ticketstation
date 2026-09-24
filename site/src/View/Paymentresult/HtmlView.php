@@ -6,6 +6,7 @@ defined('_JEXEC') or die;
 
 use Joomla\CMS\Factory;
 use Joomla\CMS\MVC\View\HtmlView as BaseHtmlView;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\Config;
 
 
 /**
@@ -39,6 +40,7 @@ class HtmlView extends BaseHtmlView {
         $this->ordercode        = $ordercode;
         $this->authorized       = $authorized;
         $this->mollieconfig     = $this->get('mollie');
+        $this->contactEmail     = (new Config)->getContactEmail();
 
         if ($authorized) {
             $this->data   = $this->get('data');

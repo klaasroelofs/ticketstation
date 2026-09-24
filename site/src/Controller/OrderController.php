@@ -11,6 +11,7 @@ use Joomla\CMS\Plugin\PluginHelper;
 use Joomla\CMS\Router\Route;
 use Ticketstation\Component\Ticketstation\Administrator\Helper;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Amount;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\Availability;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Config;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\getAmount;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Order;
@@ -116,16 +117,9 @@ class OrderController extends BaseController
             }
         }
 
-        // Setting the total ticket amount
-        $totaltickets = $tickets->starting_total_tickets - $ticketssold;
-
-        if ($tickets->parent > 0)
-        {
-            // Getting parent ticket details
-            $parent_ticket = (new Ticket)->getTicketDetailsById($tickets->parent);
-            $parent_ticketssold 	= (new Ticket)->getTicketsSoldById($tickets->parent);
-            $totaltickets  = ($tickets->counter_choice == 0) ? ($parent_ticket->starting_total_tickets - $parent_ticketssold) : $totaltickets;
-        }
+        // Tickets left for this ticket: its own cap, or the parent's pool it shares with the
+        // other child tickets that use the parent totals.
+        $totaltickets = Availability::forPurchase((int) $this->id);
 
         if ($this->amount > $totaltickets && $config->show_waitinglist && $tickets->parent == 0)
         {
@@ -327,14 +321,11 @@ class OrderController extends BaseController
      */
     public function updateavailable()
     {
-        $tickets  		= (new Ticket)->getTicketDetailsById($this->id);
-        $ticketssold 	= (new Ticket)->getTicketsSoldById($this->id);
-
-        ## Determine available tickets
-        $available_tickets = $tickets->starting_total_tickets - $ticketssold;
+        ## Same figures as the availability bar in the event view (all variants of a parent)
+        $availability = Availability::summary((int) $this->id);
 
         ## Calculate percentage available tickets
-        $percentage_available = round((($available_tickets / $tickets->starting_total_tickets) * 100), 0);
+        $percentage_available = $availability->capacity > 0 ? round((($availability->available / $availability->capacity) * 100), 0) : 0;
 
         $update = '';
 
