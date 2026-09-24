@@ -26,6 +26,7 @@ $topics = [
     'events'        => ['icon' => 'fa-calendar-alt',   'title' => 'COM_TICKETSTATION_DOCS_NAV_EVENTS'],
     'seating'       => ['icon' => 'fa-chair',           'title' => 'COM_TICKETSTATION_DOCS_NAV_SEATING'],
     'configuration' => ['icon' => 'fa-cog',             'title' => 'COM_TICKETSTATION_DOCS_NAV_CONFIGURATION'],
+    'mollie'        => ['icon' => 'fa-credit-card',     'title' => 'COM_TICKETSTATION_DOCS_NAV_MOLLIE'],
     'scanning'      => ['icon' => 'fa-qrcode',          'title' => 'COM_TICKETSTATION_DOCS_NAV_SCANNING'],
     'invoicing'     => ['icon' => 'fa-file-invoice',    'title' => 'COM_TICKETSTATION_DOCS_NAV_INVOICING'],
     'waitinglist'   => ['icon' => 'fa-hourglass-half',  'title' => 'COM_TICKETSTATION_DOCS_NAV_WAITINGLIST'],
