@@ -226,11 +226,6 @@ $itemid = TicketstationFunctions::getSiteItemid();
                         <?php endfor; ?>
                     </div>
                 </div>
-                <?php if($this->config->show_price_eventlist == 1 && $show_transaction_costs) { ?>
-                    <div>
-                        <p class="ticketmaster_upcoming_event_footer"><?= Text::sprintf('COM_TICKETSTATION_PRICES_EXCLUDE_TRANSACTION_COSTS', $transaction_costs); ?></p>
-                    </div>
-                <?php } ?>
             <?php } ?>
 
         <?php } ?>
@@ -308,7 +303,12 @@ $itemid = TicketstationFunctions::getSiteItemid();
             </div>
         <?php } ?>
 
-
+        <?php ## Once for the whole page, and only when priced tickets are actually listed
+        if (!empty($this->events) && $this->config->show_price_eventlist == 1 && $show_transaction_costs) { ?>
+            <div>
+                <p class="ticketmaster_upcoming_event_footer"><?= Text::sprintf('COM_TICKETSTATION_PRICES_EXCLUDE_TRANSACTION_COSTS', $transaction_costs); ?></p>
+            </div>
+        <?php } ?>
 
     </div>
 </div>
