@@ -1360,8 +1360,41 @@ td, tr td {
 
 #items {
     margin: 0px;
-    width:220px;
-    border:1px solid #FFF;
+    width:100%;
+    border:0px;
+}
+
+#ticket-options {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px dashed #ccc;
+}
+
+#items:after {
+    content: "";
+    display: table;
+    clear: both;
+}
+
+.ticketstation_seat_panels {
+    margin-bottom: 15px;
+}
+
+.ticketstation_seat_panel {
+    height: 100%;
+    margin-bottom: 15px;
+    padding: 12px 15px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background-color: #fff;
+}
+
+.ticketstation_seat_panel_title {
+    font-size: 115%;
+    color: #000;
+    margin: 0 0 8px 0;
+    padding-bottom: 5px;
+    border-bottom: 1px solid #ddd;
 }
 
 .item {

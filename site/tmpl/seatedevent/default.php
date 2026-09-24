@@ -108,7 +108,7 @@ $venue_website_url = preg_match('#^https?://#i', $this->ticketdetails->website) 
 
 <div class="row ticketstation">
 
-    <div class="col-xl-9" style="padding-left: 5px;padding-right: 5px;">
+    <div class="col-12" style="padding-left: 5px;padding-right: 5px;">
 
 
 
@@ -155,6 +155,49 @@ $venue_website_url = preg_match('#^https?://#i', $this->ticketdetails->website) 
 
                 <div id="ajaxMessage" style="display:none; text-align:center; margin-bottom:5px; height:25px;"></div>
                 <div id="message"><!-- Dont remove this container, it is used for ordering messages --></div>
+
+            </div>
+
+            <div class="row ticketstation_seat_panels">
+
+                <div class="col-lg-6">
+                    <div class="ticketstation_seat_panel">
+                        <h3 class="ticketstation_seat_panel_title">Instructie:</h3>
+                        <div>We verzoeken je vriendelijk om je gekozen plaatsen zoveel mogelijk aan te sluiten aan reeds verkochte plaatsen:</div>
+                        <div><img src="components/com_ticketstation/assets/images/stoelkeuze.png" style="max-width: 300px; width:100%; margin:10px 0;" alt=""></div>
+                        <div style="font-size:95%;">
+                            <div>&#8226; <?php echo Text::_( 'COM_TICKETSTATION_DROPPABLE_ORDERED_INFO' ); ?><br />&#8226; <?php echo Text::_( 'COM_TICKETSTATION_DROPPABLE_ORDERED_SEATS' ); ?></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-6">
+                    <div class="ticketstation_seat_panel">
+                        <h3 class="ticketstation_seat_panel_title"><?php echo Text::_( 'COM_TICKETSTATION_CHOSEN_SEATS' ); ?></h3>
+                        <div id="items">
+
+                            <?php for ($i = 0, $n = count($this->seats); $i < $n; $i++ ){
+                                $row = $this->seats[$i];
+                                ?>
+
+                                <div id="<?php echo $row->seat_sector; ?>" class="item" style="margin:0px; padding:2px; z-index:5;">
+                                    <div id="seat-choice" class="seat-choice" style="background-color:<?php echo htmlspecialchars($row->background_color, ENT_QUOTES, 'UTF-8'); ?>;
+                                            float:left; border-color:<?php echo htmlspecialchars($row->border_color, ENT_QUOTES, 'UTF-8'); ?>; cursor:pointer; font-size:80%; margin:0px;
+                                            color:<?php echo htmlspecialchars($row->font_color, ENT_QUOTES, 'UTF-8'); ?>;">
+                                        <?php echo $row->seatid; ?>
+                                    </div>
+                                </div>
+
+                            <?php } ?>
+
+                        </div>
+
+                        <!-- Shows the remove hint by default; filled with the seat options/remove button when a chosen seat is clicked -->
+                        <div id="ticket-options" class="note-multi-ticket">
+                            <?php echo Text::_( 'COM_TICKETSTATION_CLICK_TO_SEE_OPTIONS' ); ?>
+                        </div>
+                    </div>
+                </div>
 
             </div>
 
@@ -246,58 +289,6 @@ $venue_website_url = preg_match('#^https?://#i', $this->ticketdetails->website) 
 
         </div>
 
-    </div>
-
-    <div class="col-xl-3 ticketmaster_sidebar">
-
-        <div class="module">
-            <div class="module-inner">
-                <h3 class="module-title ">Instructie:</h3>
-                <div>
-                    <div>We verzoeken je vriendelijk om je gekozen plaatsen zoveel mogelijk aan te sluiten aan reeds verkochte plaatsen:</div>
-                    <div><img src="components/com_ticketstation/assets/images/stoelkeuze.png" style="max-width: 300px; margin-bottom:20px;"></div>
-                </div>
-
-                <div style="padding-bottom:5px; width:250px; clear:both; font-size:95%;">
-                    <div>&#8226; <?php echo Text::_( 'COM_TICKETSTATION_DROPPABLE_ORDERED_INFO' ); ?><br />&#8226; <?php echo Text::_( 'COM_TICKETSTATION_DROPPABLE_ORDERED_SEATS' ); ?></div>
-                </div>
-
-                <div class="shoppingbasket" style="clear:both; margin-bottom:10px;">
-                    <?php echo Text::_( 'COM_TICKETSTATION_CHOSEN_SEATS' ); ?>
-                </div>
-
-                <div style="width:100%; height:90px;">
-                    <div id="items" style="margin-bottom:10px; padding-bottom:20px; border:0px; width:100%; height:70px;">
-
-                        <?php $k = 0;
-
-                        for ($i = 0, $n = count($this->seats); $i < $n; $i++ ){
-                            $row =  $this->seats[$i];
-                            $background_color = $row->background_color;
-                            ?>
-
-                            <div id="<?php echo $row->seat_sector; ?>" class="item" style="margin:0px; padding:2px; z-index:5;">
-                                <div id="seat-choice" class="seat-choice" style="background-color:<?php echo htmlspecialchars($row->background_color, ENT_QUOTES, 'UTF-8'); ?>;
-                                        float:left; border-color:<?php echo htmlspecialchars($row->border_color, ENT_QUOTES, 'UTF-8'); ?>; cursor:pointer; font-size:80%; margin:0px;
-                                        color:<?php echo htmlspecialchars($row->font_color, ENT_QUOTES, 'UTF-8'); ?>;">
-                                    <?php echo $row->seatid; ?>
-                                </div>
-                            </div>
-
-                            <?php $k=1 - $k; } ?>
-
-                    </div>
-                </div>
-
-                <div class="shoppingbasket" style="clear:both; margin-top:65px;">
-                    <?php echo Text::_( 'COM_TICKETSTATION_SEAT_OPTIONS' ); ?>
-                </div>
-
-                <div style="margin-bottom:40px; padding-top:10px; height:50px;" id="ticket-options" class="note-multi-ticket">
-                    <?php echo Text::_( 'COM_TICKETSTATION_CLICK_TO_SEE_OPTIONS' ); ?>
-                </div>
-            </div>
-        </div>
     </div>
 </div>
 
