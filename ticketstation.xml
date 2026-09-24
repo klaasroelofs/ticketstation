@@ -2,7 +2,7 @@
 <extension type="component" version="5.0" method="upgrade">
 
     <name>Ticketstation</name>
-    <creationDate>23-09-2026</creationDate>
+    <creationDate>24-09-2026</creationDate>
     <author>Klaas Roelofs</author>
 	<authorEmail>klaasroelofs@huibuuke.nl</authorEmail>
     <authorUrl>https://www.huibuuke.nl</authorUrl>
