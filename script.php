@@ -24,6 +24,8 @@ class com_ticketstationInstallerScript extends InstallerScript
         // Frontend statistics view, replaced by the statistics in the backend.
         '/components/com_ticketstation/src/Model/StatisticsModel.php',
         '/components/com_ticketstation/assets/css/statistics.css',
+        // Menu item type for the payment result page, which is only reached through redirects.
+        '/components/com_ticketstation/tmpl/paymentresult/default.xml',
     ];
 
     protected $deleteFolders = [
