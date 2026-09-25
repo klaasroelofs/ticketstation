@@ -37,7 +37,7 @@ class Date
         $format = $format ?: self::getDateFormat();
 
         $config = Factory::getConfig();
-        $user   = Factory::getUser();
+        $user   = Factory::getApplication()->getIdentity();
 
         // Get a date object based on the correct timezone.
         $date = Factory::getDate($date, 'UTC');

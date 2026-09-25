@@ -99,12 +99,12 @@ class OrderController extends BaseController
         {
             if ($newTotal > $tickets->max_qty)
             {
-                $this->showMessage('ts-alert ts-alert--danger', Text::_('COM_TICKETSTATION_MAX_ORDER_PER_TICKET') . $tickets->max_qty);
+                $this->showMessage('ts-alert ts-alert--danger', Text::sprintf('COM_TICKETSTATION_MAX_ORDER_PER_TICKET', $tickets->max_qty));
             }
 
             if (count($basket) >= $tickets->max_qty)
             {
-                $this->showMessage('ts-alert ts-alert--danger', Text::_('COM_TICKETSTATION_MAX_ORDER_PER_TICKET') . $tickets->max_qty);
+                $this->showMessage('ts-alert ts-alert--danger', Text::sprintf('COM_TICKETSTATION_MAX_ORDER_PER_TICKET', $tickets->max_qty));
             }
         }
 
@@ -112,7 +112,7 @@ class OrderController extends BaseController
         {
             if ($tickets->min_qty > $newTotal)
             {
-                $this->showMessage('ts-alert ts-alert--danger', Text::_('COM_TICKETSTATION_MIN_ORDER_PER_TICKET') . $tickets->min_qty);
+                $this->showMessage('ts-alert ts-alert--danger', Text::sprintf('COM_TICKETSTATION_MIN_ORDER_PER_TICKET', $tickets->min_qty));
             }
         }
 
@@ -190,9 +190,9 @@ class OrderController extends BaseController
 
         if ($this->amount == 1)
         {
-            $this->showMessage('ts-alert ts-alert--success', $this->amount . Text::_('COM_TICKETSTATION_EVENT_ADDED_TO_CART1'));
+            $this->showMessage('ts-alert ts-alert--success', Text::sprintf('COM_TICKETSTATION_EVENT_ADDED_TO_CART1', $this->amount));
         } else {
-            $this->showMessage('ts-alert ts-alert--success', $this->amount . Text::_('COM_TICKETSTATION_EVENT_ADDED_TO_CART'));
+            $this->showMessage('ts-alert ts-alert--success', Text::sprintf('COM_TICKETSTATION_EVENT_ADDED_TO_CART', $this->amount));
         }
     }
 

@@ -1426,12 +1426,12 @@ class BoxofficeModel extends ListModel
 
                 if ($error > 1)
                 {
-                    $this->setError(Text::_('COM_TICKETMASTER_ERROR_BEFORE_SENDING_NEW'));
+                    $this->setError(Text::_('COM_TICKETSTATION_ERROR_BEFORE_SENDING_NEW'));
                     return false;
                 }
                 else
                 {
-                    $this->setError(Text::_('COM_TICKETMASTER_ERROR_BEFORE_SENDING_NEW'));
+                    $this->setError(Text::_('COM_TICKETSTATION_ERROR_BEFORE_SENDING_NEW'));
                     return false;
                 }
             }

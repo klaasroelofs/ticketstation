@@ -141,11 +141,11 @@ class HtmlView extends BaseHtmlView
         $lists['direction'] = HTMLHelper::_('select.genericList', $direction, 'direction', ' class="form-select"  style="width:100%;" '. '', 'value', 'text', $data->multi_seat );
 
         $seat_counter = array(
-            '1' => array('value' => '1', 'text' => '1 '.Text::_( 'COM_TICKETSTATION_PER_ADD' )),
-            '2' => array('value' => '2', 'text' => '2 '.Text::_( 'COM_TICKETSTATION_PER_ADD' )),
-            '3' => array('value' => '3', 'text' => '3 '.Text::_( 'COM_TICKETSTATION_PER_ADD' )),
-            '4' => array('value' => '4', 'text' => '4 '.Text::_( 'COM_TICKETSTATION_PER_ADD' )),
-            '5' => array('value' => '5', 'text' => '5 '.Text::_( 'COM_TICKETSTATION_PER_ADD' )),
+            '1' => array('value' => '1', 'text' => '1'),
+            '2' => array('value' => '2', 'text' => '2'),
+            '3' => array('value' => '3', 'text' => '3'),
+            '4' => array('value' => '4', 'text' => '4'),
+            '5' => array('value' => '5', 'text' => '5'),
         );
         $lists['seat_counter'] = HTMLHelper::_('select.genericList', $seat_counter, 'seat_counter', ' class="form-select" style="width:100%;" '. '', 'value', 'text', 1 );
 

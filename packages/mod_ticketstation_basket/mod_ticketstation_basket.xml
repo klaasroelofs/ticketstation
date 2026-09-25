@@ -8,7 +8,7 @@
 	<authorUrl>https://www.huibuuke.nl</authorUrl>
 	<copyright>© 2026 Klaas Roelofs</copyright>
 	<license>GPL v3</license>
-	<version>2.4.3</version>
+	<version>2.4.4</version>
 	<description>MOD_TICKETSTATION_BASKET_XML_DESCRIPTION</description>
 
 	<namespace path="src">Ticketstation\Module\TicketstationBasket</namespace>

@@ -17,7 +17,7 @@ use Joomla\CMS\Editor\Editor;
 defined('_JEXEC') or die('Restricted Access');
 $app = Factory::getApplication();
 $document = $app->getDocument();
-$document->setTitle(Text::_('COM_TICKETSTATION_VIEW_EDIT_TEMPLATES_TITLE') . ' - ' . $app->get('sitename'));
+$document->setTitle(Text::sprintf('COM_TICKETSTATION_VIEW_EDIT_TEMPLATES_TITLE', $this->data->alias ?? '') . ' - ' . $app->get('sitename'));
 
 $user = $this->getCurrentUser();
 $editor = Editor::getInstance($user->getParam('editor', Factory::getConfig()->get('editor')));

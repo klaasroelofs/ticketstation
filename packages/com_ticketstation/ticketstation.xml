@@ -8,7 +8,7 @@
     <authorUrl>https://www.huibuuke.nl</authorUrl>
     <copyright>© 2026 Klaas Roelofs</copyright>
     <license>GPL v3</license>
-    <version>2.4.3</version>
+    <version>2.4.4</version>
     <description>
         Thank you for installing Ticketstation!
     </description>
@@ -34,39 +34,16 @@
 
     <administration>
         <!-- The link that will appear in the Admin panel's "Components" menu -->
-        <menu>Ticketstation <small>for Joomla!™</small></menu>
+        <menu>Ticketstation</menu>
         <submenu>
             <!--
                 Note that all & must be escaped to &amp; for the file to be valid
                 XML and be parsed by the installer
             -->
-            <menu
-                    link="option=com_ticketstation&amp;view=controlpanel"
-                    view="controlpanel"
-                    alt="Ticketstation/ControlPanel"
-            >
-                COM_TICKETSTATION_CONTROLPANEL
-            </menu>
-            <menu
-                    link="option=com_ticketstation&amp;view=boxoffice"
-                    view="boxoffice"
-                    alt="Ticketstation/Boxoffice"
-            >
-                COM_TICKETSTATION_BOXOFFICE
-            </menu>
-            <menu
-                    link="option=com_ticketstation&amp;view=reservation"
-                    view="reservation"
-                    alt="Ticketstation/Reservation"
-            >
-                COM_TICKETSTATION_VIEW_RESERVATION_TITLE
-            </menu>
-            <menu
-                    link="option=com_ticketstation&amp;view=configuration"
-                    alt="Ticketstation/Configuration"
-            >
-                COM_TICKETSTATION_CONFIGURATION
-            </menu>
+            <menu link="option=com_ticketstation&amp;view=controlpanel">COM_TICKETSTATION_CONTROLPANEL</menu>
+            <menu link="option=com_ticketstation&amp;view=boxoffice">COM_TICKETSTATION_BOXOFFICE</menu>
+            <menu link="option=com_ticketstation&amp;view=reservation">COM_TICKETSTATION_VIEW_RESERVATION_TITLE</menu>
+            <menu link="option=com_ticketstation&amp;view=configuration">COM_TICKETSTATION_CONFIGURATION</menu>
         </submenu>
 
         <!-- List of files and folders to copy, and where to copy them -->
@@ -105,11 +82,5 @@
             <schemapath type="mysql">sql/updates/mysql</schemapath>
         </schemas>
     </update>
-
-    <access>
-        <section name="component">
-            <action name="core.manage" title="JACTION_MANAGE" description="JACTION_MANAGE_COMPONENT_DESC" />
-        </section>
-    </access>
 
 </extension>

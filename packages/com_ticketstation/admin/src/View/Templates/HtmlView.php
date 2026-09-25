@@ -59,7 +59,7 @@ class HtmlView extends BaseHtmlView {
 
         $this->data = $model->getData();
 
-        ToolBarHelper::title(Text::_('COM_TICKETSTATION_VIEW_EDIT_TEMPLATES_TITLE') . $this->data->alias, 'fa fa-envelope');
+        ToolBarHelper::title(Text::sprintf('COM_TICKETSTATION_VIEW_EDIT_TEMPLATES_TITLE', $this->data->alias), 'fa fa-envelope');
 
         parent::display($tpl);
     }

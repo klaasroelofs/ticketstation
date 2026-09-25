@@ -79,7 +79,7 @@ class SeatplansController extends BaseController {
 
 
         //decode JSON data received from AJAX POST request
-        $data = json_decode($_POST["data"]);
+        $data = json_decode($this->input->post->get('data', '', 'raw'));
 
         foreach($data->coords as $item) {
 

@@ -60,7 +60,7 @@ class HtmlView extends BaseHtmlView {
 
             $db->setQuery($query);
 
-            $childlist[]	   = HTMLHelper::_('select.option',  '0', Text::_( 'SELECT TICKET' ), 'ticketid', 'ticketname' );
+            $childlist[]	   = HTMLHelper::_('select.option',  '0', Text::_('COM_TICKETSTATION_SELECT_TICKET'), 'ticketid', 'ticketname' );
             $childlist	       = array_merge( $childlist, $db->loadObjectList() );
             $lists['tickets']  = HTMLHelper::_('select.genericlist',  $childlist, 'ticketid', 'class="inputbox" size="1" ', 'ticketid',
                 'ticketname', 0);

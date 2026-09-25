@@ -13,10 +13,10 @@ use \Joomla\CMS\HTML\HTMLHelper;
 use Joomla\CMS\Router\Route;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\TicketstationFunctions;
 
-$csrfTokenParam = \Joomla\CMS\Session\Session::getFormToken() . '=1';
-
 // No direct access to this file
 defined('_JEXEC') or die('Restricted Access');
+
+$csrfTokenParam = \Joomla\CMS\Session\Session::getFormToken() . '=1';
 
 $total = 0;
 

@@ -35,7 +35,6 @@ $wa->registerAndUseStyle('ticketstation', Uri::base() . 'components\com_ticketst
     <div class="row">
         <div class="col-md-12">
             <div id="j-main-container" class="j-main-container">
-                <!--<pre><?php print_r($this->items);?></pre>-->
                 <table class="table itemList">
                     <thead>
                     <tr>

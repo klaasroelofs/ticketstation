@@ -97,7 +97,7 @@ try {
     # not used at runtime, and the examples would be directly web-reachable PHP files on the site.
     $mollieDir = Join-Path $comStage 'site\vendor\mollie\mollie-api-php'
     Remove-Item (Join-Path $mollieDir 'examples') -Recurse -Force -ErrorAction SilentlyContinue
-    Remove-Item (Join-Path $mollieDir 'phpstan.neon'), (Join-Path $mollieDir 'phpstan-baseline.neon') -ErrorAction SilentlyContinue
+    Remove-Item (Join-Path $mollieDir 'phpstan.neon'), (Join-Path $mollieDir 'phpstan-baseline.neon'), (Join-Path $mollieDir '.php-cs-fixer.dist.php') -ErrorAction SilentlyContinue
     $comVersion = Get-ManifestVersion (Join-Path $comStage 'ticketstation.xml')
     New-Zip $comStage (Join-Path $pkgRoot 'packages\com_ticketstation.zip')
 

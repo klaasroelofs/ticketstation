@@ -1,0 +1,16 @@
+# Always check text files out with LF line endings, also on Windows and on the Windows release
+# runner, so the package ships with LF files (JED requires LF in language files).
+* text=auto eol=lf
+
+# Binary files
+*.png binary
+*.jpg binary
+*.gif binary
+*.ico binary
+*.pdf binary
+*.ttf binary
+*.woff binary
+*.woff2 binary
+*.z binary
+*.zip binary
+*.ai binary
