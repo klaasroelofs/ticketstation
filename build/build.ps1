@@ -105,6 +105,9 @@ try {
     $description = Escape-Xml $pkgManifest.SelectSingleNode('/extension/description').InnerText
     $releaseUrl  = "https://github.com/$GitHubRepo/releases/tag/v$pkgVersion"
     $downloadUrl = "https://github.com/$GitHubRepo/releases/download/v$pkgVersion/$zipName"
+    # <client>site</client> is required: Joomla defaults an update entry to client_id 1
+    # (administrator), while a package is installed with client_id 0, so without it the
+    # update is fetched but never matched to the installed package.
     $feed = @"
 <?xml version="1.0" encoding="utf-8"?>
 <updates>
@@ -113,6 +116,7 @@ try {
         <description>$description</description>
         <element>pkg_ticketstation</element>
         <type>package</type>
+        <client>site</client>
         <version>$pkgVersion</version>
         <infourl title="Ticketstation $pkgVersion">$releaseUrl</infourl>
         <downloads>
