@@ -70,33 +70,15 @@ class TicketPreviewCreator
         $pdf = new FPDI_EAN13();
         $pdf->AddPage($orientation, $ticket_size);
 
-        ## Background image/PDF: same lookup as ticketcreator::doPDF()
-        $background = JPATH_ADMINISTRATOR . '/components/com_ticketstation/assets/etickets/eTicket-' . $ticketid . '.jpg';
-
+        ## Background: the built-in layout or the uploaded design, same as ticketcreator::doPDF()
         if (DefaultTicketLayout::applies($ticketid)) {
             DefaultTicketLayout::drawBackground($pdf);
 
             if (!DefaultTicketLayout::hasFields($data)) {
                 $data = array_merge($data, DefaultTicketLayout::defaultFields($pdf));
             }
-        } elseif (!file_exists($background)) {
-            $sourcefile = JPATH_ADMINISTRATOR . '/components/com_ticketstation/assets/etickets/eTicket-' . $ticketid . '.pdf';
-
-            $pdf->setSourceFile($sourcefile);
-            $tplIdx = $pdf->importPage(1);
-            $pdf->useTemplate($tplIdx, 0, 0, 210);
-        } elseif (($data['ticket_size'] ?? '') == 'A4') {
-            if ($orientation == 'P') {
-                $pdf->Image($background, 0, 0, 210, 290);
-            } else {
-                $pdf->Image($background, 0, 0, 290, 210);
-            }
         } else {
-            if ($orientation == 'P') {
-                $pdf->Image($background, 0, 0, 148.5, 210);
-            } else {
-                $pdf->Image($background, 0, 0, 210, 148.5);
-            }
+            TicketDesign::draw($pdf, $ticketid);
         }
 
         ## EVENTNAME / TICKETNAME / FREE TEXT 1 all share the same drawing rules.

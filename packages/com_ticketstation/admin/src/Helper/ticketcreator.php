@@ -147,9 +147,7 @@ class ticketcreator
         ## add a page
         $pdf->AddPage($order->ticket_orientation, $ticket_size);
 
-        ## Image for the background :) <-- JPG file is now better to use then PDF. So use it if it exists
-        $background = JPATH_ADMINISTRATOR . '/components/com_ticketstation/assets/etickets/eTicket-' . $order->ticketid . '.jpg';
-
+        ## Background: the built-in layout, or the uploaded design (see TicketDesign)
         if(DefaultTicketLayout::applies($order->ticketid))
         {
             ## No design uploaded for this ticket: use the built-in layout, and its default
@@ -164,44 +162,10 @@ class ticketcreator
                 }
             }
         }
-        elseif(!file_exists($background))
-        {
-            ## This should be the source file if there is an uploaded PDF file for this event.
-            $sourcefile = JPATH_ADMINISTRATOR . '/components/com_ticketstation/assets/etickets/eTicket-' . $order->ticketid . '.pdf';
-
-            ## set the sourcefile
-            $pdf->setSourceFile($sourcefile);
-            ## import page 1
-            $tplIdx = $pdf->importPage(1);
-            ## use the imported page and place it at point 0,0 with a width of 210 mm (A4 Format)
-            $pdf->useTemplate($tplIdx, 0, 0, 210);
-
-        }
         else
         {
-
-            if($order->ticket_size == 'A4')
-            {
-                if($order->ticket_orientation == 'P')
-                {
-                    $pdf->Image($background, 0, 0, 210, 290);
-                }
-                else
-                {
-                    $pdf->Image($background, 0, 0, 290, 210);
-                }
-            }
-            else
-            {
-                if($order->ticket_orientation == 'P')
-                {
-                    $pdf->Image($background, 0, 0, 148.5, 210);
-                }
-                else
-                {
-                    $pdf->Image($background, 0, 0, 210, 148.5);
-                }
-            }
+            ## The uploaded design (JPG or PDF), stretched over the whole page.
+            TicketDesign::draw($pdf, $order->ticketid);
         }
 
         /*######## THIS IS THE PART THAT WILL COME FROM THE XML FILE #########

@@ -26,6 +26,7 @@ $document->setTitle(Text::_('COM_TICKETSTATION_VIEW_DOCS_TITLE') . ' - ' . $app-
 $topics = [
     'events'        => ['icon' => 'fa-calendar-alt',   'title' => 'COM_TICKETSTATION_DOCS_NAV_EVENTS'],
     'seating'       => ['icon' => 'fa-chair',           'title' => 'COM_TICKETSTATION_DOCS_NAV_SEATING'],
+    'ticketlayout'  => ['icon' => 'fa-ticket-alt',      'title' => 'COM_TICKETSTATION_DOCS_NAV_TICKETLAYOUT'],
     'configuration' => ['icon' => 'fa-cog',             'title' => 'COM_TICKETSTATION_DOCS_NAV_CONFIGURATION'],
     'mollie'        => ['icon' => 'fa-credit-card',     'title' => 'COM_TICKETSTATION_DOCS_NAV_MOLLIE'],
     'scanning'      => ['icon' => 'fa-qrcode',          'title' => 'COM_TICKETSTATION_DOCS_NAV_SCANNING'],
