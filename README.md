@@ -17,6 +17,8 @@ Download `pkg_ticketstation_<version>.zip` from the [latest release](https://git
 
 ## Building
 
+The build script is PowerShell, so it runs on Windows (or anywhere PowerShell is installed).
+
 ```
 cd packages/com_ticketstation/site
 composer install --no-dev
@@ -26,17 +28,7 @@ powershell -ExecutionPolicy Bypass -File build/build.ps1
 
 This writes `dist/pkg_ticketstation_<version>.zip` and the update feed `dist/pkg_ticketstation_update.xml`.
 
-## Releasing
-
-1. Raise `<version>` (and `<creationDate>`) to the same new version in all three manifests: `pkg_ticketstation.xml`, `packages/com_ticketstation/ticketstation.xml` and `packages/mod_ticketstation_basket/mod_ticketstation_basket.xml`, also when only one extension changed. The build refuses to run when they differ. Commit and push.
-2. Tag the commit with that version and push the tag:
-
-   ```
-   git tag v2.4.2
-   git push origin v2.4.2
-   ```
-
-The [release workflow](.github/workflows/release.yml) then builds the package and publishes a GitHub release with the zip and the update feed. Joomla sites read the feed from the latest release. A tag with a suffix, such as `v2.4.0-rc1`, becomes a pre-release, which is not offered to sites as an update.
+For publishing a release, see [RELEASING.md](RELEASING.md).
 
 ## License
 
