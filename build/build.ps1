@@ -123,6 +123,10 @@ try {
     $description = Escape-Xml $pkgManifest.SelectSingleNode('/extension/description').InnerText
     $releaseUrl  = "https://github.com/$GitHubRepo/releases/tag/v$pkgVersion"
     $downloadUrl = "https://github.com/$GitHubRepo/releases/download/v$pkgVersion/$zipName"
+    # Joomla only offers an update whose stability tag meets the site's Minimum Extension
+    # Stability, so a suffix like -rc1 or -beta2 must end up as the matching tag.
+    $stability = 'stable'
+    if ($pkgVersion -match '-(dev|alpha|beta|rc)\d*$') { $stability = $Matches[1] }
     # <client>site</client> is required: Joomla defaults an update entry to client_id 1
     # (administrator), while a package is installed with client_id 0, so without it the
     # update is fetched but never matched to the installed package.
@@ -142,7 +146,7 @@ try {
         </downloads>
         <sha256>$sha256</sha256>
         <tags>
-            <tag>stable</tag>
+            <tag>$stability</tag>
         </tags>
         <maintainer>Klaas Roelofs</maintainer>
         <maintainerurl>https://www.huibuuke.nl</maintainerurl>
@@ -157,6 +161,7 @@ try {
     Write-Host "  package   $pkgVersion"
     Write-Host "  component $comVersion"
     Write-Host "  module    $modVersion"
+    Write-Host "  stability $stability"
     Write-Host "  sha256    $sha256"
 } finally {
     Remove-Item $staging -Recurse -Force -ErrorAction SilentlyContinue

@@ -3,7 +3,8 @@
 # The release carries the package zip and pkg_ticketstation_update.xml. Joomla sites read the
 # update feed from the latest release (see <updateservers> in pkg_ticketstation.xml), so a new
 # release shows up there as an available extension update. Tags with a suffix (v2.4.0-rc1)
-# become pre-releases, which "latest" skips: installable by hand, not offered as an update.
+# become pre-releases, which "latest" skips; the last step therefore adds them to the feed of
+# the latest release, where only sites with a matching Minimum Extension Stability see them.
 name: Release
 
 on:
@@ -71,3 +72,37 @@ jobs:
             --title "Ticketstation $VERSION" \
             --notes-file notes.md \
             "${flags[@]}"
+
+      # Sites only read the feed of the latest (stable) release, so a pre-release is added to that
+      # feed as a second <update>, tagged with its stability (rc, beta, ...). Joomla offers it only
+      # to sites whose Minimum Extension Stability allows it; an older pre-release entry is replaced.
+      - name: Add the pre-release to the update feed of the latest release
+        if: contains(github.ref_name, '-')
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $latest = gh release view --json tagName --jq .tagName
+          if ($LASTEXITCODE -ne 0 -or -not $latest) { throw 'No latest release found' }
+          New-Item -ItemType Directory -Path feed -Force | Out-Null
+          gh release download $latest --pattern pkg_ticketstation_update.xml --dir feed --clobber
+          if ($LASTEXITCODE -ne 0) { throw "Could not download the update feed of $latest" }
+
+          $feedPath = Join-Path $PWD 'feed/pkg_ticketstation_update.xml'
+          $feed = [xml](Get-Content $feedPath -Raw -Encoding UTF8)
+          foreach ($old in @($feed.SelectNodes('/updates/update[tags/tag != "stable"]'))) {
+              [void] $old.ParentNode.RemoveChild($old)
+          }
+          $new = ([xml](Get-Content dist/pkg_ticketstation_update.xml -Raw -Encoding UTF8)).SelectSingleNode('/updates/update')
+          [void] $feed.DocumentElement.AppendChild($feed.ImportNode($new, $true))
+
+          $settings = New-Object System.Xml.XmlWriterSettings
+          $settings.Indent = $true
+          $settings.IndentChars = '    '
+          $settings.Encoding = New-Object System.Text.UTF8Encoding $false
+          $writer = [System.Xml.XmlWriter]::Create($feedPath, $settings)
+          try { $feed.Save($writer) } finally { $writer.Dispose() }
+
+          gh release upload $latest $feedPath --clobber
+          if ($LASTEXITCODE -ne 0) { throw "Could not upload the update feed to $latest" }
+          Write-Host "Added $env:GITHUB_REF_NAME to the update feed of $latest"
