@@ -46,7 +46,10 @@ jobs:
       - name: Write release notes
         shell: bash
         run: |
-          prev=$(git describe --tags --abbrev=0 "${GITHUB_REF_NAME}^" 2>/dev/null || true)
+          # A stable release lists everything since the previous stable one, skipping its RCs.
+          exclude=()
+          case "$GITHUB_REF_NAME" in *-*) ;; *) exclude=(--exclude '*-*') ;; esac
+          prev=$(git describe --tags --abbrev=0 "${exclude[@]}" "${GITHUB_REF_NAME}^" 2>/dev/null || true)
           {
             if [ -n "$prev" ]; then
               echo "## Changes since $prev"
