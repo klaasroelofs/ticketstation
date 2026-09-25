@@ -1,0 +1,25 @@
+{
+  "$schema": "https://developer.joomla.org/schemas/json-schema/web_assets.json",
+  "name": "mod_ticketstation_basket",
+  "version": "auto",
+  "description": "Ticketstation basket module assets",
+  "license": "GPL-3.0-only",
+  "assets": [
+    {
+      "name": "mod_ticketstation_basket.basket",
+      "description": "Basket module styles",
+      "type": "style",
+      "uri": "mod_ticketstation_basket/basket.css"
+    },
+    {
+      "name": "mod_ticketstation_basket.basket",
+      "description": "Refreshes the full basket totals when com_ticketstation changes the cart",
+      "type": "script",
+      "uri": "mod_ticketstation_basket/basket.js",
+      "dependencies": ["core"],
+      "attributes": {
+        "defer": true
+      }
+    }
+  ]
+}

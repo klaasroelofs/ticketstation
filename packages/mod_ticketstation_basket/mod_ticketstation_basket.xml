@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="utf-8"?>
+<extension type="module" client="site" method="upgrade">
+
+	<name>mod_ticketstation_basket</name>
+	<creationDate>2026-09-23</creationDate>
+	<author>Klaas Roelofs</author>
+	<authorEmail>klaasroelofs@huibuuke.nl</authorEmail>
+	<authorUrl>https://www.huibuuke.nl</authorUrl>
+	<copyright>© 2026 Klaas Roelofs</copyright>
+	<license>GPL v3</license>
+	<version>2.1.0</version>
+	<description>MOD_TICKETSTATION_BASKET_XML_DESCRIPTION</description>
+
+	<namespace path="src">Ticketstation\Module\TicketstationBasket</namespace>
+
+	<scriptfile>script.php</scriptfile>
+
+	<files>
+		<folder module="mod_ticketstation_basket">services</folder>
+		<folder>src</folder>
+		<folder>tmpl</folder>
+		<filename>script.php</filename>
+	</files>
+
+	<languages>
+		<language tag="en-GB">language/en-GB/mod_ticketstation_basket.ini</language>
+		<language tag="en-GB">language/en-GB/mod_ticketstation_basket.sys.ini</language>
+		<language tag="nl-NL">language/nl-NL/mod_ticketstation_basket.ini</language>
+		<language tag="nl-NL">language/nl-NL/mod_ticketstation_basket.sys.ini</language>
+	</languages>
+
+	<media destination="mod_ticketstation_basket" folder="media">
+		<filename>joomla.asset.json</filename>
+		<folder>css</folder>
+		<folder>js</folder>
+	</media>
+
+	<config>
+		<fields name="params">
+			<fieldset name="basic">
+				<field
+					name="display_mode"
+					type="list"
+					label="MOD_TICKETSTATION_BASKET_DISPLAY_MODE_LABEL"
+					description="MOD_TICKETSTATION_BASKET_DISPLAY_MODE_DESC"
+					default="mini"
+					validate="options"
+					class="form-select"
+					>
+					<option value="mini">MOD_TICKETSTATION_BASKET_DISPLAY_MODE_MINI</option>
+					<option value="full">MOD_TICKETSTATION_BASKET_DISPLAY_MODE_FULL</option>
+				</field>
+				<field
+					name="minibasket_icon_class"
+					type="text"
+					label="MOD_TICKETSTATION_BASKET_MINIBASKET_ICON_CLASS"
+					default="fa fa-shopping-basket"
+					showon="display_mode:mini"
+				/>
+				<field
+					name="check_empty"
+					type="radio"
+					label="MOD_TICKETSTATION_BASKET_HIDE_BASKET_WHEN_EMPTY"
+					layout="joomla.form.field.radio.switcher"
+					default="0"
+					filter="integer"
+					>
+					<option value="0">JNO</option>
+					<option value="1">JYES</option>
+				</field>
+			</fieldset>
+			<fieldset name="advanced">
+				<field
+					name="layout"
+					type="modulelayout"
+					label="JFIELD_ALT_LAYOUT_LABEL"
+					class="form-select"
+					validate="moduleLayout"
+				/>
+				<field
+					name="moduleclass_sfx"
+					type="textarea"
+					label="COM_MODULES_FIELD_MODULECLASS_SFX_LABEL"
+					rows="3"
+					validate="CssIdentifier"
+				/>
+				<!--
+					The cart belongs to the visitor's session, but Joomla's module cache is keyed on
+					module id, view levels and Itemid only: with caching on, all guests would be shown
+					the same cart. Hence no caching, and no cache options to switch it on.
+				-->
+				<field
+					name="cache"
+					type="hidden"
+					default="0"
+				/>
+			</fieldset>
+		</fields>
+	</config>
+</extension>

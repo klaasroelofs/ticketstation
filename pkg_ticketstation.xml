@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<extension type="package" method="upgrade">
+
+	<name>Ticketstation</name>
+	<packagename>ticketstation</packagename>
+	<creationDate>2026-09-25</creationDate>
+	<author>Klaas Roelofs</author>
+	<authorEmail>klaasroelofs@huibuuke.nl</authorEmail>
+	<authorUrl>https://www.huibuuke.nl</authorUrl>
+	<copyright>© 2026 Klaas Roelofs</copyright>
+	<license>GPL v3</license>
+	<version>2.3.9</version>
+	<description>Ticketstation for Joomla: the Ticketstation component and the Ticketstation Basket module in one package.</description>
+
+	<files folder="packages">
+		<file type="component" id="com_ticketstation">com_ticketstation.zip</file>
+		<file type="module" client="site" id="mod_ticketstation_basket">mod_ticketstation_basket.zip</file>
+	</files>
+
+	<updateservers>
+		<server type="extension" priority="1" name="Ticketstation">https://github.com/klaasroelofs/ticketstation/releases/latest/download/pkg_ticketstation_update.xml</server>
+	</updateservers>
+
+</extension>

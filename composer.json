@@ -2,7 +2,7 @@
   "name": "vendor_name/com_ticketstation",
   "description": "description",
   "minimum-stability": "stable",
-  "license": "proprietary",
+  "license": "GPL-3.0-or-later",
   "authors": [
     {
       "name": "Klaas Roelofs",

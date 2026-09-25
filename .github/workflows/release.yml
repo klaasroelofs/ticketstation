@@ -1,0 +1,73 @@
+# Publishes a GitHub release when a tag v<package version> is pushed, e.g. v2.3.9.
+#
+# The release carries the package zip and pkg_ticketstation_update.xml. Joomla sites read the
+# update feed from the latest release (see <updateservers> in pkg_ticketstation.xml), so a new
+# release shows up there as an available extension update. Tags with a suffix (v2.4.0-rc1)
+# become pre-releases, which "latest" skips: installable by hand, not offered as an update.
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          tools: composer
+
+      - name: Check that the tag matches the package version
+        shell: pwsh
+        run: |
+          $version = ([xml](Get-Content pkg_ticketstation.xml -Raw)).SelectSingleNode('/extension/version').InnerText
+          if ("v$version" -ne $env:GITHUB_REF_NAME) {
+              throw "Tag $env:GITHUB_REF_NAME does not match the version in pkg_ticketstation.xml ($version)"
+          }
+          "VERSION=$version" >> $env:GITHUB_ENV
+
+      - name: Install the Mollie library into site/vendor
+        working-directory: packages/com_ticketstation/site
+        run: composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader
+
+      - name: Build the package
+        run: powershell -ExecutionPolicy Bypass -File build/build.ps1
+
+      - name: Write release notes
+        shell: bash
+        run: |
+          prev=$(git describe --tags --abbrev=0 "${GITHUB_REF_NAME}^" 2>/dev/null || true)
+          {
+            if [ -n "$prev" ]; then
+              echo "## Changes since $prev"
+              echo
+              git log --no-merges --pretty='- %s' "$prev..$GITHUB_REF_NAME"
+            else
+              echo "First release from the ticketstation repository."
+            fi
+            echo
+            echo "Install \`pkg_ticketstation_${VERSION}.zip\` through Joomla's Extension Manager, or update from System → Update → Extensions."
+          } > notes.md
+
+      - name: Publish the release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          flags=()
+          case "$GITHUB_REF_NAME" in *-*) flags+=(--prerelease) ;; esac
+          gh release create "$GITHUB_REF_NAME" \
+            "dist/pkg_ticketstation_${VERSION}.zip" \
+            dist/pkg_ticketstation_update.xml \
+            --title "Ticketstation $VERSION" \
+            --notes-file notes.md \
+            "${flags[@]}"

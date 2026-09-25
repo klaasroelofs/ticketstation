@@ -1,5 +1,6 @@
 /.plans/
 vendor/
+/dist/
 /.idea/
 /.claude/settings.local.json
 /.mcp.json

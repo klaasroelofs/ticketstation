@@ -13,10 +13,6 @@
         Thank you for installing Ticketstation!
     </description>
 
-    <updateservers>
-        <server type="extension" priority="1" name="Ticketstation Update Site">https://www.huibuuke.nl/updates/ticketstation.xml</server>
-    </updateservers>
-
     <namespace path="src/">Ticketstation\Component\Ticketstation</namespace>
 
     <scriptfile>script.php</scriptfile>

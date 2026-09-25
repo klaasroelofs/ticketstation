@@ -1,0 +1,85 @@
+/**
+ * mod_ticketstation_basket
+ *
+ * Self-contained, like com_ticketstation's component.css: no Bootstrap or template classes.
+ * Theme it with these custom properties, e.g. in your template's custom CSS:
+ *
+ *     .mod-ticketstation-basket { --ts-basket-accent: #008c39; }
+ */
+
+.mod-ticketstation-basket {
+    --ts-basket-accent: #1f2937;
+    --ts-basket-accent-hover: #374151;
+    --ts-basket-accent-contrast: #fff;
+    --ts-basket-badge-bg: #dc2626;
+    --ts-basket-badge-text: #fff;
+    --ts-basket-border: #d1d5db;
+}
+
+/* Mini basket: icon with item count badge */
+.ticketstation-minibasket-button .basket-item-count {
+    display: inline-block;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 5px;
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 20px;
+    text-align: center;
+    color: var(--ts-basket-badge-text);
+    background: var(--ts-basket-badge-bg);
+    border-radius: 10px;
+}
+
+/* Full basket: ticket count, fees and total */
+.ticketstation-basket-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.ticketstation-basket-table td {
+    padding: .375rem 0;
+    border: 0;
+}
+
+.ticketstation-basket-table td:last-child {
+    text-align: right;
+    white-space: nowrap;
+}
+
+.ticketstation-basket-table tr:last-child td {
+    padding-top: .5rem;
+    border-top: 1px solid var(--ts-basket-border);
+}
+
+.ticketstation-basket-empty,
+.ticketstation-basket-waiting {
+    margin: .5rem 0 0;
+}
+
+.ticketstation-basket-actions {
+    margin-top: 1.25rem;
+    text-align: right;
+}
+
+.mod-ticketstation-basket .ticketstation-basket-button {
+    display: inline-block;
+    padding: .5rem 1.25rem;
+    font: inherit;
+    font-weight: 600;
+    line-height: 1.4;
+    text-decoration: none;
+    color: var(--ts-basket-accent-contrast);
+    background: var(--ts-basket-accent);
+    border: 1px solid var(--ts-basket-accent);
+    border-radius: .375rem;
+    transition: background-color .15s ease, border-color .15s ease;
+}
+
+.mod-ticketstation-basket .ticketstation-basket-button:hover,
+.mod-ticketstation-basket .ticketstation-basket-button:focus {
+    color: var(--ts-basket-accent-contrast);
+    text-decoration: none;
+    background: var(--ts-basket-accent-hover);
+    border-color: var(--ts-basket-accent-hover);
+}

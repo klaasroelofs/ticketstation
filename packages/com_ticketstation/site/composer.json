@@ -2,7 +2,7 @@
   "name": "ticketstation/site-vendor",
   "description": "Bundled runtime dependencies for the Ticketstation site component. This vendor folder is installed as part of the com_ticketstation package.",
   "type": "project",
-  "license": "proprietary",
+  "license": "GPL-3.0-or-later",
   "require": {
     "php": ">=8.3",
     "mollie/mollie-api-php": "2.63.0"
