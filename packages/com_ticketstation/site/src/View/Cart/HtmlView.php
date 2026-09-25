@@ -40,6 +40,7 @@ class HtmlView extends BaseHtmlView {
         $this->requests = $requests;
         $this->coords   = $coords;
         $this->require  = $require;
+        $this->customerNote = $config->show_remark_field == 1 ? $this->get('CustomerNote') : '';
 
         // Call the parent display to display the layout file
         parent::display($tpl);

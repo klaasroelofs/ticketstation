@@ -19,6 +19,7 @@ use Joomla\CMS\Router\Route;
 use Ticketstation\Component\Ticketstation\Administrator\Helper;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Amount;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Config;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\CustomerNote;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\getAmount;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Order;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Ticket;
@@ -93,13 +94,9 @@ class CartController extends BaseController
             exit(json_encode($arr));
         }
 
-        $model = $this->getModel('cart');
-
-        $post['id']        = $model->getPreviousRemark();
-        $post['remarks']   = $new_string = strip_tags($this->remark);
-        $post['ordercode'] = $ordercode;
-
-        if ( ! $model->storeRemark($post))
+        // Stored as a customer note: only shown in the Box Office, never printed on the
+        // tickets (that is the Box Office "Order Reference", see CustomerNote).
+        if ( ! (new CustomerNote)->save($ordercode, $this->remark))
         {
             $msg = '<span class="ts-text-danger">' . Text::_('COM_TICKETSTATION_SAVING_CONTENT_FAILED') . '</span>';
 

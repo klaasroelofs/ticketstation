@@ -20,6 +20,7 @@ use Joomla\CMS\MVC\Model\ListModel;
 use Joomla\CMS\Pagination\Pagination;
 use Joomla\Utilities\ArrayHelper;
 use stdClass;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\CustomerNote;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\QueryHelper;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\eTicketsMessage;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\getAmount;
@@ -274,6 +275,7 @@ class BoxofficeModel extends ListModel
                 'blacklisted'         => $first->blacklisted,
                 'orderprice'          => $orderprice,
                 'remarks'             => $remarks,
+                'customer_note'       => (new CustomerNote)->get($ordercode),
                 'remarkid'            => null,
                 'transaction_amount'  => $transactionAmount,
                 'paid'                => $maxPaid,
@@ -308,13 +310,14 @@ class BoxofficeModel extends ListModel
             'a.ordercode',
             'MAX(a.paid) AS paid', 'a.pdfsent', 'a.pdfcreated', 'a.published', 'a.coupon', 'SUM(a.discount) AS discount', 'a.discount_type', 'a.discount_amount', 'SUM(a.fees) AS total_fees', 't.ticketname',
             'COUNT(DISTINCT a.orderid) AS o_tickets', 'c.name', 'c.firstname', 'c.address', 'c.city', 'c.emailaddress', 'e.eventname', 'a.scanned', 'a.downloaded',
-            'a.blacklisted', 'SUM(a.price) AS orderprice', 'r.remarks', 'r.id AS remarkid', 'tt.amount AS transaction_amount',
+            'a.blacklisted', 'SUM(a.price) AS orderprice', 'r.remarks', 'r.id AS remarkid', 'n.note AS customer_note', 'tt.amount AS transaction_amount',
         ]);
 
         $query->from($db->quoteName('#__ticketstation_orders', 'a'));
         $query->join('LEFT', $db->quoteName('#__ticketstation_clients', 'c') . ' ON (' . $db->quoteName('a.userid') . ' = ' . $db->quoteName('c.clientid') . ')');
         $query->join('LEFT', $db->quoteName('#__ticketstation_events', 'e') . ' ON (' . $db->quoteName('a.eventid') . ' = ' . $db->quoteName('e.eventid') . ')');
         $query->join('LEFT', $db->quoteName('#__ticketstation_remarks', 'r') . ' ON (' . $db->quoteName('a.ordercode') . ' = ' . $db->quoteName('r.ordercode') . ')');
+        $query->join('LEFT', $db->quoteName('#__ticketstation_customer_notes', 'n') . ' ON (' . $db->quoteName('a.ordercode') . ' = ' . $db->quoteName('n.ordercode') . ')');
         $query->join('LEFT', $db->quoteName('#__ticketstation_transactions', 'tt') . ' ON (' . $db->quoteName('a.ordercode') . ' = ' . $db->quoteName('tt.orderid') . ')');
         $query->join('LEFT', $db->quoteName('#__ticketstation_tickets', 't') . ' ON (' . $db->quoteName('a.ticketid') . ' = ' . $db->quoteName('t.ticketid') . ')');
 		$query->join('LEFT OUTER', $db->quoteName('#__ticketstation_seatplancoords', 'co') . ' ON (' . $db->quoteName('a.orderid') . ' = ' . $db->quoteName('co.orderid') . ')');
@@ -362,6 +365,7 @@ class BoxofficeModel extends ListModel
                 $db->quoteName('co.seatid') . $like_filter,
                 $db->quoteName('co.row_name') . $like_filter,
                 $db->quoteName('r.remarks') . $like_filter,
+                $db->quoteName('n.note') . $like_filter,
             ];
 
             $query->where('(' . implode(' OR ', $where) . ')');            
@@ -652,6 +656,7 @@ class BoxofficeModel extends ListModel
 
                 (new Invoice)->remove($affected_ordercode);
                 (new Transaction)->remove($affected_ordercode);
+                (new CustomerNote)->remove($affected_ordercode);
             }
         }
 
@@ -1271,6 +1276,9 @@ class BoxofficeModel extends ListModel
 
                 // Nor should its transaction, if one was ever recorded.
                 (new Transaction)->remove($removed_ordercode);
+
+                // And the note the customer added in the cart.
+                (new CustomerNote)->remove($removed_ordercode);
             }
 
             $ticket_helper = new Tickets;

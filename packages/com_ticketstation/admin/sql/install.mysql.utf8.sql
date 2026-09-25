@@ -411,6 +411,15 @@ CREATE TABLE IF NOT EXISTS `#__ticketstation_remarks` (
   PRIMARY KEY (`id`)
 )  ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 DEFAULT COLLATE=utf8mb4_unicode_ci;
 
+DROP TABLE IF EXISTS `#__ticketstation_customer_notes`;
+CREATE TABLE IF NOT EXISTS `#__ticketstation_customer_notes` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `ordercode` int(11) NOT NULL,
+  `note` varchar(255) NOT NULL DEFAULT '',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `ordercode` (`ordercode`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 DEFAULT COLLATE=utf8mb4_unicode_ci;
+
 DROP TABLE IF EXISTS `#__ticketstation_history`;
 CREATE TABLE IF NOT EXISTS `#__ticketstation_history` (
   `id` int(11) NOT NULL AUTO_INCREMENT,

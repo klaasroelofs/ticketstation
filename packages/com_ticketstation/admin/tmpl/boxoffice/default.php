@@ -162,6 +162,9 @@ $wa->registerAndUseStyle('searchtools', Uri::root() . 'media/templates/administr
                                     <?php if ($row->remarks != '') { ?>
                                         <br /><span class="badge bg-info"><?= $row->remarks; ?></span>
                                     <?php } ?>
+                                    <?php if (!empty($row->customer_note)) { ?>
+                                        <br /><span class="badge bg-secondary" title="<?= htmlspecialchars($row->customer_note, ENT_QUOTES, 'UTF-8'); ?>"><span class="icon-comment" aria-hidden="true"></span> <?= Text::_('COM_TICKETSTATION_CUSTOMER_NOTE'); ?></span>
+                                    <?php } ?>
                                     <?php if (!empty($row->coupon)) { ?>
                                         <br/><span title="<?= $row->coupon; ?>" class="badge bg-warning"><?= Text::_( 'COM_TICKETSTATION_DISCOUNT_CAPS' ); ?></span>
                                     <?php } ?>

@@ -65,8 +65,6 @@ $trashIcon = '<svg class="ts-icon" viewBox="0 0 16 16" aria-hidden="true"><path 
             jQuery('#checkout').click(function(e) {
                 e.preventDefault();
 
-                // getting the remarks if available.
-                var remarks = jQuery("#remarks").val();
                 var required = jQuery("#required").val();
 
                 if (required > 0) {
@@ -74,44 +72,44 @@ $trashIcon = '<svg class="ts-icon" viewBox="0 0 16 16" aria-hidden="true"><path 
                     return false;
                 }
 
-                if (remarks == '') {
-
-                    // If remarks is empty, submit now.
+                // No note field (switched off in the Configuration): straight on to checkout.
+                if (!jQuery('textarea#remarks').length) {
                     document.location.href = '<?php echo $link; ?>';
+                    return;
+                }
 
-                } else {
+                // Save the customer note (an empty note removes an earlier one), then continue.
+                var data = {
+                    content: jQuery('#remarks').val(),
+                    ordercode: <?php echo (int) $session->get('ordercode'); ?>
+                };
+                data['<?php echo \Joomla\CMS\Session\Session::getFormToken(); ?>'] = 1;
 
-                    // Please do AJAX call with data. -- Get post data first.
-                    var tokenName = '<?php echo \Joomla\CMS\Session\Session::getFormToken(); ?>';
-                    var data = 'content=' + remarks + '&ordercode=' + <?php echo $session->get('ordercode'); ?> + '&' + tokenName + '=1';
+                jQuery.ajax({
+                    url      : "<?php echo Uri::root(true); ?>/index.php?option=com_ticketstation&controller=cart&task=saveRemark&format=raw",
+                    type     : "POST",
+                    data     : data,
+                    dataType : 'json',
+                    cache    : false
+                }).done(function(response) {
+                    if (response.status == 200) {
+                        jQuery("#chars-remaining").html(response.msg).addClass('is-saved');
+                        setTimeout(function() {
+                            document.location.href = '<?php echo $link; ?>';
+                        }, 1000);
+                    } else {
+                        noteFailed(response.msg);
+                    }
+                }).fail(function() {
+                    noteFailed(<?php echo json_encode('<span class="ts-text-danger">' . Text::_('COM_TICKETSTATION_SAVING_CONTENT_FAILED') . '</span>'); ?>);
+                });
 
-                    jQuery.ajax({
-                        //this is the php file that processes the data and send mail
-                        url       : "<?php echo Uri::root(true); ?>/index.php?option=com_ticketstation&controller=cart&task=saveRemark&format=raw",
-                        //POST method is used
-                        type      : "POST",
-                        // data:
-                        data      : data,
-                        // data type = json
-                        dataType  : 'json',
-                        //Do not cache the page
-                        cache     : false,
-                        // On Success trigger
-                        success   : function(html) {
-
-                            if (html.status == 666) {
-                                jQuery("#chars-remaining").html(html.msg);
-                            } else {
-                                jQuery("#chars-remaining").html(html.msg).addClass('is-saved');
-
-                                setTimeout(function() {
-                                    document.location.href = '<?php echo $link; ?>';
-                                }, 1000);
-                            }
-
-                        }
-                    });
-
+                // The order matters more than the note: say it wasn't saved, but never block checkout.
+                function noteFailed(msg) {
+                    jQuery("#chars-remaining").html(msg);
+                    setTimeout(function() {
+                        document.location.href = '<?php echo $link; ?>';
+                    }, 2500);
                 }
 
             });
@@ -254,8 +252,8 @@ $trashIcon = '<svg class="ts-icon" viewBox="0 0 16 16" aria-hidden="true"><path 
 
         <div class="ts-field ts-remarks">
             <label class="ts-label" for="remarks"><?php echo Text::_('COM_TICKETSTATION_ENTER_REMARKS'); ?></label>
-            <textarea class="ts-textarea" rows="3" id="remarks" name="remarks" maxlength="255"></textarea>
-            <p id="chars-remaining" class="ts-field__hint ts-chars-remaining" aria-live="polite"><?php echo Text::_('COM_TICKETSTATION_REMAINING'); ?> 255</p>
+            <textarea class="ts-textarea" rows="3" id="remarks" name="remarks" maxlength="255"><?php echo htmlspecialchars($this->customerNote, ENT_QUOTES, 'UTF-8'); ?></textarea>
+            <p id="chars-remaining" class="ts-field__hint ts-chars-remaining" aria-live="polite"><?php echo Text::_('COM_TICKETSTATION_REMAINING'); ?> <?php echo 255 - mb_strlen($this->customerNote); ?></p>
         </div>
 
     <?php } else { ?>

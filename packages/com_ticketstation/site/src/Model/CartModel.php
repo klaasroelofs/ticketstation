@@ -16,6 +16,7 @@ use Joomla\CMS\MVC\Model\BaseDatabaseModel;
 use Joomla\CMS\Pagination\Pagination;
 use Joomla\Database\DatabaseQuery;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Config;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\CustomerNote;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Order;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\WaitingList;
 
@@ -95,34 +96,13 @@ class CartModel extends BaseDatabaseModel
     }
 
     /**
-     * Storing the remarks to this orders.
+     * The note the customer added to this order earlier, so the cart can show it again.
      *
-     * @param $data
-     *
-     * @return bool
-     *
-     * @since 1.0.0
+     * @return string
      */
-    function storeRemark($data)
+    function getCustomerNote()
     {
-        $row = $this->getTable('remarks');
-
-        if ( ! $row->bind($data))
-        {
-            return false;
-        }
-
-        if ( ! $row->check())
-        {
-            return false;
-        }
-
-        if ( ! $row->store())
-        {
-            return false;
-        }
-
-        return true;
+        return (new CustomerNote)->get($this->ordercode);
     }
 
     /**
@@ -168,28 +148,6 @@ class CartModel extends BaseDatabaseModel
         $db->setQuery($query);
 
         return $db->loadObjectList();
-    }
-
-    /**
-     * Getting the previous remark so the record can be overwritten.
-     *
-     * @return null
-     *
-     * @since 1.0.0
-     */
-    public function getPreviousRemark()
-    {
-        $db = Factory::getContainer()->get('DatabaseDriver');
-
-        $query = $db->getQuery(true)
-            ->select($db->quoteName(['id']))
-            ->from($db->quoteName('#__ticketstation_remarks'))
-            ->where($db->quoteName('ordercode') . ' = ' . (int) $this->ordercode);
-
-        $db->setQuery($query);
-        $result = $db->loadObject();
-
-        return (!empty($result)) ? $result->id : null;
     }
 
 }

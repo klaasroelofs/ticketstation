@@ -2,6 +2,7 @@ DROP TABLE IF EXISTS `#__ticketstation_clients`;
 DROP TABLE IF EXISTS `#__ticketstation_config`;
 DROP TABLE IF EXISTS `#__ticketstation_country`;
 DROP TABLE IF EXISTS `#__ticketstation_coupons`;
+DROP TABLE IF EXISTS `#__ticketstation_customer_notes`;
 DROP TABLE IF EXISTS `#__ticketstation_events`;
 DROP TABLE IF EXISTS `#__ticketstation_history`;
 DROP TABLE IF EXISTS `#__ticketstation_invoices`;

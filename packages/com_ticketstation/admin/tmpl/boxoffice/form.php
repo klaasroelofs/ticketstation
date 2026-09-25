@@ -176,6 +176,12 @@ $history_icons = [
                         <td><?= Text::_('COM_TICKETSTATION_EMAILADDRESS') ?></td>
                         <td><small><a href="mailto:<?= $this->items->emailaddress; ?>"><?= $this->items->emailaddress; ?></a></small></td>
                     </tr>
+                    <?php if ($this->customerNote !== '') { ?>
+                        <tr>
+                            <td><?= Text::_('COM_TICKETSTATION_CUSTOMER_NOTE') ?></td>
+                            <td style="white-space: pre-line; overflow-wrap: anywhere;"><?= htmlspecialchars($this->customerNote, ENT_QUOTES, 'UTF-8'); ?></td>
+                        </tr>
+                    <?php } ?>
                     <tr>
                         <form action="<?= Route::_('index.php?option=com_ticketstation&view=boxoffice'); ?>" method="post" name="adminForm" id="adminForm1" enctype="multipart/form-data">
                             <td><?= Text::_('COM_TICKETSTATION_ORDERREFERENCE') ?></td>

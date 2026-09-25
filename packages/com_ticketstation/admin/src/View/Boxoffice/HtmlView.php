@@ -17,6 +17,7 @@ use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\View\HtmlView as BaseHtmlView;
 use Joomla\CMS\Toolbar\Toolbar;
 use Joomla\CMS\Toolbar\ToolbarHelper;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\CustomerNote;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\ticketcreator;
 
 /**
@@ -255,6 +256,7 @@ class HtmlView extends BaseHtmlView
 
         $this->data     = $data;
         $this->remark   = $remark;
+        $this->customerNote = (new CustomerNote)->get($items->ordercode ?? 0);
         $this->items    = $items;
         $this->config   = $config;
         $this->lists    = $lists;
