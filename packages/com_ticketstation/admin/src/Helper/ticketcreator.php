@@ -143,16 +143,24 @@ class ticketcreator
         ## Image for the background :) <-- JPG file is now better to use then PDF. So use it if it exists
         $background = JPATH_ADMINISTRATOR . '/components/com_ticketstation/assets/etickets/eTicket-' . $order->ticketid . '.jpg';
 
-        if(!file_exists($background))
+        if(DefaultTicketLayout::applies($order->ticketid))
+        {
+            ## No design uploaded for this ticket: use the built-in layout, and its default
+            ## fields as well when no field positions have been filled in for this ticket.
+            DefaultTicketLayout::drawBackground($pdf);
+
+            if(!DefaultTicketLayout::hasFields($order))
+            {
+                foreach(DefaultTicketLayout::defaultFields($pdf) as $key => $value)
+                {
+                    $order->$key = $value;
+                }
+            }
+        }
+        elseif(!file_exists($background))
         {
             ## This should be the source file if there is an uploaded PDF file for this event.
             $sourcefile = JPATH_ADMINISTRATOR . '/components/com_ticketstation/assets/etickets/eTicket-' . $order->ticketid . '.pdf';
-
-            ## Check if there is an updated source PDF file.
-            if(!file_exists($sourcefile))
-            {
-                $sourcefile = JPATH_ADMINISTRATOR . '/components/com_ticketstation/assets/etickets/eTicket.pdf';
-            }
 
             ## set the sourcefile
             $pdf->setSourceFile($sourcefile);
@@ -562,22 +570,8 @@ class ticketcreator
             }
 
             if ($filetype == 'SVG') {
-                /*
-                // Add logo
-                $logopath = JPATH_ADMINISTRATOR . '/components/com_ticketstation/assets/images/qrlogo.svg';
-                $logo = Logo::create($logopath)
-                    ->setResizeToWidth($qr_width / 3.3)
-                    ->setResizeToHeight(($qr_width / 3.3) / 0.8136) //factor 0,8136 komt voort uit aspect-ratio van Huibuuke logo
-                    ->setPunchoutBackground(true);
-                */
                 $writer = new SvgWriter();
             } else {
-                /*
-                // Add logo
-                $logopath = JPATH_ADMINISTRATOR . '/components/com_ticketstation/assets/images/qrlogo.png';
-                $logo = Logo::create($logopath)
-                    ->setResizeToWidth($qr_width / 4);
-                */
                 $writer = new PngWriter();
             }
 
@@ -596,8 +590,6 @@ class ticketcreator
                 ->setForegroundColor(new Color(0, 0, 0))
                 ->setBackgroundColor(new Color(255, 255, 255));
 
-            //Toevoegen logo momenteel (2-2023) uitgeschakeld ivm scanbaarheid
-            //$result = $writer->write($qrCode, $logo);
             $result = $writer->write($qrCode);
 
             // Save it to a file

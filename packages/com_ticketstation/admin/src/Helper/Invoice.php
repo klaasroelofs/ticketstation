@@ -340,18 +340,21 @@ class Invoice
 
         $logo = ! empty($logoPath)
             ? JPATH_ROOT . '/' . ltrim($logoPath, '/')
-            : JPATH_ADMINISTRATOR . '/components/com_ticketstation/assets/images/Logo_Huibuuke.png';
+            : JPATH_ADMINISTRATOR . '/components/com_ticketstation/assets/images/logo_ticketstation_for_joomla.png';
 
         if (file_exists($logo))
         {
             // Right-aligned against the same right margin the rest of the invoice uses (the
-            // totals/lines end at x=200), sized by height with the width derived from the
-            // image's own aspect ratio so it isn't stretched regardless of which logo is
-            // chosen.
-            $logoHeight   = 25;
+            // totals/lines end at x=200), fitted into a 70 x 25 mm box with the image's own
+            // aspect ratio so it isn't stretched regardless of which logo is chosen: a tall
+            // logo gets the full height, a wide one (like the default wordmark) the full width.
+            $maxWidth     = 70;
+            $maxHeight    = 25;
             $rightMargin  = 200;
             $imageSize    = @getimagesize($logo);
-            $logoWidth    = ($imageSize && $imageSize[1] > 0) ? $logoHeight * ($imageSize[0] / $imageSize[1]) : $logoHeight;
+            $ratio        = ($imageSize && $imageSize[1] > 0) ? $imageSize[0] / $imageSize[1] : 1;
+            $logoHeight   = min($maxHeight, $maxWidth / $ratio);
+            $logoWidth    = $logoHeight * $ratio;
 
             $pdf->Image($logo, $rightMargin - $logoWidth, 10, $logoWidth, $logoHeight);
         }

@@ -66,12 +66,14 @@ class TicketPreviewCreator
         ## Background image/PDF: same lookup as ticketcreator::doPDF()
         $background = JPATH_ADMINISTRATOR . '/components/com_ticketstation/assets/etickets/eTicket-' . $ticketid . '.jpg';
 
-        if (!file_exists($background)) {
-            $sourcefile = JPATH_ADMINISTRATOR . '/components/com_ticketstation/assets/etickets/eTicket-' . $ticketid . '.pdf';
+        if (DefaultTicketLayout::applies($ticketid)) {
+            DefaultTicketLayout::drawBackground($pdf);
 
-            if (!file_exists($sourcefile)) {
-                $sourcefile = JPATH_ADMINISTRATOR . '/components/com_ticketstation/assets/etickets/eTicket.pdf';
+            if (!DefaultTicketLayout::hasFields($data)) {
+                $data = array_merge($data, DefaultTicketLayout::defaultFields($pdf));
             }
+        } elseif (!file_exists($background)) {
+            $sourcefile = JPATH_ADMINISTRATOR . '/components/com_ticketstation/assets/etickets/eTicket-' . $ticketid . '.pdf';
 
             $pdf->setSourceFile($sourcefile);
             $tplIdx = $pdf->importPage(1);

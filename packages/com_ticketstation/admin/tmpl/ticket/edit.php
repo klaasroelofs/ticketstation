@@ -51,8 +51,10 @@ if(isset($this->item->ticketid))
     }
     else
     {
+        ## No uploaded design: the built-in layout (DefaultTicketLayout) is drawn instead,
+        ## which only exists as the ticket preview, not as a file to link to.
         $design_type = Text::_( 'COM_TICKETSTATION_DEFAULT_TICKET' );
-        $design = Uri::root() . 'administrator/components/com_ticketstation/assets/etickets/eTicket.pdf';
+        $design = '';
     }
 
     ## Background Image (Upcoming Events frontend)
@@ -128,8 +130,14 @@ if(isset($this->item->ticketid))
                                     <label><?= Text::_( 'COM_TICKETSTATION_TICKET_CURRENT_DESIGN' ); ?></label>
                                 </div>
                                 <div class="controls">
-                                    <a href="<?= $design; ?>" target="blank" class="btn btn-secondary">
-                                        <i class="icon-search"></i>  <?= Text::_( 'COM_TICKETSTATION_VIEW_DESIGN' ); ?></a>
+                                    <?php if ($ticket_design_present) { ?>
+                                        <a href="<?= $design; ?>" target="blank" class="btn btn-secondary">
+                                            <i class="icon-search"></i>  <?= Text::_( 'COM_TICKETSTATION_VIEW_DESIGN' ); ?></a>
+                                    <?php } else { ?>
+                                        <div class="mb-2"><strong><?= $design_type; ?></strong></div>
+                                        <button type="button" class="btn btn-secondary" onclick="openTicketPreview()">
+                                            <i class="icon-search"></i>  <?= Text::_( 'COM_TICKETSTATION_TICKET_PREVIEW' ); ?></button>
+                                    <?php } ?>
 
                                     <?php if ($ticket_design_present) { ?>
                                         <a href="<?= $remove_link_design; ?>" class="btn btn-secondary">

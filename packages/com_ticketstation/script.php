@@ -26,6 +26,15 @@ class com_ticketstationInstallerScript extends InstallerScript
         '/components/com_ticketstation/assets/css/statistics.css',
         // Menu item type for the payment result page, which is only reached through redirects.
         '/components/com_ticketstation/tmpl/paymentresult/default.xml',
+        // Old Huibuuke/HuiTickets logos, replaced by the Ticketstation logo.
+        '/components/com_ticketstation/assets/images/Logo_Huibuuke.png',
+        '/administrator/components/com_ticketstation/assets/images/Logo_Huibuuke.png',
+        '/administrator/components/com_ticketstation/assets/images/Ticketshop.png',
+        '/administrator/components/com_ticketstation/assets/images/qrlogo.jpg',
+        '/administrator/components/com_ticketstation/assets/images/qrlogo.png',
+        '/administrator/components/com_ticketstation/assets/images/qrlogo.svg',
+        // Old fallback ticket design, replaced by the drawn DefaultTicketLayout.
+        '/administrator/components/com_ticketstation/assets/etickets/eTicket.pdf',
     ];
 
     protected $deleteFolders = [

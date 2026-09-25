@@ -187,6 +187,10 @@ if (version_compare(JVERSION, '4.999.999', 'gt')) {
                     <?= Text::_('COM_TICKETSTATION_VIEW_CPANEL_COMPONENT_INFO') ?>
                 </h3>
                 <div class="card-body">
+                    <?php // White box so the dark-blue wordmark stays readable in the dark admin theme too ?>
+                    <div class="mb-3 p-3 rounded text-center" style="background: #fff;">
+                        <img src="components/com_ticketstation/assets/images/logo_ticketstation_for_joomla.png" alt="Ticketstation for Joomla!" class="img-fluid" style="max-height: 60px;">
+                    </div>
                     <table class="table itemList">
                         <tr>
                             <td>

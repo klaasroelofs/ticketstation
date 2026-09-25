@@ -7,7 +7,6 @@ use Endroid\QrCode\Encoding\Encoding;
 use Endroid\QrCode\ErrorCorrectionLevel\ErrorCorrectionLevelHigh;
 use Endroid\QrCode\ErrorCorrectionLevel\ErrorCorrectionLevelLow;
 use Endroid\QrCode\ErrorCorrectionLevel\ErrorCorrectionLevelMedium;
-use Endroid\QrCode\Logo\Logo;
 use Endroid\QrCode\QrCode;
 use Endroid\QrCode\RoundBlockSizeMode\RoundBlockSizeModeEnlarge;
 use Endroid\QrCode\RoundBlockSizeMode\RoundBlockSizeModeMargin;
@@ -122,22 +121,8 @@ class FPDI_EAN13 extends Fpdi
         }
 
         if ($filetype == 'SVG') {
-            /*
-            // Add logo
-            $logopath = JPATH_ADMINISTRATOR . '/components/com_ticketstation/assets/images/qrlogo.svg';
-            $logo = Logo::create($logopath)
-                ->setResizeToWidth($qr_width / 3.3)
-                ->setResizeToHeight(($qr_width / 3.3) / 0.8136) //factor 0,8136 komt voort uit aspect-ratio van Huibuuke logo
-                ->setPunchoutBackground(true);
-            */
             $writer = new SvgWriter();
         } else {
-            /*
-            // Add logo
-            $logopath = JPATH_ADMINISTRATOR . '/components/com_ticketstation/assets/images/qrlogo.png';
-            $logo = Logo::create($logopath)
-                ->setResizeToWidth($qr_width / 4);
-            */
             $writer = new PngWriter();
         }
 
@@ -156,8 +141,6 @@ class FPDI_EAN13 extends Fpdi
             ->setForegroundColor(new Color(0, 0, 0))
             ->setBackgroundColor(new Color(255, 255, 255));
 
-        //Toevoegen logo momenteel (2-2023) uitgeschakeld ivm scanbaarheid
-        //$result = $writer->write($qrCode, $logo);
         $result = $writer->write($qrCode);
 
         // Save it to a file

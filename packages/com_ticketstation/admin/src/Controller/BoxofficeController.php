@@ -16,22 +16,6 @@ use Joomla\CMS\MVC\Controller\BaseController;
 use Joomla\CMS\MVC\Factory\MVCFactoryInterface;
 use Joomla\Input\Input;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Order;
-use Endroid\QrCode\Color\Color;
-use Endroid\QrCode\Encoding\Encoding;
-use Endroid\QrCode\ErrorCorrectionLevel\ErrorCorrectionLevelLow;
-use Endroid\QrCode\ErrorCorrectionLevel\ErrorCorrectionLevelMedium;
-use Endroid\QrCode\ErrorCorrectionLevel\ErrorCorrectionLevelQuartile;
-use Endroid\QrCode\ErrorCorrectionLevel\ErrorCorrectionLevelHigh;
-use Endroid\QrCode\QrCode;
-use Endroid\QrCode\ImageData;
-use Endroid\QrCode\Label\Label;
-use Endroid\QrCode\Logo\Logo;
-use Endroid\QrCode\RoundBlockSizeMode\RoundBlockSizeModeMargin;
-use Endroid\QrCode\RoundBlockSizeMode\RoundBlockSizeModeNone;
-use Endroid\QrCode\RoundBlockSizeMode\RoundBlockSizeModeEnlarge;
-use Endroid\QrCode\RoundBlockSizeMode\RoundBlockSizeModeShrink;
-use Endroid\QrCode\Writer\PngWriter;
-use Endroid\QrCode\Writer\SvgWriter;
 
 /**
  * @package     Joomla.Administrator
@@ -745,62 +729,6 @@ class BoxofficeController extends BaseController {
         header('Connection: close');
         readfile($filepath . $filename);        // push it out
         exit();
-    }
-
-    function qrcodeNew()
-    {
-        $app  = Factory::getApplication();
-        $jinput = $app->getInput();
-
-
-        $barcode = 'Dit is een test!';
-        $destinationpath = JPATH_SITE . '/administrator/components/com_ticketstation/tickets/qrcodes/test.png';
-        $filetype = 'PNG';
-
-        $this->get_qr_image_with_logo($barcode, $destinationpath, $filetype);
-    }
-
-    function get_qr_image_with_logo($barcode, $destinationpath, $filetype = 'PNG')
-    {
-
-        $qr_width = 300;
-
-        if ($filetype == 'SVG') {
-            // Add logo
-            $logopath = JPATH_ADMINISTRATOR . '/components/com_ticketstation/assets/images/qrlogo.svg';
-            $logo = Logo::create($logopath)
-                ->setResizeToWidth($qr_width / 3.3)
-                ->setResizeToHeight(($qr_width / 3.3) / 0.8136) //factor 0,8136 komt voort uit aspect-ratio van Huibuuke logo
-                ->setPunchoutBackground(true);
-            $writer = new SvgWriter();
-        } else {
-            // Add logo
-            $logopath = JPATH_ADMINISTRATOR . '/components/com_ticketstation/assets/images/qrlogo.png';
-            $logo = Logo::create($logopath)
-                ->setResizeToWidth($qr_width / 4);
-            $writer = new PngWriter();
-        }
-
-        // Create QR code
-        $qrCode = QrCode::create($barcode)
-            ->setEncoding(new Encoding('UTF-8'))
-            ->setErrorCorrectionLevel(new ErrorCorrectionLevelHigh())
-            //->setErrorCorrectionLevel(new ErrorCorrectionLevelQuartile())
-            //->setErrorCorrectionLevel(new ErrorCorrectionLevelMedium())
-            //->setErrorCorrectionLevel(new ErrorCorrectionLevelLow())
-            ->setSize($qr_width)
-            ->setMargin(0)
-            ->setRoundBlockSizeMode(new RoundBlockSizeModeMargin())
-            ->setForegroundColor(new Color(0, 0, 0))
-            ->setBackgroundColor(new Color(255, 255, 255));
-
-        //Toevoegen logo momenteel (2-2023) uitgeschakeld ivm scanbaarheid
-        //unset($logo);
-        $result = $writer->write($qrCode, $logo);
-
-        // Save it to a file
-        $result->saveToFile($destinationpath);
-
     }
 
 }
