@@ -160,24 +160,16 @@ class PaymentresultController extends BaseController
 
     public function return()
     {
-        $app = Factory::getApplication();
-        $input = $app->getInput();
+        $input = Factory::getApplication()->getInput();
 
-        $orderCode = $input->getString('ordercode');
-
-        // Direct view-class instantiëren
         $view = new HtmlView();
-
-        // Layout instellen
         $view->setLayout('wait');
+        $view->orderCode    = $input->getInt('ordercode');
+        $view->contactEmail = (new Config)->getContactEmail();
 
-        // Variabelen doorgeven
-        $view->orderCode = $orderCode;
-
-        // Renderen
+        // No $app->close() here: the output ends up in the component buffer, so the
+        // site template and component.css are rendered around the wait page.
         $view->display();
-
-        $app->close();
     }
 
     public function poll()
