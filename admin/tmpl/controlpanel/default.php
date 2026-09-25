@@ -363,17 +363,16 @@ if (version_compare(JVERSION, '4.999.999', 'gt')) {
     <div class="row">
         <div class="col">
             <div class="ticketstation-cpanel-footer small mt-3 p-3 bg-light border-top border-4 d-flex flex-column">
+                <?php $productName = '<span style="color:#c53c88;"><b><em>Ticketstation for Joomla!™</em></b></span>'; ?>
                 <p class="text-muted">
-                    <span style="color:#c53c88;"><b><em>Ticketstation for Joomla!™</em></b></span> is loosely based on the original code of RD Ticketmaster by Robert Dam,
-                    which has been massively reworked and enhanced to make it Joomla! 6.x compatible.<br/>
-                    <strong>Use it to your advantage, but please do not expect close support. This extension was developed mainly as a hobby project and published for others to enjoy. I'll try to help out, fix bugs and add new functionality the best I can though.</strong>
+                    <?= Text::sprintf('COM_TICKETSTATION_CPANEL_FOOTER_ORIGIN', $productName); ?><br/>
+                    <strong><?= Text::_('COM_TICKETSTATION_CPANEL_FOOTER_SUPPORT'); ?></strong>
                 </p>
 
                 <p class="text-muted">
-                    Copyright 2022-<?= date('Y') ?> <a href="mailto:<?php echo $this->data['authorEmail']; ?>"><?php echo $this->data['author']; ?></a> Overloon. All legal rights reserved.
+                    Copyright 2022-<?= date('Y') ?> <a href="mailto:<?php echo $this->data['authorEmail']; ?>"><?php echo $this->data['author']; ?></a> Overloon. <?= Text::_('COM_TICKETSTATION_CPANEL_FOOTER_RIGHTS'); ?>
                     <br/>
-                    <span style="color:#c53c88;"><b><em>Ticketstation for Joomla!™</em></b></span> is Free Software and is distributed under the terms of the
-                    <a href="http://www.gnu.org/licenses/gpl-3.0.html">GNU General Public License</a>, version 3 or any later version.
+                    <?= Text::sprintf('COM_TICKETSTATION_CPANEL_FOOTER_LICENSE', $productName, '<a href="http://www.gnu.org/licenses/gpl-3.0.html">GNU General Public License</a>'); ?>
                 </p>
             </div>
         </div>

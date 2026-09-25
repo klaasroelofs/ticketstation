@@ -62,7 +62,7 @@ $availabilityBadge = function (object $availability) {
                             </div>
                             <div class="filter-search-actions btn-group">
                                 <button type="button" class="filter-search-actions__button btn btn-primary js-stools-btn-clear" onclick="document.getElementById('filter_state').value='3';document.getElementById('filter_ordering_t').value='0';document.getElementById('filter_ordering_venue').value='0';this.form.submit();">
-                                    Clear
+                                    <?= Text::_('JSEARCH_FILTER_CLEAR'); ?>
                                 </button>
                             </div>
 
@@ -73,7 +73,7 @@ $availabilityBadge = function (object $availability) {
                     <thead>
                         <tr>
                             <td class="w-1 text-center">
-                                <input class="form-check-input" type="checkbox" name="checkall-toggle" value="" title="Check All Items" onclick="Joomla.checkAll(this)" data-original-title="Check All">
+                                <input class="form-check-input" type="checkbox" name="checkall-toggle" value="" title="<?= Text::_('JGLOBAL_CHECK_ALL'); ?>" onclick="Joomla.checkAll(this)">
                             </td>
                             <th scope="col" class="w-1 text-center"><?= Text::_( 'COM_TICKETSTATION_PUBLISHING_STATE' ); ?></th>
                             <th scope="col" class="w-15"><?= Text::_( 'COM_TICKETSTATION_TICKETNAME' ); ?></th>

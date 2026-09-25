@@ -13,6 +13,7 @@ namespace Ticketstation\Component\Ticketstation\Administrator\Model;
 defined('_JEXEC') or die;
 
 use Joomla\CMS\Factory;
+use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\Model\BaseDatabaseModel;
 use Joomla\CMS\Pagination\Pagination;
 use Joomla\Utilities\ArrayHelper;
@@ -170,28 +171,28 @@ class ClientsModel extends BaseDatabaseModel
 
         // Bind the data.
         if (!$table->bind($data)) {
-            Factory::getApplication()->enqueueMessage('Bind failed', 'error');
+            Factory::getApplication()->enqueueMessage(Text::_('COM_TICKETSTATION_ERROR_BIND_FAILED'), 'error');
             //$this->setError($table->getError());
             return false;
         }
 
         // Check the data.
         if (!$table->check()) {
-            Factory::getApplication()->enqueueMessage('Check failed', 'error');
+            Factory::getApplication()->enqueueMessage(Text::_('COM_TICKETSTATION_ERROR_CHECK_FAILED'), 'error');
             //$this->setError($table->getError());
             return false;
         }
 
         // Store the data.
         if (!$table->store()) {
-            Factory::getApplication()->enqueueMessage('Store failed', 'error');
+            Factory::getApplication()->enqueueMessage(Text::_('COM_TICKETSTATION_ERROR_STORE_FAILED'), 'error');
             //$this->setError($table->getError());
             return false;
         }
 
         /*// Save the data >> bind/check/store.
         if (!$table->save($data)) {
-            Factory::getApplication()->enqueueMessage('Store failed', 'error');
+            Factory::getApplication()->enqueueMessage(Text::_('COM_TICKETSTATION_ERROR_STORE_FAILED'), 'error');
             //$this->setError($table->getError());
             return false;
         }*/

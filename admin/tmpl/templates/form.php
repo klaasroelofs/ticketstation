@@ -33,7 +33,7 @@ $editor = Editor::getInstance($user->getParam('editor', Factory::getConfig()->ge
             <div class="row">
                 <div class="col-lg-6">
                     <h3 class="card-header bg-primary text-white">
-                        Mail Template
+                        <?= Text::_('COM_TICKETSTATION_TEMPLATE_MAIL_TEMPLATE'); ?>
                     </h3>
                     <div class="alert alert-info mt-3">
                         <?= Text::sprintf(
@@ -62,16 +62,16 @@ $editor = Editor::getInstance($user->getParam('editor', Factory::getConfig()->ge
                 </div>
                 <div class="col-lg-6">
                     <h3 class="card-header bg-primary text-white">
-                        Dynamic Fields
+                        <?= Text::_('COM_TICKETSTATION_TEMPLATE_DYNAMIC_FIELDS'); ?>
                     </h3>
 
                     <div class="row mb-3">
                         <div class="row mb-3">
                             <div style="margin-bottom:15px;">
-                                You can use the following codes in your subject and body. Don't forget to include the brackets!
+                                <?= Text::_('COM_TICKETSTATION_TEMPLATE_DYNAMIC_FIELDS_DESC'); ?>
                             </div>
                             <h4>
-                                Client Info
+                                <?= Text::_('COM_TICKETSTATION_TEMPLATE_FIELDS_CLIENT'); ?>
                             </h4>
                             <div>
                                 {firstname}<br/>
@@ -83,7 +83,7 @@ $editor = Editor::getInstance($user->getParam('editor', Factory::getConfig()->ge
                         </div>
                         <div class="row mb-3">
                             <h4>
-                                Order Info
+                                <?= Text::_('COM_TICKETSTATION_TEMPLATE_FIELDS_ORDER'); ?>
                             </h4>
                             <div>
                                 {ordercode}<br/>
@@ -92,7 +92,7 @@ $editor = Editor::getInstance($user->getParam('editor', Factory::getConfig()->ge
                         </div>
                         <div class="row mb-3">
                             <h4>
-                                Company Info
+                                <?= Text::_('COM_TICKETSTATION_TEMPLATE_FIELDS_COMPANY'); ?>
                             </h4>
                             <div>
                                 {company_name}<br/>
@@ -102,7 +102,7 @@ $editor = Editor::getInstance($user->getParam('editor', Factory::getConfig()->ge
                         <?php if ($this->data->mailid == 3) { ?>
                             <div class="row mb-3">
                                 <h4>
-                                    Payment
+                                    <?= Text::_('COM_TICKETSTATION_TEMPLATE_FIELDS_PAYMENT'); ?>
                                 </h4>
                                 <div>
                                     {paymentlink}<br/>

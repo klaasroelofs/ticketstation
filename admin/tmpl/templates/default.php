@@ -47,12 +47,12 @@ $wa->registerAndUseStyle('ticketstation', Uri::base() . 'components\com_ticketst
                         <div class="subhead mb-3 shadow-sm" style="position: relative; z-index: 100;">
                             <div class="row">
                                 <div class="col-md-12">
-                                    <nav aria-label="Toolbar">
+                                    <nav aria-label="<?= Text::_('JTOOLBAR'); ?>">
                                         <div class="btn-toolbar d-flex" role="toolbar" id="toolbar">
                                             <joomla-toolbar-button id="toolbar-edit" task="">
                                                 <button class="button-edit btn btn-primary" type="button" onClick="location.href='<?= $link; ?>'">
                                                     <span class="icon-edit" aria-hidden="true"></span>
-                                                    Edit
+                                                    <?= Text::_('JACTION_EDIT'); ?>
                                                 </button>
                                             </joomla-toolbar-button>
                                         </div>

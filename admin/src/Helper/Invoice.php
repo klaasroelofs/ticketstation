@@ -393,7 +393,7 @@ class Invoice
 
         $pdf->SetFont($font_name, '', $font_size);
         $pdf->SetXY(10, 115);
-        $pdf->Write(0, PdfEncoding::toLatin1(Text::_('COM_TICKETSTATION_AMOUNT')));
+        $pdf->Write(0, PdfEncoding::toLatin1(Text::_('COM_TICKETSTATION_INVOICE_QUANTITY')));
         $pdf->SetXY(25, 115);
         $pdf->Write(0, PdfEncoding::toLatin1(Text::_('COM_TICKETSTATION_DESCRIPTION')));
         $pdf->SetXY(120, 115);
@@ -481,7 +481,7 @@ class Invoice
         {
             $height += 5;
             $pdf->SetXY(150, $height);
-            $pdf->Write(0, PdfEncoding::toLatin1(Text::_('COM_TICKETSTATION_TRANSACTION_COSTS')));
+            $pdf->Write(0, PdfEncoding::toLatin1(Text::_('COM_TICKETSTATION_INVOICE_TRANSACTION_COSTS')));
             $pdf->SetXY(184, $height);
             $pdf->Write(0, PdfEncoding::toLatin1(TicketstationFunctions::showprice($config->priceformat, $invoice->fees, $config->valuta)));
         }

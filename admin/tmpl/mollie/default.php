@@ -45,7 +45,7 @@ $wa->registerAndUseScript('passwordview', Uri::root() . 'media/system/js/fields/
                         <input autocomplete="off" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" data-form-type="other" readonly onfocus="this.removeAttribute('readonly');" type="password" name="api_key" id="api_key" class="form-control input-full valid form-control-success" value="<?= isset($this->config->api_key)?$this->config->api_key:null; ?>"/>
                         <button type="button" class="btn btn-primary input-password-toggle">
                             <span class="icon-fw icon-eye" aria-hidden="true"></span>
-                            <span class="visually-hidden">Show Password</span>
+                            <span class="visually-hidden"><?= Text::_('JSHOWPASSWORD'); ?></span>
                         </button>
                     </div>
                     <small class="form-text">

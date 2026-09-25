@@ -40,7 +40,7 @@ class HtmlView extends BaseHtmlView
 
         // Set up the toolbar
         ToolbarHelper::title(Text::_('COM_TICKETSTATION_VIEW_TRANSACTIONS_TITLE'), 'fa fa-credit-card');
-        ToolBarHelper::editList('edit', 'Open');
+        ToolBarHelper::editList('edit', 'JOPEN');
         ToolBarHelper::deleteList();
         ToolbarHelper::custom('','spacer');
         ToolbarHelper::custom('controlpanel', 'icon-home', '', 'COM_TICKETSTATION_VIEW_CPANEL_TITLE_SHORT', false);

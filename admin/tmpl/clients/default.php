@@ -37,21 +37,21 @@ $wa->registerAndUseStyle('searchtools', Uri::root() . 'media/templates/administr
                         <div class="btn-toolbar">
                             <div class="filter-search-bar btn-group">
                                 <div class="input-group">
-                                    <input type="text" name="searchbox" id="searchbox" value="<?= $this->lists['search'];?>" class="form-control" aria-describedby="filter_search-desc" placeholder="Search" inputmode="search">
+                                    <input type="text" name="searchbox" id="searchbox" value="<?= $this->lists['search'];?>" class="form-control" aria-describedby="filter_search-desc" placeholder="<?= Text::_('JSEARCH_FILTER'); ?>" inputmode="search">
                                     <div role="tooltip" id="filter_search-desc" class="filter-search-bar__description">
-                                        Search in First Name, Last Name and Email Address
+                                        <?= Text::_('COM_TICKETSTATION_CLIENTS_SEARCH_DESC'); ?>
                                     </div>
                                     <span class="filter-search-bar__label visually-hidden">
-                                        <label id="filter_search-lbl" for="filter_search">Search Order</label>
+                                        <label id="filter_search-lbl" for="searchbox"><?= Text::_('JSEARCH_FILTER'); ?></label>
                                     </span>
-                                    <button type="submit" class="filter-search-bar__button btn btn-primary" aria-label="Search">
+                                    <button type="submit" class="filter-search-bar__button btn btn-primary" aria-label="<?= Text::_('JSEARCH_FILTER_SUBMIT'); ?>">
                                         <span class="filter-search-bar__button-icon icon-search" aria-hidden="true"></span>
                                     </button>
                                 </div>
                             </div>
                             <div class="filter-search-actions btn-group">
                                 <button type="button" class="filter-search-actions__button btn btn-primary js-stools-btn-clear" onclick="document.getElementById('searchbox').value='';this.form.submit();">
-                                    Clear
+                                    <?= Text::_('JSEARCH_FILTER_CLEAR'); ?>
                                 </button>
                             </div>
                         </div>
@@ -62,7 +62,7 @@ $wa->registerAndUseStyle('searchtools', Uri::root() . 'media/templates/administr
                     <thead>
                         <tr>
                             <td class="w-1 text-center">
-                                <input class="form-check-input" type="checkbox" name="checkall-toggle" value="" title="Check All Items" onclick="Joomla.checkAll(this)" data-original-title="Check All">
+                                <input class="form-check-input" type="checkbox" name="checkall-toggle" value="" title="<?= Text::_('JGLOBAL_CHECK_ALL'); ?>" onclick="Joomla.checkAll(this)">
                             </td>
                             <th scope="col" class="w-1 text-center"><?php echo Text::_( 'COM_TICKETSTATION_PUBLISHING_STATE' ); ?></th>
                             <th scope="col" class="w-3 d-none d-lg-table-cell text-center"><?php echo Text::_( 'COM_TICKETSTATION_CLIENTID' ); ?></th>

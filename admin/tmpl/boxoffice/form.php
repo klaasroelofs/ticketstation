@@ -226,36 +226,36 @@ $history_icons = [
                     <div class="subhead mb-3 shadow-sm" style="position: relative; z-index: 100; box-shadow: none !important; background-image: none;">
                         <div class="row">
                             <div class="col-md-12">
-                                <nav aria-label="Toolbar">
+                                <nav aria-label="<?= Text::_('JTOOLBAR'); ?>">
                                     <div class="btn-toolbar d-flex" role="toolbar" id="toolbar">
                                         <joomla-toolbar-button id="toolbar-eye-close" task="resetscanstate">
                                             <button class="button-eye-close btn btn-primary" type="button">
                                                 <span class="icon-eye-close" aria-hidden="true"></span>
-                                                Not Scanned</button>
+                                                <?= Text::_('COM_TICKETSTATION_BOXOFFICE_MARK_NOT_SCANNED'); ?></button>
                                         </joomla-toolbar-button>
 
                                         <joomla-toolbar-button id="toolbar-eye-open" task="markasscanned">
                                             <button class="button-eye-open btn btn-primary" type="button">
                                                 <span class="icon-eye-open" aria-hidden="true"></span>
-                                                Scanned</button>
+                                                <?= Text::_('COM_TICKETSTATION_BOXOFFICE_MARK_SCANNED'); ?></button>
                                         </joomla-toolbar-button>
 
                                         <joomla-toolbar-button id="toolbar-lock" task="blocked">
                                             <button class="button-lock btn btn-primary" type="button">
                                                 <span class="icon-lock" aria-hidden="true"></span>
-                                                Block</button>
+                                                <?= Text::_('COM_TICKETSTATION_BOXOFFICE_BLOCK'); ?></button>
                                         </joomla-toolbar-button>
 
                                         <joomla-toolbar-button id="toolbar-unlock" task="unlock">
                                             <button class="button-unlock btn btn-primary" type="button">
                                                 <span class="icon-unlock" aria-hidden="true"></span>
-                                                Unblock</button>
+                                                <?= Text::_('COM_TICKETSTATION_BOXOFFICE_UNBLOCK'); ?></button>
                                         </joomla-toolbar-button>
 
                                         <joomla-toolbar-button id="toolbar-trash" task="removeSingleOrder">
                                             <button class="button-trash btn btn-primary" type="button">
                                                 <span class="icon-trash" aria-hidden="true"></span>
-                                                Remove Ticket</button>
+                                                <?= Text::_('COM_TICKETSTATION_BOXOFFICE_REMOVE_TICKET'); ?></button>
                                         </joomla-toolbar-button>
                                     </div>
                                 </nav>
@@ -269,7 +269,7 @@ $history_icons = [
                         <thead>
                             <tr>
                                 <td class="w-1 text-center">
-                                    <input class="form-check-input" type="checkbox" name="checkall-toggle" value="" title="Check All Items" onclick="Joomla.checkAll(this)" data-original-title="Check All">
+                                    <input class="form-check-input" type="checkbox" name="checkall-toggle" value="" title="<?= Text::_('JGLOBAL_CHECK_ALL'); ?>" onclick="Joomla.checkAll(this)">
                                 </td>
                                 <th scope="col" class="w-3"><?= Text::_( 'COM_TICKETSTATION_TICKET_ID' ); ?></th>
                                 <th scope="col" class="w-10"><?= Text::_( 'COM_TICKETSTATION_BOXOFFICE_EVENT_TICKET_NAME' ); ?></th>
@@ -367,7 +367,7 @@ $history_icons = [
                 foreach (array_reverse($history) as $entry) {
 
                     // $entry->created is stored in UTC (History::log()); convert to the site/user timezone for display.
-                    $day = Date::_($entry->created, 'l d F Y');
+                    $day = Date::_($entry->created, 'l d F Y', true);
 
                     if ($day !== $current_day) {
                         $current_day = $day;

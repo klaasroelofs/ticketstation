@@ -155,7 +155,7 @@ if(isset($this->item->ticketid))
                                         <a href="<?= $background_img; ?>" target="blank" class="btn btn-secondary">
                                             <i class="icon-search"></i>  <?= Text::_( 'COM_TICKETSTATION_VIEW_BACKGROUND_UPCOMING' ); ?></a>
                                     <?php } else { ?>
-                                        <div><strong>No image present</strong></div>
+                                        <div><strong><?= Text::_('COM_TICKETSTATION_NO_IMAGE_PRESENT'); ?></strong></div>
                                     <?php } ?>
                                     <?php if ($background_img_present) { ?>
                                         <a href="<?= $remove_link_bg; ?>" class="btn btn-secondary">
@@ -307,7 +307,7 @@ if(isset($this->item->ticketid))
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="ticketPreviewModalLabel"><?= Text::_('COM_TICKETSTATION_TICKET_PREVIEW'); ?></h5>
-                <button type="button" class="btn-close" onclick="closeTicketPreview()" aria-label="Close"></button>
+                <button type="button" class="btn-close" onclick="closeTicketPreview()" aria-label="<?= Text::_('JCLOSE'); ?>"></button>
             </div>
             <div class="modal-body p-0" style="min-height: 60vh;">
                 <div id="ticketPreviewLoading" class="text-center p-5">

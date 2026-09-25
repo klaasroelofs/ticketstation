@@ -108,7 +108,7 @@ class SeatplansettingsModel extends AdminModel
 
         // Save the data.
         if (!$table->save($data)) {
-            $app->enqueueMessage('Store failed ' . $table->getError(), 'error');
+            $app->enqueueMessage(Text::_('COM_TICKETSTATION_ERROR_STORE_FAILED') . ' ' . $table->getError(), 'error');
             return false;
         }
 

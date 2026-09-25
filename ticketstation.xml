@@ -90,6 +90,7 @@
             <language tag="en-GB">language/en-GB/com_ticketstation.ini</language>
             <language tag="en-GB">language/en-GB/com_ticketstation.sys.ini</language>
             <language tag="nl-NL">language/nl-NL/com_ticketstation.ini</language>
+            <language tag="nl-NL">language/nl-NL/com_ticketstation.sys.ini</language>
         </languages>
     </administration>
 

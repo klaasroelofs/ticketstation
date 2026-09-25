@@ -105,21 +105,21 @@ class TicketModel extends AdminModel
 
         // Bind the data.
         if (!$table->bind($data)) {
-            $app->enqueueMessage('Bind failed', 'error');
+            $app->enqueueMessage(Text::_('COM_TICKETSTATION_ERROR_BIND_FAILED'), 'error');
             //$this->setError($table->getError());
             return false;
         }
 
         // Check the data.
         if (!$table->check()) {
-            $app->enqueueMessage('Check failed', 'error');
+            $app->enqueueMessage(Text::_('COM_TICKETSTATION_ERROR_CHECK_FAILED'), 'error');
             //$this->setError($table->getError());
             return false;
         }
 
         // Store the data.
         if (!$table->store()) {
-            $app->enqueueMessage('Store failed ' . $table->getError(), 'error');
+            $app->enqueueMessage(Text::_('COM_TICKETSTATION_ERROR_STORE_FAILED') . ' ' . $table->getError(), 'error');
             //$app->enqueueMessage('<pre>' . print_r($data, 1) . '</pre>', 'error');
             //$this->setError($table->getError());
             return false;

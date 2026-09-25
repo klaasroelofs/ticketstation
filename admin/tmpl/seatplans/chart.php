@@ -301,8 +301,8 @@ if (file_exists($image)) {
                     <div class="refreshdiv" style="margin-top:15px;border:1px solid #aaa; padding: 5px 0px 5px 0px; border-radius: 3px; background-color: #ddd;">
                         <div style="margin-bottom:8px;font-size:16px;font-weight:bold;width: 100%; padding:8px 0px 4px 5px;color:#3071a9;"><?= Text::_('COM_TICKETSTATION_REALTIME_VIEW'); ?>:</div>
                         <div style="text-align:center;">
-                            <div type="button" class="btn btn-primary startrefresh">Start</div>
-                            <div type="button" class="btn btn-primary stoprefresh">Stop</div>
+                            <div type="button" class="btn btn-primary startrefresh"><?= Text::_('COM_TICKETSTATION_REALTIME_START'); ?></div>
+                            <div type="button" class="btn btn-primary stoprefresh"><?= Text::_('COM_TICKETSTATION_REALTIME_STOP'); ?></div>
                         </div>
                         <div style="padding:15px 0 15px 0;text-align:center;"><span class="refreshmsg" style="opacity:0.25;font-weight:bold;padding:5px;border:1px solid #555;border-radius: 3px;background-color:#fff;color:#555;"><?= Text::_('COM_TICKETSTATION_REALTIME_ACTIVE'); ?></span></div>
                     </div>
@@ -505,7 +505,7 @@ if (file_exists($image)) {
                 //success
                 success: function (response) {
                     if(response === "success"){
-                        $("#respond_html").text('Seat Position has been saved to the database.').addClass('success_msg').fadeIn(1000);
+                        $("#respond_html").text(<?= json_encode(Text::_('COM_TICKETSTATION_SEAT_POSITION_SAVED')); ?>).addClass('success_msg').fadeIn(1000);
                         setTimeout(function(){ $('#respond_html').fadeOut(1000); }, 2000);
                         setTimeout(function(){ $('#respond_html').removeClass('success_msg'); }, 3000);
                     }else{
@@ -706,7 +706,7 @@ if (file_exists($image)) {
         }
 
         if (countsold > 0) {
-            $("#respond_html").text('There are booked seats present! Deletion of seats not possible.').addClass('danger_msg').hide().fadeIn(1000);
+            $("#respond_html").text(<?= json_encode(Text::_('COM_TICKETSTATION_SEATS_BOOKED_NO_DELETE')); ?>).addClass('danger_msg').hide().fadeIn(1000);
             setTimeout(function(){ $('#respond_html').fadeOut(1000); }, 4000);
             setTimeout(function(){ $('#respond_html').removeClass('danger_msg'); }, 6000);
             return false;
@@ -736,7 +736,7 @@ if (file_exists($image)) {
                 const htmlparsed = JSON.parse(html);
 
                 if (htmlparsed.result === 0) {
-                    $("#respond_html").text('Failed to delete current seat from database.').addClass('danger_msg').hide().fadeIn(1000);
+                    $("#respond_html").text(<?= json_encode(Text::_('COM_TICKETSTATION_SEAT_DELETE_FAILED')); ?>).addClass('danger_msg').hide().fadeIn(1000);
                     setTimeout(function(){ $('#respond_html').fadeOut(1000); }, 2000);
                     setTimeout(function(){ $('#respond_html').removeClass('danger_msg'); }, 4000);
                 } else {

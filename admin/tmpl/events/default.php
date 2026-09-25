@@ -63,7 +63,7 @@ for ($i = 0; $i < count($this->unfinished); $i++)
                     <thead>
                         <tr>
                             <td class="w-1 text-center">
-                                <input class="form-check-input" type="checkbox" name="checkall-toggle" value="" title="Check All Items" onclick="Joomla.checkAll(this)" data-original-title="Check All">
+                                <input class="form-check-input" type="checkbox" name="checkall-toggle" value="" title="<?= Text::_('JGLOBAL_CHECK_ALL'); ?>" onclick="Joomla.checkAll(this)">
                             </td>
                             <th scope="col" class="w-1 text-center"><?php echo Text::_( 'COM_TICKETSTATION_PUBLISHING_STATE' ); ?></th>
                             <th scope="col" class="w-15"><?php echo Text::_( 'COM_TICKETSTATION_EVENTNAME' ); ?></th>

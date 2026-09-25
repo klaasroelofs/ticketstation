@@ -19,7 +19,11 @@ defined('_JEXEC') or die('Restricted access');
 
 class Date
 {
-    public static function _($date = null, $format = '')
+    /**
+     * A UTC date in the user's (or site's) timezone. Day and month names (l, D, F, M) stay
+     * English unless $translate is true.
+     */
+    public static function _($date = null, $format = '', $translate = false)
     {
         if ($date == '0000-00-00')
         {
@@ -40,7 +44,7 @@ class Date
         $date = Factory::getDate($date, 'UTC');
         $date->setTimezone(new \DateTimeZone($user->getParam('timezone', $config->get('offset'))));
 
-        return $date->format($format, true, false);
+        return $date->format($format, true, $translate);
     }
 
     /**

@@ -41,7 +41,7 @@ $wa->registerAndUseStyle('ticketstation', Uri::base() . 'components\com_ticketst
                     <thead>
                     <tr>
                         <td class="w-1 text-center">
-                            <input class="form-check-input" type="checkbox" name="checkall-toggle" value="" title="Check All Items" onclick="Joomla.checkAll(this)" data-original-title="Check All">
+                            <input class="form-check-input" type="checkbox" name="checkall-toggle" value="" title="<?= Text::_('JGLOBAL_CHECK_ALL'); ?>" onclick="Joomla.checkAll(this)">
                         </td>
                         <th scope="col" class="w-1 text-center"><?php echo Text::_( 'COM_TICKETSTATION_PUBLISHING_STATE' ); ?></th>
                         <th scope="col" class="w-15"><?php echo Text::_( 'COM_TICKETSTATION_TICKETNAME' ); ?></th>
@@ -76,12 +76,12 @@ $wa->registerAndUseStyle('ticketstation', Uri::base() . 'components\com_ticketst
                                 <?= $row->ticketname; ?> <small>(<?= $row->ticketcode; ?>)</small>
                             </td>
                             <td class="text-center">
-                                <a href="<?= $link_settings; ?>" title="settings" class="btn btn-primary">
+                                <a href="<?= $link_settings; ?>" class="btn btn-primary">
                                     <?= Text::_( 'COM_TICKETSTATION_SEATPLAN_SETTINGS' ); ?>
                                 </a>
                             </td>
                             <td class="text-center">
-                                <a href="<?= $link_seatchart; ?>" title="settings" class="btn btn-primary">
+                                <a href="<?= $link_seatchart; ?>" class="btn btn-primary">
                                     <?= Text::_( 'COM_TICKETSTATION_SEATPLAN_CHART' ); ?>
                                 </a>
                             </td>

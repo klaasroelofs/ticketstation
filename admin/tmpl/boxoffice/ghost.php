@@ -237,7 +237,7 @@ $reason_key = $ghost->reason === 'unfinished'
                 foreach (array_reverse($history) as $entry) {
 
                     // $entry->created is stored in UTC (History::log()); convert to the site/user timezone for display.
-                    $day = Date::_($entry->created, 'l d F Y');
+                    $day = Date::_($entry->created, 'l d F Y', true);
 
                     if ($day !== $current_day) {
                         $current_day = $day;

@@ -86,7 +86,7 @@ $editor = Editor::getInstance()
             <div class="row mb-3">
                 <table class="table" style="max-width: 370px;table-layout: fixed;overflow: hidden;">
                     <thead>
-                        <th style="width:75%;"><div style="font-size:120%;">Event</div><small class="form-text"><?= Text::_('COM_TICKETSTATION_SCANNING_WARNING_EVENT') ?></small></th>
+                        <th style="width:75%;"><div style="font-size:120%;"><?= Text::_('COM_TICKETSTATION_EVENT'); ?></div><small class="form-text"><?= Text::_('COM_TICKETSTATION_SCANNING_WARNING_EVENT') ?></small></th>
                         <th></th>
                     </thead>
                     <?php
@@ -110,7 +110,7 @@ $editor = Editor::getInstance()
 
 
                     <thead>
-                    <th><div style="font-size:120%;">Ticket</div></th>
+                    <th><div style="font-size:120%;"><?= Text::_('COM_TICKETSTATION_TICKET'); ?></div></th>
                     <th></th>
                     </thead>
                     <?php

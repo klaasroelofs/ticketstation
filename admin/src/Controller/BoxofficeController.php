@@ -712,7 +712,7 @@ class BoxofficeController extends BaseController {
             if (file_exists($single_ticket)) {
                 $filename = 'eTicket-' . $orderids[0]->orderid . '.pdf';
             } else {
-                $app->enqueueMessage('Ticket not present on server! Please create first.', 'error');
+                $app->enqueueMessage(Text::_('COM_TICKETSTATION_TICKET_PDF_NOT_PRESENT'), 'error');
                 $app->redirect('index.php?option=com_ticketstation&controller=boxoffice&task=edit&cid=' . $ordercode);
             }
         }

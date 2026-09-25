@@ -13,6 +13,7 @@ namespace Ticketstation\Component\Ticketstation\Administrator\Model;
 defined('_JEXEC') or die;
 
 use Joomla\CMS\Factory;
+use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\Model\BaseDatabaseModel;
 
 /**
@@ -66,7 +67,7 @@ class TemplatesModel extends BaseDatabaseModel
         $table = $this->getTable();
 
         if (!$table->save($data)) {
-            Factory::getApplication()->enqueueMessage('Save failed', 'error');
+            Factory::getApplication()->enqueueMessage(Text::_('COM_TICKETSTATION_ERROR_SAVE_FAILED'), 'error');
             $this->setError($table->getError());
             return false;
         }

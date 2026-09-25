@@ -63,7 +63,7 @@ class HtmlView extends BaseHtmlView
             ->icon('fa fa-copy')
             ->listCheck(true);
 
-        $childBar->delete('tickets.resetscanstate', 'Reset scans')
+        $childBar->delete('tickets.resetscanstate', 'COM_TICKETSTATION_TOOLBAR_RESET_SCANS')
             ->icon('fa fa-eye-slash')
             ->message('COM_TICKETSTATION_CONFIRM_RESET_SCANS')
             ->listCheck(true);
