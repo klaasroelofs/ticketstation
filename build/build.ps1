@@ -44,6 +44,19 @@ function Get-ManifestVersion([string] $path) {
     (Get-Manifest $path).SelectSingleNode('/extension/version').InnerText
 }
 
+# The package, component and module always carry the same version, so the number in Joomla's
+# update screen, the Control Panel and the release tag is one and the same. Every release bumps
+# all three manifests together, even when only one extension changed.
+$versions = [ordered] @{
+    'pkg_ticketstation.xml'        = Get-ManifestVersion (Join-Path $RepoRoot 'pkg_ticketstation.xml')
+    'ticketstation.xml'            = Get-ManifestVersion (Join-Path $ComponentDir 'ticketstation.xml')
+    'mod_ticketstation_basket.xml' = Get-ManifestVersion (Join-Path $ModuleDir 'mod_ticketstation_basket.xml')
+}
+if (@($versions.Values | Select-Object -Unique).Count -ne 1) {
+    $list = ($versions.GetEnumerator() | ForEach-Object { "$($_.Key) $($_.Value)" }) -join ', '
+    throw "The package, component and module versions must be equal: $list"
+}
+
 # Zip a folder with the manifest at the archive root. Entry names use forward slashes,
 # which Joomla on Linux needs (Compress-Archive in Windows PowerShell 5.1 writes backslashes).
 function New-Zip([string] $sourceDir, [string] $zipPath) {

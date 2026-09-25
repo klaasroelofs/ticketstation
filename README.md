@@ -28,12 +28,12 @@ This writes `dist/pkg_ticketstation_<version>.zip` and the update feed `dist/pkg
 
 ## Releasing
 
-1. Raise `<version>` in `pkg_ticketstation.xml` (and in the manifest of every extension that changed), commit and push.
-2. Tag the commit with the package version and push the tag:
+1. Raise `<version>` (and `<creationDate>`) to the same new version in all three manifests: `pkg_ticketstation.xml`, `packages/com_ticketstation/ticketstation.xml` and `packages/mod_ticketstation_basket/mod_ticketstation_basket.xml`, also when only one extension changed. The build refuses to run when they differ. Commit and push.
+2. Tag the commit with that version and push the tag:
 
    ```
-   git tag v2.3.9
-   git push origin v2.3.9
+   git tag v2.4.2
+   git push origin v2.4.2
    ```
 
 The [release workflow](.github/workflows/release.yml) then builds the package and publishes a GitHub release with the zip and the update feed. Joomla sites read the feed from the latest release. A tag with a suffix, such as `v2.4.0-rc1`, becomes a pre-release, which is not offered to sites as an update.
