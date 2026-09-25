@@ -25,9 +25,9 @@ $document->addScript('https://code.jquery.com/ui/1.13.2/jquery-ui.js');
 $document->addStyleSheet(Uri::base() . 'components/com_ticketstation/assets/css/seatchart.css');
 
 ## The image of the seat chart
-$seatchart_png = '/administrator/components/com_ticketstation/assets/seatcharts/seatchart'.$this->data->ticketid.'.png';
+$seatchart_png = Uri::root(true) . '/administrator/components/com_ticketstation/assets/seatcharts/seatchart'.$this->data->ticketid.'.png';
 $image_png = JPATH_ADMINISTRATOR.DIRECTORY_SEPARATOR.'components'.DIRECTORY_SEPARATOR.'com_ticketstation'.DIRECTORY_SEPARATOR.'assets'.DIRECTORY_SEPARATOR.'seatcharts'.DIRECTORY_SEPARATOR.'seatchart'.$this->data->ticketid.'.png';
-$seatchart_jpg = '/administrator/components/com_ticketstation/assets/seatcharts/seatchart'.$this->data->ticketid.'.jpg';
+$seatchart_jpg = Uri::root(true) . '/administrator/components/com_ticketstation/assets/seatcharts/seatchart'.$this->data->ticketid.'.jpg';
 $image_jpg = JPATH_ADMINISTRATOR.DIRECTORY_SEPARATOR.'components'.DIRECTORY_SEPARATOR.'com_ticketstation'.DIRECTORY_SEPARATOR.'assets'.DIRECTORY_SEPARATOR.'seatcharts'.DIRECTORY_SEPARATOR.'seatchart'.$this->data->ticketid.'.jpg';
 
 if (file_exists($image_png)) {

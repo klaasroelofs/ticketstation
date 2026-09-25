@@ -31,9 +31,9 @@ $session = Factory::getApplication()->getSession();
 $ordercode = $session->get('ordercode');
 
 ## The image of the seat chart
-$seatchart_png = '/administrator/components/com_ticketstation/assets/seatcharts/seatchart'.$this->ticketdetails->ticketid.'.png';
+$seatchart_png = Uri::root(true) . '/administrator/components/com_ticketstation/assets/seatcharts/seatchart'.$this->ticketdetails->ticketid.'.png';
 $image_png = JPATH_ADMINISTRATOR.DIRECTORY_SEPARATOR.'components'.DIRECTORY_SEPARATOR.'com_ticketstation'.DIRECTORY_SEPARATOR.'assets'.DIRECTORY_SEPARATOR.'seatcharts'.DIRECTORY_SEPARATOR.'seatchart'.$this->ticketdetails->ticketid.'.png';
-$seatchart_jpg = '/administrator/components/com_ticketstation/assets/seatcharts/seatchart'.$this->ticketdetails->ticketid.'.jpg';
+$seatchart_jpg = Uri::root(true) . '/administrator/components/com_ticketstation/assets/seatcharts/seatchart'.$this->ticketdetails->ticketid.'.jpg';
 $image_jpg = JPATH_ADMINISTRATOR.DIRECTORY_SEPARATOR.'components'.DIRECTORY_SEPARATOR.'com_ticketstation'.DIRECTORY_SEPARATOR.'assets'.DIRECTORY_SEPARATOR.'seatcharts'.DIRECTORY_SEPARATOR.'seatchart'.$this->ticketdetails->ticketid.'.jpg';
 
 if (file_exists($image_png)) {
