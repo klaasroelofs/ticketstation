@@ -538,6 +538,7 @@ class BoxofficeModel extends ListModel
             'paid'       => $first->paid,
             'reason'     => $ghost['reason'],
             'removed_at' => $ghost['created'],
+            'note'       => (new CustomerNote)->get($this->id),
             'lines'      => $orderLines,
             'total'      => $total,
         ];

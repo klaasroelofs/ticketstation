@@ -161,6 +161,12 @@ $reason_key = $ghost->reason === 'unfinished'
                             <?php } ?>
                         </td>
                     </tr>
+                    <?php if ($ghost->note !== '') { ?>
+                        <tr>
+                            <td><?= Text::_('COM_TICKETSTATION_CUSTOMER_NOTE') ?></td>
+                            <td style="white-space: pre-line; overflow-wrap: anywhere;"><?= htmlspecialchars($ghost->note, ENT_QUOTES, 'UTF-8'); ?></td>
+                        </tr>
+                    <?php } ?>
                 </table>
             </div>
         </div>

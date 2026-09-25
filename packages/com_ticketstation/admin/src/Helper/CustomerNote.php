@@ -72,6 +72,37 @@ class CustomerNote
     }
 
     /**
+     * Moves a note to the order's final ordercode when the temporary cart ordercode is replaced
+     * (Order::update()). Ordercodes can be reused, e.g. the code of an order the ticketcleaner
+     * removed (its note stays for the ghost view in the Box Office), so an older note under the
+     * new code is removed first rather than showing up on the new order.
+     *
+     * @return bool
+     */
+    public function move($from, $to)
+    {
+        $from = (int) $from;
+        $to   = (int) $to;
+
+        if ($from === $to) {
+            return true;
+        }
+
+        $this->remove($to);
+
+        $db = Factory::getContainer()->get('DatabaseDriver');
+
+        $query = $db->getQuery(true)
+            ->update($db->quoteName('#__ticketstation_customer_notes'))
+            ->set($db->quoteName('ordercode') . ' = ' . $to)
+            ->where($db->quoteName('ordercode') . ' = ' . $from);
+
+        $db->setQuery($query);
+
+        return (bool) $db->execute();
+    }
+
+    /**
      * Removes the note of an order, if there is one.
      *
      * @return bool

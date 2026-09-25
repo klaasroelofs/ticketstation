@@ -241,6 +241,9 @@ class Order
             return false;
         }
 
+        // The note the customer added in the cart was saved under the temporary ordercode.
+        (new CustomerNote)->move($ordercode, $new_ordercode);
+
         // This is the point where the temporary (session) ordercode used while building the
         // cart/reservation becomes the order's real, final ordercode - so this is where "order
         // created" belongs, not at the individual add-to-cart/add-ticket-row calls (those still
