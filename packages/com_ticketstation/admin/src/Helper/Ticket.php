@@ -1,12 +1,11 @@
 <?php
 /**
- * @package     ${NAMESPACE}
- * @subpackage
+ * @package     Ticketstation
+ * @subpackage  com_ticketstation
  *
- * @copyright   A copyright
- * @license     A "Slug" license name e.g. GPL2
+ * @copyright   Copyright (C) 2026 Klaas Roelofs. All rights reserved.
+ * @license     GNU General Public License version 3; see LICENSE
  */
-
 
 namespace Ticketstation\Component\Ticketstation\Administrator\Helper;
 
@@ -16,15 +15,6 @@ use Joomla\Filesystem\File;
 use Joomla\CMS\Uri\Uri;
 
 defined('_JEXEC') or die;
-
-
-/**
- * @package     Joomla.Administrator
- * @subpackage  com_ticketstation
- *
- * @copyright   Copyright (C) 2022 Klaas Roelofs. All rights reserved.
- * @license     GNU General Public License version 3; see LICENSE
- */
 
 
 ## no direct access

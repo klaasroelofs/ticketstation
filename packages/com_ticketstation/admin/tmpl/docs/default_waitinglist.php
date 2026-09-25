@@ -1,17 +1,18 @@
 <?php
-
-use Joomla\CMS\Language\Text;
-
 /**
- * @package     Joomla.Administrator
+ * @package     Ticketstation
  * @subpackage  com_ticketstation
  *
- * @copyright   Copyright (C) 2022 Klaas Roelofs. All rights reserved.
+ * @copyright   Copyright (C) 2026 Klaas Roelofs. All rights reserved.
  * @license     GNU General Public License version 3; see LICENSE
- *
+ */
+
+/**
  * Waiting list topic on the central documentation page. Seated events are
  * intentionally out of scope for this feature.
  */
+
+use Joomla\CMS\Language\Text;
 
 // No direct access to this file
 defined('_JEXEC') or die('Restricted Access');

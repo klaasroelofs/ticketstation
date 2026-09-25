@@ -93,6 +93,11 @@ try {
     $comStage = Join-Path $staging 'com_ticketstation'
     Copy-Tree $ComponentDir $comStage
     Remove-Item (Join-Path $comStage 'site\composer.json'), (Join-Path $comStage 'site\composer.lock') -ErrorAction SilentlyContinue
+    # Composer installs the Mollie library with its example scripts and dev tooling config. They are
+    # not used at runtime, and the examples would be directly web-reachable PHP files on the site.
+    $mollieDir = Join-Path $comStage 'site\vendor\mollie\mollie-api-php'
+    Remove-Item (Join-Path $mollieDir 'examples') -Recurse -Force -ErrorAction SilentlyContinue
+    Remove-Item (Join-Path $mollieDir 'phpstan.neon'), (Join-Path $mollieDir 'phpstan-baseline.neon') -ErrorAction SilentlyContinue
     $comVersion = Get-ManifestVersion (Join-Path $comStage 'ticketstation.xml')
     New-Zip $comStage (Join-Path $pkgRoot 'packages\com_ticketstation.zip')
 

@@ -1,4 +1,11 @@
 <?php
+/**
+ * @package     Ticketstation
+ * @subpackage  com_ticketstation
+ *
+ * @copyright   Copyright (C) 2026 Klaas Roelofs. All rights reserved.
+ * @license     GNU General Public License version 3; see LICENSE
+ */
 
 namespace setasign\Fpdi;
 
@@ -13,7 +20,6 @@ use Endroid\QrCode\RoundBlockSizeMode\RoundBlockSizeModeMargin;
 use Endroid\QrCode\RoundBlockSizeMode\RoundBlockSizeModeNone;
 use Endroid\QrCode\Writer\PngWriter;
 use Endroid\QrCode\Writer\SvgWriter;
-use Joomla\Filesystem\Folder;
 
 defined('_JEXEC') or die('Restricted access');
 
@@ -72,45 +78,12 @@ class FPDI_EAN13 extends Fpdi
         ## Creating the QR Code for printing.
         if ($pdf_use_qrcode == true) {
 
-            //$this->get_qr_image($qr_width,$qr_background,$new_barcode);
-
             $this->get_qr_image_with_logo($new_barcode, $qr_width);
 
         }
 
         return $new_barcode;
 
-    }
-
-    function get_qr_image($qr_width,$qr_background,$new_barcode,$localfile = '')
-    {
-        $remoteFile ='https://api.qrserver.com/v1/create-qr-code/?size='.$qr_width.'x'.$qr_width.'&bgcolor='.$qr_background.'&data='.$new_barcode;
-        if ($localfile == '') {
-            $localfile = JPATH_ADMINISTRATOR . '/components/com_ticketstation/assets/cache/' . $new_barcode . '.png';
-        }
-
-        ## Using the cache folder to save the file.
-        $cache_folder = JPATH_ADMINISTRATOR . '/components/com_ticketstation/assets/cache';
-
-        ## If the folder doesn't exsist.
-        if ( !is_dir($cache_folder) )
-        {
-            ## Making the folder right now.
-            ## Now move the file away for security reasons
-            Folder::create($cache_folder, 0755);
-        }
-
-        $ch = curl_init();
-        $timeout = 0;
-        curl_setopt ($ch, CURLOPT_URL, $remoteFile);
-        curl_setopt ($ch, CURLOPT_CONNECTTIMEOUT, $timeout);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-        curl_setopt($ch, CURLOPT_BINARYTRANSFER, 1);
-        $image = curl_exec($ch);
-        curl_close($ch);
-        $f = fopen($localfile, 'w');
-        fwrite($f, $image);
-        fclose($f);
     }
 
     function get_qr_image_with_logo($barcode, $qr_width, $destinationpath='', $filetype = 'PNG')

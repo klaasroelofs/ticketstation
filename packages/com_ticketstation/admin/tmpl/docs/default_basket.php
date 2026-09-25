@@ -1,18 +1,19 @@
 <?php
-
-use Joomla\CMS\Language\Text;
-
 /**
- * @package     Joomla.Administrator
+ * @package     Ticketstation
  * @subpackage  com_ticketstation
  *
- * @copyright   Copyright (C) 2022 Klaas Roelofs. All rights reserved.
+ * @copyright   Copyright (C) 2026 Klaas Roelofs. All rights reserved.
  * @license     GNU General Public License version 3; see LICENSE
- *
+ */
+
+/**
  * Basket module topic on the central documentation page. The module itself
  * (mod_ticketstation_basket) ships in the Ticketstation package, next to this
  * component; the event views only keep the itemcount/updatecart AJAX calls it relies on.
  */
+
+use Joomla\CMS\Language\Text;
 
 // No direct access to this file
 defined('_JEXEC') or die('Restricted Access');

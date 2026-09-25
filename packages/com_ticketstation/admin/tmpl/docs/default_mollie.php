@@ -1,18 +1,19 @@
 <?php
-
-use Joomla\CMS\Language\Text;
-
 /**
- * @package     Joomla.Administrator
+ * @package     Ticketstation
  * @subpackage  com_ticketstation
  *
- * @copyright   Copyright (C) 2022 Klaas Roelofs. All rights reserved.
+ * @copyright   Copyright (C) 2026 Klaas Roelofs. All rights reserved.
  * @license     GNU General Public License version 3; see LICENSE
- *
+ */
+
+/**
  * Mollie topic on the central documentation page: getting a Mollie account, the
  * settings on the Mollie screen (view=mollie) and how a payment flows through
  * site PaymentController (makepayment, IPNProcessPayment, mollie).
  */
+
+use Joomla\CMS\Language\Text;
 
 // No direct access to this file
 defined('_JEXEC') or die('Restricted Access');

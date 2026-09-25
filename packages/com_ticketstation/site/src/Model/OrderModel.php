@@ -1,5 +1,11 @@
 <?php
-
+/**
+ * @package     Ticketstation
+ * @subpackage  com_ticketstation
+ *
+ * @copyright   Copyright (C) 2026 Klaas Roelofs. All rights reserved.
+ * @license     GNU General Public License version 3; see LICENSE
+ */
 
 namespace Ticketstation\Component\Ticketstation\Site\Model;
 
@@ -9,14 +15,6 @@ use Joomla\CMS\Factory;
 use Joomla\CMS\MVC\Model\BaseDatabaseModel;
 use Joomla\CMS\Pagination\Pagination;
 use Joomla\Database\DatabaseQuery;
-
-/**
- * @package     Joomla.Site
- * @subpackage  com_ticketstation
- *
- * @copyright   Copyright (C) 2022 Klaas Roelofs. All rights reserved.
- * @license     GNU General Public License version 3; see LICENSE
- */
 
 /**
  * Ticketstation Order Model

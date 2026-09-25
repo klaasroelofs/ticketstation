@@ -1,4 +1,11 @@
 <?php
+/**
+ * @package     Ticketstation
+ * @subpackage  com_ticketstation
+ *
+ * @copyright   Copyright (C) 2026 Klaas Roelofs. All rights reserved.
+ * @license     GNU General Public License version 3; see LICENSE
+ */
 
 namespace Ticketstation\Component\Ticketstation\Site\Controller;
 
@@ -15,14 +22,6 @@ use Ticketstation\Component\Ticketstation\Administrator\Helper\getAmount;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\History;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\PaymentAPI;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\TicketstationFunctions;
-
-/**
- * @package     Joomla.Site
- * @subpackage  com_ticketstation
- *
- * @copyright   Copyright (C) 2022 Klaas Roelofs. All rights reserved.
- * @license     GNU General Public License version 3; see LICENSE
- */
 
 /**
  * Ticketstation Payment Controller

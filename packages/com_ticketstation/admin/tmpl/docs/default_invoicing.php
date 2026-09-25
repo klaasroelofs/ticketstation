@@ -1,17 +1,18 @@
 <?php
-
-use Joomla\CMS\Language\Text;
-
 /**
- * @package     Joomla.Administrator
+ * @package     Ticketstation
  * @subpackage  com_ticketstation
  *
- * @copyright   Copyright (C) 2022 Klaas Roelofs. All rights reserved.
+ * @copyright   Copyright (C) 2026 Klaas Roelofs. All rights reserved.
  * @license     GNU General Public License version 3; see LICENSE
- *
- * Invoicing topic on the central documentation page (see PaymentAPI::sendTickets()
- * and Invoice::generatePdf() - [[invoicing-feature-status]]).
  */
+
+/**
+ * Invoicing topic on the central documentation page (see PaymentAPI::sendTickets()
+ * and Invoice::generatePdf()).
+ */
+
+use Joomla\CMS\Language\Text;
 
 // No direct access to this file
 defined('_JEXEC') or die('Restricted Access');

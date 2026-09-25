@@ -1,18 +1,19 @@
 <?php
-
-use Joomla\CMS\Language\Text;
-use Joomla\CMS\Uri\Uri;
-
 /**
- * @package     Joomla.Administrator
+ * @package     Ticketstation
  * @subpackage  com_ticketstation
  *
- * @copyright   Copyright (C) 2022 Klaas Roelofs. All rights reserved.
+ * @copyright   Copyright (C) 2026 Klaas Roelofs. All rights reserved.
  * @license     GNU General Public License version 3; see LICENSE
- *
+ */
+
+/**
  * Ticket scanning topic on the central documentation page. Content lives here now;
  * the Scanners list screen (admin/tmpl/scanners/default.php) only links to it.
  */
+
+use Joomla\CMS\Language\Text;
+use Joomla\CMS\Uri\Uri;
 
 // No direct access to this file
 defined('_JEXEC') or die('Restricted Access');

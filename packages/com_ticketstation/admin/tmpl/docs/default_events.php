@@ -1,17 +1,18 @@
 <?php
-
-use Joomla\CMS\Language\Text;
-
 /**
- * @package     Joomla.Administrator
+ * @package     Ticketstation
  * @subpackage  com_ticketstation
  *
- * @copyright   Copyright (C) 2022 Klaas Roelofs. All rights reserved.
+ * @copyright   Copyright (C) 2026 Klaas Roelofs. All rights reserved.
  * @license     GNU General Public License version 3; see LICENSE
- *
+ */
+
+/**
  * Events & tickets topic on the central documentation page, including the
  * parent/child ticket relationship (Ticket::parent, see TicketModel).
  */
+
+use Joomla\CMS\Language\Text;
 
 // No direct access to this file
 defined('_JEXEC') or die('Restricted Access');

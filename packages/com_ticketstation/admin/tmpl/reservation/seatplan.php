@@ -1,23 +1,24 @@
 <?php
+/**
+ * @package     Ticketstation
+ * @subpackage  com_ticketstation
+ *
+ * @copyright   Copyright (C) 2026 Klaas Roelofs. All rights reserved.
+ * @license     GNU General Public License version 3; see LICENSE
+ */
+
+/**
+ * Admin equivalent of site/tmpl/seatedevent/default.php, wired to
+ * ReservationController::makeReservation()/removeSeat()/finishSeats() (admin session) instead
+ * of OrderseatedController (site session). Simple seat-by-seat selection only - the multi-seat
+ * "pick a price per seat" step that the frontend has for row/section tickets is out of scope.
+ */
 
 use Joomla\CMS\Factory;
 use Joomla\CMS\HTML\HTMLHelper;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\Router\Route;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\TicketstationFunctions;
-
-/**
- * @package     Joomla.Administrator
- * @subpackage  com_ticketstation
- *
- * @copyright   Copyright (C) 2022 Klaas Roelofs. All rights reserved.
- * @license     GNU General Public License version 3; see LICENSE
- *
- * Admin equivalent of site/tmpl/seatedevent/default.php, wired to
- * ReservationController::makeReservation()/removeSeat()/finishSeats() (admin session) instead
- * of OrderseatedController (site session). Simple seat-by-seat selection only - the multi-seat
- * "pick a price per seat" step that the frontend has for row/section tickets is out of scope.
- */
 
 // No direct access to this file
 defined('_JEXEC') or die('Restricted Access');

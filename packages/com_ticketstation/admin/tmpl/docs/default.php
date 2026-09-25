@@ -1,20 +1,21 @@
 <?php
-
-use Joomla\CMS\Factory;
-use Joomla\CMS\Language\Text;
-use Joomla\CMS\Router\Route;
-
 /**
- * @package     Joomla.Administrator
+ * @package     Ticketstation
  * @subpackage  com_ticketstation
  *
- * @copyright   Copyright (C) 2022 Klaas Roelofs. All rights reserved.
+ * @copyright   Copyright (C) 2026 Klaas Roelofs. All rights reserved.
  * @license     GNU General Public License version 3; see LICENSE
- *
+ */
+
+/**
  * Central documentation hub: a shell page that loads one sub-template per topic
  * (default_<topic>.php). Add a new topic by dropping a default_<topic>.php file
  * here and adding it to $topics below - no other wiring needed.
  */
+
+use Joomla\CMS\Factory;
+use Joomla\CMS\Language\Text;
+use Joomla\CMS\Router\Route;
 
 // No direct access to this file
 defined('_JEXEC') or die('Restricted Access');

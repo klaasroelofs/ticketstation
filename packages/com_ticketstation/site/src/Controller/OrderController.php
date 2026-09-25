@@ -1,4 +1,11 @@
 <?php
+/**
+ * @package     Ticketstation
+ * @subpackage  com_ticketstation
+ *
+ * @copyright   Copyright (C) 2026 Klaas Roelofs. All rights reserved.
+ * @license     GNU General Public License version 3; see LICENSE
+ */
 
 namespace Ticketstation\Component\Ticketstation\Site\Controller;
 
@@ -18,14 +25,6 @@ use Ticketstation\Component\Ticketstation\Administrator\Helper\Order;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Ticket;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\TicketstationFunctions;
 use Ticketstation\Component\Ticketstation\Site\Model\OrderModel;
-
-/**
- * @package     Joomla.Site
- * @subpackage  com_ticketstation
- *
- * @copyright   Copyright (C) 2022 Klaas Roelofs. All rights reserved.
- * @license     GNU General Public License version 3; see LICENSE
- */
 
 /**
  * Ticketstation Order Controller

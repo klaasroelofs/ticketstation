@@ -1,7 +1,6 @@
 <?php
-
 /**
- * @package     Joomla.Site
+ * @package     Ticketstation
  * @subpackage  mod_ticketstation_basket
  *
  * @copyright   Copyright (C) 2026 Klaas Roelofs. All rights reserved.

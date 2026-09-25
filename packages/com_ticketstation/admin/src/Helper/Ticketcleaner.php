@@ -1,28 +1,17 @@
 <?php
 /**
- * @package     Joomla.Admin
+ * @package     Ticketstation
  * @subpackage  com_ticketstation
  *
- * @copyright   Copyright (C) 2022 Klaas Roelofs. All rights reserved.
+ * @copyright   Copyright (C) 2026 Klaas Roelofs. All rights reserved.
  * @license     GNU General Public License version 3; see LICENSE
- *
  */
-
 
 namespace Ticketstation\Component\Ticketstation\Administrator\Helper;
 
 defined('_JEXEC') or die;
 
 use Joomla\CMS\Factory;
-
-/**
- * @package     Joomla.Administrator
- * @subpackage  com_ticketstation
- *
- * @copyright   Copyright (C) 2022 Klaas Roelofs. All rights reserved.
- * @license     GNU General Public License version 3; see LICENSE
- */
-
 
 ## no direct access
 defined('_JEXEC') or die('Restricted access');

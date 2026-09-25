@@ -1,19 +1,20 @@
 <?php
-
-use Joomla\CMS\Language\Text;
-
 /**
- * @package     Joomla.Administrator
+ * @package     Ticketstation
  * @subpackage  com_ticketstation
  *
- * @copyright   Copyright (C) 2022 Klaas Roelofs. All rights reserved.
+ * @copyright   Copyright (C) 2026 Klaas Roelofs. All rights reserved.
  * @license     GNU General Public License version 3; see LICENSE
- *
+ */
+
+/**
  * Seated tickets topic on the central documentation page: seat plan settings,
  * the three Multi Seat set-ups (seatplansettings.multi_seat, see
  * SeatplansController and site OrderseatedController::makeReservation()), the
  * seat chart editor and the customer's seat-picking flow.
  */
+
+use Joomla\CMS\Language\Text;
 
 // No direct access to this file
 defined('_JEXEC') or die('Restricted Access');

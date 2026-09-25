@@ -1,11 +1,11 @@
 <?php
 /**
-* @package     Joomla.Administrator
-* @subpackage  com_ticketstation
-*
- * @copyright   Copyright (C) 2022 Klaas Roelofs. All rights reserved.
+ * @package     Ticketstation
+ * @subpackage  com_ticketstation
+ *
+ * @copyright   Copyright (C) 2026 Klaas Roelofs. All rights reserved.
  * @license     GNU General Public License version 3; see LICENSE
-*/
+ */
 
 defined('_JEXEC') or die;
 
