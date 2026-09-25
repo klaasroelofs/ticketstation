@@ -37,7 +37,13 @@ $topics = [
 
 <form action="<?php echo Route::_('index.php?option=com_ticketstation&view=docs'); ?>" method="post" name="adminForm" id="adminForm">
 <div class="ticketstation-docs">
-    <p class="lead"><?= Text::_('COM_TICKETSTATION_DOCS_INTRO') ?></p>
+    <div class="d-flex flex-column flex-md-row align-items-md-center gap-3 mb-4">
+        <?php // White box so the dark-blue wordmark stays readable in the dark admin theme too ?>
+        <div class="flex-shrink-0 p-3 rounded text-center" style="background: #fff;">
+            <img src="components/com_ticketstation/assets/images/logo_ticketstation_for_joomla.png" alt="Ticketstation for Joomla!" class="img-fluid" style="max-height: 60px;">
+        </div>
+        <p class="lead mb-0"><?= Text::_('COM_TICKETSTATION_DOCS_INTRO') ?></p>
+    </div>
 
     <nav class="card mb-4">
         <div class="card-body">
