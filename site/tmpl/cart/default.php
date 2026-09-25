@@ -269,7 +269,7 @@ $trashIcon = '<svg class="ts-icon" viewBox="0 0 16 16" aria-hidden="true"><path 
 
     <?php if ($this->config->use_coupons) { ?>
 
-        <form action="index.php" method="POST" name="adminForm" id="adminForm" class="ts-coupon">
+        <form action="<?php echo Route::_('index.php?option=com_ticketstation' . ($itemid ? '&Itemid=' . $itemid : '')); ?>" method="POST" name="adminForm" id="adminForm" class="ts-coupon">
 
             <label class="ts-label" for="couponcode"><?php echo Text::_('COM_TICKETSTATION_COUPON_CODE'); ?></label>
             <p class="ts-field__hint"><?php echo Text::_('COM_TICKETSTATION_COUPON_CODE_DESC'); ?></p>

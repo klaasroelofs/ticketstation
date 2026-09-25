@@ -65,18 +65,20 @@ class PaymentController extends BaseController
         $return_url = URI::root() . 'index.php?option=com_ticketstation&controller=payment&task=mollie';
         $notify_url = URI::root() . 'index.php?option=com_ticketstation&controller=payment&task=IPNProcessPayment';
 
-        if ($this->mollieconfig->test_mode == '1') {
-            $api_key = $this->mollieconfig->api_key_test;
-        } else {
-            $api_key = $this->mollieconfig->api_key;
-        }
-
-        require_once JPATH_COMPONENT . "/vendor/autoload.php";
-
-        $mollie = new MollieApiClient();
-        $mollie->setApiKey($api_key);
-
         if (($orderamount != 0) && ($this->mollieconfig->bypass_mode == '0')) {
+
+            ## Only set up Mollie when the order actually goes there: setApiKey() throws on an
+            ## empty key, which would break bypass mode and free orders on a site without keys.
+            if ($this->mollieconfig->test_mode == '1') {
+                $api_key = $this->mollieconfig->api_key_test;
+            } else {
+                $api_key = $this->mollieconfig->api_key;
+            }
+
+            require_once JPATH_COMPONENT . "/vendor/autoload.php";
+
+            $mollie = new MollieApiClient();
+            $mollie->setApiKey($api_key);
 
             $protocol = isset($_SERVER['HTTPS']) && strcasecmp('off', $_SERVER['HTTPS']) !== 0 ? "https" : "http";
             $hostname = $_SERVER['HTTP_HOST'];

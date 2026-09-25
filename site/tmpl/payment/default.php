@@ -229,7 +229,7 @@ foreach (['terms_url' => 'COM_TICKETSTATION_TERMS_AND_CONDITIONS', 'privacy_url'
             <p class="ts-note"><?= Text::sprintf('COM_TICKETSTATION_ZERO_TOTAL', (new TicketstationFunctions)->showprice($this->config->priceformat, 0, $this->config->valuta)); ?></p>
         <?php } ?>
 
-        <form action="index.php" method="POST" name="adminForm" id="adminForm" class="ts-actions">
+        <form action="<?= Route::_('index.php?option=com_ticketstation' . ($itemid ? '&Itemid=' . $itemid : '')); ?>" method="POST" name="adminForm" id="adminForm" class="ts-actions">
 
             <a class="ts-btn ts-btn--secondary ts-btn--back" href="<?php echo $gotocheckout; ?>">
                 <?= Text::_('COM_TICKETSTATION_BACK'); ?>
