@@ -182,9 +182,6 @@ if (version_compare(JVERSION, '4.999.999', 'gt')) {
         <?php // RIGHT COLUMN (33% desktop width) ?>
         <div class="col-12 col-lg-4">
             <div class="card mb-2">
-                <h3 class="card-header">
-                    <?= Text::_('COM_TICKETSTATION_VIEW_CPANEL_COMPONENT_INFO') ?>
-                </h3>
                 <div class="card-body">
                     <?php // White box so the dark-blue wordmark stays readable in the dark admin theme too ?>
                     <div class="mb-3 p-3 rounded text-center" style="background: #fff;">
