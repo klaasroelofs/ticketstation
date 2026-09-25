@@ -363,9 +363,10 @@ if (version_compare(JVERSION, '4.999.999', 'gt')) {
     <div class="row">
         <div class="col">
             <div class="ticketstation-cpanel-footer small mt-3 p-3 bg-light border-top border-4 d-flex flex-column">
-                <?php $productName = '<span style="color:#c53c88;"><b><em>Ticketstation for Joomla!™</em></b></span>'; ?>
+                <?php // Colours follow the logo: "Ticket" and "for Joomla!" in brand blue, "station" in dark navy ?>
+                <?php $productName = '<b style="white-space: nowrap;"><span style="color:#1350db;">Ticket</span><span style="color:#0e1f3d;">station</span> <span style="color:#1350db;">for Joomla!</span></b>'; ?>
                 <p class="text-muted">
-                    <?= Text::sprintf('COM_TICKETSTATION_CPANEL_FOOTER_ORIGIN', $productName); ?><br/>
+                    <?= Text::sprintf('COM_TICKETSTATION_CPANEL_FOOTER_ABOUT', $productName); ?><br/>
                     <strong><?= Text::_('COM_TICKETSTATION_CPANEL_FOOTER_SUPPORT'); ?></strong>
                 </p>
 
