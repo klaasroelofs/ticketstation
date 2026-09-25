@@ -69,7 +69,7 @@ class OrderController extends BaseController
      */
     private function showMessage($type, $message)
     {
-        $msg = '<div class="' . $type . '" style="font-size:97%;">' . $message . '</div>';
+        $msg = '<div class="' . $type . '">' . $message . '</div>';
         $arr = ['status' => '666', 'msg' => $msg];
 
         echo json_encode($arr);
@@ -86,7 +86,7 @@ class OrderController extends BaseController
 
         if ( ! $this->performOrderCheck())
         {
-            $this->showMessage('alert alert-danger', $this->error);
+            $this->showMessage('ts-alert ts-alert--danger', $this->error);
         }
 
         $config   		= (new Config)->get(['variable_transcosts', 'transactioncosts', 'transcosts', 'pro_installed', 'show_waitinglist']);
@@ -100,12 +100,12 @@ class OrderController extends BaseController
         {
             if ($newTotal > $tickets->max_qty)
             {
-                $this->showMessage('alert alert-danger', Text::_('COM_TICKETSTATION_MAX_ORDER_PER_TICKET') . $tickets->max_qty);
+                $this->showMessage('ts-alert ts-alert--danger', Text::_('COM_TICKETSTATION_MAX_ORDER_PER_TICKET') . $tickets->max_qty);
             }
 
             if (count($basket) >= $tickets->max_qty)
             {
-                $this->showMessage('alert alert-danger', Text::_('COM_TICKETSTATION_MAX_ORDER_PER_TICKET') . $tickets->max_qty);
+                $this->showMessage('ts-alert ts-alert--danger', Text::_('COM_TICKETSTATION_MAX_ORDER_PER_TICKET') . $tickets->max_qty);
             }
         }
 
@@ -113,7 +113,7 @@ class OrderController extends BaseController
         {
             if ($tickets->min_qty > $newTotal)
             {
-                $this->showMessage('alert alert-danger', Text::_('COM_TICKETSTATION_MIN_ORDER_PER_TICKET') . $tickets->min_qty);
+                $this->showMessage('ts-alert ts-alert--danger', Text::_('COM_TICKETSTATION_MIN_ORDER_PER_TICKET') . $tickets->min_qty);
             }
         }
 
@@ -123,12 +123,12 @@ class OrderController extends BaseController
 
         if ($this->amount > $totaltickets && $config->show_waitinglist && $tickets->parent == 0)
         {
-            $this->showMessage('alert alert-danger', Text::_('COM_TICKETSTATION_ADD_TO_WAITINGLIST'));
+            $this->showMessage('ts-alert ts-alert--danger', Text::_('COM_TICKETSTATION_ADD_TO_WAITINGLIST'));
         }
 
         if ($this->amount > $totaltickets && ! $config->show_waitinglist)
         {
-            $this->showMessage('alert alert-danger', Text::_('COM_TICKETSTATION_EVENT_SOLD_OUT'));
+            $this->showMessage('ts-alert ts-alert--danger', Text::_('COM_TICKETSTATION_EVENT_SOLD_OUT'));
         }
 
         if ($config->variable_transcosts == 1)
@@ -164,7 +164,7 @@ class OrderController extends BaseController
             // Saving the order data.
             if (!$models->store($post))
             {
-                $this->showMessage('alert alert-danger', Text::_('COM_TICKETSTATION_FAILED_SAVING_CART'));
+                $this->showMessage('ts-alert ts-alert--danger', Text::_('COM_TICKETSTATION_FAILED_SAVING_CART'));
             }
 
             if ($tickets->counter_choice == 1)
@@ -172,7 +172,7 @@ class OrderController extends BaseController
                 // Decreasing the ticket total.
                 if ( ! $ticket->decreaseTicketTotals($this->id))
                 {
-                    $this->showMessage('alert alert-danger', Text::_('COM_TICKETSTATION_DB_QUERY_FAILED') . ' - 102');
+                    $this->showMessage('ts-alert ts-alert--danger', Text::_('COM_TICKETSTATION_DB_QUERY_FAILED') . ' - 102');
                 }
             }
 
@@ -184,16 +184,16 @@ class OrderController extends BaseController
                 // Decreasing the ticket total of the parent ticket.
                 if ( ! $ticket->decreaseTicketTotals($ticketid))
                 {
-                    $this->showMessage('alert alert-danger', Text::_('COM_TICKETSTATION_DB_QUERY_FAILED') . ' - 101');
+                    $this->showMessage('ts-alert ts-alert--danger', Text::_('COM_TICKETSTATION_DB_QUERY_FAILED') . ' - 101');
                 }
             }
         }
 
         if ($this->amount == 1)
         {
-            $this->showMessage('alert alert-success', $this->amount . Text::_('COM_TICKETSTATION_EVENT_ADDED_TO_CART1'));
+            $this->showMessage('ts-alert ts-alert--success', $this->amount . Text::_('COM_TICKETSTATION_EVENT_ADDED_TO_CART1'));
         } else {
-            $this->showMessage('alert alert-success', $this->amount . Text::_('COM_TICKETSTATION_EVENT_ADDED_TO_CART'));
+            $this->showMessage('ts-alert ts-alert--success', $this->amount . Text::_('COM_TICKETSTATION_EVENT_ADDED_TO_CART'));
         }
     }
 
@@ -207,7 +207,7 @@ class OrderController extends BaseController
 
         if ( ! $this->performOrderCheck())
         {
-            $this->showMessage('alert alert-danger', $this->error);
+            $this->showMessage('ts-alert ts-alert--danger', $this->error);
         }
 
         $config  = (new Config)->getPartialConfig(['pro_installed', 'show_waitinglist']);
@@ -238,12 +238,12 @@ class OrderController extends BaseController
 
             if ( ! $db->insertObject('#__ticketstation_waitinglist', $entry))
             {
-                $this->showMessage('alert alert-danger', Text::_('COM_TICKETSTATION_FAILED_SAVING_CART') . ' - 112');
+                $this->showMessage('ts-alert ts-alert--danger', Text::_('COM_TICKETSTATION_FAILED_SAVING_CART') . ' - 112');
             }
         }
 
         $message = str_replace('%%AMOUNT%%', $this->amount, Text::_('COM_TICKETSTATION_ADDED_TO_WAITINGLIST'));
-        $this->showMessage('alert alert-success', $message);
+        $this->showMessage('ts-alert ts-alert--success', $message);
     }
 
     /**
@@ -366,34 +366,34 @@ class OrderController extends BaseController
         $feesRow = '';
 
         if ($config->variable_transcosts != 2) {
-            $feesRow = '<tr style="height: 40px;">
+            $feesRow = '<tr>
 								<td>' . Text::_('COM_TICKETSTATION_FEES') . '</td>
-								<td style="text-align: right;">' . $TicketstationFunctions->showprice($config->priceformat, $fees, $config->valuta) . '</td>
+								<td>' . $TicketstationFunctions->showprice($config->priceformat, $fees, $config->valuta) . '</td>
 							</tr>';
         }
 
         if ($ordered > 0) {
-            $update .= '<table style="width: 250px;">
+            $update .= '<table class="ticketstation-basket-table">
 							<tr>
 								<td>' . $ordered . ' ' . $tickets . '</td>
-								<td style="text-align: right;">' . $TicketstationFunctions->showprice($config->priceformat, ($ordertotal - $fees), $config->valuta) . '</td>
+								<td>' . $TicketstationFunctions->showprice($config->priceformat, ($ordertotal - $fees), $config->valuta) . '</td>
 							</tr>
 							' . $feesRow . '
-							<tr style="border-top: 1px solid #aaa;">
+							<tr>
 								<td><strong>' . Text::_('COM_TICKETSTATION_ORDERTOTAL_CART') . '</strong></td>
-								<td style="text-align: right;"><strong>' . $TicketstationFunctions->showprice($config->priceformat, $ordertotal, $config->valuta) . '</strong></td>
+								<td><strong>' . $TicketstationFunctions->showprice($config->priceformat, $ordertotal, $config->valuta) . '</strong></td>
 							</tr>
 						</table>';
         } elseif ($config->show_waitinglist != 1 || $waiting < 1) {
             // Not "empty" when the customer only has tickets on the waiting list.
-            $update .= '<p id="empty_cart"><strong>' . Text::_('COM_TICKETSTATION_EMPTY_CART') . '</strong></p>';
+            $update .= '<p id="empty_cart" class="ticketstation-basket-empty">' . Text::_('COM_TICKETSTATION_EMPTY_CART') . '</p>';
         }
 
         if ($config->show_waitinglist == 1 && $waiting > 0)
         {
             $waitingtickets = ($waiting > 1) ? Text::_('COM_TICKETSTATION_TICKETS') : Text::_('COM_TICKETSTATION_TICKET');
 
-            $update .= '<br/><br/><span id="waitinglist_items">' . $waiting . ' ' . $waitingtickets . ' <br/>' . Text::_('COM_TICKETSTATION_IN_WAITNGLIST') . '</span>';
+            $update .= '<p id="waitinglist_items" class="ticketstation-basket-waiting">' . $waiting . ' ' . $waitingtickets . ' ' . Text::_('COM_TICKETSTATION_IN_WAITNGLIST') . '</p>';
         }
 
         echo '<div>' . $update . '</div>';

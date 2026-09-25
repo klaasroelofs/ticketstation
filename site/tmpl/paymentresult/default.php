@@ -24,133 +24,109 @@ defined('_JEXEC') or die('Restricted Access');
 $app        = Factory::getApplication();
 $document   = $app->getDocument();
 $document->addStyleSheet( 'components/com_ticketstation/assets/css/component.css' );
-HTMLHelper::_('jquery.framework');
 
 if (!$this->authorized) {
     $document->setTitle( Text::_('COM_TICKETSTATION_PAYMENTRESULT_ORDER') . ' - ' . $app->get('sitename') );
+    $result = 'unknown';
 } elseif ($this->unpaid->total > 0) {
     $document->setTitle( Text::_('COM_TICKETSTATION_PAYMENTRESULT_FAILED_PAGE_TITLE') . ' - ' . $app->get('sitename') );
+    $result = 'failed';
 } else {
     $document->setTitle( Text::_('COM_TICKETSTATION_PAYMENTRESULT_SUCCESS_PAGE_TITLE') . ' - ' . $app->get('sitename') );
+    $result = 'success';
 }
 
 ## Contact address shown to the customer when something needs checking (Configuration > Company)
 $contactEmail = htmlspecialchars($this->contactEmail, ENT_QUOTES, 'UTF-8');
 $contactLink  = '<a href="mailto:' . $contactEmail . '">' . $contactEmail . '</a>';
 
-$document->addScriptDeclaration('
-    jQuery(\'document\').ready( function() { 
-        jQuery(\'#download_button\').click(function() {
-                jQuery(\'.download_section\').delay(500).fadeOut();
-        });
-    });
-');
-
 ?>
 
-    <script language="javascript">
+<div class="ticketstation ticketstation--paymentresult ticketstation--paymentresult-<?php echo $result; ?>">
 
-        jQuery(document).ready(function() {
-
-            jQuery('head').append("<style>ul.checkout-bar li.previous:after {width:100%;} ul.checkout-bar li.complete:before {background: #BB2721;} ul.checkout-bar li.active {color: #BB2721;}</style>");
-
-            jQuery('head').delay(1500).queue(function() {
-                jQuery('head').append("<style>ul.checkout-bar li.complete:after { width:61%; }</style>");
-                jQuery('head').dequeue();
-            });
-
-        });
-
-    </script>
-
-<div class="row ticketstation">
-    <div class="col-12">
+    <?php if ($result === 'unknown') { ?>
 
         <div class="page-header">
-            <h1><?php echo Text::_('COM_TICKETSTATION_PAGE_HEADING_TICKETS'); ?></h1>
+            <h1 class="ts-page-title"><?php echo Text::_('COM_TICKETSTATION_PAYMENTRESULT_ORDER'); ?></h1>
         </div>
 
-        <?php if (!$this->authorized) { ?>
+        <section class="ts-card ts-result ts-result--unknown">
+            <p><?php echo Text::_('COM_TICKETSTATION_PAYMENTRESULT_STATUS_IN_MAIL'); ?></p>
+            <p><?php echo Text::sprintf('COM_TICKETSTATION_PAYMENTRESULT_NOTHING_RECEIVED', $contactLink); ?></p>
+        </section>
 
-            <h2 class="ticketmaster-header"><strong><?php echo Text::_('COM_TICKETSTATION_PAYMENTRESULT_ORDER'); ?></strong></h2>
+    <?php } elseif ($result === 'failed') { ?>
 
-            <div class="ticketmaster_event_info">
-                <div class="row-fluid">
-                    <p><?php echo Text::_('COM_TICKETSTATION_PAYMENTRESULT_STATUS_IN_MAIL'); ?></p>
-                    <p><?php echo Text::sprintf('COM_TICKETSTATION_PAYMENTRESULT_NOTHING_RECEIVED', $contactLink); ?></p>
+        <div class="page-header">
+            <h1 class="ts-page-title"><?php echo Text::_('COM_TICKETSTATION_PAYMENTRESULT_FAILED'); ?></h1>
+        </div>
+
+        <p class="ts-lead"><?php echo Text::_('COM_TICKETSTATION_PAYMENTRESULT_OOPS'); ?></p>
+
+        <section class="ts-card ts-result ts-result--failed">
+            <h2 class="ts-card__title"><?php echo Text::_('COM_TICKETSTATION_PAYMENTRESULT_ORDER_RECEIVED'); ?></h2>
+            <p><?php echo Text::sprintf('COM_TICKETSTATION_PAYMENTRESULT_ORDER_NUMBER', '<strong class="ts-order-code">' . $this->ordercode . '</strong>'); ?></p>
+            <p class="ts-text-danger"><?php echo Text::_('COM_TICKETSTATION_PAYMENTRESULT_PROCESSING_FAILED'); ?></p>
+            <p><strong><?php echo Text::_('COM_TICKETSTATION_PAYMENTRESULT_PAID_ANYWAY_QUESTION'); ?></strong><br /><?php echo Text::sprintf('COM_TICKETSTATION_PAYMENTRESULT_PAID_ANYWAY', $contactLink); ?></p>
+            <p><strong><?php echo Text::_('COM_TICKETSTATION_PAYMENTRESULT_FAILED_QUESTION'); ?></strong><br /><?php echo Text::_('COM_TICKETSTATION_PAYMENTRESULT_UNPAID_REMOVED'); ?></p>
+        </section>
+
+    <?php } else { ?>
+
+        <div class="page-header">
+            <h1 class="ts-page-title"><?php echo Text::_('COM_TICKETSTATION_PAYMENTRESULT_SUCCESS'); ?></h1>
+        </div>
+
+        <p class="ts-lead"><?php echo Text::sprintf('COM_TICKETSTATION_PAYMENTRESULT_THANK_YOU', htmlspecialchars($this->data[0]->firstname, ENT_QUOTES, 'UTF-8')); ?></p>
+
+        <section class="ts-card ts-result ts-result--success">
+            <h2 class="ts-card__title"><?php echo Text::_('COM_TICKETSTATION_PAYMENTRESULT_ORDER_PROCESSED'); ?></h2>
+            <p><?php echo Text::sprintf('COM_TICKETSTATION_PAYMENTRESULT_ORDER_NUMBER', '<strong class="ts-order-code">' . $this->ordercode . '</strong>'); ?></p>
+            <p><?php echo Text::sprintf('COM_TICKETSTATION_PAYMENTRESULT_MAIL_SOON', '<strong>' . htmlspecialchars($this->data[0]->emailaddress, ENT_QUOTES, 'UTF-8') . '</strong>'); ?></p>
+            <p><?php echo Text::sprintf('COM_TICKETSTATION_PAYMENTRESULT_CHECK_SPAM', $contactLink); ?></p>
+        </section>
+
+        <?php if($this->data[0]->downloadbuttonshown != 1) {
+
+            $download_link = Uri::root(true) . "/index.php?option=com_ticketstation&controller=paymentresult&task=downloadTicketAfterPurchase&order=" . $this->ordercode . "&" . \Joomla\CMS\Session\Session::getFormToken() . "=1";
+
+            $ticketcount = count($this->data);
+        ?>
+
+            <section class="ts-card ts-download" id="ts-download">
+                <h2 class="ts-card__title"><?php echo Text::_('COM_TICKETSTATION_PAYMENTRESULT_DOWNLOAD'); ?></h2>
+                <p><?php echo Text::plural('COM_TICKETSTATION_PAYMENTRESULT_DOWNLOAD_DESC', $ticketcount); ?></p>
+
+                <div class="ts-actions">
+                    <a id="download_button" class="ts-btn ts-btn--primary" href="<?php echo $download_link; ?>"><?php echo Text::plural('COM_TICKETSTATION_PAYMENTRESULT_DOWNLOAD_BUTTON', $ticketcount); ?></a>
+
+                    <?php if ($this->mollieconfig->bypass_mode == '1') {
+
+                        $itemid = TicketstationFunctions::getSiteItemid();
+                        $link_to_start = Route::_('index.php?option=com_ticketstation&view=upcoming' . ($itemid ? '&Itemid=' . $itemid : ''));
+                        ?>
+
+                        <a class="ts-btn ts-btn--secondary ts-btn--next" href="<?php echo $link_to_start; ?>"><?php echo Text::_('COM_TICKETSTATION_NEW_ORDER'); ?></a>
+
+                    <?php } ?>
                 </div>
-            </div>
+            </section>
 
-        <?php } elseif ($this->unpaid->total > 0) { ?>
+            <script>
+                // The tickets can be downloaded once: hide the section after the click.
+                document.getElementById('download_button').addEventListener('click', function () {
+                    setTimeout(function () {
+                        document.getElementById('ts-download').hidden = true;
+                    }, 500);
+                });
+            </script>
 
-            <h2 class="ticketmaster-header"><strong><?php echo Text::_('COM_TICKETSTATION_PAYMENTRESULT_FAILED'); ?></strong></h2>
-
-            <div>
-                <h3><strong><?php echo Text::_('COM_TICKETSTATION_PAYMENTRESULT_OOPS'); ?></strong></h3>
-            </div>
-            <div class="ticketmaster_event_info">
-                <div class="row-fluid">
-                    <h4><strong><?php echo Text::_('COM_TICKETSTATION_PAYMENTRESULT_ORDER_RECEIVED'); ?></strong></h4>
-                    <p><?php echo Text::sprintf('COM_TICKETSTATION_PAYMENTRESULT_ORDER_NUMBER', '<strong>' . $this->ordercode . '</strong>'); ?></p>
-                    <p><strong><span style="color: #ff0000;"><?php echo Text::_('COM_TICKETSTATION_PAYMENTRESULT_PROCESSING_FAILED'); ?></span></strong></p>
-                    <p><strong><?php echo Text::_('COM_TICKETSTATION_PAYMENTRESULT_PAID_ANYWAY_QUESTION'); ?><br /></strong><?php echo Text::sprintf('COM_TICKETSTATION_PAYMENTRESULT_PAID_ANYWAY', $contactLink); ?></p>
-                    <p><strong><?php echo Text::_('COM_TICKETSTATION_PAYMENTRESULT_FAILED_QUESTION'); ?></strong><br /><?php echo Text::_('COM_TICKETSTATION_PAYMENTRESULT_UNPAID_REMOVED'); ?></p>
-                </div>
-            </div>
-
-        <?php } else { ?>
-
-            <h2 class="ticketmaster-header"><strong><?php echo Text::_('COM_TICKETSTATION_PAYMENTRESULT_SUCCESS'); ?></strong></h2>
-
-            <div>
-                <h3><strong><?php echo Text::sprintf('COM_TICKETSTATION_PAYMENTRESULT_THANK_YOU', $this->data[0]->firstname); ?></strong></h3>
-            </div>
-            <div class="ticketmaster_event_info">
-                <div class="row-fluid">
-                    <h4><strong><?php echo Text::_('COM_TICKETSTATION_PAYMENTRESULT_ORDER_PROCESSED'); ?></strong></h4>
-                    <p><?php echo Text::sprintf('COM_TICKETSTATION_PAYMENTRESULT_ORDER_NUMBER', '<span style="color: #008c39;"><strong>' . $this->ordercode . '</strong></span>'); ?></p>
-                    <p><?php echo Text::sprintf('COM_TICKETSTATION_PAYMENTRESULT_MAIL_SOON', '<strong>' . $this->data[0]->emailaddress . '</strong>'); ?></p>
-                    <p><?php echo Text::sprintf('COM_TICKETSTATION_PAYMENTRESULT_CHECK_SPAM', $contactLink); ?></p>
-                </div>
-            </div>
-
-            <?php if($this->data[0]->downloadbuttonshown != 1) {
-
-                $download_link = "location.href='/index.php?option=com_ticketstation&controller=paymentresult&task=downloadTicketAfterPurchase&order=" . $this->ordercode . "&" . \Joomla\CMS\Session\Session::getFormToken() . "=1'";
-
-                $ticketcount = count($this->data);
-            ?>
-
-
-                <div class="row-fluid download_section">
-                    <div class="span12">
-                        <hr />
-                        <h4><strong><?php echo Text::_('COM_TICKETSTATION_PAYMENTRESULT_DOWNLOAD'); ?></strong></h4>
-                        <p><?php echo Text::plural('COM_TICKETSTATION_PAYMENTRESULT_DOWNLOAD_DESC', $ticketcount); ?></p>
-                        <a id="download_button" class="btn btn-primary pull-left" type="button" onclick="<?php echo $download_link; ?>"><?php echo Text::plural('COM_TICKETSTATION_PAYMENTRESULT_DOWNLOAD_BUTTON', $ticketcount); ?></a>
-
-                        <?php if ($this->mollieconfig->bypass_mode == '1') {
-
-                            $itemid = TicketstationFunctions::getSiteItemid();
-                            $link_to_start = Route::_('index.php?option=com_ticketstation&view=upcoming' . ($itemid ? '&Itemid=' . $itemid : ''));
-                            ?>
-
-                            <a class="btn btn-primary pull-right" type="button" onClick="location.href='<?php echo $link_to_start; ?>'"><?php echo Text::_('COM_TICKETSTATION_NEW_ORDER'); ?></a>
-
-                        <?php } ?>
-
-                    </div>
-                </div>
-
-                <?php MarkDownloadbuttonshown($this->ordercode); ?>
-
-            <?php } ?>
+            <?php MarkDownloadbuttonshown($this->ordercode); ?>
 
         <?php } ?>
 
+    <?php } ?>
 
-
-    </div>
 </div>
 
 <?php function MarkDownloadbuttonshown($ordercode)
@@ -174,5 +150,3 @@ $document->addScriptDeclaration('
 
 }
 ?>
-
-

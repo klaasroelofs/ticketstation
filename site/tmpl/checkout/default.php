@@ -3,8 +3,8 @@
 use Joomla\CMS\Factory;
 use Joomla\CMS\HTML\HTMLHelper;
 use Joomla\CMS\Language\Text;
+use Joomla\CMS\Layout\LayoutHelper;
 use Joomla\CMS\Router\Route;
-use Joomla\Event\Event;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\TicketstationFunctions;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\User;
 
@@ -29,7 +29,6 @@ $app        = Factory::getApplication();
 $document   = $app->getDocument();
 $document->setTitle( Text::_('COM_TICKETSTATION_ORDER_DETAILS') . ' - ' . $app->get('sitename') );
 $document->addStyleSheet( 'components/com_ticketstation/assets/css/component.css' );
-HTMLHelper::_('jquery.framework');
 
 ## Redirection link in JRoute:
 $itemid = TicketstationFunctions::getSiteItemid();
@@ -39,178 +38,79 @@ $gotocart = Route::_('index.php?option=com_ticketstation&view=cart' . ($itemid ?
 $user = new User();
 $info = $user->getClientByOrdercode($ordercode);
 
-##Captcha -invisible
-//PluginHelper::importPlugin('captcha', 'recaptcha_invisible');
-//$dispatcher = JDispatcher::getInstance();
-//$dispatcher->trigger('onInit','jform_captcha');
+## Text fields in form order: name => [shown, label, stored value, input type, autocomplete]
+$fields = [
+    'firstname'    => [true, 'COM_TICKETSTATION_YOUR_FIRSTNAME', $info->firstname ?? '', 'text', 'given-name'],
+    'lastname'     => [true, 'COM_TICKETSTATION_YOUR_LASTNAME', $info->name ?? '', 'text', 'family-name'],
+    'address'      => [$this->config->show_address != 0, 'COM_TICKETSTATION_YOUR_ADDRESS', $info->address ?? '', 'text', 'address-line1'],
+    'address2'     => [$this->config->show_secondaddress != 0, 'COM_TICKETSTATION_YOUR_ADDRESS', $info->address2 ?? '', 'text', 'address-line2'],
+    'address3'     => [$this->config->show_thirdaddress != 0, 'COM_TICKETSTATION_YOUR_ADDRESS', $info->address3 ?? '', 'text', 'address-line3'],
+    'zipcode'      => [$this->config->show_zipcode != 0, 'COM_TICKETSTATION_YOUR_ZIPCODE', $info->zipcode ?? '', 'text', 'postal-code'],
+    'city'         => [$this->config->show_city != 0, 'COM_TICKETSTATION_YOUR_CITY', $info->city ?? '', 'text', 'address-level2'],
+    'country'      => [$this->config->show_country != 0, 'COM_TICKETSTATION_YOUR_COUNTRY', null, 'select', ''],
+    'phonenumber'  => [$this->config->show_phone != 0, 'COM_TICKETSTATION_YOUR_PHONE', $info->phonenumber ?? '', 'tel', 'tel'],
+    'emailaddress' => [true, 'COM_TICKETSTATION_YOUR_EMAIL', $info->emailaddress ?? '', 'email', 'email'],
+    'email2'       => [true, 'COM_TICKETSTATION_RETYPE_EMAIL', $info->emailaddress ?? '', 'email', 'email'],
+];
 
-//$plugin = JPluginHelper::getPlugin('captcha', 'recaptcha_invisible');
-//$params = new JRegistry($plugin->params);
-
-//$dispatcher = Factory::getApplication()->getDispatcher();
-//$event = new Event('onInit', 'jform_captcha');
-//$res = $dispatcher->dispatch('onInit', $event);
+$required = '<span class="ts-required" aria-hidden="true">*</span>';
 
 ?>
 
-<script language="javascript">
+<div class="ticketstation ticketstation--checkout">
 
-    jQuery(document).ready(function() {
+    <?php echo LayoutHelper::render('steps', ['current' => 3], null, ['component' => 'com_ticketstation', 'client' => 0]); ?>
 
-        jQuery('head').append("<style>ul.checkout-bar li.previous:after {width:100%;} ul.checkout-bar li.active:before {background: #BB2721;} ul.checkout-bar li.active {color: #BB2721;}</style>");
-
-    });
-
-</script>
-
-<div class="row ticketstation">
-    <div class="col-12">
-        <div class="checkout-wrap">
-            <ul class="checkout-bar">
-
-                <li class="visited"><span class="progress-bar-text"><?php echo Text::_('COM_TICKETSTATION_STEP_CHOOSE_TICKETS'); ?></span></li>
-
-                <li class="visited previous ">
-                    <span class="progress-bar-text"><?php echo Text::_('COM_TICKETSTATION_CART'); ?></span>
-                </li>
-
-                <li class="active"><span class="progress-bar-text"><?php echo Text::_('COM_TICKETSTATION_ORDER_DETAILS'); ?></span></li>
-
-                <li class="next"><span class="progress-bar-text"><?php echo Text::_('COM_TICKETSTATION_STEP_PAYMENT'); ?></span></li>
-
-            </ul>
-        </div>
+    <div class="page-header">
+        <h1 class="ts-page-title"><?php echo Text::_('COM_TICKETSTATION_ORDER_DETAILS'); ?></h1>
     </div>
-</div>
 
-<div class="row ticketstation">
-    <div class="col-xl-9">
-        <h2 class="ticketmaster-header"><strong><?php echo Text::_('COM_TICKETSTATION_ORDER_DETAILS'); ?></strong></h2>
+    <p class="ts-intro"><?php echo Text::_('COM_TICKETSTATION_CREATEACCOUNT_NOW2'); ?></p>
 
-        <div id="tm-cart-text" style="margin-bottom:15px;">
-            <p><?php echo Text::_('COM_TICKETSTATION_CREATEACCOUNT_NOW2'); ?></p>
-        </div>
+    <form id="general" class="ts-form" action="<?php echo Route::_('index.php?option=com_ticketstation&controller=checkout' . ($itemid ? '&Itemid=' . $itemid : '')); ?>" method="post" name="general">
 
-        <div>
-            <form id="general" action="<?php echo Route::_('index.php?option=com_ticketstation&controller=checkout' . ($itemid ? '&Itemid=' . $itemid : '')); ?>" method="post" name="general">
-                <div class="col-lg-6">
-                    <?php if($this->config->show_salutation != 0 ): ?>
-                        <div class="row-fluid">
-                            <div class="ticketmaster-checkout-text"><?php echo Text::_( 'COM_TICKETSTATION_YOUR_GENDER' ); ?>*</div>
-                            <div class="ticketmaster-checkout-input"><?php echo $this->lists['gender']; ?></div>
-                        </div>
-                    <?php endif; ?>
+        <div class="ts-form__fields">
 
-                    <div class="row-fluid">
-                        <div class="ticketmaster-checkout-text"><?php echo Text::_( 'COM_TICKETSTATION_YOUR_FIRSTNAME' ); ?>*</div>
-                        <div class="ticketmaster-checkout-input">
-                            <input style="min-width: 50%;" name="firstname" type="text" id="firstname" class="input" value="<?php echo isset($info->firstname)?$info->firstname:null; ?>"  />
-                        </div>
-                    </div>
+            <?php if($this->config->show_salutation != 0 ): ?>
+                <div class="ts-field ts-field--gender">
+                    <label class="ts-label" for="gender"><?php echo Text::_( 'COM_TICKETSTATION_YOUR_GENDER' ); ?><?php echo $required; ?></label>
+                    <?php echo $this->lists['gender']; ?>
+                </div>
+            <?php endif; ?>
 
-                    <div class="row-fluid">
-                        <div class="ticketmaster-checkout-text"><?php echo Text::_( 'COM_TICKETSTATION_YOUR_LASTNAME' ); ?>*</div>
-                        <div class="ticketmaster-checkout-input">
-                            <input style="min-width: 50%;" name="lastname" type="text" id="name" class="input" value="<?php echo isset($info->name)?$info->name:null; ?>"  />
-                        </div>
-                    </div>
+            <?php foreach ($fields as $name => [$shown, $label, $value, $type, $autocomplete]) {
 
-                    <?php if($this->config->show_address != 0 ): ?>
-                        <div class="row-fluid">
-                            <div class="ticketmaster-checkout-text"><?php echo Text::_( 'COM_TICKETSTATION_YOUR_ADDRESS' ); ?>*</div>
-                            <div class="ticketmaster-checkout-input">
-                                <input name="address" type="text" id="address" class="input" value="<?php echo isset($info->address)?$info->address:null; ?>"  />
-                            </div>
-                        </div>
-                    <?php endif; ?>
+                if (!$shown) {
+                    continue;
+                } ?>
 
-                    <?php if($this->config->show_secondaddress != 0 ): ?>
-                        <div class="row-fluid">
-                            <div class="ticketmaster-checkout-text"><?php echo Text::_( 'COM_TICKETSTATION_YOUR_ADDRESS' ); ?>*</div>
-                            <div class="ticketmaster-checkout-input">
-                                <input name="address2" type="text" id="address2" class="input" value="<?php echo isset($info->address2)?$info->address2:null; ?>"  />
-                            </div>
-                        </div>
-                    <?php endif; ?>
-
-                    <?php if($this->config->show_thirdaddress != 0 ): ?>
-                        <div class="row-fluid">
-                            <div class="ticketmaster-checkout-text"><?php echo Text::_( 'COM_TICKETSTATION_YOUR_ADDRESS' ); ?>*</div>
-                            <div class="ticketmaster-checkout-input">
-                                <input name="address3" type="text" id="address3" class="input" value="<?php echo isset($info->address3)?$info->address3:null; ?>"  />
-                            </div>
-                        </div>
-                    <?php endif; ?>
-
-                    <?php if($this->config->show_zipcode != 0 ): ?>
-                        <div class="row-fluid">
-                            <div class="ticketmaster-checkout-text"><?php echo Text::_( 'COM_TICKETSTATION_YOUR_ZIPCODE' ); ?>*</div>
-                            <div class="ticketmaster-checkout-input">
-                                <input name="zipcode" type="text" id="zipcode" class="input" value="<?php echo isset($info->zipcode)?$info->zipcode:null; ?>"  />
-                            </div>
-                        </div>
-                    <?php endif ?>
-
-                    <?php if($this->config->show_city != 0): ?>
-                        <div class="row-fluid">
-                            <div class="ticketmaster-checkout-text"><?php echo Text::_( 'COM_TICKETSTATION_YOUR_CITY' ); ?>*</div>
-                            <div class="ticketmaster-checkout-input">
-                                <input name="city" type="text" id="city" class="input" value="<?php echo isset($info->city)?$info->city:null; ?>"  />
-                            </div>
-                        </div>
-                    <?php endif; ?>
-
-                    <?php if($this->config->show_country != 0 ): ?>
-                        <div class="row-fluid">
-                            <div class="ticketmaster-checkout-text"><?php echo Text::_( 'COM_TICKETSTATION_YOUR_COUNTRY' ); ?>*</div>
-                            <div class="ticketmaster-checkout-input"><?php echo $this->lists['country']; ?></div>
-                        </div>
-                    <?php endif; ?>
-
-                    <?php if($this->config->show_phone != 0 ): ?>
-                        <div class="row-fluid">
-                            <div class="ticketmaster-checkout-text"><?php echo Text::_( 'COM_TICKETSTATION_YOUR_PHONE' ); ?>*</div>
-                            <div class="ticketmaster-checkout-input">
-                                <input style="min-width: 50%;" name="phonenumber" type="text" class="input" value="<?php echo isset($info->phonenumber)?$info->phonenumber:null; ?>"/>
-                            </div>
-                        </div>
-                    <?php endif; ?>
-
-                    <div class="row-fluid">
-                        <div class="ticketmaster-checkout-text"><?php echo Text::_( 'COM_TICKETSTATION_YOUR_EMAIL' ); ?>*</div>
-                        <div class="ticketmaster-checkout-input">
-                            <input style="min-width: 50%;" name="emailaddress" type="text" class="input" value="<?php echo isset($info->emailaddress)?$info->emailaddress:null; ?>"  />
-                        </div>
-                    </div>
-
-                    <div class="row-fluid">
-                        <div class="ticketmaster-checkout-text"><?php echo Text::_( 'COM_TICKETSTATION_RETYPE_EMAIL' ); ?>*</div>
-                        <div class="ticketmaster-checkout-input">
-                            <input style="min-width: 50%;" name="email2" type="text" id="email2" class="input"  value="<?php echo isset($info->emailaddress)?$info->emailaddress:null; ?>"/>
-                        </div>
-                    </div>
-
+                <div class="ts-field ts-field--<?php echo $name; ?>">
+                    <?php if ($type === 'select') { ?>
+                        <label class="ts-label" for="country_id"><?php echo Text::_($label); ?><?php echo $required; ?></label>
+                        <?php echo $this->lists['country']; ?>
+                    <?php } else { ?>
+                        <label class="ts-label" for="<?php echo $name; ?>"><?php echo Text::_($label); ?><?php echo $required; ?></label>
+                        <input class="ts-input" type="<?php echo $type; ?>" name="<?php echo $name; ?>" id="<?php echo $name; ?>" value="<?php echo htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8'); ?>"<?php echo $autocomplete ? ' autocomplete="' . $autocomplete . '"' : ''; ?> />
+                    <?php } ?>
                 </div>
 
-                <div style="margin-top: 20px;">
-
-                    <input type="submit" value="<?php echo Text::_('COM_TICKETSTATION_CONTINUE'); ?>" class="btn btn-primary pull-right">
-
-                    <a class="btn btn-primary pull-left" onclick="document.location.href='<?php echo $gotocart; ?>'">
-                        <span><?php echo Text::_('COM_TICKETSTATION_BACK'); ?></span>
-                    </a>
-
-                </div>
-
-                <div style="clear:both;">&nbsp;</div>
-
-                <input type="hidden" name="option" value="com_ticketstation" />
-                <input type="hidden" name="controller" value="checkout" />
-                <input type="hidden" name="task" value="save" />
-                <?php echo HTMLHelper::_( 'form.token' ); ?>
-
-            </form>
+            <?php } ?>
 
         </div>
-    </div>
+
+        <div class="ts-actions">
+            <a class="ts-btn ts-btn--secondary ts-btn--back" href="<?php echo $gotocart; ?>">
+                <?php echo Text::_('COM_TICKETSTATION_BACK'); ?>
+            </a>
+
+            <button type="submit" class="ts-btn ts-btn--primary ts-btn--next"><?php echo Text::_('COM_TICKETSTATION_CONTINUE'); ?></button>
+        </div>
+
+        <input type="hidden" name="option" value="com_ticketstation" />
+        <input type="hidden" name="controller" value="checkout" />
+        <input type="hidden" name="task" value="save" />
+        <?php echo HTMLHelper::_( 'form.token' ); ?>
+
+    </form>
+
 </div>

@@ -25,7 +25,7 @@ $app        = Factory::getApplication();
 $document   = $app->getDocument();
 $document->setTitle( Text::_('COM_TICKETSTATION_SCANCHART_TITLE') . ' - ' . $app->get('sitename'));
 
-$document->addStyleSheet( 'components/com_ticketstation/assets/css/component.css' );
+$document->addStyleSheet( 'components/com_ticketstation/assets/css/scanner.css' );
 $document->addScript('https://code.jquery.com/jquery-3.7.1.js');
 $document->addScript('https://code.jquery.com/ui/1.13.2/jquery-ui.js');
 

@@ -3,7 +3,9 @@
 use Joomla\CMS\Factory;
 use Joomla\CMS\HTML\HTMLHelper;
 use Joomla\CMS\Language\Text;
+use Joomla\CMS\Layout\LayoutHelper;
 use Joomla\CMS\Router\Route;
+use Joomla\CMS\Uri\Uri;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Availability;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Ordercode;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\TicketstationFunctions;
@@ -33,6 +35,7 @@ $ordercode = $session->get('ordercode');
 ## Redirection link in JRoute:
 $itemid = TicketstationFunctions::getSiteItemid();
 $gotocart = Route::_('index.php?option=com_ticketstation&view=cart' . ($itemid ? '&Itemid=' . $itemid : ''));
+$shop_on  = Route::_('index.php?option=com_ticketstation&view=upcoming' . ($itemid ? '&Itemid=' . $itemid : ''));
 
 ## Determine available tickets: for a parent with child tickets the total over all published
 ## variants, following their counter settings (the same figure as in the upcoming-events list)
@@ -45,372 +48,204 @@ $percentage_available = ($availability->capacity > 0)
     ? round((($available_tickets / $availability->capacity) * 100), 0)
     : 0;
 
+if ($available_tickets <= 0) {
+    $availability_class = 'ts-availability--soldout';
+} elseif ($percentage_available < 11) {
+    $availability_class = 'ts-availability--critical';
+} elseif ($percentage_available < 26) {
+    $availability_class = 'ts-availability--low';
+} else {
+    $availability_class = 'ts-availability--ok';
+}
+
 ## Venue website link (stored without scheme in the venue form, e.g. "www.example.nl")
 $venue_website_url = preg_match('#^https?://#i', $this->items->website) ? $this->items->website : 'https://' . $this->items->website;
 
+## One table row per ticket: the child tickets (variants) of this ticket, or else the ticket itself.
+## Only a ticket without variants offers the waiting list and the "few tickets left" notice.
+$ticketRows = [];
+
+if (count($this->childs) != 0) {
+    foreach ($this->childs as $child) {
+        ## Tickets left for this variant: the shared parent pool or its own cap.
+        $ticketRows[] = (object) [
+            'ticket'      => $child,
+            'available'   => Availability::forPurchase((int) $child->ticketid),
+            'waitinglist' => false,
+            'fewLeft'     => false,
+        ];
+    }
+} else {
+    $ticketRows[] = (object) [
+        'ticket'      => $this->items,
+        'available'   => $available_tickets,
+        'waitinglist' => $this->config->show_waitinglist == 1,
+        'fewLeft'     => ($percentage_available < 0.5) && ($available_tickets > 0),
+    ];
+}
+
 ?>
 
-<script src="https://code.jquery.com/jquery-latest.min.js"></script>
+<div class="ticketstation ticketstation--event">
 
-<script type="text/javascript">
-    jQuery(document).ready(function() {
+    <?php echo LayoutHelper::render('steps', ['current' => 1], null, ['component' => 'com_ticketstation', 'client' => 0]); ?>
 
-        jQuery('head').append("<style>ul.checkout-bar:before {width:11%;} ul.checkout-bar li.active:before {background: #BB2721;} ul.checkout-bar li.active {color: #BB2721;}</style>");
-
-    });
-</script>
-
-<div class="row ticketstation">
-    <div class="col-12">
-        <div>
-            <div class="checkout-wrap">
-                <ul class="checkout-bar first">
-
-                    <li class="active"><span class="progress-bar-text"><?php echo Text::_('COM_TICKETSTATION_STEP_CHOOSE_TICKETS'); ?></span></li>
-
-                    <li class="next"><span class="progress-bar-text"><?php echo Text::_('COM_TICKETSTATION_CART'); ?></span></li>
-
-                    <li class=""><span class="progress-bar-text"><?php echo Text::_('COM_TICKETSTATION_ORDER_DETAILS'); ?></span></li>
-
-                    <li class=""><span class="progress-bar-text"><?php echo Text::_('COM_TICKETSTATION_STEP_PAYMENT'); ?></span></li>
-
-                </ul>
-            </div>
-        </div>
+    <div class="page-header">
+        <h1 class="ts-page-title"><?php echo Text::_('COM_TICKETSTATION_STEP_CHOOSE_TICKETS'); ?></h1>
     </div>
-</div>
 
-<div class="row ticketstation">
+    <section class="ts-card ts-ticketinfo">
+        <h2 class="ts-card__title"><?php echo Text::_('COM_TICKETSTATION_TICKET_INFORMATION'); ?></h2>
 
-    <div class="col-12" style="padding-left: 5px;padding-right: 5px;">
+        <dl class="ts-meta">
+            <dt><?php echo Text::_('COM_TICKETSTATION_EVENT'); ?></dt>
+            <dd><?php echo htmlspecialchars($this->items->eventname, ENT_QUOTES, 'UTF-8'); ?></dd>
 
-        <h2 class="ticketmaster-header"><strong><?php echo Text::_('COM_TICKETSTATION_STEP_CHOOSE_TICKETS'); ?></strong></h2>
+            <dt><?php echo Text::_('COM_TICKETSTATION_DATE'); ?></dt>
+            <dd><?php echo date('d-m-Y H:i', strtotime($this->items->startdate)); ?></dd>
 
-        <div class="ticketmaster_event_info">
-            <h4><strong><?php echo Text::_('COM_TICKETSTATION_TICKET_INFORMATION'); ?>:</strong></h4>
-            <table>
-                <tr>
-                    <td width="130px" style="font-weight:bold;"><?php echo Text::_('COM_TICKETSTATION_EVENT'); ?>:</td>
-                    <td><?php echo htmlspecialchars($this->items->eventname, ENT_QUOTES, 'UTF-8'); ?></td>
-                </tr>
-                <tr>
-                    <td style="padding-right:5px;font-weight:bold;"><?php echo Text::_('COM_TICKETSTATION_DATE'); ?>:</td>
-                    <td><?php echo date('d-m-Y H:i', strtotime($this->items->startdate)); ?></td>
-                </tr>
-                <?php if ($this->config->show_venue == 1) { ?>
-                    <tr>
-                        <td style="font-weight:bold;"><?php echo Text::_('COM_TICKETSTATION_VENUE'); ?>:</td>
-                        <td><?php echo $this->items->venue; ?> - <?php echo $this->items->city; ?></td>
-                    </tr>
-                <?php } ?>
-                <?php if ($this->config->show_venue == 1 && $this->config->show_venue_address == 1 && ($this->items->street != '' || $this->items->zipcode != '')) { ?>
-                    <tr>
-                        <td style="font-weight:bold;"><?php echo Text::_('COM_TICKETSTATION_ADDRESS'); ?>:</td>
-                        <td><?php echo htmlspecialchars(trim($this->items->street . ', ' . $this->items->zipcode . ' ' . $this->items->city, ', '), ENT_QUOTES, 'UTF-8'); ?></td>
-                    </tr>
-                <?php } ?>
-                <?php if ($this->config->show_venue == 1 && $this->config->show_venue_website == 1 && $this->items->website != '') { ?>
-                    <tr>
-                        <td style="font-weight:bold;"><?php echo Text::_('COM_TICKETSTATION_WEBSITE'); ?>:</td>
-                        <td><a href="<?php echo htmlspecialchars($venue_website_url, ENT_QUOTES, 'UTF-8'); ?>" target="_blank" rel="noopener"><?php echo htmlspecialchars($this->items->website, ENT_QUOTES, 'UTF-8'); ?></a></td>
-                    </tr>
-                <?php } ?>
-            </table>
-
-            <?php if ($this->config->show_venue == 1 && $this->config->show_venue_description == 1 && trim(strip_tags($this->items->venuedescription)) != '') { ?>
-                <div class="ticketstation_venue_description">
-                    <?php echo $this->items->venuedescription; ?>
-                </div>
+            <?php if ($this->config->show_venue == 1) { ?>
+                <dt><?php echo Text::_('COM_TICKETSTATION_VENUE'); ?></dt>
+                <dd><?php echo $this->items->venue; ?> - <?php echo $this->items->city; ?></dd>
             <?php } ?>
 
-            <?php if ($this->config->show_available_tickets == 1) { ?>
-
-                <h4><strong><?php echo Text::_('COM_TICKETSTATION_TICKETS_AVAILABLE'); ?>:</strong></h4>
-
-                <div id="percentage-available" class="percentage-available" style="max-width: 500px;">
-
-                    <?php if($available_tickets <= 0) { ?>
-
-                        <div id="percentage-available-bar" class="percentage-available-bar percentage-available-bar-striped  percentage-available-bar-bg-soldout" style="width:100%;" role="progressbar" aria-valuenow="<?php echo $percentage_available; ?>" aria-valuemin="0" aria-valuemax="100"><span id="percentage-available-bar-text"><?php echo Text::_('COM_TICKETSTATION_SOLD_OUT2'); ?></span>
-                        </div>
-
-                    <?php } elseif($percentage_available < 11) { ?>
-
-                        <div id="percentage-available-bar" class="percentage-available-bar percentage-available-bar-striped  percentage-available-bar-bg-warning" style="width: <?php echo ($percentage_available < 0.5) ? "1" : $percentage_available; ?>%;" role="progressbar" aria-valuenow="<?php echo $percentage_available; ?>" aria-valuemin="0" aria-valuemax="100"><span id="percentage-available-bar-text" class="percentage-available-bar-text-warning"><?php echo $percentage_available; ?>%</span>
-                        </div>
-
-                    <?php } elseif($percentage_available < 26) { ?>
-
-                        <div id="percentage-available-bar" class="percentage-available-bar percentage-available-bar-striped  percentage-available-bar-bg-caution" style="width: <?php echo $percentage_available; ?>%;" role="progressbar" aria-valuenow="<?php echo $percentage_available; ?>" aria-valuemin="0" aria-valuemax="100"><span id="percentage-available-bar-text"><?php echo $percentage_available; ?>%</span>
-                        </div>
-
-                    <?php } else { ?>
-
-                        <div id="percentage-available-bar" class="percentage-available-bar percentage-available-bar-striped  percentage-available-bar-bg" style="width: <?php echo $percentage_available; ?>%;" role="progressbar" aria-valuenow="<?php echo $percentage_available; ?>" aria-valuemin="0" aria-valuemax="100"><span id="percentage-available-bar-text"><?php echo $percentage_available; ?>%</span>
-                        </div>
-
-                    <?php } ?>
-
-                </div>
-
+            <?php if ($this->config->show_venue == 1 && $this->config->show_venue_address == 1 && ($this->items->street != '' || $this->items->zipcode != '')) { ?>
+                <dt><?php echo Text::_('COM_TICKETSTATION_ADDRESS'); ?></dt>
+                <dd><?php echo htmlspecialchars(trim($this->items->street . ', ' . $this->items->zipcode . ' ' . $this->items->city, ', '), ENT_QUOTES, 'UTF-8'); ?></dd>
             <?php } ?>
 
-            <div style="min-height:45px; color:#444; text-align:center; padding-bottom:2px;">
+            <?php if ($this->config->show_venue == 1 && $this->config->show_venue_website == 1 && $this->items->website != '') { ?>
+                <dt><?php echo Text::_('COM_TICKETSTATION_WEBSITE'); ?></dt>
+                <dd><a href="<?php echo htmlspecialchars($venue_website_url, ENT_QUOTES, 'UTF-8'); ?>" target="_blank" rel="noopener"><?php echo htmlspecialchars($this->items->website, ENT_QUOTES, 'UTF-8'); ?></a></dd>
+            <?php } ?>
+        </dl>
 
-                <div id="message" style="display:none;"><!-- Dont remove this container, it is used for ordering messages --></div>
+        <?php if ($this->config->show_venue == 1 && $this->config->show_venue_description == 1 && trim(strip_tags($this->items->venuedescription)) != '') { ?>
+            <div class="ts-venue-description">
+                <?php echo $this->items->venuedescription; ?>
+            </div>
+        <?php } ?>
 
+        <?php if ($this->config->show_available_tickets == 1) { ?>
+
+            <h3 class="ts-subtitle" id="ts-availability-label"><?php echo Text::_('COM_TICKETSTATION_TICKETS_AVAILABLE'); ?></h3>
+
+            <div id="percentage-available" class="ts-availability <?php echo $availability_class; ?>">
+                <div class="ts-availability__track" role="progressbar" aria-labelledby="ts-availability-label" aria-valuenow="<?php echo $percentage_available; ?>" aria-valuemin="0" aria-valuemax="100">
+                    <div id="percentage-available-bar" class="ts-availability__bar" style="width: <?php echo $available_tickets <= 0 ? 0 : max(1, $percentage_available); ?>%;"></div>
+                </div>
+                <span id="percentage-available-bar-text" class="ts-availability__text"><?php echo $available_tickets <= 0 ? Text::_('COM_TICKETSTATION_SOLD_OUT2') : $percentage_available . '%'; ?></span>
             </div>
 
-        </div>
+        <?php } ?>
+    </section>
 
-        <div>
+    <table class="ts-table ts-tickets">
+        <thead>
+            <tr>
+                <th scope="col"><?php echo Text::_('COM_TICKETSTATION_EVENT_INFORMATION'); ?></th>
+                <th scope="col"><?php echo Text::_('COM_TICKETSTATION_PRICE'); ?></th>
+                <th scope="col"><?php echo Text::_('COM_TICKETSTATION_QUANTITY'); ?></th>
+                <th scope="col"><span class="ts-visually-hidden"><?php echo Text::_('COM_TICKETSTATION_ORDER'); ?></span></th>
+            </tr>
+        </thead>
+        <tbody>
+            <?php foreach ($ticketRows as $ticketRow) {
 
-            <?php if (count($this->childs) != 0) { ?>
+                $ticket    = $ticketRow->ticket;
+                $ticketid  = (int) $ticket->ticketid;
+                $published = ($ticket->eventpublished == 1) && ($ticket->ticketpublished == 1);
+                $hasLimit  = ($ticket->min_qty != 0 || $ticket->max_qty != 0);
+                $hasNote   = $ticketRow->fewLeft || !empty($ticket->free_text_1) || $hasLimit;
 
-                <table class="table">
-                    <thead>
-                    <th>
-                    </th>
-                    <th>
-                        <?php echo Text::_('COM_TICKETSTATION_PRICE'); ?>:
-                    </th>
-                    <th>
-                        <?php echo Text::_('COM_TICKETSTATION_QUANTITY'); ?>:
-                    </th>
-                    <th>
-                    </th>
-                    </thead>
-                    <?php foreach ($this->childs as $row ) {
+                ## Only offer a quantity when there is something to add it to (tickets or the waiting list)
+                $canOrder = $published && ($ticketRow->available > 0 || $ticketRow->waitinglist);
 
-                        ## Tickets left for this variant: the shared parent pool or its own cap.
-                        $total_tickets = Availability::forPurchase((int) $row->ticketid);
+                ## Quantities on offer: up to the ticket's maximum per order (10 without one), and no
+                ## more than are left - unless it's sold out and the quantity is for the waiting list.
+                $maxQty = $ticket->max_qty > 0 ? (int) $ticket->max_qty : 10;
 
-                        ?>
+                if ($ticketRow->available > 0) {
+                    $maxQty = max(1, min($maxQty, (int) $ticketRow->available));
+                }
 
-                        <tr>
-                            <td style="border-top:none !important;vertical-align: middle;">
-                                <div style="font-weight:bold;"><?php echo htmlspecialchars($row->ticketname, ENT_QUOTES, 'UTF-8'); ?></div>
-                            </td>
-                            <td style="border-top:none !important;vertical-align: middle;">
-                                <div><?php echo (new TicketstationFunctions)->showprice($this->config->priceformat ,$row->ticketprice, $this->config->valuta); ?></div>
-                            </td>
-                            <td style="border-top:none !important;vertical-align: middle;">
-                                <div style="float:left;">
-                                    <select id="qty_<?php echo $row->ticketid;?>">
-                                        <option value="1">1</option>
-                                        <option value="2">2</option>
-                                        <option value="3">3</option>
-                                        <option value="4">4</option>
-                                        <option value="5">5</option>
-                                        <option value="6">6</option>
-                                        <option value="7">7</option>
-                                        <option value="8">8</option>
-                                        <option value="9">9</option>
-                                        <option value="10">10</option>
-                                    </select>
-                                </div>
-                            </td>
-                            <td style="border-top:none !important;width: 100px;padding-left: 0px;">
+                $minimum = str_replace('%%MIN_AMOUNT%%', $ticket->min_qty, Text::_('COM_TICKETSTATION_MINIMUM_FOR_ORDER'));
+                $maximum = str_replace('%%MAX_AMOUNT%%', $ticket->max_qty, Text::_('COM_TICKETSTATION_MAXIMUM_FOR_ORDER'));
+                ?>
 
-                                <?php if ($total_tickets <= 0) { ?>
-
-                                    <div class="btn-ticket-small-disabled pull-right">
-                                        <?php echo Text::_('COM_TICKETSTATION_SOLD_OUT2'); ?>
-                                    </div>
-
-                                <?php } else { ?>
-
-                                    <?php if (($row->eventpublished == 1) && ($row->ticketpublished == 1)) { ?>
-
-                                        <a class="btn-ticket-small pull-right" onclick="buytickets(<?php echo $row->ticketid;?>,2)">
-                                            <span><?php echo Text::_('COM_TICKETSTATION_ORDER'); ?></span>
-                                        </a>
-
-                                    <?php } ?>
-
+                <tr class="ts-tickets__row<?php echo $hasNote ? ' ts-tickets__row--has-note' : ''; ?>">
+                    <td class="ts-tickets__name"><?php echo htmlspecialchars($ticket->ticketname, ENT_QUOTES, 'UTF-8'); ?></td>
+                    <td class="ts-tickets__price"><?php echo (new TicketstationFunctions)->showprice($this->config->priceformat, $ticket->ticketprice, $this->config->valuta); ?></td>
+                    <td class="ts-tickets__qty">
+                        <?php if ($canOrder) { ?>
+                            <label class="ts-visually-hidden" for="qty_<?php echo $ticketid; ?>"><?php echo Text::_('COM_TICKETSTATION_QUANTITY'); ?></label>
+                            <select id="qty_<?php echo $ticketid; ?>" class="ts-select ts-select--qty">
+                                <?php for ($qty = 1; $qty <= $maxQty; $qty++) { ?>
+                                    <option value="<?php echo $qty; ?>"><?php echo $qty; ?></option>
                                 <?php } ?>
-
-                            </td>
-                        </tr>
-                        <?php if (!empty($row->free_text_1) && ($row->min_qty == 0 && $row->max_qty == 0 )) { ?>
-                            <tr>
-                                <td colspan="4" style="border-top:none !important;">
-                                    <span style="font-weight:normal"><em><?php echo $row->free_text_1; ?></em></span>
-                                </td>
-                            </tr>
+                            </select>
                         <?php } ?>
-                        <?php if ( $row->min_qty != 0 || $row->max_qty != 0 ) { ?>
+                    </td>
+                    <td class="ts-tickets__action">
+                        <?php if ($ticketRow->available <= 0) { ?>
 
-                            <?php $minimum = str_replace('%%MIN_AMOUNT%%', $row->min_qty, Text::_('COM_TICKETSTATION_MINIMUM_FOR_ORDER')); ?>
-                            <?php $maximum = str_replace('%%MAX_AMOUNT%%', $row->max_qty, Text::_('COM_TICKETSTATION_MAXIMUM_FOR_ORDER')); ?>
-
-                            <tr>
-                                <td colspan="4" style="border-top:none !important;">
-                                    <?php if (!empty($row->free_text_1)) { ?>
-                                        <span style="font-weight:normal"><em><?php echo $row->free_text_1; ?></em></span><br/>
-                                    <?php } ?>
-
-                                    <span style="padding-bottom:5px;color:#BB2721;font-weight:bold;">
-
-										<?php if($row->max_qty != 0 && $row->min_qty != 0){ ?>
-                                            <?php echo $minimum; ?> <?php echo $row->min_qty; ?> || <?php echo $maximum; ?> <?php echo $row->max_qty; ?>
-                                        <?php }else if($row->max_qty != 0 && $row->min_qty == 0){ ?>
-                                            <?php echo $maximum; ?>
-                                        <?php }else if($row->max_qty == 0 && $row->min_qty != 0){ ?>
-                                            <?php echo $minimum; ?> <?php echo $row->min_qty; ?>
-                                        <?php } ?>
-
-									</span>
-                                </td>
-                            </tr>
-
-                        <?php } ?>
-
-
-                    <?php } ?>
-
-                </table>
-
-            <?php } else { ?>
-
-                <table class="table">
-                    <thead>
-                    <th>
-                    </th>
-                    <th>
-                        <?php echo Text::_('COM_TICKETSTATION_PRICE'); ?>:
-                    </th>
-                    <th>
-                        <?php echo Text::_('COM_TICKETSTATION_QUANTITY'); ?>:
-                    </th>
-                    <th>
-                    </th>
-                    </thead>
-                    <tr>
-                        <td style="border-top:none !important;vertical-align: middle;">
-                            <div style="font-weight:bold;"><?php echo htmlspecialchars($this->items->ticketname, ENT_QUOTES, 'UTF-8'); ?></div>
-                        </td>
-                        <td style="border-top:none !important;vertical-align: middle;">
-                            <div><?php echo (new TicketstationFunctions)->showprice($this->config->priceformat ,$this->items->ticketprice, $this->config->valuta); ?></div>
-                        </td>
-                        <td style="border-top:none !important;vertical-align: middle;">
-                            <div style="float:left;">
-                                <select id="qty_<?php echo $this->items->ticketid;?>">
-                                    <option value="1">1</option>
-                                    <option value="2">2</option>
-                                    <option value="3">3</option>
-                                    <option value="4">4</option>
-                                    <option value="5">5</option>
-                                    <option value="6">6</option>
-                                    <option value="7">7</option>
-                                    <option value="8">8</option>
-                                    <option value="9">9</option>
-                                    <option value="10">10</option>
-                                </select>
-                            </div>
-                        </td>
-                        <td style="border-top:none !important;width: 100px;padding-left: 0px;">
-
-                            <?php if ($available_tickets <= 0) { ?>
-
-                                <?php if ($this->config->show_waitinglist == 1 && ($this->items->eventpublished == 1) && ($this->items->ticketpublished == 1)) { ?>
-
-                                    <a class="btn-ticket-small pull-right" onclick="waitinglist(<?php echo $this->items->ticketid;?>)">
-                                        <span><?php echo Text::_('COM_TICKETSTATION_JOIN_WAITINGLIST'); ?></span>
-                                    </a>
-
-                                <?php } else { ?>
-
-                                    <div class="btn-ticket-small-disabled pull-right">
-                                        <?php echo Text::_('COM_TICKETSTATION_SOLD_OUT2'); ?>
-                                    </div>
-
-                                <?php } ?>
-
+                            <?php if ($ticketRow->waitinglist && $published) { ?>
+                                <button type="button" class="ts-btn ts-btn--secondary ts-btn--sm ts-btn--waitinglist" onclick="waitinglist(<?php echo $ticketid; ?>)">
+                                    <?php echo Text::_('COM_TICKETSTATION_JOIN_WAITINGLIST'); ?>
+                                </button>
                             <?php } else { ?>
-
-                                <?php if (($this->items->eventpublished == 1) && ($this->items->ticketpublished == 1)) { ?>
-
-                                    <a class="btn-ticket-small pull-right" onclick="buytickets(<?php echo $this->items->ticketid;?>,2)">
-                                        <span><?php echo Text::_('COM_TICKETSTATION_ORDER'); ?></span>
-                                    </a>
-
-                                <?php } ?>
-
+                                <span class="ts-badge ts-badge--soldout"><?php echo Text::_('COM_TICKETSTATION_SOLD_OUT2'); ?></span>
                             <?php } ?>
 
+                        <?php } elseif ($published) { ?>
+
+                            <button type="button" class="ts-btn ts-btn--secondary ts-btn--sm ts-btn--add" onclick="buytickets(<?php echo $ticketid; ?>)">
+                                <?php echo Text::_('COM_TICKETSTATION_ORDER'); ?>
+                            </button>
+
+                        <?php } ?>
+                    </td>
+                </tr>
+
+                <?php if ($hasNote) { ?>
+                    <tr class="ts-tickets__note-row">
+                        <td colspan="4">
+                            <?php if ($ticketRow->fewLeft) { ?>
+                                <div class="ts-alert ts-alert--warning"><?php echo Text::_('COM_TICKETSTATION_FEW_TICKETS_LEFT'); ?></div>
+                            <?php } ?>
+
+                            <?php if (!empty($ticket->free_text_1)) { ?>
+                                <span class="ts-tickets__note"><?php echo $ticket->free_text_1; ?></span>
+                            <?php } ?>
+
+                            <?php if ($ticket->min_qty != 0) { ?>
+                                <span class="ts-tickets__limit"><?php echo $minimum; ?></span>
+                            <?php } ?>
+
+                            <?php if ($ticket->max_qty != 0) { ?>
+                                <span class="ts-tickets__limit"><?php echo $maximum; ?></span>
+                            <?php } ?>
                         </td>
                     </tr>
-                    <?php if (($percentage_available < 0.5) && ($available_tickets > 0)) { ?>
-                        <tr>
-                            <td colspan="4" style="border-top:none !important;background-color: antiquewhite; text-align: center;">
-                                <span style="font-weight:normal;color:#BB2721;"><em><?php echo Text::_('COM_TICKETSTATION_FEW_TICKETS_LEFT'); ?></em></span>
-                            </td>
-                        </tr>
-
-                    <?php } ?>
-
-                    <?php if (!empty($this->items->free_text_1) && ($this->items->min_qty == 0 && $this->items->max_qty == 0 )) { ?>
-                        <tr>
-                            <td colspan="4" style="border-top:none !important;">
-                                <span style="font-weight:normal;"><em><?php echo $this->items->free_text_1; ?></em></span>
-                            </td>
-                        </tr>
-                    <?php } ?>
-                    <?php if ( $this->items->min_qty != 0 || $this->items->max_qty != 0 ) { ?>
-
-                        <?php $minimum = str_replace('%%MIN_AMOUNT%%', $this->items->min_qty, Text::_('COM_TICKETSTATION_MINIMUM_FOR_ORDER')); ?>
-                        <?php $maximum = str_replace('%%MAX_AMOUNT%%', $this->items->max_qty, Text::_('COM_TICKETSTATION_MAXIMUM_FOR_ORDER')); ?>
-
-                        <tr>
-                            <td colspan="4" style="border-top:none !important;">
-                                <?php if (!empty($this->items->free_text_1)) { ?>
-                                    <span style="font-weight:normal"><em><?php echo $this->items->free_text_1; ?></em></span><br/>
-                                <?php } ?>
-
-                                <span style="padding-bottom:5px;color:#BB2721;font-weight:bold;">
-
-									<?php if($this->items->max_qty != 0 && $this->items->min_qty != 0){ ?>
-                                        <?php echo $minimum; ?> || <?php echo $maximum; ?>
-                                    <?php }else if($this->items->max_qty != 0 && $this->items->min_qty == 0){ ?>
-                                        <?php echo $maximum; ?>
-                                    <?php }else if($this->items->max_qty == 0 && $this->items->min_qty != 0){ ?>
-                                        <?php echo $minimum; ?>
-                                    <?php } ?>
-
-								</span>
-                            </td>
-                        </tr>
-
-                    <?php } ?>
-
-                </table>
+                <?php } ?>
 
             <?php } ?>
+        </tbody>
+    </table>
 
+    <!-- Filled with the result of adding tickets; don't remove -->
+    <div id="message" class="ts-message" role="status" aria-live="polite" style="display: none;"></div>
 
+    <div class="ts-actions">
+        <a class="ts-btn ts-btn--secondary ts-btn--back" href="<?php echo $shop_on; ?>">
+            <?php echo Text::_('COM_TICKETSTATION_BACK'); ?>
+        </a>
 
-            <div>
-
-                <?php if (count($this->ordered) == 0 && $this->waiting == 0) {
-                    $style_continue = 'display: none;';
-                } else {
-                    $style_continue = '';
-                } ?>
-                <div id="continue-button" style="<?= $style_continue; ?>">
-                    <a class="btn btn-primary pull-right" onClick="location.href='<?php echo $gotocart; ?>'">
-                        <span><?php echo Text::_('COM_TICKETSTATION_CONTINUE'); ?></span>
-                    </a>
-                </div>
-
-                <a class="btn btn-primary pull-left" onClick="history.back()">
-                    <span><?php echo Text::_('COM_TICKETSTATION_BACK'); ?></span>
-                </a>
-
-            </div>
-
-        </div>
+        <a id="continue-button" class="ts-btn ts-btn--primary ts-btn--next" href="<?php echo $gotocart; ?>"<?php echo (count($this->ordered) == 0 && $this->waiting == 0) ? ' style="display: none;"' : ''; ?>>
+            <?php echo Text::_('COM_TICKETSTATION_CONTINUE'); ?>
+        </a>
     </div>
+
 </div>
 
 <script type="text/javascript">
@@ -421,7 +256,7 @@ $venue_website_url = preg_match('#^https?://#i', $this->items->website) ? $this-
 
         jQuery.ajax({
             //this is the php file that processes the data and send mail
-            url: "/index.php?option=com_ticketstation&controller=order&task=itemcount&format=raw",
+            url: "<?php echo Uri::root(true); ?>/index.php?option=com_ticketstation&controller=order&task=itemcount&format=raw",
             //POST method is used
             type: "POST",
             //pass the data
@@ -441,7 +276,7 @@ $venue_website_url = preg_match('#^https?://#i', $this->items->website) ? $this-
 
         jQuery.ajax({
             //this is the php file that processes the data and send mail
-            url: "/index.php?option=com_ticketstation&controller=order&task=updatecart&format=raw",
+            url: "<?php echo Uri::root(true); ?>/index.php?option=com_ticketstation&controller=order&task=updatecart&format=raw",
             //POST method is used
             type: "POST",
             //pass the data
@@ -450,8 +285,6 @@ $venue_website_url = preg_match('#^https?://#i', $this->items->website) ? $this-
             cache: false,
             //success
             success: function (html) {
-                //if process.php returned 1/true (send mail success)
-                jQuery("#seatselection").delay(500).show(0);
                 if (!html.includes('empty_cart') || html.includes('waitinglist_items')) {
                     jQuery("#continue-button").show(0);
                 } else {
@@ -465,14 +298,14 @@ $venue_website_url = preg_match('#^https?://#i', $this->items->website) ? $this-
 
     function updateAvailable(){
 
-        jQuery('#percentage-available-bar').addClass('percentage-available-bar-loading');
+        jQuery('#percentage-available-bar').addClass('is-loading');
 
         var ticketid = 'ticketid=' + <?php echo $this->items->ticketid; ?> ;
 
         jQuery("#percentage-available-bar").delay(1000).queue(function() {
             jQuery.ajax({
                 //this is the php file that processes the data and send mail
-                url: "/index.php?option=com_ticketstation&controller=order&task=updateavailable&format=raw",
+                url: "<?php echo Uri::root(true); ?>/index.php?option=com_ticketstation&controller=order&task=updateavailable&format=raw",
                 //POST method is used
                 type: "POST",
                 //pass the data
@@ -481,7 +314,7 @@ $venue_website_url = preg_match('#^https?://#i', $this->items->website) ? $this-
                 cache: false,
                 //success
                 success: function (html) {
-                    jQuery("#percentage-available-bar").css("width", html).removeClass('percentage-available-bar-loading');
+                    jQuery("#percentage-available-bar").css("width", html).removeClass('is-loading');
                     jQuery("#percentage-available-bar-text").html(html);
                 }
             });
@@ -501,7 +334,7 @@ $venue_website_url = preg_match('#^https?://#i', $this->items->website) ? $this-
 
         jQuery.ajax({
             //this is the php file that processes the data and send mail
-            url: "/index.php?option=com_ticketstation&controller=order&task=buyticket&format=raw",
+            url: "<?php echo Uri::root(true); ?>/index.php?option=com_ticketstation&controller=order&task=buyticket&format=raw",
             //POST method is used
             type: "POST",
             //pass the data
@@ -513,23 +346,10 @@ $venue_website_url = preg_match('#^https?://#i', $this->items->website) ? $this-
             //success
             success: function (html) {
                 // We're done, show data
-
-                if(html.status == 666) {
-                    jQuery( "#message" ).show();
-                    jQuery( '#message' ).html(html.msg);
-                    updateCart();
-                    updateAvailable();
-                    jQuery( "#message" ).delay(3000).fadeOut(500);
-
-                }else{
-                    jQuery( "#message" ).show();
-                    jQuery( "#message" ).html(html.msg);
-                    updateCart();
-                    updateAvailable();
-                    jQuery( "#message" ).delay(3000).fadeOut(500);
-
-                }
-
+                jQuery( "#message" ).stop(true, true).html(html.msg).show();
+                updateCart();
+                updateAvailable();
+                jQuery( "#message" ).delay(3000).fadeOut(500);
             },
             error:function (xhr, ajaxOptions, thrownError){
             }
@@ -549,7 +369,7 @@ $venue_website_url = preg_match('#^https?://#i', $this->items->website) ? $this-
 
         jQuery.ajax({
             //this is the php file that processes the data and send mail
-            url: "/index.php?option=com_ticketstation&controller=order&task=waitinglist&format=raw",
+            url: "<?php echo Uri::root(true); ?>/index.php?option=com_ticketstation&controller=order&task=waitinglist&format=raw",
             //POST method is used
             type: "POST",
             //pass the data

@@ -1,0 +1,503 @@
+/**
+ * com_ticketstation - staff pages (ticket scanner, scan overview, scan seat chart)
+ *
+ * These pages are full-screen tools for staff and keep their own look. The customer-facing
+ * views use component.css instead.
+ */
+
+@import url("https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css");
+
+/*### START SCANNING PAGE ###*/
+
+.userinfo {
+    border: 1px solid #ccc;
+    padding: 10px;
+    border-radius: 10px;
+    text-align: center;
+    background-color: #ead1d2;
+    max-width: 750px;
+    box-shadow: 0px 0px 7px 0px darkgray;
+    position: relative;
+    cursor: pointer;
+}
+
+.userinfo-icon {
+    float: right;
+    position: relative;
+    right: 10px;
+}
+
+.userinfo-logout {
+    border: 1px solid #ccc;
+    padding: 20px 0px 10px 0px;
+    border-radius: 0px 0px 10px 10px;
+    text-align: center;
+    background-color: #fff;
+    max-width: 750px;
+    box-shadow: 0px 0px 7px 0px darkgray;
+    margin-top: -10px;
+    display: none;
+}
+
+#container {
+    text-align: center;
+    margin: 0;
+}
+
+/* Positioned and sized on the scan region by qr-scanner */
+#scan-region-highlight {
+    pointer-events: none;
+    z-index: 2;
+}
+
+#qr-video {
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 100vw;
+    height: 100vh;
+    height: 100dvh;
+    object-fit: cover;
+    background: #000;
+    visibility: hidden;
+    z-index: 1;
+}
+
+#qr-video.is-active {
+    visibility: visible;
+}
+
+.control-bar {
+    height: 65px;
+    width: 100%;
+    padding: 5px 0px;
+    position: fixed;
+    left: 0;
+    bottom: 0;
+    box-shadow: inset 0px 5px 10px -7px #222;
+    /*border-top: 1px solid #bbb;*/
+    /*background-color: #eee;*/
+    border-top: 1px solid rgba(255, 255, 255, 0.5);
+    background: rgb(0 0 0 / 25%);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    z-index: 10;
+}
+
+#controls {
+    float: right;
+    margin-right: 10px;
+}
+
+#scanpage-title {
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 100%;
+    z-index: 20;
+}
+
+.scanpage-title {
+    color: #eee;
+}
+
+.scanpage-title-underlay {
+    position: fixed;
+    left: 0;
+    top: -90px;
+    width: 100%;
+    height: 70px;
+    box-shadow: inset 0px -5px 10px -7px #222;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.5);
+    background: rgb(0 0 0 / 25%);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    z-index: 20;
+    transition: top .75s ease-out;
+    color: #eee;
+    text-shadow: 1px 1px 0px #444;
+}
+
+.scanpage-title-underlay.is-visible {
+    top: 0;
+}
+
+.scanpage-title-underlay h3, .scanpage-title-underlay h4 {
+    color: #eee;
+}
+
+.scanpage-textshadow {
+    text-shadow: 1px 1px 0px #444;
+}
+
+.scanpage-boxshadow {
+    box-shadow: 0px 3px 5px 1px #444;
+}
+
+#btn-scan-qr {
+    width: calc(100vw - 25px);
+    height: calc(100vh - 160px);
+    margin: 80px auto;
+    padding-top: calc((100vh / 2) - 160px);
+    background-size: cover;
+    cursor: pointer;
+    color: #444;
+    font-size: 60px;
+    font-weight: bold;
+    text-shadow: 2px 2px 2px #eee;
+    z-index: 1;
+    /*background-image: linear-gradient(rgba(255,255,255,0.7), rgba(255,255,255,0.7)), url('/components/com_ticketmaster/assets/images/scanQR.jpg');
+    box-shadow: 0 0 10px 3px #444;
+    border: 3px solid #333;
+    border-radius: 10px;*/
+}
+
+#manualentrycontainer {
+    text-shadow: 1px 1px 1px #eee;
+    margin-top: calc(100vh/2 - 100px);
+}
+
+#btn-scan-qr img {
+    margin: 15px;
+    border: 1px solid #666;
+}
+
+.btn-scan-background {
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 100vw;
+    height: 100vh;
+    background-size: cover;
+    background-image: linear-gradient(#ffffff80, #ffffff80), url(../images/scanQR.jpg);
+    z-index: -1;
+}
+
+.scanresultcontainer {
+    color: white;
+    font-weight: bold;
+    width: 100vw;
+    height: 100vh;
+    position: fixed;
+    left: 0;
+    top: 0;
+    z-index: 1;
+    padding-top: calc((100vh / 2) - 90px);
+    z-index: 5;
+}
+
+.scanresultcontainer:hover {
+    text-decoration: none;
+}
+
+#scanresultorder {
+    font-size: 25px;
+}
+
+#scanresulttext {
+    font-size: 18px;
+}
+
+#scanhistorycontainer {
+    left: 0;
+    bottom: 80px;
+    position: fixed;
+    width: 100%;
+    z-index: 10;
+}
+
+.scanhistory {
+    width: 100%;
+    font-size: 16px;
+    padding: 5px;
+    border-top: 2px solid #eee;
+    border-bottom: 2px solid #eee;
+    color: #eee;
+    font-weight: bold;
+}
+
+#scanhistorytitle {
+    margin: 5px 0px;
+    color: #eee;
+}
+
+#scanhistorytext {
+    font-size: 12px;
+}
+
+.negative {
+    background-color: red;
+}
+
+.positive {
+    background-color: green;
+}
+
+#stopscanning,
+#backbutton {
+    float: left;
+    margin-left: 10px;
+}
+
+#backbutton {
+    background-color: #fff;
+    border-radius: 3px;
+}
+
+.btn-back {
+    font-size: 16px;
+    font-weight: bold;
+    background-color: #008c392e;
+    padding: 15px;
+    color: #444;
+    text-transform: uppercase;
+    z-index: 21;
+    box-shadow: inset 0px 5px 10px -7px #ccc;
+}
+
+.btn-manualsubmit {
+    font-size: 16px;
+    font-weight: bold;
+    border-radius: 3px;
+    background-color: #008c39ed;
+    padding: 15px;
+    color: #eee;
+    text-transform: uppercase;
+    z-index: 21;
+    box-shadow: inset 0px 5px 10px -7px #ccc;
+}
+
+.btn-back {
+    pointer-events: none;
+}
+
+.btn-stopscanning {
+    pointer-events: none;
+    font-size: 16px;
+    font-weight: bold;
+    border-radius: 3px;
+    background-color: #c72c41ed;
+    padding: 15px;
+    color: #eee;
+    text-transform: uppercase;
+    z-index: 20;
+    box-shadow: inset 0px 5px 10px -7px #ccc;
+}
+
+.btn-back,
+.btn-stopscanning {
+    width: 85px;
+}
+
+.btn-manualentry,
+.btn-torch,
+.btn-sound,
+.btn-vibrate {
+    pointer-events: none !important;
+    width: 55px !important;
+    height: 55px !important;
+    font-size: 32px !important;
+    padding: 4px 0px !important;
+    margin-left: 2px !important;
+    font-weight: bold !important;
+    border: 1px solid #4e4e4e !important;
+    border-radius: 10px !important;
+    z-index: 20 !important;
+    color: #aaa !important;
+    background-color: #0000005e !important;
+    box-shadow: inset 0px 5px 10px -7px #ccc !important;
+    transition: color .4s, background-color .4s, box-shadow .4s !important;
+    -webkit-transition: color .4s, background-color .4s, box-shadow .4s !important;
+}
+
+.manualentry-on,
+.torch-on,
+.sound-on,
+.vibrate-on {
+    color: #eee !important;
+    background-color: #0000002b !important;
+    box-shadow: inset 0px 5px 10px -7px #444 !important;
+
+}
+
+.scanpage-copyright {
+    position: fixed;
+    top: 70px;
+    left: 5px;
+    font-size: 10px;
+    color: #eee;
+    text-shadow: 1px 1px 0px #444;
+    z-index: 20;
+}
+
+#scanned-tickets,
+#scanned-tickets-session {
+    position: fixed;
+    bottom: 65px;
+    font-size: 13px;
+    color: #eee;
+    text-shadow: 1px 1px 0px #444;
+    z-index: 10;
+}
+
+#scanned-tickets {
+    left: 5px;
+}
+
+#scanned-tickets-session {
+    right: 5px;
+}
+
+/*### END SCANNING PAGE ###*/
+
+/*### START BUTTONS ###*/
+.btn-logout {
+    font-size: 12px;
+    font-weight: bold;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+    background-color: #008c392e;
+    padding: 5px;
+    transition: box-shadow .3s ease;
+    color: #444;
+    text-transform: uppercase;
+    width: 120px;
+}
+
+.btn-logout:hover {
+    box-shadow: 0 0 10px 3px rgb(234 209 210 / 100%);
+    color: #444;
+    text-decoration: none;
+}
+
+.btn-danger {
+    text-transform: none !important;
+}
+
+/*### START LABELS ###*/
+.label-notscanned {
+    padding: 5px;
+    font-size: 13px;
+    font-weight: bold;
+    border: 1px solid #ff0000;
+    border-radius: 3px;
+    background-color: #fff;
+    color: #ff0000;
+    box-shadow: rgb(85, 85, 85) 2px 2px;
+}
+
+/*### START EVENT LISTS ###*/
+.ticketmaster_upcoming_event {
+    box-shadow: 0px 0px 7px 0px darkgray;
+    border-radius: 10px;
+    padding-bottom: 25px;
+    margin-bottom: 40px;
+    margin-left: auto;
+    margin-right: auto;
+    max-width: 750px !important;
+    background-color: white;
+}
+
+.ticketmaster_upcoming_event_heading {
+    padding: 7px;
+    text-transform: uppercase;
+    letter-spacing: -0.5px;
+}
+
+.ticketmaster_upcoming_event_content {
+    padding: 0px 25px;
+}
+
+.ticketmaster_upcoming_event_footer {
+    text-align:center;
+    margin-top:-25px;
+    font-size: 0.9em;
+    font-style: italic;
+}
+
+.ticketmaster_upcoming_ticket {
+    border-radius: 10px;
+    border: 1px solid #ccc;
+    margin-bottom: 25px;
+    position: relative;
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position-x: center;
+}
+
+.ticketmaster_upcoming_ticket_heading {
+    border-radius: 10px 10px 0px 0px;
+    border-bottom: 1px solid #ccc;
+    padding: 7px;
+    background-color:#008c392e;
+}
+
+.ticketmaster_upcoming_ticket_content {
+    min-height: 150px;
+    padding: 10px;
+    background-position: right 0px bottom -340px;
+    border-radius: 0px 0px 10px 10px
+}
+
+
+@media all and (max-width: 900px) {
+    .ticketmaster_upcoming_event {
+        padding-bottom: 10px;
+        margin-bottom: 25px;
+    }
+
+    .ticketmaster_upcoming_event_content {
+        padding: 0px 10px;
+    }
+
+    .ticketmaster_upcoming_ticket {
+        margin-bottom: 10px;
+    }
+    .ticketmaster_upcoming_ticket_content {
+        min-height: 125px;
+        padding: 5px;
+    }
+    .ticketmaster_upcoming_event_footer {
+        margin-top: -10px;
+        font-size: 0.75em;
+    }
+}
+
+.ticketmaster_upcoming_ticketlink {
+    position:absolute;
+    width:100%;
+    height:100%;
+    top:0;
+    left: 0;
+    border-radius: 10px;
+    z-index: 1;
+    transition: box-shadow .3s ease;
+}
+
+.ticketmaster_upcoming_ticketlink:hover {
+    box-shadow: 0 0 10px 3px rgb(0 140 57 / 50%);
+}
+
+td, tr td {
+    border: none !important;
+}
+
+/*### START SEAT CHART ###*/
+.seat-element {
+    /* PLEASE DO NOT CHANGE */
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    border:1px #198d02 solid;
+    background-color:#e1fdda;
+    cursor:pointer;
+    font-size:9px;
+    color:#000;
+    text-align:center;
+    -moz-border-radius: 2px;
+    -webkit-border-radius: 2px;
+}
+
+.seat-element:hover {
+    background-color:#fff;
+    cursor:pointer;
+    border:1px orange solid !important;
+}

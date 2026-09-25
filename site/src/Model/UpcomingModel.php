@@ -73,6 +73,9 @@ class UpcomingModel extends BaseDatabaseModel {
                 't.startdate', 't.ticketprice', 't.ticketid', 't.starting_total_tickets',
                 'e.eventname', 't.ticketname', 'e.eventdescription', 't.show_seatplans', 'v.venue', 'v.city', 't.eventid',
             ])
+            // Price range of the published variants (child tickets); NULL for a ticket without them.
+            ->select('(SELECT MIN(c.ticketprice) FROM #__ticketstation_tickets AS c WHERE c.parent = t.ticketid AND c.published = 1) AS variant_min_price')
+            ->select('(SELECT MAX(c.ticketprice) FROM #__ticketstation_tickets AS c WHERE c.parent = t.ticketid AND c.published = 1) AS variant_max_price')
             ->from($db->quoteName('#__ticketstation_tickets', 't'))
             ->join('LEFT', $db->quoteName('#__ticketstation_events', 'e') . ' ON ' . $db->quoteName('t.eventid') . ' = ' . $db->quoteName('e.eventid'))
             ->join('LEFT', $db->quoteName('#__ticketstation_venues', 'v') . ' ON ' . $db->quoteName('t.venue') . ' = ' . $db->quoteName('v.id'))

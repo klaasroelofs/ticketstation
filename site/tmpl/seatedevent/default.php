@@ -3,7 +3,9 @@
 use Joomla\CMS\Factory;
 use Joomla\CMS\HTML\HTMLHelper;
 use Joomla\CMS\Language\Text;
+use Joomla\CMS\Layout\LayoutHelper;
 use Joomla\CMS\Router\Route;
+use Joomla\CMS\Uri\Uri;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Ordercode;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\TicketstationFunctions;
 
@@ -52,10 +54,15 @@ if (file_exists($image)) {
     $height = 850;
 }
 
+## Size of the chart (seat positions are relative to it) and its background image
+$glassbox_style = 'width:' . (int) $width . 'px; height:' . ((int) $height + 20) . 'px;'
+    . (file_exists($image) ? ' background-image: url(' . $seatchart . ');' : '');
+
 
 ## Redirection link in JRoute:
 $itemid = TicketstationFunctions::getSiteItemid();
 $gotocart = Route::_('index.php?option=com_ticketstation&view=cart' . ($itemid ? '&Itemid=' . $itemid : ''));
+$shop_on  = Route::_('index.php?option=com_ticketstation&view=upcoming' . ($itemid ? '&Itemid=' . $itemid : ''));
 
 ## Hint under "chosen seats": with price categories the customer also picks the category there.
 $seatHint = Text::_($this->pricechoice ? 'COM_TICKETSTATION_CLICK_TO_CHOOSE_PRICE' : 'COM_TICKETSTATION_CLICK_TO_SEE_OPTIONS');
@@ -64,248 +71,173 @@ $seatHint = Text::_($this->pricechoice ? 'COM_TICKETSTATION_CLICK_TO_CHOOSE_PRIC
 $venue_website_url = preg_match('#^https?://#i', $this->ticketdetails->website) ? $this->ticketdetails->website : 'https://' . $this->ticketdetails->website;
 ?>
 
-<style>
+<div class="ticketstation ticketstation--seatedevent">
 
-    #glassbox {
-        /* PLEASE DO NOT CHANGE */
-        height:<?php echo $height+20; ?>px;
-        background-repeat:no-repeat;
-        background-position: 0px 30px;
-        position:relative;
-        width:<?php echo $width; ?>px;
-        -moz-border-radius: 5px;
-        -webkit-border-radius: 5px;
-    }
+    <?php echo LayoutHelper::render('steps', ['current' => 1], null, ['component' => 'com_ticketstation', 'client' => 0]); ?>
 
-</style>
-
-<script src="https://code.jquery.com/jquery-latest.min.js"></script>
-
-<script type="text/javascript">
-    jQuery(document).ready(function() {
-
-        jQuery('head').append("<style>ul.checkout-bar:before {width:11%;} ul.checkout-bar li.active:before {background: #BB2721;} ul.checkout-bar li.active {color: #BB2721;}</style>");
-
-    });
-</script>
-
-<div class="row ticketstation">
-    <div class="col-12">
-        <div>
-            <div class="checkout-wrap">
-                <ul class="checkout-bar first">
-
-                    <li class="active"><span class="progress-bar-text"><?php echo Text::_('COM_TICKETSTATION_STEP_CHOOSE_TICKETS'); ?></span></li>
-
-                    <li class="next"><span class="progress-bar-text"><?php echo Text::_('COM_TICKETSTATION_CART'); ?></span></li>
-
-                    <li class=""><span class="progress-bar-text"><?php echo Text::_('COM_TICKETSTATION_ORDER_DETAILS'); ?></span></li>
-
-                    <li class=""><span class="progress-bar-text"><?php echo Text::_('COM_TICKETSTATION_STEP_PAYMENT'); ?></span></li>
-
-                </ul>
-            </div>
-        </div>
+    <div class="page-header">
+        <h1 class="ts-page-title"><?php echo Text::_('COM_TICKETSTATION_SELECT_SEATS'); ?></h1>
     </div>
-</div>
 
-<div class="row ticketstation">
+    <section class="ts-card ts-ticketinfo">
+        <h2 class="ts-card__title"><?php echo Text::_('COM_TICKETSTATION_TICKET_INFORMATION'); ?></h2>
 
-    <div class="col-12" style="padding-left: 5px;padding-right: 5px;">
+        <dl class="ts-meta">
+            <dt><?php echo Text::_('COM_TICKETSTATION_EVENT'); ?></dt>
+            <dd><?php echo $this->ticketdetails->eventname; ?> - <?php echo $this->ticketdetails->ticketname; ?></dd>
 
+            <dt><?php echo Text::_('COM_TICKETSTATION_DATE'); ?></dt>
+            <dd><?php echo date('d-m-Y H:i', strtotime($this->ticketdetails->startdate)); ?></dd>
 
-
-        <h2 class="ticketmaster-header"><strong><?php echo Text::_('COM_TICKETSTATION_SELECT_SEATS'); ?></strong></h2>
-
-        <div class="ticketmaster_event_info">
-            <h4><strong><?php echo Text::_('COM_TICKETSTATION_TICKET_INFORMATION'); ?>:</strong></h4>
-            <table>
-                <tr>
-                    <td width="130px" style="font-weight:bold;"><?php echo Text::_('COM_TICKETSTATION_EVENT'); ?>:</td>
-                    <td><?php echo $this->ticketdetails->eventname; ?> - <?php echo $this->ticketdetails->ticketname; ?></td>
-                </tr>
-                <tr>
-                    <td style="padding-right:5px;font-weight:bold;"><?php echo Text::_('COM_TICKETSTATION_DATE'); ?>:</td>
-                    <td><?php echo date('d-m-Y H:i', strtotime($this->ticketdetails->startdate)); ?></td>
-                </tr>
-                <?php if ($this->config->show_venue == 1) { ?>
-                    <tr>
-                        <td style="font-weight:bold;"><?php echo Text::_('COM_TICKETSTATION_VENUE'); ?>:</td>
-                        <td><?php echo $this->ticketdetails->venue; ?> - <?php echo $this->ticketdetails->city; ?></td>
-                    </tr>
-                <?php } ?>
-                <?php if ($this->config->show_venue == 1 && $this->config->show_venue_address == 1 && ($this->ticketdetails->street != '' || $this->ticketdetails->zipcode != '')) { ?>
-                    <tr>
-                        <td style="font-weight:bold;"><?php echo Text::_('COM_TICKETSTATION_ADDRESS'); ?>:</td>
-                        <td><?php echo htmlspecialchars(trim($this->ticketdetails->street . ', ' . $this->ticketdetails->zipcode . ' ' . $this->ticketdetails->city, ', '), ENT_QUOTES, 'UTF-8'); ?></td>
-                    </tr>
-                <?php } ?>
-                <?php if ($this->config->show_venue == 1 && $this->config->show_venue_website == 1 && $this->ticketdetails->website != '') { ?>
-                    <tr>
-                        <td style="font-weight:bold;"><?php echo Text::_('COM_TICKETSTATION_WEBSITE'); ?>:</td>
-                        <td><a href="<?php echo htmlspecialchars($venue_website_url, ENT_QUOTES, 'UTF-8'); ?>" target="_blank" rel="noopener"><?php echo htmlspecialchars($this->ticketdetails->website, ENT_QUOTES, 'UTF-8'); ?></a></td>
-                    </tr>
-                <?php } ?>
-            </table>
-
-            <?php if ($this->config->show_venue == 1 && $this->config->show_venue_description == 1 && trim(strip_tags($this->ticketdetails->venuedescription)) != '') { ?>
-                <div class="ticketstation_venue_description">
-                    <?php echo $this->ticketdetails->venuedescription; ?>
-                </div>
+            <?php if ($this->config->show_venue == 1) { ?>
+                <dt><?php echo Text::_('COM_TICKETSTATION_VENUE'); ?></dt>
+                <dd><?php echo $this->ticketdetails->venue; ?> - <?php echo $this->ticketdetails->city; ?></dd>
             <?php } ?>
 
-            <div style="height:45px; margin:8px 0px 10px 0px; color:#000; text-align:center; padding-bottom:2px;">
+            <?php if ($this->config->show_venue == 1 && $this->config->show_venue_address == 1 && ($this->ticketdetails->street != '' || $this->ticketdetails->zipcode != '')) { ?>
+                <dt><?php echo Text::_('COM_TICKETSTATION_ADDRESS'); ?></dt>
+                <dd><?php echo htmlspecialchars(trim($this->ticketdetails->street . ', ' . $this->ticketdetails->zipcode . ' ' . $this->ticketdetails->city, ', '), ENT_QUOTES, 'UTF-8'); ?></dd>
+            <?php } ?>
 
-                <div id="ajaxMessage" style="display:none; text-align:center; margin-bottom:5px; height:25px;"></div>
-                <div id="message"><!-- Dont remove this container, it is used for ordering messages --></div>
+            <?php if ($this->config->show_venue == 1 && $this->config->show_venue_website == 1 && $this->ticketdetails->website != '') { ?>
+                <dt><?php echo Text::_('COM_TICKETSTATION_WEBSITE'); ?></dt>
+                <dd><a href="<?php echo htmlspecialchars($venue_website_url, ENT_QUOTES, 'UTF-8'); ?>" target="_blank" rel="noopener"><?php echo htmlspecialchars($this->ticketdetails->website, ENT_QUOTES, 'UTF-8'); ?></a></dd>
+            <?php } ?>
+        </dl>
 
+        <?php if ($this->config->show_venue == 1 && $this->config->show_venue_description == 1 && trim(strip_tags($this->ticketdetails->venuedescription)) != '') { ?>
+            <div class="ts-venue-description">
+                <?php echo $this->ticketdetails->venuedescription; ?>
             </div>
+        <?php } ?>
+    </section>
 
-            <div class="row ticketstation_seat_panels">
+    <div class="ts-panels">
 
-                <div class="col-lg-6">
-                    <div class="ticketstation_seat_panel">
-                        <h3 class="ticketstation_seat_panel_title"><?php echo Text::_('COM_TICKETSTATION_INSTRUCTIONS'); ?>:</h3>
-                        <div><?php echo Text::_('COM_TICKETSTATION_SEAT_INSTRUCTION'); ?></div>
-                        <div><img src="components/com_ticketstation/assets/images/stoelkeuze.png" style="max-width: 300px; width:100%; margin:10px 0;" alt=""></div>
-                        <div style="font-size:95%;">
-                            <div>&#8226; <?php echo Text::_( 'COM_TICKETSTATION_DROPPABLE_ORDERED_INFO' ); ?><br />&#8226; <?php echo Text::_( 'COM_TICKETSTATION_DROPPABLE_ORDERED_SEATS' ); ?></div>
-                        </div>
-                    </div>
-                </div>
+        <section class="ts-card ts-panel ts-panel--instructions">
+            <h2 class="ts-card__title"><?php echo rtrim(Text::_('COM_TICKETSTATION_INSTRUCTIONS'), ': '); ?></h2>
+            <p><?php echo Text::_('COM_TICKETSTATION_SEAT_INSTRUCTION'); ?></p>
+            <img class="ts-instruction-image" src="components/com_ticketstation/assets/images/stoelkeuze.png" alt="">
+            <ul class="ts-legend">
+                <li><?php echo Text::_( 'COM_TICKETSTATION_DROPPABLE_ORDERED_INFO' ); ?></li>
+                <li><?php echo Text::_( 'COM_TICKETSTATION_DROPPABLE_ORDERED_SEATS' ); ?></li>
+            </ul>
+        </section>
 
-                <div class="col-lg-6">
-                    <div class="ticketstation_seat_panel">
-                        <h3 class="ticketstation_seat_panel_title"><?php echo Text::_( 'COM_TICKETSTATION_CHOSEN_SEATS' ); ?></h3>
-                        <div id="items">
+        <section class="ts-card ts-panel ts-panel--chosen">
+            <h2 class="ts-card__title"><?php echo rtrim(Text::_( 'COM_TICKETSTATION_CHOSEN_SEATS' ), ': '); ?></h2>
+            <div id="items" class="ts-chosen-seats">
 
-                            <?php for ($i = 0, $n = count($this->seats); $i < $n; $i++ ){
-                                $row = $this->seats[$i];
-                                ?>
-
-                                <div id="<?php echo $row->seat_sector; ?>" class="item" style="margin:0px; padding:2px; z-index:5;">
-                                    <div id="seat-choice" class="seat-choice" style="background-color:#<?php echo htmlspecialchars($row->background_color, ENT_QUOTES, 'UTF-8'); ?>;
-                                            float:left; border-color:#<?php echo htmlspecialchars($row->border_color, ENT_QUOTES, 'UTF-8'); ?>; cursor:pointer; font-size:80%; margin:0px;
-                                            color:#<?php echo htmlspecialchars($row->font_color, ENT_QUOTES, 'UTF-8'); ?>;">
-                                        <?php echo htmlspecialchars($row->row_name . $row->seatid, ENT_QUOTES, 'UTF-8'); ?>
-                                    </div>
-                                </div>
-
-                            <?php } ?>
-
-                        </div>
-
-                        <!-- Shows the hint by default; filled with the seat options (price category, remove button) when a chosen seat is clicked -->
-                        <div id="ticket-options" class="note-multi-ticket">
-                            <?php echo $seatHint; ?>
-                        </div>
-                    </div>
-                </div>
-
-            </div>
-
-            <h4><strong><?php echo Text::_('COM_TICKETSTATION_SEATING_PLAN'); ?>:</strong></h4>
-
-        </div>
-
-        <div>
-
-            <div class="ticketmaster_turn_phone" style="display: none;">
-                <img src="/components/com_ticketstation/assets/images/rotate-phone.gif" alt="" style="width:50%;margin-left:auto;margin-right:auto;">
-                <p><?php echo Text::_('COM_TICKETSTATION_ROTATE_PHONE'); ?></p>
-            </div>
-
-            <div class="ticketmaster_box_content" style="padding-bottom: 25px; width:<?php echo $width+12; ?>px; margin: 0 auto;">
-
-                <div class="glassbox" id="glassbox" <?php if (file_exists($image)) { ?> style="background-image: url(<?= $seatchart; ?>);" <?php } ?>>
-
-                    <?php
-
-                    $k = 0;
-                    for ($i = 0, $n = count($this->items); $i < $n; $i++ ){
-
-                        ## Give give $row the this->item[$i]
-                        $row        = &$this->items[$i];
-
-                        $x 			 = $row->x_pos;
-                        $y 			 = $row->y_pos;
-                        $line_height = 'line-height:'. $row->height .'px;';
-
-                        if ($row->booked > 0){
-
-                            $style = 'color:#fff; border-color:#000; cursor:no-drop; '.$line_height;
-                            $background = '#FF0000';
-
-                        }else{
-
-                            $style = 'color:#'.$row->font_color.'; border-color:#'.$row->border_color.'; '.$line_height;
-
-                            if ($row->background_color != ''){
-                                $background = '#'. $row->background_color;
-                            }else{
-                                $background = '#e1fdda';
-                            }
-
-                        }
-
-                        ## This is a seat --> Load seat data.
-                        if ($row->type == 1){
-                            echo '<div id="seat-'.$row->id.'" class="seat-element" 
-                                        style="/*box-sizing: unset;*/left:'.$x.'px; top:'.$y.'px; background-color:'.$background.';
-                                               width:'.$row->width.'px; height:'.$row->height.'px;
-                                               position:absolute; '.$style.'">'.$row->seatid.'</div>';
-                        }else{
-
-                            echo '<div id="seat-'.$row->id.'" class="seat-element" 
-                                        style="/*box-sizing: unset;*/left:'.$x.'px; top:'.$y.'px;  background-color:'.$background.'; 
-                                               width:'.$row->width.'px; height:'.$row->height.'px;
-                                               position:absolute; '.$style.'">
-                                                    <div style = "line-height:'.$row->height.'px;"><strong>'.$row->ticketname.'</strong></div>
-                                               </div>';
-                        }
-
-                        $k=1 - $k;
-                    }
+                <?php for ($i = 0, $n = count($this->seats); $i < $n; $i++ ){
+                    $row = $this->seats[$i];
                     ?>
 
-                </div>
+                    <div id="<?php echo $row->seat_sector; ?>" class="ts-chosen-seat">
+                        <span class="ts-seat-chip" style="background-color:#<?php echo htmlspecialchars($row->background_color, ENT_QUOTES, 'UTF-8'); ?>; border-color:#<?php echo htmlspecialchars($row->border_color, ENT_QUOTES, 'UTF-8'); ?>; color:#<?php echo htmlspecialchars($row->font_color, ENT_QUOTES, 'UTF-8'); ?>;">
+                            <?php echo htmlspecialchars($row->row_name . $row->seatid, ENT_QUOTES, 'UTF-8'); ?>
+                        </span>
+                    </div>
+
+                <?php } ?>
 
             </div>
-        </div>
 
-        <div>
-
-            <?php if (count($this->ordered) == 0) {
-                $style_continue = 'display: none;';
-            } else {
-                $style_continue = '';
-            } ?>
-            <div id="continue-button" style="<?= $style_continue; ?>">
-                <a class="btn btn-primary pull-right" onClick="location.href='<?php echo $gotocart; ?>'">
-                    <span><?php echo Text::_('COM_TICKETSTATION_CONTINUE'); ?></span>
-                </a>
+            <!-- Shows the hint by default; filled with the seat options (price category, remove button) when a chosen seat is clicked -->
+            <div id="ticket-options" class="ts-seat-options">
+                <?php echo $seatHint; ?>
             </div>
-
-            <a class="btn btn-primary pull-left" onClick="history.back()">
-                <span><?php echo Text::_('COM_TICKETSTATION_BACK'); ?></span>
-            </a>
-
-        </div>
+        </section>
 
     </div>
+
+    <section class="ts-seatmap-section">
+        <h2 class="ts-section-title"><?php echo Text::_('COM_TICKETSTATION_SEATING_PLAN'); ?></h2>
+
+        <div class="ts-rotate-hint">
+            <img src="<?php echo Uri::root(true); ?>/components/com_ticketstation/assets/images/rotate-phone.gif" alt="">
+            <p><?php echo Text::_('COM_TICKETSTATION_ROTATE_PHONE'); ?></p>
+        </div>
+
+        <div class="ts-seatmap">
+            <div class="ts-seatmap__canvas glassbox" id="glassbox" style="<?php echo $glassbox_style; ?>">
+
+                <?php
+
+                for ($i = 0, $n = count($this->items); $i < $n; $i++ ){
+
+                    ## Give give $row the this->item[$i]
+                    $row        = &$this->items[$i];
+
+                    $x 			 = $row->x_pos;
+                    $y 			 = $row->y_pos;
+                    $line_height = 'line-height:'. $row->height .'px;';
+
+                    if ($row->booked > 0){
+
+                        $style = 'color:#fff; border-color:#000; cursor:no-drop; '.$line_height;
+                        $background = '#FF0000';
+
+                    }else{
+
+                        $style = 'color:#'.$row->font_color.'; border-color:#'.$row->border_color.'; '.$line_height;
+
+                        if ($row->background_color != ''){
+                            $background = '#'. $row->background_color;
+                        }else{
+                            $background = '#e1fdda';
+                        }
+
+                    }
+
+                    ## This is a seat --> Load seat data.
+                    if ($row->type == 1){
+                        echo '<div id="seat-'.$row->id.'" class="seat-element"
+                                    style="left:'.$x.'px; top:'.$y.'px; background-color:'.$background.';
+                                           width:'.$row->width.'px; height:'.$row->height.'px;
+                                           position:absolute; '.$style.'">'.htmlspecialchars($row->row_name . $row->seatid, ENT_QUOTES, 'UTF-8').'</div>';
+                    }else{
+
+                        echo '<div id="seat-'.$row->id.'" class="seat-element"
+                                    style="left:'.$x.'px; top:'.$y.'px;  background-color:'.$background.';
+                                           width:'.$row->width.'px; height:'.$row->height.'px;
+                                           position:absolute; '.$style.'">
+                                                <div style = "line-height:'.$row->height.'px;"><strong>'.$row->ticketname.'</strong></div>
+                                           </div>';
+                    }
+                }
+                ?>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- Floating messages after clicking a seat, so the chart doesn't move; don't remove -->
+    <div id="ajaxMessage" class="ts-toast" role="status" aria-live="polite" style="display: none;"></div>
+
+    <div class="ts-actions">
+        <a class="ts-btn ts-btn--secondary ts-btn--back" href="<?php echo $shop_on; ?>">
+            <?php echo Text::_('COM_TICKETSTATION_BACK'); ?>
+        </a>
+
+        <a id="continue-button" class="ts-btn ts-btn--primary ts-btn--next" href="<?php echo $gotocart; ?>"<?php echo count($this->ordered) == 0 ? ' style="display: none;"' : ''; ?>>
+            <?php echo Text::_('COM_TICKETSTATION_CONTINUE'); ?>
+        </a>
+    </div>
+
 </div>
 
-
-
-
 <script type="text/javascript">
+(function ($) {
 
     var seatHint = <?php echo json_encode($seatHint); ?>;
 
-    $("#close").bind("click", function(e){
-        window.parent.document.location.reload();
-        parent.Mediabox.close();
-    });
+    // Shows a message at the bottom of the screen; errors stay a little longer.
+    function showMessage(type, msg) {
+        var alertBox = $('<div class="ts-alert"></div>').addClass('ts-alert--' + type).html(msg);
+
+        $('#ajaxMessage').stop(true, true).empty().append(alertBox).show()
+            .delay(type === 'danger' ? 5000 : 3000).fadeOut(500);
+    }
 
     $('#ticket-options').on('change', '.ticketid', function (event) {
 
@@ -317,7 +249,7 @@ $venue_website_url = preg_match('#^https?://#i', $this->ticketdetails->website) 
 
         $.ajax({
             //this is the php file that processes the data
-            url: "/index.php?option=com_ticketstation&controller=orderseated&task=updateSeat&format=raw",
+            url: "<?php echo Uri::root(true); ?>/index.php?option=com_ticketstation&controller=orderseated&task=updateSeat&format=raw",
             //POST method is used
             type: "POST",
             //pass the data
@@ -325,15 +257,9 @@ $venue_website_url = preg_match('#^https?://#i', $this->ticketdetails->website) 
             //Do not cache the page
             cache: false,
             //success
-            //beforeSend: function() {
-            //	$( "#ajaxLoader" ).show();
-            //},
             success: function (data) {
                 // We're done, show data
-                //$( "#ajaxLoader" ).hide();
-                $( "#ajaxMessage" ).show();
-                $( '#ajaxMessage').html('<div class="alert alert-message" style="color:green;">'+ data +'</div>');
-                setTimeout(function(){ $('#ajaxMessage').fadeOut(500); }, 3000);
+                showMessage('success', data);
                 $( "#ticket-options" ).html(seatHint);
                 updateCart();
 
@@ -354,7 +280,7 @@ $venue_website_url = preg_match('#^https?://#i', $this->ticketdetails->website) 
 
         $.ajax({
             //this is the php file that processes the data
-            url: "/index.php?option=com_ticketstation&controller=orderseated&task=removeseat&format=raw",
+            url: "<?php echo Uri::root(true); ?>/index.php?option=com_ticketstation&controller=orderseated&task=removeseat&format=raw",
             //POST method is used
             type: "POST",
             //pass the data
@@ -364,17 +290,11 @@ $venue_website_url = preg_match('#^https?://#i', $this->ticketdetails->website) 
             //Do not cache the page
             cache: false,
             //success
-            //beforeSend: function() {
-            //	$( "#ajaxLoader" ).show();
-            //},
             success: function (data) {
-
-                // We're done, show data
-                //$( "#ajaxLoader" ).hide();
 
                 if(data.error == 1){
 
-                    $( "#ajaxMessage" ).html(data.msg);
+                    showMessage('danger', data.msg);
 
                 }else{
 
@@ -382,10 +302,7 @@ $venue_website_url = preg_match('#^https?://#i', $this->ticketdetails->website) 
                     $( '#seat-' + data.id).css('background-color', '#'+data.background);
                     $( '#seat-' + data.id).css('color', '#'+data.color);
 
-                    $( "#ajaxMessage" ).show();
-                    $( '#ajaxMessage').html('<div class="alert alert-message" style="color:green;">'+ data.msg +'</div>');
-
-                    setTimeout(function(){ $('#ajaxMessage').fadeOut(500); }, 3000);
+                    showMessage('success', data.msg);
 
                     $( "#ticket-options" ).html(seatHint);
 
@@ -401,9 +318,8 @@ $venue_website_url = preg_match('#^https?://#i', $this->ticketdetails->website) 
 
     });
 
-    $('#items').on('click', '.item', function (event) {
+    $('#items').on('click', '.ts-chosen-seat', function (event) {
 
-        $( "#multi-ticket" ).hide();
         loadSeatOptions($(this).attr('id'));
 
     });
@@ -415,7 +331,7 @@ $venue_website_url = preg_match('#^https?://#i', $this->ticketdetails->website) 
 
         $.ajax({
             //this is the php file that processes the data
-            url: "/index.php?option=com_ticketstation&controller=orderseated&task=loadSeat&format=raw",
+            url: "<?php echo Uri::root(true); ?>/index.php?option=com_ticketstation&controller=orderseated&task=loadSeat&format=raw",
             //POST method is used
             type: "POST",
             //pass the data
@@ -423,12 +339,8 @@ $venue_website_url = preg_match('#^https?://#i', $this->ticketdetails->website) 
             //Do not cache the page
             cache: false,
             //success
-            //beforeSend: function() {
-            //	$( "#ajaxLoader" ).show();
-            //},
             success: function (data) {
                 // We're done, show data
-                //	$( "#ajaxLoader" ).hide();
                 $( "#ticket-options" ).html(data);
 
             },
@@ -455,7 +367,7 @@ $venue_website_url = preg_match('#^https?://#i', $this->ticketdetails->website) 
 
             $.ajax({
                 //this is the php file that processes the data
-                url: "/index.php?option=com_ticketstation&controller=orderseated&task=makeReservation&format=raw",
+                url: "<?php echo Uri::root(true); ?>/index.php?option=com_ticketstation&controller=orderseated&task=makeReservation&format=raw",
                 //POST method is used
                 type: "POST",
                 //pass the data
@@ -465,36 +377,24 @@ $venue_website_url = preg_match('#^https?://#i', $this->ticketdetails->website) 
                 //Do not cache the page
                 cache: false,
                 //success
-                //beforeSend: function() {
-                //	$( "#ajaxLoader" ).show();
-                //},
                 success: function (data) {
                     // We're done, show data
-                    //	$( "#ajaxLoader" ).hide();
-
-                    $( "#ajaxMessage" ).show();
 
                     if(data.error == 1){
 
-                        $( '#ajaxMessage').html('<div class="alert alert-error">'+ data.msg +'</div>');
-                        //setTimeout(function(){ $('#ajaxMessage').fadeOut(500); }, 3000);
+                        showMessage('danger', data.msg);
 
                     }else{
 
                         $( '#seat-'+ data.id ).css('backgroundColor', 'orange');
                         $( '#seat-'+ data.id ).css('color', '#FFF');
 
-                        $( '#ajaxMessage').html('<div class="alert alert-message" style="color:green;">'+ data.msg +'</div>');
+                        showMessage('success', data.msg);
 
-                        setTimeout(function(){ $('#ajaxMessage').fadeOut(500); }, 3000);
-
-
-                        if(data.multiseat == 1){
-                            $( "#multi-ticket" ).show();
-                            $('<div id="'+data.id+'" class="item" style="padding:2px; border:0px;"><div id="seat-choice" class="seat-choice" style="background-color:orange; float:left; border-color:#CCC; cursor:pointer; font-size:80%;">'+data.seatid+'</div></div>').appendTo("#items");
-                        }else{
-                            $('<div id="'+data.id+'" class="item" style="padding:2px; border:0px;"><div id="seat-choice" class="seat-choice" style="background-color:#FEFEFE; float:left; border-color:#CCC; cursor:pointer; font-size:80%;">'+data.seatid+'</div></div>').appendTo("#items");
-                        }
+                        $('<div class="ts-chosen-seat"><span class="ts-seat-chip ts-seat-chip--selected"></span></div>')
+                            .attr('id', data.id)
+                            .find('.ts-seat-chip').text(data.seatid).end()
+                            .appendTo("#items");
 
                         updateCart();
 
@@ -516,39 +416,13 @@ $venue_website_url = preg_match('#^https?://#i', $this->ticketdetails->website) 
 
     });
 
-    function loadCart(){
-
-        $.ajax({
-            //this is the php file that processes the data
-            url: "/index.php?option=com_ticketstation&controller=orderseated&task=loadCart&format=raw",
-            //POST method is used
-            type: "POST",
-            //Do not cache the page
-            cache: false,
-            //success
-            //beforeSend: function() {
-            //	$( "#ajaxLoader" ).show();
-            //},
-            success: function (data) {
-                // We're done, show data
-                //	$( "#ajaxLoader" ).hide();
-                $( '#shopping_cart').html(data);
-
-            },
-            error:function (xhr, ajaxOptions, thrownError){
-                alert(xhr.status);
-            }
-        });
-
-    }
-
     function updateCart(){
 
         var order = 'ordercode=' + <?php echo $ordercode; ?> ;
-        
-        jQuery.ajax({
+
+        $.ajax({
             //this is the php file that processes the data and send mail
-            url: "/index.php?option=com_ticketstation&controller=order&task=itemcount&format=raw",
+            url: "<?php echo Uri::root(true); ?>/index.php?option=com_ticketstation&controller=order&task=itemcount&format=raw",
             //POST method is used
             type: "POST",
             //pass the data
@@ -557,18 +431,18 @@ $venue_website_url = preg_match('#^https?://#i', $this->ticketdetails->website) 
             cache: false,
             //success
             success: function (html) {
-                jQuery("#basket-item-count").html(html);
+                $("#basket-item-count").html(html);
                 if (html !== '0') {
-                    jQuery("#ticketstation_basket_module").show(0);
+                    $("#ticketstation_basket_module").show(0);
                 } else {
-                    jQuery("#ticketstation_basket_module").hide(0);
+                    $("#ticketstation_basket_module").hide(0);
                 }
             }
         });
 
-        jQuery.ajax({
+        $.ajax({
             //this is the php file that processes the data and send mail
-            url: "/index.php?option=com_ticketstation&controller=order&task=updatecart&format=raw",
+            url: "<?php echo Uri::root(true); ?>/index.php?option=com_ticketstation&controller=order&task=updatecart&format=raw",
             //POST method is used
             type: "POST",
             //pass the data
@@ -577,11 +451,10 @@ $venue_website_url = preg_match('#^https?://#i', $this->ticketdetails->website) 
             cache: false,
             //success
             success: function (html) {
-                jQuery("#seatselection").delay(500).show(0);
                 if (!html.includes('empty_cart')) {
-                    jQuery("#continue-button").show(0);
+                    $("#continue-button").show(0);
                 } else {
-                    jQuery("#continue-button").hide(0);
+                    $("#continue-button").hide(0);
                 }
 
             }
@@ -589,4 +462,5 @@ $venue_website_url = preg_match('#^https?://#i', $this->ticketdetails->website) 
 
     }
 
+})(jQuery);
 </script>

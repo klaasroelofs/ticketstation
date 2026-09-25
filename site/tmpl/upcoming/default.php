@@ -35,8 +35,6 @@ foreach (['DAY', 'DAYS', 'HOUR', 'HOURS', 'MINUTE', 'MINUTES', 'SECOND', 'SECOND
     Text::script('COM_TICKETSTATION_COUNTDOWN_' . $countdownText);
 }
 
-$ticketbackgroundimage = JPATH_ADMINISTRATOR . '/components/com_ticketstation/assets/images/ticketbackgrounds/';
-
 ## Day and month names follow the active site language (e.g. "zaterdag 3 oktober 2026" / "Saturday 3 October 2026")
 $fmt = datefmt_create(
     str_replace('-', '_', $app->getLanguage()->getTag()),
@@ -59,260 +57,211 @@ if ($this->config->variable_transcosts == 0) {
 ## Menu item for the links to the ticket views
 $itemid = TicketstationFunctions::getSiteItemid();
 
+## Background image of a ticket or event, handed to component.css as --ts-ticket-image
+$backgroundStyle = function (string $name): string {
+    if (!file_exists(JPATH_ADMINISTRATOR . '/components/com_ticketstation/assets/images/ticketbackgrounds/' . $name . '.jpg')) {
+        return '';
+    }
+
+    return "--ts-ticket-image: url('" . Uri::root() . 'administrator/components/com_ticketstation/assets/images/ticketbackgrounds/' . $name . ".jpg');";
+};
+
 ?>
 
-<div class="row ticketstation">
-    <div class="col-12">
+<div class="ticketstation ticketstation--upcoming">
 
-        <div class="page-header">
-            <h1><?= Text::_('COM_TICKETSTATION_PAGE_HEADING_TICKETS'); ?></h1>
+    <div class="page-header">
+        <h1 class="ts-page-title"><?= Text::_('COM_TICKETSTATION_PAGE_HEADING_TICKETS'); ?></h1>
+    </div>
+
+    <?php if ((($this->mollie->test_mode == '1') || ($this->mollie->bypass_mode == '1')) && (($this->isadmin == '1'))) { ?>
+        <?php if (($this->mollie->test_mode == '1') && ($this->mollie->bypass_mode == '1')) {
+            $mollie_text = Text::_('COM_TICKETSTATION_MOLLIE_MODE_BYPASS_AND_TEST');
+        } elseif ($this->mollie->test_mode == '1') {
+            $mollie_text = Text::_('COM_TICKETSTATION_MOLLIE_MODE_TEST');
+        } elseif ($this->mollie->bypass_mode == '1') {
+            $mollie_text = Text::_('COM_TICKETSTATION_MOLLIE_MODE_BYPASS');
+        } ?>
+        <div class="ts-alert ts-alert--danger ts-mode-notice" role="alert">
+            <svg class="ts-icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1a7 7 0 1 0 0 14A7 7 0 0 0 8 1zm0 3.5a.9.9 0 0 1 .9.95l-.25 4.3a.65.65 0 0 1-1.3 0l-.25-4.3A.9.9 0 0 1 8 4.5zm0 6.6a.85.85 0 1 1 0 1.7.85.85 0 0 1 0-1.7z"/></svg>
+            <span><?= Text::sprintf('COM_TICKETSTATION_MOLLIE_MODE_ACTIVE', $mollie_text); ?></span>
         </div>
+    <?php } ?>
 
-        <?php if ((($this->mollie->test_mode == '1') || ($this->mollie->bypass_mode == '1')) && (($this->isadmin == '1'))) { ?>
-            <?php if (($this->mollie->test_mode == '1') && ($this->mollie->bypass_mode == '1')) {
-                $mollie_text = Text::_('COM_TICKETSTATION_MOLLIE_MODE_BYPASS_AND_TEST');
-            } elseif ($this->mollie->test_mode == '1') {
-                $mollie_text = Text::_('COM_TICKETSTATION_MOLLIE_MODE_TEST');
-            } elseif ($this->mollie->bypass_mode == '1') {
-                $mollie_text = Text::_('COM_TICKETSTATION_MOLLIE_MODE_BYPASS');
-            } ?>
-            <div class="alert alert-danger mollie-plugin-status"><span style="margin-bottom: 10px;"class="fa fa-exclamation-circle fa-3x"></span><br /><?= Text::sprintf('COM_TICKETSTATION_MOLLIE_MODE_ACTIVE', $mollie_text); ?></div>
-        <?php } ?>
+    <?php if (empty($this->events) && empty($this->upcoming) || ((($this->isadmin == '0') && (($this->mollie->test_mode == '1') || ($this->mollie->bypass_mode == '1'))) && empty($this->upcoming))) {?>
 
-        <?php if (empty($this->events) && empty($this->upcoming) || ((($this->isadmin == '0') && (($this->mollie->test_mode == '1') || ($this->mollie->bypass_mode == '1'))) && empty($this->upcoming))) {?>
+        <section class="ts-card ts-empty">
+            <h2 class="ts-card__title"><?= Text::_('COM_TICKETSTATION_NO_EVENTS'); ?></h2>
+            <p><?= Text::_('COM_TICKETSTATION_NO_EVENTS_DESC'); ?></p>
+            <p><?= Text::_('COM_TICKETSTATION_NO_EVENTS_STAY_TUNED'); ?></p>
+        </section>
 
-            <div class="ticketmaster_upcoming_event">
-                <div class="ticketmaster_upcoming_event_heading" style="padding: 7px 25px;">
-                    <h3><strong><?= Text::_('COM_TICKETSTATION_NO_EVENTS'); ?></strong></h3>
-                </div>
-                <div class="ticketmaster_upcoming_event_content" style="padding: 7px 25px;">
-                    <p><strong><?= Text::_('COM_TICKETSTATION_NO_EVENTS_DESC'); ?></strong></p>
-                    <p><strong><?= Text::_('COM_TICKETSTATION_NO_EVENTS_STAY_TUNED'); ?></strong></p>
-                </div>
-            </div>
+    <?php } else { ?>
 
-        <?php } else { ?>
+        <?php foreach ($this->events as $event) { ?>
 
-            <?php
-            foreach ($this->events as $event) { ?>
+            <section class="ts-card ts-event">
+                <h2 class="ts-card__title ts-event__title"><?= $event->eventname; ?></h2>
 
-                <div class="ticketmaster_upcoming_event">
-                    <div class="ticketmaster_upcoming_event_heading">
+                <div class="ts-event__tickets">
 
-                        <h3 style="margin: 10px 0px 10px 10px;"><strong><?= $event->eventname; ?></strong></h3>
+                    <?php
+                    for ($i = 0, $n = count($this->items); $i < $n; $i++ ):
 
-                    </div>
+                        ## Give give $row the this->item[$i]
+                        $row        = $this->items[$i];
 
-                    <div class="ticketmaster_upcoming_event_content">
+                        if ($row->eventid == $event->eventid) {
 
-                        <?php
-                        for ($i = 0, $n = count($this->items); $i < $n; $i++ ):
+                            if ($row->show_seatplans == 1)
+                            {
+                                $link 		= Route::_('index.php?option=com_ticketstation&view=seatedevent&cid='.$row->ticketid . ($itemid ? '&Itemid=' . $itemid : ''));
+                            }
+                            else
+                            {
+                                $link 		= Route::_('index.php?option=com_ticketstation&view=event&id='.$row->ticketid . ($itemid ? '&Itemid=' . $itemid : ''));
+                            }
 
-                            ## Give give $row the this->item[$i]
-                            $row        = $this->items[$i];
+                            ## The ticket's own background, or else the event's
+                            $ticketbackgroundimage_css = $backgroundStyle('ticket' . $row->ticketid) ?: $backgroundStyle('event' . $row->eventid);
 
-                            if ($row->eventid == $event->eventid) {
+                            // Over all published variants (child tickets) and following their counter
+                            // settings; for seated tickets the free seats on the chart.
+                            $available_tickets = Availability::forListing((int) $row->ticketid);
 
-                                if ($row->show_seatplans == 1)
-                                {
-                                    $link 		= Route::_('index.php?option=com_ticketstation&view=seatedevent&cid='.$row->ticketid . ($itemid ? '&Itemid=' . $itemid : ''));
-                                }
-                                else
-                                {
-                                    $link 		= Route::_('index.php?option=com_ticketstation&view=event&id='.$row->ticketid . ($itemid ? '&Itemid=' . $itemid : ''));
-                                }
+                            // A sold-out ticket stays clickable when the waiting list is on, so the
+                            // customer can reach the event page to join it. Seated tickets are excluded:
+                            // their seat-picker has no waiting list.
+                            $waitinglist_open = ($available_tickets < 1 && $this->config->show_waitinglist == 1 && $row->show_seatplans != 1);
 
-                                $ticketbackgroundimage_css = '';
-                                if (file_exists(JPATH_ADMINISTRATOR . '/components/com_ticketstation/assets/images/ticketbackgrounds/ticket' . $row->ticketid . '.jpg')) {
-                                    $ticketbackgroundimage = Uri::root() . 'administrator/components/com_ticketstation/assets/images/ticketbackgrounds/ticket'.$row->ticketid . '.jpg';
-                                    $ticketbackgroundimage_css = "background-image: linear-gradient(rgba(255,255,255,0.6), rgba(255,255,255,0.6)), url('". $ticketbackgroundimage ."');color:#000;";
-                                } elseif (file_exists(JPATH_ADMINISTRATOR . '/components/com_ticketstation/assets/images/ticketbackgrounds/event' . $row->eventid . '.jpg')){
-                                    $ticketbackgroundimage = Uri::root() . 'administrator/components/com_ticketstation/assets/images/ticketbackgrounds/event'.$row->eventid . '.jpg';
-                                    $ticketbackgroundimage_css = "background-image: linear-gradient(rgba(255,255,255,0.6), rgba(255,255,255,0.6)), url('". $ticketbackgroundimage ."');color:#000;";
-                                }
+                            $clickable = ($available_tickets > 0 || $waitinglist_open);
 
-                                // Over all published variants (child tickets) and following their counter
-                                // settings; for seated tickets the free seats on the chart.
-                                $available_tickets = Availability::forListing((int) $row->ticketid);
+                            $ticket_classes = 'ts-ticket'
+                                . ($clickable ? ' ts-ticket--link' : '')
+                                . ($available_tickets < 1 ? ' ts-ticket--soldout' : '')
+                                . ($ticketbackgroundimage_css ? ' ts-ticket--has-image' : '');
 
-                                // A sold-out ticket stays clickable when the waiting list is on, so the
-                                // customer can reach the event page to join it. Seated tickets are excluded:
-                                // their seat-picker has no waiting list.
-                                $waitinglist_open = ($available_tickets < 1 && $this->config->show_waitinglist == 1 && $row->show_seatplans != 1);
+                            ?>
 
-                                ?>
+                            <article class="<?= $ticket_classes; ?>"<?= $ticketbackgroundimage_css ? ' style="' . $ticketbackgroundimage_css . '"' : ''; ?>>
 
+                                <div class="ts-ticket__header">
+                                    <h3 class="ts-ticket__title">
+                                        <?php if ($clickable) { ?>
+                                            <a class="ts-ticket__link" href="<?= $link; ?>"><?= $row->ticketname; ?></a>
+                                        <?php } else { ?>
+                                            <?= $row->ticketname; ?>
+                                        <?php } ?>
+                                    </h3>
+                                </div>
 
+                                <div class="ts-ticket__body">
 
-                                <div class="ticketmaster_upcoming_ticket" style="<?= $ticketbackgroundimage_css; ?>">
-
-                                    <?php if ($available_tickets > 0 || $waitinglist_open) { ?>
-                                        <a href="<?= $link; ?>">
-                                            <span class="ticketmaster_upcoming_ticketlink"></span>
-                                        </a>
+                                    <?php if (trim(strip_tags((string) $row->eventdescription)) !== '') { ?>
+                                        <div class="ts-ticket__description"><?= $row->eventdescription; ?></div>
                                     <?php } ?>
 
-                                    <div class="ticketmaster_upcoming_ticket_heading">
+                                    <dl class="ts-meta">
+                                        <dt><?= Text::_('COM_TICKETSTATION_DATE'); ?></dt>
+                                        <dd><?= datefmt_format($fmt, strtotime($row->startdate));?></dd>
 
-                                        <h4 style="margin-left: 10px;"><strong><?= $row->ticketname; ?></strong></h4>
+                                        <dt><?= Text::_('COM_TICKETSTATION_START_TIME'); ?></dt>
+                                        <dd><?= Text::sprintf('COM_TICKETSTATION_TIME_OCLOCK', date('H:i', strtotime($row->startdate))); ?></dd>
 
-                                    </div>
+                                        <?php if ($this->config->show_venue == 1) { ?>
+                                            <dt><?= Text::_('COM_TICKETSTATION_VENUE'); ?></dt>
+                                            <dd><?= $row->venue; ?> - <?= $row->city; ?></dd>
+                                        <?php } ?>
 
-                                    <div class="ticketmaster_upcoming_ticket_content" >
+                                        <?php if($this->config->show_price_eventlist == 1) { ?>
+                                            <dt><?= Text::_('COM_TICKETSTATION_PRICE'); ?></dt>
+                                            <?php
+                                            // With variants the price is theirs: one price, or "from" the lowest.
+                                            if ($row->variant_min_price !== null) {
+                                                $price = (new TicketstationFunctions)->showprice($this->config->priceformat, $row->variant_min_price, $this->config->valuta);
 
+                                                if ((float) $row->variant_min_price != (float) $row->variant_max_price) {
+                                                    $price = Text::sprintf('COM_TICKETSTATION_PRICE_FROM', $price);
+                                                }
+                                            } else {
+                                                $price = (new TicketstationFunctions)->showprice($this->config->priceformat, $row->ticketprice, $this->config->valuta);
+                                            }
+                                            ?>
+                                            <dd class="ts-ticket__price"><strong><?= $price; ?></strong></dd>
+                                        <?php } ?>
+                                    </dl>
 
-                                        <?= $row->eventdescription; ?>
-
-
-
-                                        <div>
-                                            <table>
-                                                <tr>
-                                                    <td width="100px"><?= Text::_('COM_TICKETSTATION_DATE'); ?>:</td>
-                                                    <td><?= datefmt_format($fmt, strtotime($row->startdate));?></td>
-                                                </tr>
-                                                <tr>
-                                                    <td><?= Text::_('COM_TICKETSTATION_START_TIME'); ?>:</td>
-                                                    <td><?= Text::sprintf('COM_TICKETSTATION_TIME_OCLOCK', date('H:i', strtotime($row->startdate))); ?></td>
-                                                </tr>
-                                                <?php if ($this->config->show_venue == 1) { ?>
-                                                    <tr>
-                                                        <td><?= Text::_('COM_TICKETSTATION_VENUE'); ?>:</td>
-                                                        <td><?= $row->venue; ?> - <?= $row->city; ?></td>
-                                                    </tr>
+                                    <?php if ((($this->config->show_quantity_eventlist == 1) && ($available_tickets > 0)) || $available_tickets < 1) { ?>
+                                        <div class="ts-ticket__status">
+                                            <?php if ($available_tickets < 1) { ?>
+                                                <span class="ts-badge ts-badge--soldout"><?= Text::_( 'COM_TICKETSTATION_SOLD_OUT2' ); ?></span>
+                                                <?php if ($waitinglist_open) { ?>
+                                                    <span class="ts-badge ts-badge--waitinglist"><?= Text::_( 'COM_TICKETSTATION_WAITINGLIST_AVAILABLE' ); ?></span>
                                                 <?php } ?>
-                                                <?php if($this->config->show_price_eventlist == 1) { ?>
-                                                    <tr>
-                                                        <td><?= Text::_('COM_TICKETSTATION_PRICE'); ?>:</td>
-                                                        <td><strong><?= (new TicketstationFunctions)->showprice($this->config->priceformat ,$row->ticketprice,$this->config->valuta); ?></strong></td>
-                                                    </tr>
-                                                <?php } ?>
-                                                <?php if (($this->config->show_quantity_eventlist == 1) && ($available_tickets > 0)) { ?>
-                                                    <tr>
-                                                        <?php if ($available_tickets < 50) { ?>
-                                                            <td style="vertical-align:middle; height:40px;" colspan="2">
-                                                                <div class="label label-warning">
-                                                                    <?= Text::_( 'COM_TICKETSTATION_PLACES_LEFT' ); ?> <?= $available_tickets; ?>
-                                                                </div>
-                                                            </td>
-                                                        <?php } else { ?>
-                                                            <td style="vertical-align:middle; height:40px;" colspan="2">
-                                                                <div class="label label-info">
-                                                                    <?= Text::_( 'COM_TICKETSTATION_PLACES_LEFT' ); ?> <?= $available_tickets; ?>
-                                                                </div>
-                                                            </td>
-                                                        <?php } ?>
-                                                    </tr>
-                                                <?php } ?>
-                                                <?php if ($available_tickets < 1) { ?>
-                                                    <tr>
-                                                        <td style="vertical-align:middle; height:40px;" colspan="2">
-                                                            <div class="label label-important ">
-                                                                <?= Text::_( 'COM_TICKETSTATION_SOLD_OUT2' ); ?>
-                                                            </div>
-                                                            <?php if ($waitinglist_open) { ?>
-                                                                <div class="label label-info" style="margin-left: 5px;">
-                                                                    <?= Text::_( 'COM_TICKETSTATION_WAITINGLIST_AVAILABLE' ); ?>
-                                                                </div>
-                                                            <?php } ?>
-                                                        </td>
-                                                    </tr>
-                                                <?php } ?>
-                                            </table>
+                                            <?php } else { ?>
+                                                <span class="ts-badge <?= $available_tickets < 50 ? 'ts-badge--few' : 'ts-badge--available'; ?>"><?= Text::_( 'COM_TICKETSTATION_PLACES_LEFT' ); ?> <?= $available_tickets; ?></span>
+                                            <?php } ?>
                                         </div>
-                                    </div>
-                                </div>
-                            <?php } ?>
-                        <?php endfor; ?>
-                    </div>
-                </div>
-            <?php } ?>
+                                    <?php } ?>
 
+                                </div>
+                            </article>
+                        <?php } ?>
+                    <?php endfor; ?>
+                </div>
+            </section>
         <?php } ?>
 
+    <?php } ?>
 
+    <?php if (!empty($this->upcoming)) {?>
 
-        <?php if (!empty($this->upcoming)) {?>
+        <section class="ts-card ts-event ts-event--upcoming">
+            <h2 class="ts-card__title ts-event__title"><?= Text::_('COM_TICKETSTATION_UPCOMING_EVENTS'); ?></h2>
 
-            <div class="ticketmaster_upcoming_event">
-                <div class="ticketmaster_upcoming_event_heading">
-
-                    <h3 style="margin: 10px 0px 10px 10px;"><strong><?= Text::_('COM_TICKETSTATION_UPCOMING_EVENTS'); ?></strong></h3>
-
-                </div>
+            <div class="ts-event__tickets">
                 <?php foreach ($this->upcoming as $upcoming) {
 
-                    $ticketbackgroundimage_css = '';
-                    if (file_exists(JPATH_ADMINISTRATOR . '/components/com_ticketstation/assets/images/ticketbackgrounds/event' . $upcoming->eventid . '.jpg')){
-                        $ticketbackgroundimage = Uri::root() . 'administrator/components/com_ticketstation/assets/images/ticketbackgrounds/event'.$upcoming->eventid . '.jpg';
-                        $ticketbackgroundimage_css = "background-image: linear-gradient(rgba(255,255,255,0.6), rgba(255,255,255,0.6)), url('". $ticketbackgroundimage ."');color:#000;";
-                    }
+                    $ticketbackgroundimage_css = $backgroundStyle('event' . $upcoming->eventid);
                     ?>
 
+                    <article class="ts-ticket ts-ticket--presale<?= $ticketbackgroundimage_css ? ' ts-ticket--has-image' : ''; ?>"<?= $ticketbackgroundimage_css ? ' style="' . $ticketbackgroundimage_css . '"' : ''; ?>>
 
-
-                    <div class="ticketmaster_upcoming_event_content">
-
-                        <div class="ticketmaster_upcoming_ticket" style="<?= $ticketbackgroundimage_css; ?>">
-
-                            <div class="ticketmaster_upcoming_ticket_heading" >
-
-                                <h4 style="margin-left: 10px;"><strong><?= $upcoming->eventname; ?></strong></h4>
-
-                            </div>
-
-                            <div class="ticketmaster_upcoming_ticket_content">
-                                <div id="startverkooptiteldiv<?= $upcoming->eventid; ?>" style="margin-left: 10px;font-size: 1.1em;"><strong><?= Text::_('COM_TICKETSTATION_SALE_STARTS_IN'); ?>:</strong>
-                                </div>
-
-
-                                <div id="clockdiv<?= $upcoming->eventid; ?>" class="clockdiv">
-                                    <div id="daysdiv<?= $upcoming->eventid; ?>">
-                                        <span id="days<?= $upcoming->eventid; ?>" class="days"></span>
-                                        <div id="dayscaption<?= $upcoming->eventid; ?>" class="smalltext"><?= Text::_('COM_TICKETSTATION_COUNTDOWN_DAYS'); ?></div>
-                                    </div>
-                                    <div id="hoursdiv<?= $upcoming->eventid; ?>">
-                                        <span id="hours<?= $upcoming->eventid; ?>" class="hours"></span>
-                                        <div id="hourscaption<?= $upcoming->eventid; ?>" class="smalltext"><?= Text::_('COM_TICKETSTATION_COUNTDOWN_HOURS'); ?></div>
-                                    </div>
-                                    <div id="minutesdiv<?= $upcoming->eventid; ?>">
-                                        <span id="minutes<?= $upcoming->eventid; ?>" class="minutes"></span>
-                                        <div id="minutescaption<?= $upcoming->eventid; ?>" class="smalltext"><?= Text::_('COM_TICKETSTATION_COUNTDOWN_MINUTES'); ?></div>
-                                    </div>
-                                    <div id="secondsdiv<?= $upcoming->eventid; ?>">
-                                        <span id="seconds<?= $upcoming->eventid; ?>" class="seconds"></span>
-                                        <div id="secondscaption<?= $upcoming->eventid; ?>" class="smalltext"><?= Text::_('COM_TICKETSTATION_COUNTDOWN_SECONDS'); ?></div>
-                                    </div>
-                                </div>
-                                <div style="font-weight:bold;margin-left:10px;font-size:1.5em;">
-                                    <span id="renewpage<?= $upcoming->eventid; ?>"></span>
-                                </div>
-                                <div id="startverkoopdatumtijddiv<?= $upcoming->eventid; ?>" style="margin-left: 10px;font-size:0.9em;font-style:italic;color:#444;font-weight:bold;">
-                                    (<?= Text::sprintf('COM_TICKETSTATION_SALE_STARTS_AT', datefmt_format($fmt, strtotime($upcoming->startdate)), date('H:i', strtotime($upcoming->startdate))); ?>)
-                                </div>
-
-                            </div>
+                        <div class="ts-ticket__header">
+                            <h3 class="ts-ticket__title"><?= $upcoming->eventname; ?></h3>
                         </div>
-                    </div>
+
+                        <div class="ts-ticket__body">
+                            <p id="startverkooptiteldiv<?= $upcoming->eventid; ?>" class="ts-countdown-title"><?= Text::_('COM_TICKETSTATION_SALE_STARTS_IN'); ?>:</p>
+
+                            <div id="clockdiv<?= $upcoming->eventid; ?>" class="ts-countdown">
+                                <?php foreach (['days' => 'DAYS', 'hours' => 'HOURS', 'minutes' => 'MINUTES', 'seconds' => 'SECONDS'] as $unit => $caption) { ?>
+                                    <div id="<?= $unit . 'div' . $upcoming->eventid; ?>" class="ts-countdown__unit">
+                                        <span id="<?= $unit . $upcoming->eventid; ?>" class="ts-countdown__value"></span>
+                                        <span id="<?= $unit . 'caption' . $upcoming->eventid; ?>" class="ts-countdown__label"><?= Text::_('COM_TICKETSTATION_COUNTDOWN_' . $caption); ?></span>
+                                    </div>
+                                <?php } ?>
+                            </div>
+
+                            <div class="ts-countdown-reload" id="renewpage<?= $upcoming->eventid; ?>"></div>
+
+                            <p id="startverkoopdatumtijddiv<?= $upcoming->eventid; ?>" class="ts-countdown-date">
+                                (<?= Text::sprintf('COM_TICKETSTATION_SALE_STARTS_AT', datefmt_format($fmt, strtotime($upcoming->startdate)), date('H:i', strtotime($upcoming->startdate))); ?>)
+                            </p>
+                        </div>
+                    </article>
 
                     <script>
                         initializeClock('<?= $upcoming->eventid; ?>', '<?= $upcoming->startdate; ?>');
                     </script>
                 <?php } ?>
-
             </div>
-        <?php } ?>
+        </section>
+    <?php } ?>
 
-        <?php ## Once for the whole page, and only when priced tickets are actually listed
-        if (!empty($this->events) && $this->config->show_price_eventlist == 1 && $show_transaction_costs) { ?>
-            <div>
-                <p class="ticketmaster_upcoming_event_footer"><?= Text::sprintf('COM_TICKETSTATION_PRICES_EXCLUDE_TRANSACTION_COSTS', $transaction_costs); ?></p>
-            </div>
-        <?php } ?>
+    <?php ## Once for the whole page, and only when priced tickets are actually listed
+    if (!empty($this->events) && $this->config->show_price_eventlist == 1 && $show_transaction_costs) { ?>
+        <p class="ts-note ts-note--center"><?= Text::sprintf('COM_TICKETSTATION_PRICES_EXCLUDE_TRANSACTION_COSTS', $transaction_costs); ?></p>
+    <?php } ?>
 
-    </div>
 </div>
-
-
-
-

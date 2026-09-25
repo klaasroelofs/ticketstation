@@ -3,7 +3,9 @@
 use Joomla\CMS\Factory;
 use Joomla\CMS\HTML\HTMLHelper;
 use Joomla\CMS\Language\Text;
+use Joomla\CMS\Layout\LayoutHelper;
 use Joomla\CMS\Router\Route;
+use Joomla\CMS\Uri\Uri;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Ordercode;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\TicketstationFunctions;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\getAmount;
@@ -20,9 +22,6 @@ use Ticketstation\Component\Ticketstation\Administrator\Helper\getAmount;
 defined('_JEXEC') or die('Restricted Access');
 
 $session  = Factory::getApplication()->getSession();
-
-$button    = 'btn';
-$btndanger = 'btn btn-small btn-danger';
 
 ## Get document type and add it.
 $app        = Factory::getApplication();
@@ -45,6 +44,8 @@ $shop_on = Route::_('index.php?option=com_ticketstation&view=upcoming' . ($itemi
 $items   = count($this->items);
 $waiters = count($this->waiters);
 
+$trashIcon = '<svg class="ts-icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M6.5 1h3a1 1 0 0 1 1 1v1H14a.5.5 0 0 1 0 1h-.54l-.8 9.6A1.5 1.5 0 0 1 11.17 15H4.83a1.5 1.5 0 0 1-1.5-1.4L2.54 4H2a.5.5 0 0 1 0-1h3.5V2a1 1 0 0 1 1-1zm0 2h3V2h-3v1zM6 6.5a.5.5 0 0 0-1 .03l.3 5.5a.5.5 0 0 0 1-.06L6 6.5zm4.97.03a.5.5 0 0 0-1-.06l-.3 5.5a.5.5 0 1 0 1 .06l.3-5.5zM8 6a.5.5 0 0 0-.5.5v5.5a.5.5 0 0 0 1 0V6.5A.5.5 0 0 0 8 6z"/></svg>';
+
 ?>
 
     <script language="javascript">
@@ -58,75 +59,6 @@ $waiters = count($this->waiters);
 
                 jQuery('#chars-remaining').html('<?php echo Text::_('COM_TICKETSTATION_REMAINING'); ?> ' + (max - jQuery(this).val().length));
             });
-        });
-
-        jQuery(document).ready(function() {
-
-            jQuery('head').append("<style>ul.checkout-bar li.previous:after {width:100%;} ul.checkout-bar li.active:before {background: #BB2721;} ul.checkout-bar li.active {color: #BB2721;}</style>");
-
-        });
-
-        jQuery(document).ready(function() {
-
-            jQuery('a.delete').click(function(e) {
-                e.preventDefault();
-
-                var parent = jQuery(this).parent();
-                var orderid = parent.attr('id').replace('tm-cart-price-', '');
-                var container = parent.attr('id').replace('tm-cart-price-', 'tm-cart-container');
-                var data = 'cid=' + orderid;
-
-                var tokenName = '<?php echo \Joomla\CMS\Session\Session::getFormToken(); ?>';
-                jQuery.ajax({
-                    type      : 'POST',
-                    url       : '/index.php?option=com_ticketstation&controller=order&task=remove&format=raw',
-                    data      : 'orderid=' + parent.attr('id').replace('tm-cart-price-', '') + '&' + tokenName + '=1',
-                    dataType  : 'json',
-                    beforeSend: function() {
-                        jQuery('#tm-loader').show();
-                        jQuery("#row-" + orderid).addClass("error");
-                    },
-                    success   : function(result) {
-                        jQuery("#row-" + orderid).remove();
-                        jQuery("#tai" + orderid + "information").hide();
-                        //jQuery("#tm-cart-total-price").html(result.total);
-                        jQuery("#tm-cart-total-fees").html(result.fees);
-                        jQuery('#tm-loader').hide();
-                    }
-                });
-
-            });
-
-        });
-
-        jQuery(document).ready(function() {
-
-            jQuery('a.deletewaiting').click(function(e) {
-                e.preventDefault();
-
-                var parent = jQuery(this).parent();
-                var orderid = parent.attr('id').replace('tm-cart-waiting-', '');
-                var container = parent.attr('id').replace('tm-cart-waiting-', 'tm-cart-container');
-                var data = 'cid=' + orderid;
-
-                var tokenName = '<?php echo \Joomla\CMS\Session\Session::getFormToken(); ?>';
-                jQuery.ajax({
-                    type      : 'POST',
-                    url       : '/index.php?option=com_ticketstation&controller=order&task=removeWaiting&format=raw',
-                    data      : 'id=' + parent.attr('id').replace('tm-cart-waiting-', '') + '&' + tokenName + '=1',
-                    beforeSend: function() {
-                        jQuery('#tm-loader').show();
-                        jQuery("#wait-" + orderid).addClass("error");
-                    },
-                    success   : function(result) {
-                        jQuery("#wait-" + orderid).remove();
-                        jQuery("#tm-cart-total-price").html(result);
-                        jQuery('#tm-loader').hide();
-                    }
-                });
-
-            });
-
         });
 
         jQuery(document).ready(function() {
@@ -156,7 +88,7 @@ $waiters = count($this->waiters);
 
                     jQuery.ajax({
                         //this is the php file that processes the data and send mail
-                        url       : "/index.php?option=com_ticketstation&controller=cart&task=saveRemark&format=raw",
+                        url       : "<?php echo Uri::root(true); ?>/index.php?option=com_ticketstation&controller=cart&task=saveRemark&format=raw",
                         //POST method is used
                         type      : "POST",
                         // data:
@@ -165,20 +97,13 @@ $waiters = count($this->waiters);
                         dataType  : 'json',
                         //Do not cache the page
                         cache     : false,
-                        // Before sending the form
-                        beforeSend: function() {
-                            jQuery("#test").html(' <?php echo Text::_('COM_TICKETSTATION_PLEASE_WAIT'); ?>');
-                            jQuery('<img class="inline" style="margin-right:5px;" src="components/com_ticketstation/assets/images/loading.gif" />').prependTo("#test");
-                        },
                         // On Success trigger
                         success   : function(html) {
 
                             if (html.status == 666) {
                                 jQuery("#chars-remaining").html(html.msg);
-                                jQuery("#inner").html(html.msg);
                             } else {
-                                jQuery("#chars-remaining").html(html.msg);
-                                jQuery("#chars-remaining").css('color', '#04B404');
+                                jQuery("#chars-remaining").html(html.msg).addClass('is-saved');
 
                                 setTimeout(function() {
                                     document.location.href = '<?php echo $link; ?>';
@@ -196,258 +121,184 @@ $waiters = count($this->waiters);
 
     </script>
 
-    <div class="row ticketstation">
-        <div class="col-12">
-            <?php if ($items != 0) { ?>
-                <div>
-                    <div class="checkout-wrap">
-                        <ul class="checkout-bar">
+<?php if ($items == 0 && $waiters == 0) {
+    ## Nothing in the cart: back to the event list
+    header('Location: '.$shop_on);
+    die();
+} ?>
 
-                            <li class="visited previous">
-                                <span class="progress-bar-text"><?php echo Text::_('COM_TICKETSTATION_STEP_CHOOSE_TICKETS'); ?></span>
-                            </li>
+<div class="ticketstation ticketstation--cart">
 
-                            <li class="active"><span class="progress-bar-text"><?php echo Text::_('COM_TICKETSTATION_CART'); ?></span></li>
+    <?php if ($items != 0) { ?>
+        <?php echo LayoutHelper::render('steps', ['current' => 2], null, ['component' => 'com_ticketstation', 'client' => 0]); ?>
+    <?php } ?>
 
-                            <li class="next"><span class="progress-bar-text"><?php echo Text::_('COM_TICKETSTATION_ORDER_DETAILS'); ?></span></li>
-
-                            <li class=""><span class="progress-bar-text"><?php echo Text::_('COM_TICKETSTATION_STEP_PAYMENT'); ?></span></li>
-
-                        </ul>
-                    </div>
-                </div>
-            <?php } ?>
-        </div>
+    <div class="page-header">
+        <h1 class="ts-page-title"><?php echo Text::_('COM_TICKETSTATION_CART'); ?></h1>
     </div>
 
-    <div class="row ticketstation">
-        <div class="col-xl-9">
+    <p class="ts-intro"><?php echo Text::_('COM_TICKETSTATION_YOUR_CART_TEXT'); ?></p>
 
-        <?php if ($items == 0 && $waiters == 0) { ?>
+    <table class="ts-table ts-summary ts-cart" id="cart">
 
-            <?php
-                header('Location: '.$shop_on);
-                die();
-            ?>
-
-            <div style="min-height:250px;">
-                <h2 class="ticketmaster-header"><strong><?php echo Text::_('COM_TICKETSTATION_YOUR_CART_EMPTY'); ?></strong></h2>
-
-                <p style="margin:30px 0px;"><?php echo Text::_('COM_TICKETSTATION_GO_TO_UPCOMING'); ?></p>
-
-                <a class="btn btn-primary pull-left" onClick="location.href='<?php echo $shop_on; ?>'">
-                    <span><?php echo Text::_('COM_TICKETSTATION_AVAILABLE_EVENTS'); ?></span>
-                </a>
-            </div>
-
-        <?php } else { ?>
-
-            <h2 class="ticketmaster-header"><strong><?php echo Text::_('COM_TICKETSTATION_CART'); ?></strong></h2>
-
-            <div id="tm-cart-text">
-                <p><?php echo Text::_('COM_TICKETSTATION_YOUR_CART_TEXT'); ?></p>
-            </div>
-
-            <div class="failed" style="display: none;">
-                <?php echo Text::_('COM_TICKETSTATION_CART_FAILED'); ?>
-            </div>
-
-            <div id="ticketmaster-loading" align="center" style="margin-bottom:3px; height:20px;">
-                <div id="tm-loader" style=" display: none; ">
-                    <img src="components/com_ticketstation/assets/images/ajaxloader.gif" height="20px" />
-                </div>
-            </div>
-            <div>
-                <table class="table" id="cart" style="border:none; max-width:100%;">
-
-                    <?php if ($items != 0) { ?>
-                        <thead>
-                        <th width="60%"><?php echo Text::_('COM_TICKETSTATION_EVENT_INFORMATION'); ?></th>
-                        <th width="40%">
-                            <div align="right"><?php echo Text::_('COM_TICKETSTATION_PRICE'); ?></div>
-                        </th>
-
-                        </thead>
-                    <?php } ?>
-
-                    <?php foreach ($this->items as $row): ?>
-
-                        <tr id="row-<?php echo $row->orderid; ?>">
-                            <td>
-                                <?php echo htmlspecialchars($row->eventname, ENT_QUOTES, 'UTF-8'); ?> - <?php echo htmlspecialchars($row->ticketname, ENT_QUOTES, 'UTF-8'); ?>
-
-                                <?php if (isset($row->seat_sector) ? $row->seat_sector : 0 != 0): ?>
-                                    <?php echo ' - ' . Text::_('COM_TICKETSTATION_SEATNUMBER') . ': ' . checkSeat($row->orderid, $this->coords); ?>
-                                <?php endif; ?>
-
-                                <br />
-
-                                <?php echo Text::_('COM_TICKETSTATION_DATE'); ?>: <?php echo date($this->config->dateformat, strtotime($row->startdate)); ?>
-
-                                <?php if (isset($row->show_end_date) ? $row->show_end_date : 0 == 1): ?>
-                                    - <?php echo date($this->config->dateformat, strtotime($row->end_date)); ?>
-                                <?php endif; ?>
-
-                            </td>
-                            <td>
-                                <div style="text-align: right;">
-                                    <a style="margin-right: 10px;" class="btn btn-danger btn-mini" href="<?php echo Route::_('index.php?option=com_ticketstation&controller=order&task=remove&orderid=' . $row->orderid . '&' . \Joomla\CMS\Session\Session::getFormToken() . '=1' . ($itemid ? '&Itemid=' . $itemid : '')); ?>">
-                                        <span class="fa fa-trash"></span>
-                                    </a>
-                                    <?php echo (new TicketstationFunctions)->showprice($this->config->priceformat, $row->ticketprice, $this->config->valuta); ?>
-                                </div>
-                            </td>
-                        </tr>
-
-                    <?php endforeach; ?>
-
-                    <?php if (count($this->waiters) != 0) { ?>
-                        <tr>
-                            <td colspan="3">
-                                <div class="waitinglist_message">
-                                    <?php echo Text::_('COM_TICKETSTATION_ITEMS_ON_WAITINGLIST'); ?><br />
-                                    <?php echo Text::_('COM_TICKETSTATION_A_PAYMENT_REQUEST_WILL_BE_SENT'); ?>
-                                </div>
-                            </td>
-                        </tr>
-                    <?php } ?>
-
-                    <?php foreach ($this->waiters as $row): ?>
-                        <tr id="wait-<?php echo $row->id; ?>">
-                            <td>
-                                <strong><?php echo htmlspecialchars($row->eventname, ENT_QUOTES, 'UTF-8'); ?></strong> - <?php echo htmlspecialchars($row->ticketname, ENT_QUOTES, 'UTF-8'); ?>
-
-                                <?php if (isset($row->seat_sector) ? $row->seat_sector : 0 != 0): ?>
-                                    <?php echo ' - ' . Text::_('COM_TICKETSTATION_SEATNUMBER') . ': ' . checkSeat($row->orderid, $this->coords); ?>
-                                <?php endif; ?>
-
-                                <br />
-
-                                <?php echo Text::_('COM_TICKETSTATION_DATE'); ?>: <?php echo date($this->config->dateformat, strtotime($row->startdate)); ?>
-                                <?php if (isset($row->show_end_date) ? $row->show_end_date : 0 == 1): ?>
-                                    - <?php echo date($this->config->dateformat, strtotime($row->end_date)); ?>
-                                <?php endif; ?>
-
-                                <div align="center">
-                                    <a class="btn btn-danger btn-xs btn-mini" href="<?php echo Route::_('index.php?option=com_ticketstation&controller=order&task=removeWaiting&id=' . $row->id . '&' . \Joomla\CMS\Session\Session::getFormToken() . '=1' . ($itemid ? '&Itemid=' . $itemid : '')); ?>">
-                                        <span class="fa fa-trash"></span>
-                                    </a>
-                                </div>
-
-                            </td>
-
-                        </tr>
-
-                    <?php endforeach; ?>
-
-                    <tr>
-                        <td>
-                            <div style="text-align:right;font-weight:bold;"><?php echo Text::_('COM_TICKETSTATION_SUBTOTAL'); ?></div>
-                        </td>
-                        <td>
-                            <div style="font-weight:bold;" align="right"><?php echo (new TicketstationFunctions)->showprice($this->config->priceformat , ($ordertotal-$fees)+$discount, $this->config->valuta); ?></div>
-                        </td>
-                    </tr>
-
-                    <?php if ($discount > 0): ?>
-
-                        <tr>
-                            <td>
-                                <div style="text-align:right;"><?php echo Text::_('COM_TICKETSTATION_DISCOUNT'); ?><?php if ($this->items[0]->discount_type == 1):?> (<?php echo $this->items[0]->discount_amount;?>%)<?php endif; ?>:</div>
-                            </td>
-                            <td>
-                                <div align="right"><sup>-</sup>/<sub>-</sub> <?php echo (new TicketstationFunctions)->showprice($this->config->priceformat, $discount, $this->config->valuta); ?></div>
-                            </td>
-                        </tr>
-                    <?php endif; ?>
-
-                    <?php if ($fees > 0 && $this->config->variable_transcosts != 2): ?>
-                        <tr>
-                            <td>
-                                <div style="text-align:right;"><?php echo Text::_('COM_TICKETSTATION_FEES'); ?><?php if ($this->config->variable_transcosts == '1') { ?> (<?php echo $this->config->transcosts ?>%) <?php } ?></div>
-                            </td>
-                            <td>
-                                <div align="right"><?php echo (new TicketstationFunctions)->showprice($this->config->priceformat, $fees, $this->config->valuta); ?></div>
-                            </td>
-                        </tr>
-                    <?php endif; ?>
-
-                    <tr>
-                        <td>
-                            <div style="text-align:right; font-weight:bold;"><?php echo Text::_('COM_TICKETSTATION_CART_TOTAL'); ?></div>
-                        </td>
-                        <td>
-                            <div align="right" style="font-weight:bold;"><?php echo (new TicketstationFunctions)->showprice($this->config->priceformat, $ordertotal, $this->config->valuta); ?></div>
-                        </td>
-                    </tr>
-                </table>
-
-                <div style="clear:both; margin-top: 15px;"></div>
-
-                <div style="clear:both;"></div>
-
-                <?php if ($this->config->show_remark_field == 1) { ?>
-
-                    <div class="remarks_text">
-
-                        <h4><?php echo Text::_('COM_TICKETSTATION_ENTER_REMARKS'); ?></h4>
-
-                        <textarea rows="3" style="width:98%;" id="remarks" name="remarks" maxlength="255"></textarea>
-                        <div id="chars-remaining" class="chars-remaining"><?php echo Text::_('COM_TICKETSTATION_REMAINING'); ?> 255</div>
-
-                    </div>
-
-                <?php } else { ?>
-
-                    <input type="hidden" name="remarks" id="remarks" value="" />
-
-                <?php } ?>
-
-                <input type="hidden" name="required" id="required" value="<?php echo count($this->requests); ?>" />
-
-                <?php if ($this->config->use_coupons) { ?>
-
-                    <div style="margin: 35px 0;">
-
-                        <h4><?php echo Text::_('COM_TICKETSTATION_COUPON_CODE'); ?></h4>
-
-                        <div style="margin-bottom:10px;">
-                            <?php echo Text::_('COM_TICKETSTATION_COUPON_CODE_DESC'); ?>
-                        </div>
-
-                        <form action="index.php" method="POST" name="adminForm" id="adminForm" class="form-inline">
-
-                            <input name="couponcode" id="couponcode" type="text" class="input-medium" style="margin-bottom: 20px;margin-right: 25px;" size="25" maxlength="50" />
-                            <input type="hidden" name="task" id="coupon" value="coupon" />
-                            <input type="hidden" name="controller" id="cart" value="checkout" />
-                            <input type="hidden" name="option" id="option" value="com_ticketstation" />
-                            <?php echo HTMLHelper::_('form.token'); ?>
-
-                            <input name="button" type="submit" value="<?php echo Text::_('COM_TICKETSTATION_SUBMIT_COUPON'); ?>" class="btn-ticket-small" />
-
-                        </form>
-
-                    </div>
-
-                <?php } ?>
-
-                <div>
-
-                    <a class="btn btn-primary pull-right" id="checkout">
-                        <span><?php echo Text::_('COM_TICKETSTATION_TO_CHECKOUT'); ?></span>
-                    </a>
-                    <a class="btn btn-primary pull-left" onClick="document.location.href='<?php echo $shop_on; ?>'">
-                        <span><?php echo Text::_('COM_TICKETSTATION_CONTINUE_SHOPPING'); ?></span>
-                    </a>
-
-                </div>
-
-            </div>
-
+        <?php if ($items != 0) { ?>
+            <thead>
+                <tr>
+                    <th scope="col"><?php echo Text::_('COM_TICKETSTATION_EVENT_INFORMATION'); ?></th>
+                    <th scope="col" class="ts-price"><?php echo Text::_('COM_TICKETSTATION_PRICE'); ?></th>
+                </tr>
+            </thead>
         <?php } ?>
 
+        <tbody>
+            <?php foreach ($this->items as $row): ?>
+
+                <tr id="row-<?php echo $row->orderid; ?>" class="ts-summary__item">
+                    <td>
+                        <span class="ts-summary__name">
+                            <?php echo htmlspecialchars($row->eventname, ENT_QUOTES, 'UTF-8'); ?> - <?php echo htmlspecialchars($row->ticketname, ENT_QUOTES, 'UTF-8'); ?>
+
+                            <?php if (isset($row->seat_sector) ? $row->seat_sector : 0 != 0): ?>
+                                <?php echo ' - ' . Text::_('COM_TICKETSTATION_SEATNUMBER') . ': ' . checkSeat($row->orderid, $this->coords); ?>
+                            <?php endif; ?>
+                        </span>
+
+                        <span class="ts-summary__date">
+                            <?php echo Text::_('COM_TICKETSTATION_DATE'); ?>: <?php echo date($this->config->dateformat, strtotime($row->startdate)); ?>
+
+                            <?php if (isset($row->show_end_date) ? $row->show_end_date : 0 == 1): ?>
+                                - <?php echo date($this->config->dateformat, strtotime($row->end_date)); ?>
+                            <?php endif; ?>
+                        </span>
+                    </td>
+                    <td class="ts-price">
+                        <span class="ts-summary__price-cell">
+                            <a class="ts-btn ts-btn--danger ts-btn--icon ts-btn--remove" title="<?php echo Text::_('COM_TICKETSTATION_REMOVE'); ?>" href="<?php echo Route::_('index.php?option=com_ticketstation&controller=order&task=remove&orderid=' . $row->orderid . '&' . \Joomla\CMS\Session\Session::getFormToken() . '=1' . ($itemid ? '&Itemid=' . $itemid : '')); ?>">
+                                <?php echo $trashIcon; ?>
+                                <span class="ts-visually-hidden"><?php echo Text::_('COM_TICKETSTATION_REMOVE'); ?></span>
+                            </a>
+                            <span class="ts-summary__amount"><?php echo (new TicketstationFunctions)->showprice($this->config->priceformat, $row->ticketprice, $this->config->valuta); ?></span>
+                        </span>
+                    </td>
+                </tr>
+
+            <?php endforeach; ?>
+
+            <?php if (count($this->waiters) != 0) { ?>
+                <tr class="ts-summary__waiting">
+                    <td colspan="2">
+                        <div class="ts-alert ts-waitinglist-note">
+                            <?php echo Text::_('COM_TICKETSTATION_ITEMS_ON_WAITINGLIST'); ?><br />
+                            <?php echo Text::_('COM_TICKETSTATION_A_PAYMENT_REQUEST_WILL_BE_SENT'); ?>
+                        </div>
+                    </td>
+                </tr>
+            <?php } ?>
+
+            <?php foreach ($this->waiters as $row): ?>
+                <tr id="wait-<?php echo $row->id; ?>" class="ts-summary__item ts-summary__item--waiting">
+                    <td>
+                        <span class="ts-summary__name">
+                            <?php echo htmlspecialchars($row->eventname, ENT_QUOTES, 'UTF-8'); ?> - <?php echo htmlspecialchars($row->ticketname, ENT_QUOTES, 'UTF-8'); ?>
+
+                            <?php if (isset($row->seat_sector) ? $row->seat_sector : 0 != 0): ?>
+                                <?php echo ' - ' . Text::_('COM_TICKETSTATION_SEATNUMBER') . ': ' . checkSeat($row->orderid, $this->coords); ?>
+                            <?php endif; ?>
+                        </span>
+
+                        <span class="ts-summary__date">
+                            <?php echo Text::_('COM_TICKETSTATION_DATE'); ?>: <?php echo date($this->config->dateformat, strtotime($row->startdate)); ?>
+                            <?php if (isset($row->show_end_date) ? $row->show_end_date : 0 == 1): ?>
+                                - <?php echo date($this->config->dateformat, strtotime($row->end_date)); ?>
+                            <?php endif; ?>
+                        </span>
+                    </td>
+                    <td class="ts-price">
+                        <a class="ts-btn ts-btn--danger ts-btn--icon ts-btn--remove" title="<?php echo Text::_('COM_TICKETSTATION_REMOVE'); ?>" href="<?php echo Route::_('index.php?option=com_ticketstation&controller=order&task=removeWaiting&id=' . $row->id . '&' . \Joomla\CMS\Session\Session::getFormToken() . '=1' . ($itemid ? '&Itemid=' . $itemid : '')); ?>">
+                            <?php echo $trashIcon; ?>
+                            <span class="ts-visually-hidden"><?php echo Text::_('COM_TICKETSTATION_REMOVE'); ?></span>
+                        </a>
+                    </td>
+                </tr>
+
+            <?php endforeach; ?>
+        </tbody>
+
+        <tfoot>
+            <tr class="ts-summary__subtotal">
+                <th scope="row"><?php echo Text::_('COM_TICKETSTATION_SUBTOTAL'); ?></th>
+                <td class="ts-price"><?php echo (new TicketstationFunctions)->showprice($this->config->priceformat , ($ordertotal-$fees)+$discount, $this->config->valuta); ?></td>
+            </tr>
+
+            <?php if ($discount > 0): ?>
+                <tr class="ts-summary__discount">
+                    <th scope="row"><?php echo Text::_('COM_TICKETSTATION_DISCOUNT'); ?><?php if ($this->items[0]->discount_type == 1):?> (<?php echo $this->items[0]->discount_amount;?>%)<?php endif; ?></th>
+                    <td class="ts-price">- <?php echo (new TicketstationFunctions)->showprice($this->config->priceformat, $discount, $this->config->valuta); ?></td>
+                </tr>
+            <?php endif; ?>
+
+            <?php if ($fees > 0 && $this->config->variable_transcosts != 2): ?>
+                <tr class="ts-summary__fees">
+                    <th scope="row"><?php echo Text::_('COM_TICKETSTATION_FEES'); ?><?php if ($this->config->variable_transcosts == '1') { ?> (<?php echo $this->config->transcosts ?>%)<?php } ?></th>
+                    <td class="ts-price"><?php echo (new TicketstationFunctions)->showprice($this->config->priceformat, $fees, $this->config->valuta); ?></td>
+                </tr>
+            <?php endif; ?>
+
+            <tr class="ts-summary__total">
+                <th scope="row"><?php echo Text::_('COM_TICKETSTATION_CART_TOTAL'); ?></th>
+                <td class="ts-price"><?php echo (new TicketstationFunctions)->showprice($this->config->priceformat, $ordertotal, $this->config->valuta); ?></td>
+            </tr>
+        </tfoot>
+    </table>
+
+    <?php if ($this->config->show_remark_field == 1) { ?>
+
+        <div class="ts-field ts-remarks">
+            <label class="ts-label" for="remarks"><?php echo Text::_('COM_TICKETSTATION_ENTER_REMARKS'); ?></label>
+            <textarea class="ts-textarea" rows="3" id="remarks" name="remarks" maxlength="255"></textarea>
+            <p id="chars-remaining" class="ts-field__hint ts-chars-remaining" aria-live="polite"><?php echo Text::_('COM_TICKETSTATION_REMAINING'); ?> 255</p>
         </div>
+
+    <?php } else { ?>
+
+        <input type="hidden" name="remarks" id="remarks" value="" />
+
+    <?php } ?>
+
+    <input type="hidden" name="required" id="required" value="<?php echo count($this->requests); ?>" />
+
+    <?php if ($this->config->use_coupons) { ?>
+
+        <form action="index.php" method="POST" name="adminForm" id="adminForm" class="ts-coupon">
+
+            <label class="ts-label" for="couponcode"><?php echo Text::_('COM_TICKETSTATION_COUPON_CODE'); ?></label>
+            <p class="ts-field__hint"><?php echo Text::_('COM_TICKETSTATION_COUPON_CODE_DESC'); ?></p>
+
+            <div class="ts-inline-form">
+                <input name="couponcode" id="couponcode" type="text" class="ts-input" maxlength="50" autocomplete="off" />
+                <button name="button" type="submit" class="ts-btn ts-btn--secondary"><?php echo Text::_('COM_TICKETSTATION_SUBMIT_COUPON'); ?></button>
+            </div>
+
+            <input type="hidden" name="task" id="coupon" value="coupon" />
+            <input type="hidden" name="controller" id="cart" value="checkout" />
+            <input type="hidden" name="option" id="option" value="com_ticketstation" />
+            <?php echo HTMLHelper::_('form.token'); ?>
+
+        </form>
+
+    <?php } ?>
+
+    <div class="ts-actions">
+        <a class="ts-btn ts-btn--secondary ts-btn--back" href="<?php echo $shop_on; ?>">
+            <?php echo Text::_('COM_TICKETSTATION_CONTINUE_SHOPPING'); ?>
+        </a>
+
+        <a class="ts-btn ts-btn--primary ts-btn--next" id="checkout" href="<?php echo $link; ?>">
+            <?php echo Text::_('COM_TICKETSTATION_TO_CHECKOUT'); ?>
+        </a>
     </div>
+
+</div>
 
 <?php function checkSeat($value, $seat)
 {

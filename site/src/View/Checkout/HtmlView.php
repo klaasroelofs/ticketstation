@@ -64,7 +64,7 @@ class HtmlView extends BaseHtmlView {
             //4 => array('value' => '4', 'text' => JText::_( 'COM_TICKETSTATION_FAMILY' )),
         );
 
-        $lists['gender'] = HTMLHelper::_('select.genericList', $gender, 'gender', ' class="inputbox" ' , 'value', 'text', 1 );
+        $lists['gender'] = HTMLHelper::_('select.genericList', $gender, 'gender', 'class="ts-select"', 'value', 'text', 1 );
 
         if($config->show_birthday != 0 )
         {
@@ -120,7 +120,7 @@ class HtmlView extends BaseHtmlView {
 
         $countrylist[]	  = HTMLHelper::_('select.option',  '0', Text::_( 'COM_TICKETSTATION_PLS_SELECT' ), 'id', 'name' );
         $countrylist	      = array_merge( $countrylist, $db->loadObjectList() );
-        $lists['country'] = HTMLHelper::_('select.genericlist',  $countrylist, 'country_id', 'class="inputbox"','id',
+        $lists['country'] = HTMLHelper::_('select.genericlist',  $countrylist, 'country_id', 'class="ts-select"', 'id',
             'name', '' );
 
         $this->lists    = $lists;

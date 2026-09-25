@@ -84,7 +84,7 @@ class CartController extends BaseController
 
         if ($ordercode != $this->ordercode)
         {
-            $msg = '<font color="#FF0000">' . Text::_('COM_TICKETSTATION_SAVING_CONTENT_FAILED') . '</font>';
+            $msg = '<span class="ts-text-danger">' . Text::_('COM_TICKETSTATION_SAVING_CONTENT_FAILED') . '</span>';
 
             $arr = [
                 'status' => '666',
@@ -102,7 +102,7 @@ class CartController extends BaseController
 
         if ( ! $model->storeRemark($post))
         {
-            $msg = '<font color="#FF0000">' . Text::_('COM_TICKETSTATION_SAVING_CONTENT_FAILED') . '</font>';
+            $msg = '<span class="ts-text-danger">' . Text::_('COM_TICKETSTATION_SAVING_CONTENT_FAILED') . '</span>';
 
             $arr = [
                 'status' => '666',

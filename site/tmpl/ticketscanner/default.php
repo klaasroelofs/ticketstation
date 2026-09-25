@@ -25,7 +25,7 @@ $document   = $app->getDocument();
 $document->setTitle( Text::_('COM_TICKETSTATION_TICKETSCANNER_TITLE') . ' - ' . $app->get('sitename'));
 $document->setMetaData('viewport', 'width=device-width, initial-scale=1, viewport-fit=cover');
 
-$document->addStyleSheet( 'components/com_ticketstation/assets/css/component.css' );
+$document->addStyleSheet( 'components/com_ticketstation/assets/css/scanner.css' );
 $wa->registerAndUseStyle('fontawesome-free.all', 'media/vendor/fontawesome-free/css/all.min.css', [], [], []);
 
 // The scanner page stays open for hours: keep the session (and so the scan token) alive.

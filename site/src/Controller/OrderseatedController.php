@@ -224,7 +224,7 @@ class OrderseatedController extends BaseController {
         }
 
         $label  = htmlspecialchars($item->row_name . $item->seatid, ENT_QUOTES, 'UTF-8');
-        $remove = '<button id="'.(int)$id.'" class="btn btn-block btn-danger remove">'.Text::_( 'COM_TICKETSTATION_REMOVE_SEAT' ).' '.$label.' '.Text::_( 'COM_TICKETSTATION_REMOVE_FROM' ).'</button>';
+        $remove = '<button id="'.(int)$id.'" class="ts-btn ts-btn--danger ts-btn--sm ts-btn--block remove" type="button">'.Text::_( 'COM_TICKETSTATION_REMOVE_SEAT' ).' '.$label.' '.Text::_( 'COM_TICKETSTATION_REMOVE_FROM' ).'</button>';
 
         ## With Multi Seat = Yes, the published child tickets are the price categories to choose from.
         $items = [];
@@ -270,8 +270,8 @@ class OrderseatedController extends BaseController {
             $options[] = HTMLHelper::_('select.option', $row->ticketid, $row->ticketname .' - '.$price);
         }
 
-        echo '<label for="' . (int) $item->orderid . '">' . Text::_('COM_TICKETSTATION_PRICE_CATEGORY') . ' ' . $label . ':</label>';
-        echo HTMLHelper::_('select.genericlist', $options, (string) (int) $item->orderid, 'class="input ticketid" style="width:100%;"', 'value', 'text', $current);
+        echo '<label class="ts-label" for="' . (int) $item->orderid . '">' . Text::_('COM_TICKETSTATION_PRICE_CATEGORY') . ' ' . $label . ':</label>';
+        echo HTMLHelper::_('select.genericlist', $options, (string) (int) $item->orderid, 'class="ts-select ticketid"', 'value', 'text', $current);
         echo $remove;
         exit();
     }

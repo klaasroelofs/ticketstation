@@ -24,7 +24,7 @@ $app        = Factory::getApplication();
 $document   = $app->getDocument();
 $document->setTitle( Text::_('COM_TICKETSTATION_TICKETSCANNING_TITLE') . ' - ' . $app->get('sitename'));
 
-$document->addStyleSheet( 'components/com_ticketstation/assets/css/component.css' );
+$document->addStyleSheet( 'components/com_ticketstation/assets/css/scanner.css' );
 HTMLHelper::_('jquery.framework');
 $document->addScript('components/com_ticketstation/assets/javascripts/showLogout.js');
 

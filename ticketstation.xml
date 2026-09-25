@@ -24,6 +24,7 @@
     <files folder="site/">
         <folder>assets</folder>
         <folder>language</folder>
+        <folder>layouts</folder>
         <folder>src</folder>
         <folder>tmpl</folder>
         <folder>vendor</folder>
