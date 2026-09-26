@@ -16,6 +16,7 @@ use Joomla\CMS\HTML\HTMLHelper;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\View\HtmlView as BaseHtmlView;
 use Joomla\CMS\Toolbar\ToolbarHelper;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\SeatplanSettings;
 
 /**
  * Ticketstation Seatplans Admin View
@@ -81,39 +82,45 @@ class HtmlView extends BaseHtmlView
             $app->enqueueMessage(Text::_('COM_TICKETSTATION_SEATPLANSETTINGS_INCOMPLETE'), 'warning');
         }
 
-        if($data->multi_seat != 1) {
-            $items = $this->get('seats');
-        } else {
-            $items = $this->get('nochilds');
-        }
+        $items = $this->get('seats');
 
         $db = Factory::getContainer()->get('DatabaseDriver');
 
-        if ($data->multi_seat != 1) {
+        ## What a new seat becomes: a free seat of this ticket (the customer picks a price
+        ## category) or a section seat of one of its child tickets (fixed price).
+        $query = $db->getQuery(true)
+            ->select(['ticketid AS id', 'ticketname AS name'])
+            ->from($db->quoteName('#__ticketstation_tickets'))
+            ->where($db->quoteName('parent') . " = " . (int) $this->id)
+            ->order('ticketname ASC');
 
-            $query = $db->getQuery(true)
-                ->select(['ticketid AS id', 'ticketname AS name'])
-                ->from($db->quoteName('#__ticketstation_tickets'))
-                ->where($db->quoteName('parent') . " = " . (int) $this->id)
-                ->order('ticketname ASC');
+        $db->setQuery($query);
+        $children = $db->loadObjectList();
 
-            $db->setQuery($query);
+        $ticketlist[]	  = HTMLHelper::_('select.option',  (int) $this->id, Text::_( 'COM_TICKETSTATION_SEAT_KIND_FREE' ), 'id', 'name' );
 
-            $ticketlist[]	  = HTMLHelper::_('select.option',  '0', Text::_( 'COM_TICKETSTATION_PLS_SELECT' ), 'id', 'name' );
-            $ticketlist	      = array_merge( $ticketlist, $db->loadObjectList() );
-            $lists['childtickets'] = HTMLHelper::_('select.genericlist',  $ticketlist, 'single', 'class="form-select" style="width:100%;" ', 'id', 'name', intval(0) );
+        foreach ($children as $child) {
+            $ticketlist[] = HTMLHelper::_('select.option', (int) $child->id, Text::sprintf('COM_TICKETSTATION_SEAT_KIND_SECTION', $child->name), 'id', 'name');
+        }
 
-        } else {
+        $lists['childtickets'] = HTMLHelper::_('select.genericlist',  $ticketlist, 'single', 'class="form-select" style="width:100%;" ', 'id', 'name', (int) $this->id );
 
-            $ticketlist[]  = HTMLHelper::_('select.option',  (int)$this->id, Text::_( 'COM_TICKETSTATION_ALL_SEATS_POSSIBLE' ), 'id', 'name' );
-            $lists['childtickets'] = HTMLHelper::_('select.genericlist',  $ticketlist, 'single', 'class="form-select" style="width:100%;"', 'id', 'name', intval(0) );
+        $type = array(
+            '0' => array('value' => '0', 'text' => Text::_( 'COM_TICKETSTATION_NO' )),
+            '1' => array('value' => '1', 'text' => Text::_( 'COM_TICKETSTATION_YES' )),
+        );
+        $lists['type'] = HTMLHelper::_('select.genericList', $type, 'new_seat', ' class="form-select" style="width:100%;"'. '', 'value', 'text', 0 );
 
-            $type = array(
-                '0' => array('value' => '0', 'text' => Text::_( 'COM_TICKETSTATION_NO' )),
-                '1' => array('value' => '1', 'text' => Text::_( 'COM_TICKETSTATION_YES' )),
-            );
-            $lists['type'] = HTMLHelper::_('select.genericList', $type, 'new_seat', ' class="form-select" style="width:100%;"'. '', 'value', 'text', 0 );
+        ## Which child tickets are sections and which are price categories, for the hint in
+        ## the editor: a child with seats is a section, a published child without seats a
+        ## price category.
+        $this->categories = SeatplanSettings::priceCategories((int) $this->id);
+        $this->freeSeats  = 0;
 
+        foreach ($items as $item) {
+            if ((int) $item->parent === 0) {
+                $this->freeSeats++;
+            }
         }
 
         ## Source tickets for copy functionality
@@ -123,6 +130,7 @@ class HtmlView extends BaseHtmlView
             ->join('LEFT', $db->quoteName('#__ticketstation_events', 'e') . ' ON (' . $db->quoteName('e.eventid') . ' = ' . $db->quoteName('t.eventid') . ')')
             ->where($db->quoteName('t.ticketid') . " != " . (int) $this->id)
             ->where($db->quoteName('t.show_seatplans') . " = 1")
+            ->where($db->quoteName('t.parent') . " = 0")
             ->order('name ASC');
 
         $db->setQuery($query);
@@ -138,7 +146,7 @@ class HtmlView extends BaseHtmlView
             '2' => array('value' => '2', 'text' => Text::_( 'COM_TICKETSTATION_UP_DOWN' )),
             '3' => array('value' => '3', 'text' => Text::_( 'COM_TICKETSTATION_DOWN_UP' )),
         );
-        $lists['direction'] = HTMLHelper::_('select.genericList', $direction, 'direction', ' class="form-select"  style="width:100%;" '. '', 'value', 'text', $data->multi_seat );
+        $lists['direction'] = HTMLHelper::_('select.genericList', $direction, 'direction', ' class="form-select"  style="width:100%;" '. '', 'value', 'text', 0 );
 
         $seat_counter = array(
             '1' => array('value' => '1', 'text' => '1'),

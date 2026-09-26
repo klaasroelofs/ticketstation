@@ -100,52 +100,17 @@ class SeatedeventModel extends BaseDatabaseModel {
 
             $db = Factory::getContainer()->get('DatabaseDriver');
 
-            ## Seats of the child tickets (Multi Seat = No). The chart settings come from
-            ## this parent; a child's own settings row only overrides the colours.
+            ## All seats of this chart: free seats (ticketid = this ticket) and section seats
+            ## (parent = this ticket). The chart settings come from this ticket; a section's
+            ## own settings row only overrides the colours.
             $sql = 'SELECT c.*, t.ticketname, ' . SeatplanSettings::COLUMNS . '
 					FROM #__ticketstation_seatplancoords AS c
 					INNER JOIN #__ticketstation_tickets AS t ON t.ticketid = c.ticketid'
                 . SeatplanSettings::JOINS . '
-					WHERE c.parent = '.(int)$this->ticketid;
+					WHERE (c.ticketid = '.(int)$this->ticketid.' OR c.parent = '.(int)$this->ticketid.')';
 
             $db->setQuery($sql);
             $this->data = $db->loadObjectList();
-        }
-        return $this->data;
-    }
-
-    function getNochilds() {
-
-        if (empty($this->_data)) {
-
-            $db = Factory::getContainer()->get('DatabaseDriver');
-
-            ## Making the query for showing all the clients in list function
-            $sql = 'SELECT t.ticketname, tt.background_color, c.*, tt.font_color, tt.border_color
-					FROM #__ticketstation_seatplancoords AS c,  #__ticketstation_tickets AS t, #__ticketstation_seatplansettings AS tt
-					WHERE c.ticketid = t.ticketid
-					AND c.ticketid = tt.ticketid
-					AND c.ticketid = '.(int)$this->id.'';
-
-            $db->setQuery($sql);
-            $this->data = $db->loadObjectList();
-        }
-        return $this->data;
-    }
-
-    function getCheckChilds() {
-
-        if (empty($this->_data)) {
-
-            $db = Factory::getContainer()->get('DatabaseDriver');
-
-            ## This query checks if multi ticket has childs or not?
-            $sql = 'SELECT COUNT(ticketid) AS total
-					FROM #__ticketstation_tickets
-					WHERE parent = '.(int)$this->id.'';
-
-            $db->setQuery($sql);
-            $this->data = $db->loadObject();
         }
         return $this->data;
     }
@@ -159,64 +124,11 @@ class SeatedeventModel extends BaseDatabaseModel {
             ## Making the query for showing all the clients in list function
             $sql = 'SELECT * 
 					FROM #__ticketstation_seatplansettings
-					WHERE ticketid ='.(int)$this->id.'';
+					WHERE ticketid ='.(int)$this->id.'
+					ORDER BY id';
 
             $db->setQuery($sql);
             $this->data = $db->loadObject();
-        }
-        return $this->data;
-    }
-
-    function _buildContentWhereTicket() {
-
-        $where = array();
-
-        $where[] = 'a.eventid = e.eventid';
-        $where[] = 'a.ticketid = t.ticketid';
-        $where[] = 'a.ticketid = tt.ticketid';
-        $where[] = 'a.ordercode = '.(int)$this->ordercode;
-
-
-        $where 		= ( count( $where ) ? ' WHERE '. implode( ' AND ', $where ) : '' );
-
-        return $where;
-    }
-
-    function getCart() {
-
-        if (empty($this->_data)) {
-
-            $db = Factory::getContainer()->get('DatabaseDriver');
-            $where = $this->_buildContentWhereTicket();
-
-            ## Making the query for showing all the clients in list function
-            $sql='SELECT a.*, t.ticketname, t.ticketprice, t.startdate, e.eventname, tt.*, COUNT(a.orderid) AS total
-			      FROM #__ticketstation_orders AS a, #__ticketstation_events AS e, #__ticketstation_tickets AS t, #__ticketstation_seatplansettings AS tt'
-                .$where.' GROUP BY a.ticketid' ;
-
-            $db->setQuery($sql);
-            $this->data = $db->loadObjectList();
-        }
-        return $this->data;
-    }
-
-    function getCartNoChilds() {
-
-        if (empty($this->_data)) {
-
-            $db = Factory::getContainer()->get('DatabaseDriver');
-            $where = $this->_buildContentWhereTicket();
-
-            ## Making the query for showing all the clients in list function
-            $sql='SELECT a.*,COUNT(a.orderid) AS total, t.ticketname 
-				  FROM #__ticketstation_orders AS a, #__ticketstation_tickets AS t
-				  WHERE a.ordercode = '.(int)$this->ordercode.'
-				  AND a.ticketid = t.ticketid
-				  AND t.parent = '.(int)$this->id.'
-				  GROUP BY ticketid';
-
-            $db->setQuery($sql);
-            $this->data = $db->loadObjectList();
         }
         return $this->data;
     }

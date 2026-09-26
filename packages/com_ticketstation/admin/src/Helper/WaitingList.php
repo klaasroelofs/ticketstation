@@ -414,10 +414,11 @@ class WaitingList
         $db = Factory::getContainer()->get('DatabaseDriver');
 
         $query = $db->getQuery(true)
-            ->select(['a.*', 't.ticketname', 't.ticketprice', 't.startdate', 'e.eventname'])
+            ->select(['a.*', "IF(p.ticketid IS NULL, t.ticketname, CONCAT(p.ticketname, ' - ', t.ticketname)) AS ticketname", 't.ticketprice', 't.startdate', 'e.eventname'])
             ->from($db->quoteName('#__ticketstation_waitinglist', 'a'))
             ->join('LEFT', $db->quoteName('#__ticketstation_events', 'e') . ' ON ' . $db->quoteName('a.eventid') . ' = ' . $db->quoteName('e.eventid'))
             ->join('LEFT', $db->quoteName('#__ticketstation_tickets', 't') . ' ON ' . $db->quoteName('a.ticketid') . ' = ' . $db->quoteName('t.ticketid'))
+            ->join('LEFT', $db->quoteName('#__ticketstation_tickets', 'p') . ' ON ' . $db->quoteName('p.ticketid') . ' = ' . $db->quoteName('t.parent') . ' AND ' . $db->quoteName('t.parent') . ' > 0')
             ->where($db->quoteName('a.ordercode') . " = " . $ordercode)
             ->where($db->quoteName('a.processed') . " = 0");
 

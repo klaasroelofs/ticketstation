@@ -20,6 +20,7 @@ use Ticketstation\Component\Ticketstation\Administrator\Helper\Availability;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Order;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Ordercode;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\PaymentAPI;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\SeatplanSettings;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Ticket;
 
 /**
@@ -101,6 +102,18 @@ class ReservationController extends BaseController
         }
 
         $ticket = (new Ticket)->getTicketDetailsById($ticketid);
+
+        // A child of a seated ticket is sold through its parent's seat chart.
+        if ($ticket && $ticket->parent > 0)
+        {
+            $parent = (new Ticket)->getTicketDetailsById((int) $ticket->parent);
+
+            if ($parent && $parent->show_seatplans == 1)
+            {
+                $ticket   = $parent;
+                $ticketid = (int) $parent->ticketid;
+            }
+        }
 
         if (! $ticket)
         {
@@ -207,13 +220,19 @@ class ReservationController extends BaseController
 
         $seat = $model->getSeatWithSettings($coordId);
 
-        if (! $seat || $seat->booked == 1)
+        // Taken: sold, or held by someone picking it right now. A blocked seat without an
+        // order can be booked here (the page asks for confirmation first).
+        if (! $seat || $seat->orderid > 0 || ($seat->booked == 1 && $seat->blocked != 1))
         {
             echo json_encode(['error' => '1', 'msg' => Text::_('COM_TICKETSTATION_THIS_SEAT_IS_TAKEN'), 'id' => $coordId]);
             $app->close();
         }
 
-        $ticket = (new Ticket)->getTicketDetailsById($seat->ticketid);
+        // A section seat sells its child ticket; a free seat the price category picked above
+        // the chart (or the most expensive one), as in the storefront.
+        $categoryId = (int) $seat->parent === 0 ? $jinput->getInt('categoryid', 0) : 0;
+        $ticketid   = SeatplanSettings::ticketForSeat($seat, $categoryId);
+        $ticket     = $ticketid ? (new Ticket)->getTicketDetailsById($ticketid) : null;
 
         if (! $ticket)
         {
@@ -232,7 +251,7 @@ class ReservationController extends BaseController
 
         $orderid = $model->insertOrderRow([
             'ordercode'           => $ordercode,
-            'ticketid'            => $seat->ticketid,
+            'ticketid'            => $ticketid,
             'eventid'             => $ticket->eventid,
             'price'               => $ticket->ticketprice,
             'vat'                 => $pricing['vat_amount'],
@@ -251,11 +270,17 @@ class ReservationController extends BaseController
             $app->close();
         }
 
-        $model->updateSeatCoords($orderid, $coordId);
+        if (! $model->updateSeatCoords($orderid, $coordId))
+        {
+            $model->deleteOrderRow((int) $orderid);
+
+            echo json_encode(['error' => '1', 'msg' => Text::_('COM_TICKETSTATION_THIS_SEAT_IS_TAKEN'), 'id' => $coordId]);
+            $app->close();
+        }
 
         $state             = $this->getState();
         $state['eventid']  = $ticket->eventid;
-        $state['ticketid'] = $seat->ticketid;
+        $state['ticketid'] = SeatplanSettings::owner($seat);
         $this->setState($state);
 
         echo json_encode([

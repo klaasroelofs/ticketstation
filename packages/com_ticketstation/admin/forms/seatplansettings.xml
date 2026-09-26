@@ -17,18 +17,6 @@
                 label="COM_TICKETSTATION_SEATPLANSETTING_JPG_BACKGROUND"
         />
         <field
-                name="multi_seat"
-                type="radio"
-                layout="joomla.form.field.radio.switcher"
-                label="COM_TICKETSTATION_SEATPLANSETTING_MULTISEAT"
-                class="form-control-succes"
-                default="1"
-                description="COM_TICKETSTATION_SEATPLANSETTING_MULTISEAT_DESC"
-        >
-            <option value="0">COM_TICKETSTATION_NO</option>
-            <option value="1">COM_TICKETSTATION_YES</option>
-        </field>
-        <field
                 name="background_color"
                 type="text"
                 maxlength="6"

@@ -38,7 +38,7 @@ class HtmlView extends BaseHtmlView
         $this->form  = $model->getForm();
         $this->item  = $model->getData();
 
-        ## Child tickets (sections when Multi Seat = No) with their own colour overrides.
+        ## Child tickets with their own colour overrides, used for their section seats.
         $this->childColours = empty($this->item->ticketid) ? [] : SeatplanSettings::getChildColours((int) $this->item->ticketid);
 
         // Set up the toolbar

@@ -126,24 +126,15 @@ if (file_exists($image)) {
                                     <div style="width: 100%; padding: 8px 0px 8px 0px;"><?php echo Text::_( 'COM_TICKETSTATION_CHOOSE_SEAT_SECTOR' ); ?></div>
                                     <div style="width: 100%;"><?php echo $this->lists['childtickets']; ?></div>
 
-                                    <?php if ($this->data->multi_seat == 1){ ?>
-                                        <div style="width: 100%; padding: 8px 0px 8px 0px"><?php echo Text::_( 'COM_TICKETSTATION_STARTING_NEWNUMBER' ); ?></div>
-                                        <div style="width: 100%;"><?php echo $this->lists['type']; ?></div>
+                                    <div style="width: 100%; padding: 8px 0px 8px 0px"><?php echo Text::_( 'COM_TICKETSTATION_STARTING_NEWNUMBER' ); ?></div>
+                                    <div style="width: 100%;"><?php echo $this->lists['type']; ?></div>
 
-                                        <div style="width: 100%; padding: 8px 0px 8px 0px;"><?php echo Text::_( 'COM_TICKETSTATION_ROW_NAME' ); ?></div>
-                                        <div style="width: 100%;"><input name="row_name" id="row_name" class="form-control" style="width:94%;" type="text" value="" maxlength="10" /></div>
+                                    <div style="width: 100%; padding: 8px 0px 8px 0px;"><?php echo Text::_( 'COM_TICKETSTATION_ROW_NAME' ); ?></div>
+                                    <div style="width: 100%;"><input name="row_name" id="row_name" class="form-control" style="width:94%;" type="text" value="" maxlength="5" /></div>
 
-                                        <div style="width: 100%; padding: 8px 0px 25px 0px; border-bottom:0px solid #CCC;">
-                                            <a href="#" id="addMultiSeat" class="btn btn-primary"> <?php echo Text::_( 'COM_TICKETSTATION_ADD_SEAT_SECTOR' ); ?></a>
-                                        </div>
-
-                                    <?php }else{ ?>
-
-                                        <div style="width: 100%; padding: 8px 0px 25px 0px; border-bottom:0px solid #CCC;">
-                                            <a href="#" id="addSeat" class="btn btn-primary"> <?php echo Text::_( 'COM_TICKETSTATION_ADD_SEAT_SECTOR' ); ?></a>
-                                        </div>
-
-                                    <?php } ?>
+                                    <div style="width: 100%; padding: 8px 0px 25px 0px; border-bottom:0px solid #CCC;">
+                                        <a href="#" id="addMultiSeat" class="btn btn-primary"> <?php echo Text::_( 'COM_TICKETSTATION_ADD_SEAT_SECTOR' ); ?></a>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -220,7 +211,6 @@ if (file_exists($image)) {
                             </div>
                         </div>
 
-                        <?php if ($this->data->multi_seat == 1) { ?>
                             <div class="accordion-item">
                                 <h2 class="accordion-header" id="headingFive">
                                     <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFive" aria-expanded="true" aria-controls="collapseFive">
@@ -241,13 +231,30 @@ if (file_exists($image)) {
                                     </div>
                                 </div>
                             </div>
-                        <?php } ?>
 
                     </div>
 
                     <?php
+                    ## Which child tickets are price categories, and a warning when free seats would
+                    ## sell at the price of this ticket itself.
+                    $categoryNames = array_map(fn ($category) => htmlspecialchars($category->ticketname, ENT_QUOTES, 'UTF-8'), $this->categories);
+                    ?>
+                    <div class="alert alert-info small" style="margin-bottom:15px;">
+                        <?= Text::_('COM_TICKETSTATION_SEATCHART_KINDS_HINT'); ?>
+                        <?php if ($categoryNames) { ?>
+                            <br><strong><?= Text::_('COM_TICKETSTATION_SEATCHART_PRICE_CATEGORIES'); ?>:</strong> <?= implode(', ', $categoryNames); ?>
+                        <?php } ?>
+                    </div>
+                    <?php if ($this->freeSeats > 0 && !$categoryNames) { ?>
+                        <div class="alert alert-warning small" style="margin-bottom:15px;">
+                            <?= Text::sprintf('COM_TICKETSTATION_SEATCHART_NO_CATEGORIES_WARNING', htmlspecialchars($this->data->ticketname, ENT_QUOTES, 'UTF-8')); ?>
+                        </div>
+                    <?php } ?>
+
+                    <?php
                     $countFree = 0;
                     $countSold = 0;
+                    $countBlocked = 0;
                     $countScanned = 0;
                     $countNotScanned = 0;
 
@@ -255,7 +262,9 @@ if (file_exists($image)) {
                         if ($item->booked == '0') {
                             $countFree++;
                         }
-                        if ($item->booked == '1') {
+                        if ($item->blocked == '1' && $item->orderid == 0) {
+                            $countBlocked++;
+                        } elseif ($item->booked == '1') {
                             $countSold++;
                         }
                         if ($item->scanned == '1') {
@@ -278,6 +287,13 @@ if (file_exists($image)) {
                                     <td style="font-size:11px;font-weight:bold; text-align:center; border:1px solid #000; background-color:#FF0000; color:#fff; width: 25px; height:25px;"><?php echo $countSold ?></td>
                                     <td style="color:#3071a9; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 13px;">&nbsp;&nbsp;&nbsp;= <?= Text::_('COM_TICKETSTATION_SEATS_SOLD'); ?></td>
                                     <td style="color:#3071a9; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 10px;">(<?php echo ($countSold != 0 ? round(($countSold/($countSold+$countFree))*100) : 0)?>%)</td>
+                                </tr>
+                                <tr>
+                                    <td style="width: 22px; height:10px; line-height:10px;"></td>
+                                </tr>
+                                <tr>
+                                    <td style="font-size:11px;font-weight:bold; text-align:center; border:1px solid #000; background-color:#888888; color:#fff; width: 25px; height:25px;"><?php echo $countBlocked ?></td>
+                                    <td style="color:#3071a9; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 13px;">&nbsp;&nbsp;&nbsp;= <?= Text::_('COM_TICKETSTATION_SEATS_BLOCKED'); ?></td>
                                 </tr>
                                 <tr>
                                     <td style="width: 22px; height:10px; line-height:10px;"></td>
@@ -329,7 +345,11 @@ if (file_exists($image)) {
                             $x = $row->x_pos;
                             $y = $row->y_pos;
 
-                            if ($row->booked > 0){
+                            if ($row->blocked > 0 && $row->orderid == 0){
+                                ## stoel geblokkeerd, maak GRIJS
+                                $style = 'color:#FFF; border-color:#000;';
+                                $background = '888888';
+                            }elseif ($row->booked > 0){
                                 ## stoel verkocht, maak ROOD
                                 $style = 'color:#FFF; border-color:#000;';
                                 $background = 'ff0000';
@@ -551,32 +571,6 @@ if (file_exists($image)) {
 
     });
 
-    $("#addSeat").bind("click", function(e){
-
-        var singleValue = $("#single").val();
-
-        if (singleValue === 0){
-            return false;
-        }
-
-        $.getJSON("index.php?option=com_ticketstation&controller=seatplans&task=newSeat&ticketid="+ singleValue +"&format=raw&"+csrfTokenParam,
-
-            function(data){
-
-                if (data.id === 0){
-                    return false;
-                }
-
-                // Create a new div in the glassbox div.
-                var elm = $('<div id="'+data.id+'" class="seat-element" style="left:30px; top:30px; position:absolute;">'+data.seatid+'</div>').appendTo("#glassbox");
-
-                // Pass the element to makeDraggable
-                makeDraggable(elm);
-                $("#"+data.id+"").animate({height: data.seat_height, width: data.seat_width})
-
-            });
-    });
-
     $("#addMultiSeat").bind("click", function(e){
 
         var singleValue  = $("#single").val();
@@ -587,7 +581,7 @@ if (file_exists($image)) {
             return false;
         }
 
-        $.getJSON("index.php?option=com_ticketstation&controller=seatplans&task=getrecord&ticketid="+ singleValue +"&row_name="+ NewRowName +"&new_seat="+ newSeat +"&format=raw&"+csrfTokenParam,
+        $.getJSON("index.php?option=com_ticketstation&controller=seatplans&task=getrecord&ticketid="+ singleValue +"&row_name="+ encodeURIComponent(NewRowName) +"&new_seat="+ newSeat +"&format=raw&"+csrfTokenParam,
 
             function(data){
 
@@ -696,7 +690,6 @@ if (file_exists($image)) {
     $("#CopyFromSource").bind("click", function(e){
 
         var sourceValue = $("#source").val();
-        var multiseat = <?= $this->data->multi_seat; ?>;
         var countsold = <?= $countSold; ?>;
 
         if (sourceValue == 0) {
@@ -707,10 +700,6 @@ if (file_exists($image)) {
             $("#respond_html").text(<?= json_encode(Text::_('COM_TICKETSTATION_SEATS_BOOKED_NO_DELETE')); ?>).addClass('danger_msg').hide().fadeIn(1000);
             setTimeout(function(){ $('#respond_html').fadeOut(1000); }, 4000);
             setTimeout(function(){ $('#respond_html').removeClass('danger_msg'); }, 6000);
-            return false;
-        }
-
-        if (multiseat == 0) {
             return false;
         }
 

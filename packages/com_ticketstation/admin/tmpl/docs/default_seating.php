@@ -9,7 +9,7 @@
 
 /**
  * Seated tickets topic on the central documentation page: seat plan settings,
- * the three Multi Seat set-ups (seatplansettings.multi_seat, see
+ * free seats, section seats and price categories (see SeatplanSettings,
  * SeatplansController and site OrderseatedController::makeReservation()), the
  * seat chart editor and the customer's seat-picking flow.
  */
@@ -52,9 +52,9 @@ $modes = ['SINGLE', 'TIERS', 'SECTIONS'];
         </details>
 
         <details class="mb-3 border rounded p-3">
-            <summary class="h5 mb-0"><span class="fa fa-layer-group me-2" aria-hidden="true"></span><?= Text::_('COM_TICKETSTATION_SEATING_DOCS_MULTISEAT_TITLE') ?></summary>
+            <summary class="h5 mb-0"><span class="fa fa-layer-group me-2" aria-hidden="true"></span><?= Text::_('COM_TICKETSTATION_SEATING_DOCS_KINDS_TITLE') ?></summary>
             <div class="mt-3">
-                <p><?= Text::_('COM_TICKETSTATION_SEATING_DOCS_MULTISEAT_INTRO') ?></p>
+                <p><?= Text::_('COM_TICKETSTATION_SEATING_DOCS_KINDS_INTRO') ?></p>
 
                 <div class="table-responsive">
                     <table class="table table-sm table-bordered align-top">
@@ -79,7 +79,7 @@ $modes = ['SINGLE', 'TIERS', 'SECTIONS'];
                     </table>
                 </div>
 
-                <p class="mb-0"><?= Text::_('COM_TICKETSTATION_SEATING_DOCS_MULTISEAT_CHOOSE') ?></p>
+                <p class="mb-0"><?= Text::_('COM_TICKETSTATION_SEATING_DOCS_KINDS_CHOOSE') ?></p>
             </div>
         </details>
 

@@ -54,6 +54,17 @@
             <option value="">COM_TICKETSTATION_CHOOSE_VENUE</option>
         </field>
         <field
+                name="show_seatplans"
+                type="radio"
+                layout="joomla.form.field.radio.switcher"
+                label="COM_TICKETSTATION_SHOW_SEATPLANS"
+                class="form-control-success"
+                default="0"
+        >
+            <option value="0">COM_TICKETSTATION_NO</option>
+            <option value="1">COM_TICKETSTATION_YES</option>
+        </field>
+        <field
                 name="starting_total_tickets"
                 type="number"
                 label="COM_TICKETSTATION_CAPACITY"
@@ -67,6 +78,7 @@
                 label="COM_TICKETSTATION_CAPACITY_MODE"
                 description="COM_TICKETSTATION_CAPACITY_MODE_EXPLANATION"
                 default="0"
+                showon="show_seatplans:0"
         >
             <option value="0">COM_TICKETSTATION_CAPACITY_SHARED</option>
             <option value="1">COM_TICKETSTATION_CAPACITY_PER_CHILD</option>
@@ -123,17 +135,6 @@
                 format="%d-%m-%Y %H:%M"
                 filterformat="d-m-Y H:i"
         />
-        <field
-                name="show_seatplans"
-                type="radio"
-                layout="joomla.form.field.radio.switcher"
-                label="COM_TICKETSTATION_SHOW_SEATPLANS"
-                class="form-control-success"
-                default="0"
-        >
-            <option value="0">COM_TICKETSTATION_NO</option>
-            <option value="1">COM_TICKETSTATION_YES</option>
-        </field>
         <field
                 name="scans_on"
                 type="radio"

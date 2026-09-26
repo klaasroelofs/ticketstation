@@ -95,10 +95,15 @@ else
     }
     .seat-element.seat-mine {
         background-color: #FFA500 !important;
+        color: #fff !important;
+        border-color: #000 !important;
         cursor: pointer;
     }
     .seat-element.seat-taken {
         cursor: no-drop;
+    }
+    .seat-element.seat-blocked {
+        cursor: pointer;
     }
 </style>
 
@@ -117,23 +122,40 @@ else
 
                 <div id="ajaxMessage" class="alert alert-danger" style="display:none;"></div>
 
+                <?php if (!empty($this->categories)) : ?>
+                    <div class="mb-3" style="max-width: 400px;">
+                        <label for="price-category" class="form-label"><?= Text::_('COM_TICKETSTATION_RESERVATION_PRICE_CATEGORY') ?></label>
+                        <select id="price-category" class="form-select">
+                            <?php foreach ($this->categories as $category) : ?>
+                                <option value="<?= (int) $category->ticketid ?>"><?= htmlspecialchars($category->ticketname, ENT_QUOTES, 'UTF-8') ?> &ndash; <?= TicketstationFunctions::showprice($this->config->priceformat, $category->ticketprice, $this->config->valuta) ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                        <div class="form-text"><?= Text::_('COM_TICKETSTATION_RESERVATION_PRICE_CATEGORY_DESC') ?></div>
+                    </div>
+                <?php endif; ?>
+
                 <div style="width: <?= (int) $width + 12 ?>px; max-width: 100%; overflow-x: auto;">
                     <div id="glassbox" <?php if (file_exists($image)) : ?>style="background-image:url(<?= htmlspecialchars($seatchart, ENT_QUOTES, 'UTF-8') ?>);"<?php endif; ?>>
                         <?php foreach ($this->seats as $row) :
                             $mine       = isset($mySeats[(int) $row->id]);
                             $lineHeight = 'line-height:' . (int) $row->height . 'px;';
 
-                            if ($mine)
-                            {
-                                $seatClass  = 'seat-element seat-mine';
-                                $style      = 'color:#fff; border-color:#000; ' . $lineHeight;
-                                $background = '';
-                            }
-                            elseif ($row->booked > 0)
+                            // A blocked seat can still be booked here (after a confirmation); it
+                            // shows grey, and goes back to grey when it is removed again.
+                            $blocked = (int) $row->blocked === 1;
+                            $taken   = ! $mine && $row->booked > 0 && ! ($blocked && (int) $row->orderid === 0);
+
+                            if ($taken)
                             {
                                 $seatClass  = 'seat-element seat-taken';
                                 $style      = 'color:#fff; border-color:#000; ' . $lineHeight;
                                 $background = 'background-color:#FF0000;';
+                            }
+                            elseif ($blocked)
+                            {
+                                $seatClass  = 'seat-element seat-blocked';
+                                $style      = 'color:#fff; border-color:#000; ' . $lineHeight;
+                                $background = 'background-color:#888888;';
                             }
                             else
                             {
@@ -143,13 +165,18 @@ else
                                 $bg         = $row->background_color !== '' ? '#' . htmlspecialchars($row->background_color, ENT_QUOTES, 'UTF-8') : '#e1fdda';
                                 $background = 'background-color:' . $bg . ';';
                             }
+
+                            if ($mine)
+                            {
+                                $seatClass .= ' seat-mine';
+                            }
                             ?>
                             <div id="seat-<?= (int) $row->id ?>" class="<?= $seatClass ?>"
-                                 data-mine="<?= $mine ? '1' : '0' ?>" data-taken="<?= (! $mine && $row->booked > 0) ? '1' : '0' ?>"
+                                 data-mine="<?= $mine ? '1' : '0' ?>" data-taken="<?= $taken ? '1' : '0' ?>" data-blocked="<?= $blocked ? '1' : '0' ?>"
                                  style="position:absolute; left:<?= (int) $row->x_pos ?>px; top:<?= (int) $row->y_pos ?>px;
                                         width:<?= (int) $row->width ?>px; height:<?= (int) $row->height ?>px; <?= $background . $style ?>">
                                 <?php if ((int) $row->type === 1) : ?>
-                                    <?= htmlspecialchars($row->seatid, ENT_QUOTES, 'UTF-8') ?>
+                                    <?= htmlspecialchars($row->row_name . $row->seatid, ENT_QUOTES, 'UTF-8') ?>
                                 <?php else : ?>
                                     <strong><?= htmlspecialchars($row->ticketname, ENT_QUOTES, 'UTF-8') ?></strong>
                                 <?php endif; ?>
@@ -210,12 +237,16 @@ else
                     return;
                 }
 
+                if ($seat.data('blocked') == 1 && !window.confirm(<?= json_encode(Text::_('COM_TICKETSTATION_RESERVATION_BOOK_BLOCKED_CONFIRM')) ?>)) {
+                    return;
+                }
+
                 var id = $seat.attr('id').replace('seat-', '');
 
                 $.ajax({
                     type: 'post',
                     url: 'index.php?option=com_ticketstation&controller=reservation&task=makeReservation&format=raw',
-                    data: {id: id, [csrfTokenName]: 1},
+                    data: {id: id, categoryid: $('#price-category').val() || 0, [csrfTokenName]: 1},
                     dataType: 'json'
                 }).done(function (result) {
                     if (result.error === '0') {

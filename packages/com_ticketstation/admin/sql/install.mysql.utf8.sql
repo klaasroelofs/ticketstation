@@ -384,7 +384,8 @@ CREATE TABLE IF NOT EXISTS `#__ticketstation_seatplansettings` (
   `seat_width` varchar(2) DEFAULT NULL,
   `seat_height` varchar(2) DEFAULT NULL,
   `type` tinyint(1) NOT NULL DEFAULT '1',
-  PRIMARY KEY (`id`)
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `idx_ticketid` (`ticketid`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 DEFAULT COLLATE=utf8mb4_unicode_ci;
 
 DROP TABLE IF EXISTS `#__ticketstation_seatplancoords`;
@@ -397,12 +398,16 @@ CREATE TABLE IF NOT EXISTS `#__ticketstation_seatplancoords` (
   `row_name` varchar(5) DEFAULT NULL,
   `seatid` int(11) NOT NULL,
   `booked` tinyint(1) NOT NULL DEFAULT '0',
+  `blocked` tinyint(1) NOT NULL DEFAULT '0',
   `parent` int(11) NOT NULL DEFAULT '0',
   `type` tinyint(1) NOT NULL DEFAULT '1',
   `width` int(11) NOT NULL,
   `height` int(11) NOT NULL,
-  PRIMARY KEY (`id`)
-) ENGINE=MyISAM  DEFAULT CHARSET=latin1;
+  PRIMARY KEY (`id`),
+  KEY `idx_ticketid` (`ticketid`),
+  KEY `idx_parent` (`parent`),
+  KEY `idx_orderid` (`orderid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 DEFAULT COLLATE=utf8mb4_unicode_ci;
 
 DROP TABLE IF EXISTS `#__ticketstation_remarks`;
 CREATE TABLE IF NOT EXISTS `#__ticketstation_remarks` (

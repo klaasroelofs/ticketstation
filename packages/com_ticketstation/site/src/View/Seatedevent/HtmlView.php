@@ -16,6 +16,7 @@ use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\View\HtmlView as BaseHtmlView;
 use Joomla\CMS\Router\Route;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Config;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\SeatplanSettings;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\TicketstationFunctions;
 
 
@@ -47,32 +48,8 @@ class HtmlView extends BaseHtmlView {
             $app->redirect(Route::_('index.php?option=com_ticketstation&view=upcoming' . ($itemid ? '&Itemid=' . $itemid : '')));
         }
 
-        ## Getting specific items, depending on ticket kind
-        if($data->multi_seat != 1) {
-
-            $items	= $this->get('seats');
-            $order	= $this->get('cart');
-
-        }else{
-
-            ## Check if an item has childs.
-            $childs = $this->get('checkchilds');
-
-            ## if childs > 0 than run the queries below.
-            if($childs->total != 0){
-
-                $items	= $this->get('nochilds');
-                $order	= $this->get('cartnochilds');
-
-                ## There are no childs, use this queries.
-            }else{
-
-                $items	= $this->get('nochilds');
-                $order	= $this->get('cart');
-
-            }
-
-        }
+        ## Every seat of the chart: free seats and section seats.
+        $items	= $this->get('seats');
 
         $db = Factory::getContainer()->get('DatabaseDriver');
         ## Getting the global DB session
@@ -87,25 +64,13 @@ class HtmlView extends BaseHtmlView {
         $db->setQuery($query);
         $ordered = $db->loadObjectList();
 
-        ## Multi Seat = Yes with published child tickets: the customer picks a price category per seat.
-        $pricechoice = false;
-
-        if ($data->multi_seat == 1) {
-            $query = $db->getQuery(true)
-                ->select('COUNT(*)')
-                ->from($db->quoteName('#__ticketstation_tickets'))
-                ->where($db->quoteName('parent') . ' = ' . (int) $ticketdetails->ticketid)
-                ->where($db->quoteName('published') . ' = 1');
-
-            $db->setQuery($query);
-            $pricechoice = (int) $db->loadResult() > 0;
-        }
+        ## With price categories the customer picks one per free seat.
+        $pricechoice = (bool) SeatplanSettings::priceCategories((int) $ticketdetails->ticketid);
 
         $this->pricechoice      = $pricechoice;
 
         $this->tickets          = $tickets;
         $this->ticketdetails    = $ticketdetails;
-        $this->order            = $order;
         $this->ordered          = $ordered;
         $this->seats            = $seats;
         $this->items            = $items;

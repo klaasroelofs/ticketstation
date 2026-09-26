@@ -275,35 +275,15 @@ class SeatplansModel extends BaseDatabaseModel
 
             $db = Factory::getContainer()->get('DatabaseDriver');
 
-            ## Seats of the child tickets (Multi Seat = No). The chart settings come from
-            ## this parent; a child's own settings row only overrides the colours.
-            $sql = 'SELECT t.*, ' . SeatplanSettings::COLUMNS . ', c.*, o.scanned
+            ## All seats of this chart: free seats (ticketid = this ticket) and section seats
+            ## (parent = this ticket). The chart settings come from this ticket; a section's
+            ## own settings row only overrides the colours.
+            $sql = 'SELECT t.*, ' . SeatplanSettings::COLUMNS . ', c.*, o.scanned, o.ordercode
 					FROM #__ticketstation_seatplancoords AS c
 					INNER JOIN #__ticketstation_tickets AS t ON t.ticketid = c.ticketid'
                 . SeatplanSettings::JOINS . '
-					LEFT JOIN #__ticketstation_orders AS o ON o.seat_sector = c.id
-					WHERE c.parent = '.(int)$this->id;
-
-            $db->setQuery($sql);
-            $this->data = $db->loadObjectList();
-        }
-        return $this->data;
-    }
-
-    function getNochilds() {
-
-        if (empty($this->_data)) {
-
-            $db = Factory::getContainer()->get('DatabaseDriver');
-
-            ## Making the query for showing all the clients in list function
-            $sql = 'SELECT c.*, t.*, tt.background_color, tt.border_color, tt.font_color, o.scanned
-					FROM (#__ticketstation_seatplancoords AS c,  #__ticketstation_tickets AS t, #__ticketstation_seatplansettings AS tt)
-					LEFT JOIN #__ticketstation_orders as o
-					ON (c.id = o.seat_sector)
-					WHERE c.ticketid = t.ticketid
-					AND c.ticketid = tt.ticketid
-					AND c.ticketid = '.(int)$this->id.'';
+					LEFT JOIN #__ticketstation_orders AS o ON o.orderid = c.orderid AND c.orderid > 0
+					WHERE (c.ticketid = '.(int)$this->id.' OR c.parent = '.(int)$this->id.')';
 
             $db->setQuery($sql);
             $this->data = $db->loadObjectList();
@@ -358,7 +338,8 @@ class SeatplansModel extends BaseDatabaseModel
 					FROM #__ticketstation_seatplansettings AS ss, #__ticketstation_tickets AS t, #__ticketstation_events AS e
 					WHERE ss.ticketid ='.(int)$this->id.'
 					AND ss.ticketid = t.ticketid
-					AND t.eventid = e.eventid';
+					AND t.eventid = e.eventid
+					ORDER BY ss.id';
 
             $db->setQuery($sql);
             $this->data = $db->loadObject();
@@ -389,52 +370,6 @@ class SeatplansModel extends BaseDatabaseModel
         }
 
         return true;
-    }
-
-    function saveSeat($data) {
-
-        $table = $this->getTable('seatplancoords');
-
-        $message = array();
-        $message['succes'] = false;
-
-        ## Bind the form fields to the table
-        if (!$table->bind($data)) {
-            //$this->setError($this->_db->getErrorMsg());
-            return $message;
-        }
-
-        ## Make sure the table is valid
-        if (!$table->check()) {
-            //$this->setError($this->_db->getErrorMsg());
-            return $message;
-        }
-
-        ## Store the table to the database
-        if (!$table->store()) {
-            //$this->setError($this->_db->getErrorMsg());
-            return $message;
-        }
-
-        $db = Factory::getContainer()->get('DatabaseDriver');
-
-        ## Making the query for showing all the clients in list function
-        $sql = 'SELECT *
-				FROM #__ticketstation_seatplancoords
-				WHERE id ='.(int)$data['id'].'';
-
-        $db->setQuery($sql);
-        $data = $db->loadObject();
-
-        $message['succes'] = true;
-
-        if($data->parent != 0){
-            $message['return'] = $data->parent;
-        }else{
-            $message['return'] = $data->ticketid;
-        }
-
-        return $message;
     }
 
     function saveSeatBatch($data) {
@@ -610,9 +545,11 @@ class SeatplansModel extends BaseDatabaseModel
 
         $db = Factory::getContainer()->get('DatabaseDriver');
 
+        ## All seats of the source chart. Section seats become free seats here: the source's
+        ## child tickets belong to another event.
         $sql = 'SELECT *
 				FROM #__ticketstation_seatplancoords
-				WHERE ticketid ='.(int)$sourceid.'';
+				WHERE ticketid = '.(int)$sourceid.' OR parent = '.(int)$sourceid;
 
         $db->setQuery($sql);
         $data = $db->loadObjectList();
@@ -627,6 +564,7 @@ class SeatplansModel extends BaseDatabaseModel
             $insert['x_pos'] = $row->x_pos;
             $insert['y_pos'] = $row->y_pos;
             $insert['ticketid'] = $targetid;
+            $insert['parent'] = 0;
             $insert['seatid'] = $row->seatid;
             $insert['type'] = $row->type;
             $insert['width'] = $row->width;

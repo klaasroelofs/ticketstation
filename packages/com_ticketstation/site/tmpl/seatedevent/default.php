@@ -300,6 +300,7 @@ $venue_website_url = preg_match('#^https?://#i', $this->ticketdetails->website) 
                     $( '#' + data.id ).remove();
                     $( '#seat-' + data.id).css('background-color', '#'+data.background);
                     $( '#seat-' + data.id).css('color', '#'+data.color);
+                    $( '#seat-' + data.id).css('cursor', ''); // back to the stylesheet's pointer
 
                     showMessage('success', data.msg);
 
@@ -387,6 +388,7 @@ $venue_website_url = preg_match('#^https?://#i', $this->ticketdetails->website) 
 
                         $( '#seat-'+ data.id ).css('backgroundColor', 'orange');
                         $( '#seat-'+ data.id ).css('color', '#FFF');
+                        $( '#seat-'+ data.id ).css('cursor', 'no-drop');
 
                         showMessage('success', data.msg);
 

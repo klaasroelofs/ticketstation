@@ -91,6 +91,7 @@ class SeatplansettingsModel extends AdminModel
         $query->from($db->quoteName('#__ticketstation_tickets', 't'));
         $query->join('LEFT', $db->quoteName('#__ticketstation_seatplansettings', 's') . ' ON (' . $db->quoteName('t.ticketid') . ' = ' . $db->quoteName('s.ticketid').')');
         $query->where($db->quoteName('t.ticketid') . ' = '. $db->quote((int)$ticketid));
+        $query->order($db->quoteName('s.id') . ' ASC');
 
         $db->setQuery($query);
         return $db->loadObject();
@@ -111,7 +112,7 @@ class SeatplansettingsModel extends AdminModel
             return false;
         }
 
-        // Colour overrides for the child tickets (sections when Multi Seat = No)
+        // Colour overrides for the child tickets, used for their section seats
         SeatplanSettings::saveChildColours($ticketid, $jinput->post->get('childcolours', [], 'array'));
 
         // Store files on server

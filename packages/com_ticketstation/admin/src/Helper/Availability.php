@@ -23,7 +23,8 @@ use Joomla\CMS\Factory;
  * tickets chooses, in its own counter_choice, whether the children share its capacity
  * (0, one pool for the parent and all children) or each have their own (1).
  *
- * Seated tickets count free seats on the chart.
+ * Seated tickets: the capacity is the number of seats on the chart that aren't blocked, and
+ * available is that minus the order rows, in the same way (see freeSeats()).
  */
 class Availability
 {
@@ -157,9 +158,9 @@ class Availability
     /**
      * Availability of one child ticket (variant) for the backend ticket list:
      * {available, capacity, shared}. "shared" is true when the variant has no stock of its
-     * own but draws on its parent: the parent's shared capacity, or the parent's seats for
-     * a price category of a seated ticket with Multi Seat = Yes. A section of a seated
-     * ticket with Multi Seat = No counts its own free seats.
+     * own but draws on its parent: the parent's shared capacity, or the free seats of the
+     * chart for a price category of a seated ticket. A section of a seated ticket counts its
+     * own seats.
      */
     public static function forVariant(int $ticketid): object
     {
@@ -258,44 +259,70 @@ class Availability
     }
 
     /**
-     * Free seats of a seated ticket, or with $sectionId only those of that section (child
-     * ticket) when Multi Seat = No. With Multi Seat = Yes a child is a price category that
-     * shares all of the parent's seats, which the result marks as "shared".
+     * Seats of a seated ticket's chart: {available, capacity, shared}. The capacity is the
+     * number of seats that aren't blocked, plus blocked seats the box office sold anyway;
+     * available is that minus the order rows that use them. Without $childId for the whole chart (all orders of the owner and its children).
+     * With $childId for one child ticket: a section counts its own seats and orders; a price
+     * category (a child without seats) shares the free seats with the owner and the other
+     * categories, which the result marks as "shared".
      */
-    private static function freeSeats(object $ticket, int $sectionId = 0): object
+    private static function freeSeats(object $owner, int $childId = 0): object
     {
-        $db = Factory::getContainer()->get('DatabaseDriver');
+        $db      = Factory::getContainer()->get('DatabaseDriver');
+        $ownerId = (int) $owner->ticketid;
+        $summary = (object) ['available' => 0, 'capacity' => 0, 'shared' => false];
 
+        ## Seats per ticket they belong to: the owner (free seats) or a child (its section).
         $query = $db->getQuery(true)
-            ->select('multi_seat')
-            ->from($db->quoteName('#__ticketstation_seatplansettings'))
-            ->where($db->quoteName('ticketid') . ' = ' . (int) $ticket->ticketid);
+            ->select(['c.ticketid', 'SUM(c.blocked = 0 OR c.orderid > 0) AS seats'])
+            ->from($db->quoteName('#__ticketstation_seatplancoords', 'c'))
+            ->where('(' . $db->quoteName('c.ticketid') . ' = ' . $ownerId . ' OR ' . $db->quoteName('c.parent') . ' = ' . $ownerId . ')')
+            ->group($db->quoteName('c.ticketid'));
 
         $db->setQuery($query);
-        $multiSeat = $db->loadResult();
+        $seats = array_map('intval', $db->loadAssocList('ticketid', 'seats'));
 
-        $summary = (object) ['available' => 0, 'capacity' => 0, 'shared' => $sectionId > 0 && $multiSeat == 1];
+        $ids = [$ownerId];
 
-        if ($multiSeat === null) {
+        foreach (self::getChildren($ownerId) as $child) {
+            $ids[] = (int) $child->ticketid;
+        }
+
+        $query = $db->getQuery(true)
+            ->select(['ticketid', 'COUNT(*) AS sold'])
+            ->from($db->quoteName('#__ticketstation_orders'))
+            ->whereIn($db->quoteName('ticketid'), $ids)
+            ->group($db->quoteName('ticketid'));
+
+        $db->setQuery($query);
+        $sold = array_map('intval', $db->loadAssocList('ticketid', 'sold'));
+
+        if ($childId > 0 && isset($seats[$childId])) {
+            $summary->capacity  = $seats[$childId];
+            $summary->available = max(0, $seats[$childId] - ($sold[$childId] ?? 0));
+
             return $summary;
         }
 
-        ## Multi Seat = No: the seats of the child tickets (sections), or of one section.
-        ## Otherwise the seats belong to the ticket itself.
-        $query = $db->getQuery(true)
-            ->select(['SUM(c.booked = 0) AS free', 'COUNT(*) AS seats'])
-            ->from($db->quoteName('#__ticketstation_seatplancoords', 'c'))
-            ->where($db->quoteName($multiSeat == 1 ? 'c.ticketid' : 'c.parent') . ' = ' . (int) $ticket->ticketid);
+        if ($childId > 0) {
+            ## A price category: the free seats, used up by the owner and every category.
+            $taken = 0;
 
-        if ($sectionId > 0 && $multiSeat != 1) {
-            $query->where($db->quoteName('c.ticketid') . ' = ' . $sectionId);
+            foreach ($ids as $id) {
+                if (!isset($seats[$id]) || $id === $ownerId) {
+                    $taken += $sold[$id] ?? 0;
+                }
+            }
+
+            $summary->capacity  = $seats[$ownerId] ?? 0;
+            $summary->available = max(0, $summary->capacity - $taken);
+            $summary->shared    = true;
+
+            return $summary;
         }
 
-        $db->setQuery($query);
-        $row = $db->loadObject();
-
-        $summary->available = (int) ($row->free ?? 0);
-        $summary->capacity  = (int) ($row->seats ?? 0);
+        $summary->capacity  = array_sum($seats);
+        $summary->available = max(0, $summary->capacity - array_sum($sold));
 
         return $summary;
     }

@@ -36,8 +36,8 @@ class ScanchartModel extends BaseDatabaseModel
 
         $db = Factory::getContainer()->get('DatabaseDriver');
 
-        ## The seats of this ticket, or - for a parent with Multi Seat = No - of all its child
-        ## tickets. chart_ticketid is the ticket that owns the chart and its background image.
+        ## All seats of this chart: its free seats and the section seats of its child tickets.
+        ## chart_ticketid is the ticket that owns the chart and its background image.
         $sql = 'SELECT t.*, e.*, ' . SeatplanSettings::COLUMNS . ', c.*, o.scanned,
                     IF(c.parent > 0, c.parent, c.ticketid) AS chart_ticketid
                 FROM #__ticketstation_seatplancoords AS c

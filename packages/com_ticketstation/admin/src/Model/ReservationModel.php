@@ -45,17 +45,23 @@ class ReservationModel extends BaseDatabaseModel
     /**
      * Ticket types for one event, for the step 1 picker - published or not, as long as the
      * ticket's own end date/time hasn't passed yet (the event's own dates are irrelevant here).
+     * A child ticket is listed under its parent as "Parent - Child", except the children of a
+     * seated ticket: those are sold through the parent's seat chart (as sections or price
+     * categories), not on their own.
      */
     public function getTicketsForEvent(int $eventid)
     {
         $db = Factory::getContainer()->get('DatabaseDriver');
 
         $query = $db->getQuery(true)
-            ->select(['ticketid', 'ticketname', 'ticketprice', 'show_seatplans'])
-            ->from($db->quoteName('#__ticketstation_tickets'))
-            ->where($db->quoteName('eventid') . ' = ' . (int) $eventid)
-            ->where($db->quoteName('enddate') . ' > ' . $db->quote(Date::localNow()))
-            ->order($db->quoteName('ticketname') . ' ASC');
+            ->select(['t.ticketid', 't.ticketprice', 't.show_seatplans',
+                "IF(p.ticketid IS NULL, t.ticketname, CONCAT(p.ticketname, ' - ', t.ticketname)) AS ticketname"])
+            ->from($db->quoteName('#__ticketstation_tickets', 't'))
+            ->join('LEFT', $db->quoteName('#__ticketstation_tickets', 'p') . ' ON ' . $db->quoteName('p.ticketid') . ' = ' . $db->quoteName('t.parent') . ' AND ' . $db->quoteName('t.parent') . ' > 0')
+            ->where($db->quoteName('t.eventid') . ' = ' . (int) $eventid)
+            ->where($db->quoteName('t.enddate') . ' > ' . $db->quote(Date::localNow()))
+            ->where('(' . $db->quoteName('p.ticketid') . ' IS NULL OR ' . $db->quoteName('p.show_seatplans') . ' = 0)')
+            ->order('COALESCE(' . $db->quoteName('p.ticketname') . ', ' . $db->quoteName('t.ticketname') . '), ' . $db->quoteName('t.parent') . ', ' . $db->quoteName('t.ticketname'));
 
         $db->setQuery($query);
         $tickets = $db->loadObjectList();
@@ -69,8 +75,8 @@ class ReservationModel extends BaseDatabaseModel
     }
 
     /**
-     * All seat coordinates on a ticket's seat chart - its own seats, or for a parent with
-     * Multi Seat = No the seats of its child tickets - with their display settings.
+     * All seat coordinates on a ticket's seat chart - its free seats and the section seats of
+     * its child tickets - with their display settings.
      */
     public function getSeats(int $ticketid)
     {
@@ -160,15 +166,19 @@ class ReservationModel extends BaseDatabaseModel
     {
         $db = Factory::getContainer()->get('DatabaseDriver');
 
+        // Only a seat without an order that is free or blocked (the box office may book
+        // blocked seats), in one statement, so two people can't both get the same seat.
         $query = $db->getQuery(true)
             ->update($db->quoteName('#__ticketstation_seatplancoords'))
             ->set($db->quoteName('booked') . ' = 1')
             ->set($db->quoteName('orderid') . ' = ' . (int) $orderid)
-            ->where($db->quoteName('id') . ' = ' . (int) $coordId);
+            ->where($db->quoteName('id') . ' = ' . (int) $coordId)
+            ->where($db->quoteName('orderid') . ' = 0')
+            ->where('(' . $db->quoteName('booked') . ' = 0 OR ' . $db->quoteName('blocked') . ' = 1)');
 
         $db->setQuery($query);
 
-        return (bool) $db->execute();
+        return $db->execute() && $db->getAffectedRows() > 0;
     }
 
     /**
@@ -181,7 +191,8 @@ class ReservationModel extends BaseDatabaseModel
 
         $query = $db->getQuery(true)
             ->update($db->quoteName('#__ticketstation_seatplancoords'))
-            ->set($db->quoteName('booked') . ' = 0')
+            // A blocked seat goes back to blocked, any other seat to free.
+            ->set($db->quoteName('booked') . ' = ' . $db->quoteName('blocked'))
             ->set($db->quoteName('orderid') . ' = 0')
             ->where($db->quoteName('id') . ' = ' . (int) $coordId);
 

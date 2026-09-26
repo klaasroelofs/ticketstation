@@ -702,7 +702,8 @@ class BoxofficeModel extends ListModel
                 $query = $db->getQuery(true);
 
                 $fields = [
-                    $db->quoteName('booked') . ' = 0',
+                    // A blocked seat goes back to blocked, any other seat to free.
+                    $db->quoteName('booked') . ' = ' . $db->quoteName('blocked'),
                     $db->quoteName('orderid') . ' = 0',
                 ];
 

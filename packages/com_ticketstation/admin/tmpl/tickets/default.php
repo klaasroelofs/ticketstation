@@ -177,7 +177,7 @@ $availabilityBadge = function (object $availability) {
                             <td>
                                 <strong><?= $row->eventname; ?></strong><br />
                                 <?= $row->ticketname; ?><br />
-                                <a href="<?= $link;?>"> <?= $second->ticketname; ?></a> <small>(<?= $second->ticketcode; ?>)</small>
+                                <span class="d-inline-block ms-3">&ndash; <a href="<?= $link;?>"><?= $second->ticketname; ?></a> <small>(<?= $second->ticketcode; ?>)</small></span>
                             </td>
                             <td class="d-none d-md-table-cell">
                                 <?= date($this->config->dateformat, strtotime($second->startdate)); ?>
@@ -186,7 +186,7 @@ $availabilityBadge = function (object $availability) {
                                 <?= $start_time; ?>
                             </td>
                             <td class="d-none d-lg-table-cell">
-                                <strong><?= $second->venue; ?> - <?= $second->city; ?></strong>
+                                <?= $second->venue; ?> - <?= $second->city; ?>
                             </td>
                             <td class="d-none d-lg-table-cell text-center">
                                 <?= TicketstationFunctions::showprice($this->config->priceformat, $second->ticketprice, $this->config->valuta); ?>

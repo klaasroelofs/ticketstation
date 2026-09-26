@@ -16,6 +16,7 @@ use Joomla\CMS\HTML\HTMLHelper;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\Uri\Uri;
 use Joomla\Utilities\ArrayHelper;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\SeatplanSettings;
 use Ticketstation\Component\Ticketstation\Administrator\Controller\Mixin\RegisterControllerTasks;
 use Joomla\CMS\Application\CMSApplication;
 use Joomla\CMS\MVC\Controller\BaseController;
@@ -103,65 +104,107 @@ class SeatplansController extends BaseController {
         echo "success";
     }
 
+    ## The seat edit form: seat number, row, position, section and status. A sold seat keeps
+    ## its section and status; those change with its order.
     function loadSeat(){
 
-        $seatid = Factory::getApplication()->getInput()->get('seatid', 0);
+        $seatid = Factory::getApplication()->getInput()->getInt('seatid', 0);
 
         $db     = Factory::getContainer()->get('DatabaseDriver');
 
-        $sql = 'SELECT *
-				FROM #__ticketstation_seatplancoords
-				WHERE id ='.(int)$seatid.'';
+        $sql = 'SELECT c.*, o.ordercode
+				FROM #__ticketstation_seatplancoords AS c
+				LEFT JOIN #__ticketstation_orders AS o ON o.orderid = c.orderid AND c.orderid > 0
+				WHERE c.id = '.(int)$seatid;
 
         $db->setQuery($sql);
         $data = $db->loadObject();
 
-        $booking_state = array(
-            '0' => array('value' => '0', 'text' => Text::_( 'COM_TICKETSTATION_FREE' )),
-            '1' => array('value' => '1', 'text' => Text::_( 'COM_TICKETSTATION_TAKEN' )),
-        );
+        if (!$data) {
+            echo '<div class="alert alert-warning">' . Text::_('COM_TICKETSTATION_SEAT_NOT_FOUND') . '</div>';
+            return;
+        }
 
-        $lists['state'] = HTMLHelper::_('select.genericList', $booking_state, 'booked', ' class="form-select" '. '', 'value', 'text', $data->booked );
+        $owner = SeatplanSettings::owner($data);
+        $sold  = (int) $data->orderid > 0;
+        $esc   = fn ($value) => htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
 
-        echo '<h3 id="editSeatChanger">'.Text::_( 'COM_TICKETSTATION_EDIT_SEATNUMBER' ).' '.$seatid.'</h3>';
+        $query = $db->getQuery(true)
+            ->select(['ticketid', 'ticketname'])
+            ->from($db->quoteName('#__ticketstation_tickets'))
+            ->where($db->quoteName('parent') . ' = ' . $owner)
+            ->order('ticketname ASC');
+
+        $db->setQuery($query);
+
+        $sections = [HTMLHelper::_('select.option', $owner, Text::_('COM_TICKETSTATION_SEAT_KIND_FREE'), 'value', 'text')];
+
+        foreach ($db->loadObjectList() as $child) {
+            $sections[] = HTMLHelper::_('select.option', (int) $child->ticketid, Text::sprintf('COM_TICKETSTATION_SEAT_KIND_SECTION', $child->ticketname), 'value', 'text');
+        }
+
+        $disabled = $sold ? ' disabled' : '';
+
+        $lists['section'] = HTMLHelper::_('select.genericList', $sections, 'section', ' class="form-select"' . $disabled, 'value', 'text', (int) $data->ticketid);
+
+        $status = [
+            HTMLHelper::_('select.option', '0', Text::_('COM_TICKETSTATION_FREE'), 'value', 'text'),
+            HTMLHelper::_('select.option', '1', Text::_('COM_TICKETSTATION_SEAT_STATUS_BLOCKED'), 'value', 'text'),
+        ];
+
+        $lists['state'] = HTMLHelper::_('select.genericList', $status, 'blocked', ' class="form-select"', 'value', 'text', (int) $data->blocked);
+
+        echo '<h3 id="editSeatChanger">'.Text::_( 'COM_TICKETSTATION_EDIT_SEATNUMBER' ).' '.(int)$seatid.'</h3>';
         echo '<form class="form" action = "index.php" method="POST" name="adminForm" id="adminForm1">';
         echo '  <div class="control-group">';
         echo '    <label class="control-label" for="seatid">'.Text::_( 'COM_TICKETSTATION_NEW_SEATID' ).'</label>';
         echo '    <div class="controls">';
-        echo '      <input class="form-control" type="text" id="seatid" name="seatid" placeholder="Seat Number" value="'.$data->seatid.'">';
+        echo '      <input class="form-control" type="text" id="seatid" name="seatid" placeholder="Seat Number" value="'.$esc($data->seatid).'">';
         echo '    </div>';
         echo '  </div>';
         echo '  <div class="control-group">';
         echo '    <label class="control-label" for="row_name">'.Text::_( 'COM_TICKETSTATION_NEW_ROW_NAME' ).'</label>';
         echo '    <div class="controls">';
-        echo '      <input class="form-control" type="text" id="row_name" name="row_name" placeholder="Row Name"value="'.$data->row_name.'">';
+        echo '      <input class="form-control" type="text" id="row_name" name="row_name" placeholder="Row Name" maxlength="5" value="'.$esc($data->row_name).'">';
         echo '    </div>';
         echo '  </div>';
 
         echo '  <div class="control-group">';
         echo '    <label class="control-label" for="x_pos">'.Text::_( 'COM_TICKETSTATION_X_POS_NEW' ).'</label>';
         echo '    <div class="controls">';
-        echo '      <input class="form-control" type="text" id="x_pos" name="x_pos" placeholder="" value="'.$data->x_pos.'">';
+        echo '      <input class="form-control" type="text" id="x_pos" name="x_pos" placeholder="" value="'.$esc($data->x_pos).'">';
         echo '    </div>';
         echo '  </div>';
         echo '  <div class="control-group">';
         echo '    <label class="control-label" for="y_pos">'.Text::_( 'COM_TICKETSTATION_Y_POS_NEW' ).'</label>';
         echo '    <div class="controls">';
-        echo '      <input class="form-control" type="text" id="y_pos" name="y_pos" placeholder="" value="'.$data->y_pos.'">';
+        echo '      <input class="form-control" type="text" id="y_pos" name="y_pos" placeholder="" value="'.$esc($data->y_pos).'">';
         echo '    </div>';
         echo '  </div>';
 
         echo '  <div class="control-group">';
-        echo '    <label class="control-label" for="booked">'.Text::_( 'COM_TICKETSTATION_BOOKING_STATUS' ).'</label>';
+        echo '    <label class="control-label" for="section">'.Text::_( 'COM_TICKETSTATION_SEAT_SECTION' ).'</label>';
         echo '    <div class="controls">';
-        echo 		 $lists['state'];
+        echo 		 $lists['section'];
+        echo '    </div>';
+        echo '  </div>';
+
+        echo '  <div class="control-group">';
+        echo '    <label class="control-label" for="blocked">'.Text::_( 'COM_TICKETSTATION_BOOKING_STATUS' ).'</label>';
+        echo '    <div class="controls">';
+
+        if ($sold) {
+            echo '      <p class="form-control-plaintext">'.Text::sprintf('COM_TICKETSTATION_SEAT_SOLD_TO', $esc($data->ordercode)).'</p>';
+        } else {
+            echo 		 $lists['state'];
+        }
+
         echo '    </div>';
         echo '  </div>';
 
         echo '  <button type="submit" class="btn btn-primary">'.Text::_( 'COM_TICKETSTATION_SAVE_CHANGES' ).'</button>';
 
         echo '  <input type="hidden" name="id" value="'.(int)$seatid.'" />';
-        echo '  <input type="hidden" name="ticketid" value="'.(int)$data->ticketid.'" />';
         echo '  <input type="hidden" name="option" value="com_ticketstation" />';
         echo '  <input type="hidden" name="task" value="saveSeatChanges" />';
         echo '  <input type="hidden" name="controller" value="seatplans" />';
@@ -173,196 +216,112 @@ class SeatplansController extends BaseController {
 
     }
 
+    ## Saves the seat edit form. The section must be one of the chart owner's child tickets
+    ## (or the owner itself, for a free seat). A sold seat keeps its section and status.
     function saveSeatChanges() {
 
+        $post = $this->input->post;
+        $id   = $post->getInt('id', 0);
+        $db   = Factory::getContainer()->get('DatabaseDriver');
 
-        //$post = Factory::getApplication()->getInput()->get('post');
-        $post   	= Factory::getApplication()->getInput()->post->getArray();
-
-        $model	= $this->getModel('seatplans');
-
-        if($post['booked'] == 0){
-            $post['orderid'] = 0;
-        }
-
-        $message = $model->saveSeat($post);
-
-        if($message['succes'] == true){
-            $link = 'index.php?option=com_ticketstation&controller=seatplans&task=displaychart&cid='.$message['return'];
-            $this->setRedirect($link);
-        }else{
-            $link = 'index.php?option=com_ticketstation&controller=seatplans&task=displaychart&cid='.$post['ticketid'];
-            $this->setRedirect($link);
-        }
-
-    }
-
-    ## adding a seat which is not a multiseat.
-    function newSeat() {
-
-
-        $ticketid = Factory::getApplication()->getInput()->get('ticketid', 0);
-
-        $db     = Factory::getContainer()->get('DatabaseDriver');
-
-        ## selecting the parent. For a non-multiseat ticket, $ticketid is a child
-        ## ticket (chosen via the "Seat/Sector" dropdown); its seatplan settings
-        ## are only ever stored against the parent ticket, never the child.
-        $sql = 'SELECT parent FROM #__ticketstation_tickets
-				WHERE ticketid = '.(int)$ticketid.'';
-
-        $db->setQuery($sql);
-        $result = $db->loadObject();
-
-        $parentid = (!empty($result) && (int) $result->parent > 0) ? (int) $result->parent : (int) $ticketid;
-
-        ## Load the dimensions of this seat from the parent ticket's settings
-        $sql = 'SELECT * FROM #__ticketstation_seatplansettings
-				WHERE ticketid = '.$parentid.'';
-
-        $db->setQuery($sql);
+        $db->setQuery('SELECT * FROM #__ticketstation_seatplancoords WHERE id = ' . $id);
         $seat = $db->loadObject();
 
-        ## Fall back to sane defaults when the seatplan settings row is missing
-        ## or has an empty type/width/height (all three are nullable columns).
-        $seat_type   = (!empty($seat) && $seat->type !== null && $seat->type !== '') ? (int) $seat->type : 1;
-        $seat_width  = (!empty($seat) && $seat->seat_width !== null && $seat->seat_width !== '') ? (int) $seat->seat_width : 22;
-        $seat_height = (!empty($seat) && $seat->seat_height !== null && $seat->seat_height !== '') ? (int) $seat->seat_height : 22;
-
-        ## Loading the latest coord.
-        $sql = 'SELECT * FROM #__ticketstation_seatplancoords
-				WHERE ticketid = '.(int)$ticketid.'
-				ORDER BY seatid DESC LIMIT 0,1';
-
-        $db->setQuery($sql);
-        $item = $db->loadObject();
-
-        if(empty($item)){
-
-            $query = "INSERT INTO #__ticketstation_seatplancoords (orderid, x_pos, y_pos, ticketid, seatid, booked, type, parent, width, height)
-					  VALUES (0, 10, 10, ".$ticketid.", 1, 0, ".$seat_type.", ".$result->parent.", ".$seat_width.", ".$seat_height." )";
-
-            $db->setQuery( $query );
-            $db->execute();
-
-            $dataid = $db->insertid();
-            $seatid = 1;
-
-
-        }else{
-
-            $seatid = $item->seatid+1;
-
-            $query = "INSERT INTO #__ticketstation_seatplancoords (orderid, x_pos, y_pos, ticketid, seatid, booked, type, parent, width, height)
-						VALUES (0, 10, 10, ".$ticketid.", ".(int)$seatid.", 0, ".$seat_type.", ".$result->parent.", ".$seat_width.", ".$seat_height.")";
-
-            $db->setQuery( $query );
-            $db->execute();
-
-            $dataid = $db->insertid();
-
+        if (!$seat) {
+            $this->setRedirect('index.php?option=com_ticketstation&view=seatplans', Text::_('COM_TICKETSTATION_SEAT_NOT_FOUND'), 'error');
+            return;
         }
 
-        $arr = array('seatid' => $seatid, 'id' => $dataid, 'seat_width' => $seat_width, 'seat_height' => $seat_height);
-        echo json_encode($arr);
+        $owner = SeatplanSettings::owner($seat);
 
-    }
+        $update = (object) [
+            'id'       => $id,
+            'seatid'   => $post->getInt('seatid', (int) $seat->seatid),
+            'row_name' => mb_substr(trim($post->getString('row_name', '')), 0, 5),
+            'x_pos'    => $post->getInt('x_pos', (int) $seat->x_pos),
+            'y_pos'    => $post->getInt('y_pos', (int) $seat->y_pos),
+        ];
 
-    ## adding multi ticket seats.
-    function getRecord() {
+        if ((int) $seat->orderid === 0) {
 
+            $section = $post->getInt('section', (int) $seat->ticketid);
 
-        $input      = Factory::getApplication()->getInput();
-        $ticketid   = $input->get('ticketid', 0);
-        $row_name   = $input->get('row_name', 0);
-        $new_seat   = $input->get('new_seat', 0);
+            ## Anything but the owner or one of its child tickets leaves the section unchanged.
+            if ($section !== $owner) {
+                $db->setQuery('SELECT parent FROM #__ticketstation_tickets WHERE ticketid = ' . $section);
 
-        $db     = Factory::getContainer()->get('DatabaseDriver');
-
-        ## Load the dimensions of this seat
-        $sql = 'SELECT * FROM #__ticketstation_seatplansettings 
-				WHERE ticketid = '.(int)$ticketid.'';
-
-        $db->setQuery($sql);
-        $seat = $db->loadObject();
-
-        ## Fall back to sane defaults when the seatplan settings row is missing
-        ## or has an empty type/width/height (all three are nullable columns).
-        $seat_type   = (!empty($seat) && $seat->type !== null && $seat->type !== '') ? (int) $seat->type : 1;
-        $seat_width  = (!empty($seat) && $seat->seat_width !== null && $seat->seat_width !== '') ? (int) $seat->seat_width : 22;
-        $seat_height = (!empty($seat) && $seat->seat_height !== null && $seat->seat_height !== '') ? (int) $seat->seat_height : 22;
-
-        if($row_name){
-
-            ## Loading the latest coord.
-            $sql = 'SELECT * FROM #__ticketstation_seatplancoords
-					WHERE ticketid = '.(int)$ticketid.'
-					AND row_name = '.$db->quote($row_name).'
-					ORDER BY seatid DESC LIMIT 0,1';
-
-            $db->setQuery($sql);
-            $item = $db->loadObject();
-
-        }else{
-
-            ## Loading the latest coord.
-            $sql = 'SELECT * FROM #__ticketstation_seatplancoords 
-					WHERE ticketid = '.(int)$ticketid.' 
-					ORDER BY seatid DESC LIMIT 0,1';
-
-            $db->setQuery($sql);
-            $item = $db->loadObject();
-
-        }
-
-        ## selecting the parent.
-        $sql = 'SELECT parent FROM #__ticketstation_tickets 
-				WHERE ticketid = '.(int)$ticketid.'';
-
-        $db->setQuery($sql);
-        $result = $db->loadObject();
-
-        if($new_seat == 1){
-
-            $query = "INSERT INTO #__ticketstation_seatplancoords (orderid, x_pos, y_pos, ticketid, seatid, booked, type, parent, width, height, row_name)
-						VALUES (0, 10, 10, ".$ticketid.", 1, 0, ".$seat_type.", ".$result->parent.", ".$seat_width.", ".$seat_height.", ".$db->quote($row_name)." )";
-
-            $db->setQuery( $query );
-            $db->execute();
-
-            $dataid = $db->insertid();
-            $seatid = 1;
-
-        }else{
-
-            if(empty($item)){
-
-                $query = "INSERT INTO #__ticketstation_seatplancoords (orderid, x_pos, y_pos, ticketid, seatid, booked, type, parent, width, height, row_name) 
-							VALUES (0, 10, 10, ".$ticketid.", 1, 0, ".$seat_type.", ".$result->parent.", ".$seat_width.", ".$seat_height.", ".$db->quote($row_name)." )";
-
-                $db->setQuery( $query );
-                $db->execute();
-
-                $dataid = $db->insertid();
-                $seatid = 1;
-
-            }else{
-
-                $seatid = $item->seatid+1;
-
-                $query = "INSERT INTO #__ticketstation_seatplancoords (orderid, x_pos, y_pos, ticketid, seatid, booked, type, parent, width, height, row_name) 
-							VALUES (0, 10, 10, ".$ticketid.", ".(int)$seatid.", 0, ".$seat_type.", ".$result->parent.", ".$seat_width.", ".$seat_height.", ".$db->quote($row_name).")";
-
-                $db->setQuery( $query );
-                $db->execute();
-
-                $dataid = $db->insertid();
-
+                if ((int) $db->loadResult() !== $owner) {
+                    $section = (int) $seat->ticketid;
+                }
             }
 
+            $update->ticketid = $section;
+            $update->parent   = $section === $owner ? 0 : $owner;
+            $update->blocked  = $post->getInt('blocked', 0) === 1 ? 1 : 0;
+            $update->booked   = $update->blocked;
         }
 
-        $arr = array('seatid' => $seatid, 'id' => $dataid, 'seat_width' => $seat_width, 'seat_height' => $seat_height, 'row_name' => $row_name, 'new_seatnr' => $new_seat);
+        $db->updateObject('#__ticketstation_seatplancoords', $update, 'id');
+
+        $this->setRedirect('index.php?option=com_ticketstation&controller=seatplans&task=displaychart&cid=' . $owner);
+    }
+
+    ## Adds one seat to a chart: a free seat when $ticketid is the chart owner itself, or a
+    ## section seat when it is one of the owner's child tickets. Seats are numbered per chart
+    ## and row, continuing from the highest number so far (or starting at 1 with new_seat).
+    function getRecord() {
+
+        $input      = Factory::getApplication()->getInput();
+        $ticketid   = $input->getInt('ticketid', 0);
+        $row_name   = mb_substr(trim($input->getString('row_name', '')), 0, 5);
+        $new_seat   = $input->getInt('new_seat', 0);
+
+        $db     = Factory::getContainer()->get('DatabaseDriver');
+
+        $db->setQuery('SELECT parent FROM #__ticketstation_tickets WHERE ticketid = ' . $ticketid);
+        $parent = (int) $db->loadResult();
+        $owner  = $parent > 0 ? $parent : $ticketid;
+
+        ## Load the dimensions of this seat from the chart owner's settings
+        $db->setQuery('SELECT * FROM #__ticketstation_seatplansettings WHERE ticketid = ' . $owner . ' ORDER BY id');
+        $seat = $db->loadObject();
+
+        ## Fall back to sane defaults when the seatplan settings row is missing
+        ## or has an empty type/width/height (all three are nullable columns).
+        $seat_type   = (!empty($seat) && $seat->type !== null && $seat->type !== '') ? (int) $seat->type : 1;
+        $seat_width  = (!empty($seat) && $seat->seat_width !== null && $seat->seat_width !== '') ? (int) $seat->seat_width : 22;
+        $seat_height = (!empty($seat) && $seat->seat_height !== null && $seat->seat_height !== '') ? (int) $seat->seat_height : 22;
+
+        $seatid = 1;
+
+        if ($new_seat != 1) {
+            $query = $db->getQuery(true)
+                ->select('MAX(seatid)')
+                ->from($db->quoteName('#__ticketstation_seatplancoords'))
+                ->where('(' . $db->quoteName('ticketid') . ' = ' . $owner . ' OR ' . $db->quoteName('parent') . ' = ' . $owner . ')')
+                ->where($db->quoteName('row_name') . ' = ' . $db->quote($row_name));
+
+            $db->setQuery($query);
+            $seatid = (int) $db->loadResult() + 1;
+        }
+
+        $record = (object) [
+            'orderid'  => 0,
+            'x_pos'    => 10,
+            'y_pos'    => 10,
+            'ticketid' => $ticketid,
+            'seatid'   => $seatid,
+            'booked'   => 0,
+            'type'     => $seat_type,
+            'parent'   => $parent,
+            'width'    => $seat_width,
+            'height'   => $seat_height,
+            'row_name' => $row_name,
+        ];
+
+        $db->insertObject('#__ticketstation_seatplancoords', $record, 'id');
+
+        $arr = array('seatid' => $seatid, 'id' => (int) $record->id, 'seat_width' => $seat_width, 'seat_height' => $seat_height, 'row_name' => $row_name, 'new_seatnr' => (string) $new_seat);
 
         echo json_encode($arr);
 
@@ -423,7 +382,7 @@ class SeatplansController extends BaseController {
         $sourceid     = Factory::getApplication()->getInput()->get('sourceid', 0);
 
         // First, we need to delete all current seats for this ticket
-        $query = 'DELETE FROM #__ticketstation_seatplancoords WHERE ticketid ='.(int)$targetid.'';
+        $query = 'DELETE FROM #__ticketstation_seatplancoords WHERE ticketid = '.(int)$targetid.' OR parent = '.(int)$targetid;
 
         $db->setQuery($query);
 

@@ -18,6 +18,7 @@ use Joomla\CMS\Router\Route;
 use Joomla\CMS\Toolbar\ToolbarHelper;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Availability;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Config;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\SeatplanSettings;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Ordercode;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Ticket;
 
@@ -82,7 +83,8 @@ class HtmlView extends BaseHtmlView
                 $ticketid      = (int) ($state['ticketid'] ?? 0);
                 $this->ticket    = (new Ticket)->getTicketDetailsById($ticketid);
                 $this->available = Availability::forTicket($ticketid);
-                $this->seats     = $ticketid ? $model->getSeats($ticketid) : [];
+                $this->seats      = $ticketid ? $model->getSeats($ticketid) : [];
+                $this->categories = $ticketid ? SeatplanSettings::priceCategories($ticketid) : [];
                 $this->summary = $model->getOrderSummary((string) $ordercode);
                 break;
 

@@ -122,7 +122,11 @@ $linkback = Route::_('index.php?option=com_ticketstation&view=ticketscanning' . 
                         $x = $row->x_pos;
                         $y = $row->y_pos;
 
-                        if ($row->booked > 0){
+                        if ($row->blocked > 0 && $row->orderid == 0){
+                            ## stoel geblokkeerd, maak GRIJS
+                            $style = 'color:#FFF; border-color:#000;';
+                            $background = '888888';
+                        }elseif ($row->booked > 0){
                             ## stoel verkocht, maak ROOD
                             $style = 'color:#FFF; border-color:#000;';
                             $background = 'ff0000';
@@ -181,7 +185,8 @@ $linkback = Route::_('index.php?option=com_ticketstation&view=ticketscanning' . 
                     if ($item->booked == '0') {
                         $countFree++;
                     }
-                    if ($item->booked == '1') {
+                    ## A blocked seat isn't sold, so it doesn't count as not scanned either.
+                    if ($item->booked == '1' && ($item->blocked != '1' || $item->orderid > 0)) {
                         $countSold++;
                     }
                     if ($item->scanned == '1') {

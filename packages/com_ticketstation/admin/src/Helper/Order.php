@@ -55,7 +55,8 @@ class Order
     }
 
     /**
-     * Getting current orders in the cart.
+     * Getting current orders in the cart. A child ticket's name includes its parent's:
+     * "Parent - Child".
      *
      * @return mixed
      *
@@ -66,10 +67,11 @@ class Order
         $db = Factory::getContainer()->get('DatabaseDriver');
 
         $query = $db->getQuery(true)
-            ->select(['a.*', 'c.*', 't.ticketname', 't.ticketprice', 't.startdate', 'e.eventname', 't.enddate', 'b.country'])
+            ->select(['a.*', 'c.*', "IF(p.ticketid IS NULL, t.ticketname, CONCAT(p.ticketname, ' - ', t.ticketname)) AS ticketname", 't.ticketprice', 't.startdate', 'e.eventname', 't.enddate', 'b.country'])
             ->from($db->quoteName('#__ticketstation_orders', 'a'))
             ->join('LEFT', $db->quoteName('#__ticketstation_events', 'e') . ' ON ' . $db->quoteName('a.eventid') . ' = ' . $db->quoteName('e.eventid'))
             ->join('LEFT', $db->quoteName('#__ticketstation_tickets', 't') . ' ON ' . $db->quoteName('a.ticketid') . ' = ' . $db->quoteName('t.ticketid'))
+            ->join('LEFT', $db->quoteName('#__ticketstation_tickets', 'p') . ' ON ' . $db->quoteName('p.ticketid') . ' = ' . $db->quoteName('t.parent') . ' AND ' . $db->quoteName('t.parent') . ' > 0')
             ->join('LEFT', $db->quoteName('#__ticketstation_clients', 'c') . ' ON ' . $db->quoteName('a.userid') . ' = ' . $db->quoteName('c.clientid'))
             ->join('LEFT', $db->quoteName('#__ticketstation_country', 'b') . ' ON ' . $db->quoteName('c.country_id') . ' = ' . $db->quoteName('b.country_id'))
             ->where($db->quoteName('a.ordercode') . " = " . Factory::getApplication()->getSession()->get('ordercode'))
