@@ -11,10 +11,12 @@ ALTER TABLE `#__ticketstation_seatplancoords`
   ENGINE=InnoDB,
   CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
+-- Marked CAN FAIL: Joomla's Database "Fix" can set the schema back to 2.5.0, after which this
+-- file runs a second time and the column and indexes already exist (see 2.5.1.sql).
 ALTER TABLE `#__ticketstation_seatplancoords`
   ADD COLUMN `blocked` tinyint(1) NOT NULL DEFAULT 0 AFTER `booked`,
   ADD INDEX `idx_ticketid` (`ticketid`),
   ADD INDEX `idx_parent` (`parent`),
-  ADD INDEX `idx_orderid` (`orderid`);
+  ADD INDEX `idx_orderid` (`orderid`) /** CAN FAIL **/;
 
 UPDATE `#__ticketstation_seatplancoords` SET `blocked` = 1 WHERE `booked` = 1 AND `orderid` = 0;

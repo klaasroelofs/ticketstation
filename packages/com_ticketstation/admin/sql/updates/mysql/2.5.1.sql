@@ -1,0 +1,6 @@
+-- No database changes in 2.5.1. This file only moves the recorded schema version past the
+-- 2.5.0.x files: Joomla's installer orders update files by version (2.5.0 < 2.5.0.1 < 2.5.0.2)
+-- and recorded 2.5.0.2, but its Database check takes the last file in natural filename order,
+-- which puts 2.5.0.sql after 2.5.0.2.sql, and so reported a mismatch. From 2.5.1 on both see
+-- the same latest version. A later schema change gets the next version number, never an extra
+-- segment such as 2.5.1.1.

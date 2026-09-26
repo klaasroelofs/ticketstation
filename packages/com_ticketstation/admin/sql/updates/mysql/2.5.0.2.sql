@@ -5,4 +5,5 @@ DELETE `s`
 FROM `#__ticketstation_seatplansettings` AS `s`
 INNER JOIN `#__ticketstation_seatplansettings` AS `k` ON `k`.`ticketid` = `s`.`ticketid` AND `k`.`id` < `s`.`id`;
 
-ALTER TABLE `#__ticketstation_seatplansettings` ADD UNIQUE KEY `idx_ticketid` (`ticketid`);
+-- Marked CAN FAIL: the key already exists when this file runs a second time (see 2.5.1.sql).
+ALTER TABLE `#__ticketstation_seatplansettings` ADD UNIQUE KEY `idx_ticketid` (`ticketid`) /** CAN FAIL **/;
