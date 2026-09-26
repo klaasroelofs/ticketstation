@@ -192,6 +192,17 @@ class Availability
     }
 
     /**
+     * The ticket whose Capacity a quantity ticket sells from: its parent when that shares its
+     * capacity with the child tickets, otherwise the ticket itself.
+     */
+    public static function poolOwner(int $ticketid): int
+    {
+        $pool = self::pool($ticketid);
+
+        return $pool ? $pool->ticketid : 0;
+    }
+
+    /**
      * The capacity a quantity ticket sells from: {ticketid, capacity, ids}, where ticketid is
      * the ticket whose Capacity applies (and whose row reserve() locks) and ids are the
      * tickets whose order rows use it up. A child of a parent with shared capacity sells

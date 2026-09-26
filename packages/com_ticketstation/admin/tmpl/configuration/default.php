@@ -19,19 +19,33 @@ $document = $app->getDocument();
 $document->setTitle(Text::_('COM_TICKETSTATION_VIEW_CONFIGURATION_TITLE') . ' - ' . $app->get('sitename'));
 
 // The venue address/description/website options only apply when the location line itself is shown,
-// so hide them while show_venue is set to No.
+// so hide them while show_venue is set to No. Transaction costs are either a percentage or a fixed
+// amount, so only the field of the chosen kind is shown.
 $document->getWebAssetManager()->addInlineScript("
     document.addEventListener('DOMContentLoaded', function () {
         var showVenue = document.getElementById('show_venue');
         var subOptions = document.getElementById('venue-sub-options');
-        if (!showVenue || !subOptions) {
-            return;
+        if (showVenue && subOptions) {
+            var toggle = function () {
+                subOptions.style.display = showVenue.value === '1' ? '' : 'none';
+            };
+            showVenue.addEventListener('change', toggle);
+            toggle();
         }
-        var toggle = function () {
-            subOptions.style.display = showVenue.value === '1' ? '' : 'none';
-        };
-        showVenue.addEventListener('change', toggle);
-        toggle();
+
+        var costsKind = document.getElementById('variable_transcosts');
+        var variableRow = document.getElementById('transcosts');
+        var fixedRow = document.getElementById('transactioncosts');
+        if (costsKind && variableRow && fixedRow) {
+            variableRow = variableRow.closest('.row');
+            fixedRow = fixedRow.closest('.row');
+            var toggleCosts = function () {
+                variableRow.style.display = costsKind.value === '1' ? '' : 'none';
+                fixedRow.style.display = costsKind.value === '0' ? '' : 'none';
+            };
+            costsKind.addEventListener('change', toggleCosts);
+            toggleCosts();
+        }
     });
 ");
 
@@ -504,76 +518,6 @@ $document->getWebAssetManager()->addInlineScript("
     <?= HTMLHelper::_('uitab.endTab'); ?>
 
     <?= HTMLHelper::_('uitab.addTab', 'configTabs', 'documents', Text::_('COM_TICKETSTATION_CONFIG_TAB_DOCUMENTS')); ?>
-
-        <div class="card mt-3 rounded-to">
-            <h3 class="card-header">
-                <?= Text::_('COM_TICKETSTATION_PDF_SETTINGS') ?>
-            </h3>
-            <div class="card-body">
-                <div class="row mb-3">
-                    <label for="send_multi_ticket_only" class="col-sm-3 col-form-label"
-                           rel="popover"
-                           title="<?= Text::_('COM_TICKETSTATION_SEND_MULTI_TICKET_ONLY') ?>">
-                        <?= Text::_('COM_TICKETSTATION_SEND_MULTI_TICKET_ONLY') ?>
-                    </label>
-                    <div class="col-sm-9">
-                        <?= $this->lists['send_multi_ticket_only']; ?>
-                        <small class="form-text">
-                            <?= Text::_('COM_TICKETSTATION_SEND_MULTI_TICKET_ONLY_DESC') ?>
-                        </small>
-                    </div>
-                </div>
-                <div class="row mb-3">
-                    <label for="send_pdf_tickets" class="col-sm-3 col-form-label"
-                           rel="popover"
-                           title="<?= Text::_('COM_TICKETSTATION_TURN_OFF_PDF_TICKETS_EMAIL') ?>">
-                        <?= Text::_('COM_TICKETSTATION_TURN_OFF_PDF_TICKETS_EMAIL') ?>
-                    </label>
-                    <div class="col-sm-9">
-                        <?= $this->lists['send_pdf_tickets']; ?>
-                        <small class="form-text">
-                            <?= Text::_('COM_TICKETSTATION_TURN_OFF_PDF_TICKETS_EMAIL_DESC') ?>
-                        </small>
-                    </div>
-                </div>
-                <div class="row mb-3">
-                    <label for="send_multi_ticket_admin" class="col-sm-3 col-form-label"
-                           rel="popover"
-                           title="<?= Text::_('COM_TICKETSTATION_SEND_MULTI_TICKET_TO_ADMIN') ?>">
-                        <?= Text::_('COM_TICKETSTATION_SEND_MULTI_TICKET_TO_ADMIN') ?>
-                    </label>
-                    <div class="col-sm-9">
-                        <?= $this->lists['send_multi_ticket_admin']; ?>
-                        <small class="form-text">
-                            <?= Text::_('COM_TICKETSTATION_SEND_MULTI_TICKET_TO_ADMIN_DESC') ?>
-                        </small>
-                    </div>
-                </div>
-                <div class="row mb-3">
-                    <label for="admin_receivers_multi_ticket" class="col-sm-3 col-form-label"
-                           rel="popover"
-                           title="<?= Text::_('COM_TICKETSTATION_SEND_MULTI_TICKET_TO_ADMIN_EMAIL') ?>">
-                        <?= Text::_('COM_TICKETSTATION_SEND_MULTI_TICKET_TO_ADMIN_EMAIL') ?>
-                    </label>
-                    <div class="col-sm-9">
-                        <textarea class="form-control" name="admin_receivers_multi_ticket" id="admin_receivers_multi_ticket" rows="3"><?= isset($this->config->admin_receivers_multi_ticket)?ltrim($this->config->admin_receivers_multi_ticket):null; ?></textarea>
-                    </div>
-                </div>
-                <div class="row mb-3">
-                    <label for="use_euros_in_pdf" class="col-sm-3 col-form-label"
-                           rel="popover"
-                           title="<?= Text::_('COM_TICKETSTATION_SPECIALCHAR_IN_PDF') ?>">
-                        <?= Text::_('COM_TICKETSTATION_SPECIALCHAR_IN_PDF') ?>
-                    </label>
-                    <div class="col-sm-9">
-                        <?= $this->lists['use_euros_in_pdf']; ?>
-                        <small class="form-text">
-                            <?= Text::_('COM_TICKETSTATION_SPECIALCHAR_IN_PDF_DESC') ?>
-                        </small>
-                    </div>
-                </div>
-            </div>
-        </div>
 
         <div class="card mt-3 rounded-to">
             <h3 class="card-header">

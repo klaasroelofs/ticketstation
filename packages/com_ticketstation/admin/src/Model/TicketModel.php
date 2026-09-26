@@ -16,7 +16,9 @@ use Joomla\Filesystem\File;
 use Joomla\CMS\Form\Form;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\Model\AdminModel;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\Config;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Ticket;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\WaitingList;
 
 
 /**
@@ -120,6 +122,18 @@ class TicketModel extends AdminModel
         $jinput = $app->getInput();
         $table = $this->getTable();
 
+        // The Capacity before this save, to see whether it was raised.
+        $oldCapacity = null;
+
+        if (!empty($data['ticketid'])) {
+            $query = $this->_db->getQuery(true)
+                ->select($this->_db->quoteName('starting_total_tickets'))
+                ->from($this->_db->quoteName('#__ticketstation_tickets'))
+                ->where($this->_db->quoteName('ticketid') . ' = ' . (int) $data['ticketid']);
+            $this->_db->setQuery($query);
+            $oldCapacity = $this->_db->loadResult();
+        }
+
         // Bind the data.
         if (!$table->bind($data)) {
             $app->enqueueMessage(Text::_('COM_TICKETSTATION_ERROR_BIND_FAILED'), 'error');
@@ -146,6 +160,17 @@ class TicketModel extends AdminModel
             $this->ticketid = $data['ticketid'];
         } else {
             $this->ticketid = $this->_db->insertid();
+        }
+
+        // A raised Capacity goes to the waiting list first, like the tickets of a removed order.
+        if ($oldCapacity !== null && isset($data['starting_total_tickets'])
+            && (int) $data['starting_total_tickets'] > (int) $oldCapacity
+            && (new Config)->getPartialConfig(['show_waitinglist'])->show_waitinglist == 1) {
+            $promoted = (new WaitingList)->promote([(int) $this->ticketid]);
+
+            if ($promoted > 0) {
+                $app->enqueueMessage(Text::plural('COM_TICKETSTATION_WAITINGLIST_N_PROMOTED', $promoted));
+            }
         }
 
         // Store files on server

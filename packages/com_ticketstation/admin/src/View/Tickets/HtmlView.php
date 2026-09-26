@@ -72,6 +72,7 @@ class HtmlView extends BaseHtmlView
             ->listCheck(true);
 
         ToolbarHelper::custom('seatplans', 'fa-solid fa-chair', '', 'COM_TICKETSTATION_SEATPLANS', false,false);
+        ToolbarHelper::custom('events', 'fa fa-calendar-alt', '', 'COM_TICKETSTATION_EVENTS', false);
 
         ToolbarHelper::custom('','spacer');
         ToolbarHelper::custom('controlpanel', 'icon-home', '', 'COM_TICKETSTATION_VIEW_CPANEL_TITLE_SHORT', false);

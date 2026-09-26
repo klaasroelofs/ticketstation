@@ -124,7 +124,7 @@ class SendonPayment
         }
         else
         {
-            $paymentstatus = '<<span style="font-color=#006600;">'.Text::_( 'COM_TICKETSTATION_ORDERSTATUS_PAID' ).'</span>';
+            $paymentstatus = '<span style="font-color=#006600;">'.Text::_( 'COM_TICKETSTATION_ORDERSTATUS_PAID' ).'</span>';
         }
 
         $to_be_paid 	= (new getAmount())->_getAmount($this->eid);

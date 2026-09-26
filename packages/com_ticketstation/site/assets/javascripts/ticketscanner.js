@@ -212,7 +212,8 @@ async function startScanning() {
     } catch (e) {
         state = 'result-error';
         signal(false);
-        showResult(false, config.texts.camera, '');
+        // Browsers only offer the camera to pages served over HTTPS (or from localhost).
+        showResult(false, window.isSecureContext ? config.texts.camera : config.texts.insecure, '');
         return;
     }
 

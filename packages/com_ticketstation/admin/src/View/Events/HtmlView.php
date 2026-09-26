@@ -60,6 +60,8 @@ class HtmlView extends BaseHtmlView
             ->message('JGLOBAL_CONFIRM_DELETE')
             ->listCheck(true);
 
+        ToolbarHelper::custom('tickets', 'fa fa-ticket-alt', '', 'COM_TICKETSTATION_TICKETS', false);
+
         ToolbarHelper::custom('','spacer');
         ToolbarHelper::custom('controlpanel', 'icon-home', '', 'COM_TICKETSTATION_VIEW_CPANEL_TITLE_SHORT', false);
 

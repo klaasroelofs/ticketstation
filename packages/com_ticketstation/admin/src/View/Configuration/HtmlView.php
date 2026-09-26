@@ -146,15 +146,6 @@ class HtmlView extends BaseHtmlView {
         $lists['load_bootstrap'] = HTMLHelper::_('select.genericList', $yesno, 'load_bootstrap', ' class="form-select" ' . '',
             'value', 'text', $config->load_bootstrap);
 
-        $lists['send_multi_ticket_admin'] = HTMLHelper::_('select.genericList', $yesno, 'send_multi_ticket_admin', ' class="form-select" ' . '',
-            'value', 'text', $config->send_multi_ticket_admin);
-
-        $lists['send_multi_ticket_only'] = HTMLHelper::_('select.genericList', $yesno, 'send_multi_ticket_only', ' class="form-select" ' . '',
-            'value', 'text', $config->send_multi_ticket_only);
-
-        $lists['send_pdf_tickets'] = HTMLHelper::_('select.genericList', $yesno, 'send_pdf_tickets', ' class="form-select" ' . '',
-            'value', 'text', $config->send_pdf_tickets);
-
         $lists['send_invoice'] = HTMLHelper::_('select.genericList', $yesno, 'send_invoice', ' class="form-select" ' . '',
             'value', 'text', $config->send_invoice);
 
@@ -212,15 +203,6 @@ class HtmlView extends BaseHtmlView {
         ];
         $lists['placeholder'] = HTMLHelper::_('select.genericList', $placeholder, 'priceformat', 'class="form-select" ="1"' . '', 'value',
             'text', $config->priceformat);
-
-        ## Filling the Array() for a dropdown list.
-        $currencyholder            = [
-            '0' => ['value' => '1', 'text' => '' . Text::_('COM_TICKETSTATION_NO')],
-            '1' => ['value' => '2', 'text' => '' . Text::_('COM_TICKETSTATION_EURO')],
-            '2' => ['value' => '3', 'text' => '' . Text::_('COM_TICKETSTATION_POUND')],
-        ];
-        $lists['use_euros_in_pdf'] = HTMLHelper::_('select.genericList', $currencyholder, 'use_euros_in_pdf', 'class="form-select" ="1"' . '', 'value',
-            'text', $config->use_euros_in_pdf);
 
         /*
         $db = Factory::getContainer()->get('DatabaseDriver');

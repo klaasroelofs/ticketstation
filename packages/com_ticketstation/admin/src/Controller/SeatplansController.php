@@ -381,6 +381,14 @@ class SeatplansController extends BaseController {
         $targetid   = Factory::getApplication()->getInput()->get('targetid', 0);
         $sourceid     = Factory::getApplication()->getInput()->get('sourceid', 0);
 
+        // Checked here and not only in the page: a seat may have been sold since the chart was opened.
+        $db->setQuery('SELECT COUNT(*) FROM #__ticketstation_seatplancoords WHERE (ticketid = ' . (int) $targetid . ' OR parent = ' . (int) $targetid . ') AND orderid > 0');
+
+        if ((int) $db->loadResult() > 0) {
+            echo json_encode(['result' => 'sold']);
+            exit();
+        }
+
         // First, we need to delete all current seats for this ticket
         $query = 'DELETE FROM #__ticketstation_seatplancoords WHERE ticketid = '.(int)$targetid.' OR parent = '.(int)$targetid;
 

@@ -162,6 +162,9 @@ $venue_website_url = preg_match('#^https?://#i', $this->ticketdetails->website) 
 
                 <?php
 
+                ## The seats in this customer's own order.
+                $mine = array_map('intval', array_column($this->ordered, 'seat_sector'));
+
                 for ($i = 0, $n = count($this->items); $i < $n; $i++ ){
 
                     ## Give give $row the this->item[$i]
@@ -171,7 +174,13 @@ $venue_website_url = preg_match('#^https?://#i', $this->ticketdetails->website) 
                     $y 			 = $row->y_pos;
                     $line_height = 'line-height:'. $row->height .'px;';
 
-                    if ($row->booked > 0){
+                    if ($row->booked > 0 && in_array((int) $row->id, $mine, true)){
+
+                        ## Chosen by this customer: orange, as right after picking it.
+                        $style = 'color:#fff; border-color:#'.$row->border_color.'; cursor:no-drop; '.$line_height;
+                        $background = 'orange';
+
+                    }elseif ($row->booked > 0){
 
                         $style = 'color:#fff; border-color:#000; cursor:no-drop; '.$line_height;
                         $background = '#FF0000';

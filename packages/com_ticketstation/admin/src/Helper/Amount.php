@@ -156,7 +156,7 @@ class Amount
         else
         {
             // Total order amount for ordercode (eid) --> variable cost is on.
-            $this->order_fees = (($amount / 100) * $config->transcosts) + $config->transactioncosts;
+            $this->order_fees = (($amount / 100) * $config->transcosts);
         }
     }
 

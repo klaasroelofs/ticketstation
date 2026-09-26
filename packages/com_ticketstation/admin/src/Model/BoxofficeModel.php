@@ -362,8 +362,8 @@ class BoxofficeModel extends ListModel
                 //$db->quoteName('c.city') . $like_filter,
                 //$db->quoteName('c.zipcode') . $like_filter,
                 $db->quoteName('c.emailaddress') . $like_filter,
-                $db->quoteName('co.seatid') . $like_filter,
-                $db->quoteName('co.row_name') . $like_filter,
+                // The seat number as printed on the ticket: row name and seat, e.g. A12.
+                'CONCAT(COALESCE(' . $db->quoteName('co.row_name') . ", ''), " . $db->quoteName('co.seatid') . ')' . $like_filter,
                 $db->quoteName('r.remarks') . $like_filter,
                 $db->quoteName('n.note') . $like_filter,
             ];
@@ -722,6 +722,12 @@ class BoxofficeModel extends ListModel
                     return false;
                 }
             }
+        }
+
+        // The released tickets go to the waiting list first, as with a deleted order.
+        if ($this->getConfig()->show_waitinglist == 1)
+        {
+            (new WaitingList)->promote(array_column($orderdata, 'ticketid'));
         }
 
         return true;
@@ -1198,12 +1204,6 @@ class BoxofficeModel extends ListModel
             $db->setQuery($query);
             $data = $db->loadObjectList();
 
-            if ($config->show_waitinglist == 1)
-            {
-                $waiting = new WaitingList;
-                $waiting->processList($cid);
-            }
-
             $query = $db->getQuery(true);
 
             $conditions = [
@@ -1222,7 +1222,15 @@ class BoxofficeModel extends ListModel
                 return false;
             }
 
-            foreach (array_unique(array_column($data, 'ordercode')) as $removed_ordercode) {
+            // A ghost (an order the ticketcleaner removed) has no order rows left, only its
+            // History snapshot. Logging the manual removal ends that lifecycle, so the ghost
+            // leaves the list too.
+            $removed = array_unique(array_merge(
+                array_column($data, 'ordercode'),
+                array_keys(History::getAutoRemovedGhosts($cid))
+            ));
+
+            foreach ($removed as $removed_ordercode) {
                 History::log($removed_ordercode, 'order_removed', 'Order removed');
 
                 // An invoice for a deleted order shouldn't survive it.
@@ -1266,6 +1274,12 @@ class BoxofficeModel extends ListModel
                 {
                     $ticket_helper->resetSeatSate($row->orderid);
                 }
+            }
+
+            // The released tickets go to the waiting list first.
+            if ($config->show_waitinglist == 1)
+            {
+                (new WaitingList)->promote(array_column($data, 'ticketid'));
             }
 
             return true;

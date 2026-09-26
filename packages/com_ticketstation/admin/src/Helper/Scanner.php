@@ -100,6 +100,25 @@ class Scanner
     }
 
     /**
+     * Whether the ticket has Scanning Allowed switched on. With it off, the ticket is refused
+     * at the door, also by a scanner that has the whole event.
+     */
+    public static function scanningAllowed(int $ticketid): bool
+    {
+        $db = Factory::getContainer()->get('DatabaseDriver');
+
+        $query = $db->getQuery(true)
+            ->select($db->quoteName('scans_on'))
+            ->from($db->quoteName('#__ticketstation_tickets'))
+            ->where($db->quoteName('ticketid') . ' = :ticketid')
+            ->bind(':ticketid', $ticketid, ParameterType::INTEGER);
+
+        $db->setQuery($query);
+
+        return (int) $db->loadResult() === 1;
+    }
+
+    /**
      * Decodes a JSON id list column into a list of positive integers.
      */
     public static function idList(?string $json): array

@@ -148,7 +148,7 @@ class getAmount
                 $transcost = $config->transactioncosts;
             } else {
                 ## Total order amount for ordercode (eid) --> variable cost is on.
-                $transcost = (($orderprice / 100) * $config->transcosts) + $config->transactioncosts;
+                $transcost = (($orderprice / 100) * $config->transcosts);
             }
 
             if ($orderprice != 0) {
@@ -368,7 +368,7 @@ class getAmount
                 $transcost = $config->transactioncosts;
             } else {
                 ## Total order amount for ordercode (eid) --> variable cost is on.
-                $transcost = (($orderprice / 100) * $config->transcosts) + $config->transactioncosts;
+                $transcost = (($orderprice / 100) * $config->transcosts);
             }
 
 

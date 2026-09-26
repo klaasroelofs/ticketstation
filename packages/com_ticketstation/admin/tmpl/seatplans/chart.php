@@ -703,9 +703,6 @@ if (file_exists($image)) {
             return false;
         }
 
-        //$(".seat-element").hide("slow");
-        $(".seat-element").remove();
-
         var data = 'sourceid=' + sourceValue + '&targetid=' + <?= $this->data->ticketid; ?> + '&' + csrfTokenParam;
 
         $.ajax({
@@ -722,11 +719,19 @@ if (file_exists($image)) {
 
                 const htmlparsed = JSON.parse(html);
 
-                if (htmlparsed.result === 0) {
+                if (htmlparsed.result === 'sold') {
+                    // A seat was sold after this page was opened: the chart stays as it is.
+                    $("#respond_html").text(<?= json_encode(Text::_('COM_TICKETSTATION_SEATS_BOOKED_NO_DELETE')); ?>).addClass('danger_msg').hide().fadeIn(1000);
+                    setTimeout(function(){ $('#respond_html').fadeOut(1000); }, 4000);
+                    setTimeout(function(){ $('#respond_html').removeClass('danger_msg'); }, 6000);
+                } else if (htmlparsed.result == 0) {
                     $("#respond_html").text(<?= json_encode(Text::_('COM_TICKETSTATION_SEAT_DELETE_FAILED')); ?>).addClass('danger_msg').hide().fadeIn(1000);
                     setTimeout(function(){ $('#respond_html').fadeOut(1000); }, 2000);
                     setTimeout(function(){ $('#respond_html').removeClass('danger_msg'); }, 4000);
                 } else {
+                    // The old seats are gone on the server; replace them on the chart.
+                    $(".seat-element").remove();
+
                     $.each(htmlparsed, function (idx, data) {
 
                         // Create a new div in the glassbox div.

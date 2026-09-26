@@ -42,6 +42,9 @@
 #container {
     text-align: center;
     margin: 0;
+    /* Own stacking context: the start screen behind it (z-index -1) then stays above the
+       template's page background instead of disappearing under a body that has one. */
+    isolation: isolate;
 }
 
 /* Positioned and sized on the scan region by qr-scanner */

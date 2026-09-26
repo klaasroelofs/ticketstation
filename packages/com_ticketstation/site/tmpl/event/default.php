@@ -61,7 +61,8 @@ if ($available_tickets <= 0) {
 $venue_website_url = preg_match('#^https?://#i', $this->items->website) ? $this->items->website : 'https://' . $this->items->website;
 
 ## One table row per ticket: the child tickets (variants) of this ticket, or else the ticket itself.
-## Only a ticket without variants offers the waiting list and the "few tickets left" notice.
+## Every sold-out row offers the waiting list; only a ticket without variants gets the
+## "few tickets left" notice.
 $ticketRows = [];
 
 if (count($this->childs) != 0) {
@@ -70,7 +71,7 @@ if (count($this->childs) != 0) {
         $ticketRows[] = (object) [
             'ticket'      => $child,
             'available'   => Availability::forPurchase((int) $child->ticketid),
-            'waitinglist' => false,
+            'waitinglist' => $this->config->show_waitinglist == 1,
             'fewLeft'     => false,
         ];
     }

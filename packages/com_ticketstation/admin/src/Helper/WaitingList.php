@@ -21,155 +21,113 @@ defined('_JEXEC') or die('Restricted access');
 
 class WaitingList
 {
-    private $remove;
-    private $message;
+    /**
+     * Hands available tickets to the waiting list, after an order was deleted, the cleanup
+     * removed unfinished or expired orders, or a ticket's Capacity was raised. Confirmed
+     * waiting orders for the given tickets, their parent and their sibling or child tickets
+     * are promoted oldest first, each one only when all its tickets fit in what is available;
+     * an order that doesn't fit is skipped for a later, smaller one. Child tickets that share
+     * their parent's capacity count against it together, so a place freed on one child ticket
+     * can go to a customer waiting for another. Seated tickets have no waiting list.
+     *
+     * @param   int[]  $ticketids  Tickets that may have tickets available again.
+     *
+     * @return  int  The number of tickets handed to the waiting list.
+     */
+    public function promote(array $ticketids): int
+    {
+        $ticketids = array_values(array_unique(array_filter(array_map('intval', $ticketids))));
 
-    public function processList($cid=array(), $date=null){
+        if (!$ticketids) {
+            return 0;
+        }
 
-        $this->remove = 0;
-        $this->message = null;
-
-        ## Database driver
         $db = Factory::getContainer()->get('DatabaseDriver');
 
-        if( count($cid)== 0 ){
+        // The whole families of these tickets: their top-level tickets and all child tickets.
+        $query = $db->getQuery(true)
+            ->select('DISTINCT IF(' . $db->quoteName('parent') . ' > 0, ' . $db->quoteName('parent') . ', ' . $db->quoteName('ticketid') . ')')
+            ->from($db->quoteName('#__ticketstation_tickets'))
+            ->whereIn($db->quoteName('ticketid'), $ticketids);
+        $db->setQuery($query);
+        $tops = array_map('intval', $db->loadColumn());
 
-            ## Fetch the actual candidate stale/pending order rows (not just a count),
-            ## oldest first, so we know exactly which ones to hand over to a waiting
-            ## list customer versus leave for Ticketcleaner to release back to stock.
-            $query = $db->getQuery(true);
+        if (!$tops) {
+            return 0;
+        }
 
-            $query->select(array('orderid', 'ticketid'));
-            $query->from($db->quoteName('#__ticketstation_orders'));
-            $query->where($db->quoteName('orderdate') . ' < '.$db->quote($date));
-            $query->where($db->quoteName('paid') . ' = '.$db->quote(0));
-            $query->where($db->quoteName('published') . ' = '.$db->quote(0));
-            $query->order($db->quoteName('ticketid') . ' ASC, ' . $db->quoteName('orderdate') . ' ASC');
+        $query = $db->getQuery(true)
+            ->select($db->quoteName('t.ticketid'))
+            ->from($db->quoteName('#__ticketstation_tickets', 't'))
+            ->join('INNER', $db->quoteName('#__ticketstation_tickets', 'top') . ' ON ' . $db->quoteName('top.ticketid')
+                . ' = IF(' . $db->quoteName('t.parent') . ' > 0, ' . $db->quoteName('t.parent') . ', ' . $db->quoteName('t.ticketid') . ')')
+            ->whereIn($db->quoteName('top.ticketid'), $tops)
+            ->where($db->quoteName('top.show_seatplans') . ' != 1');
+        $db->setQuery($query);
+        $family = array_map('intval', $db->loadColumn());
 
+        if (!$family) {
+            return 0;
+        }
+
+        // Waiting orders for these tickets, oldest first.
+        $query = $db->getQuery(true)
+            ->select($db->quoteName('ordercode'))
+            ->from($db->quoteName('#__ticketstation_waitinglist'))
+            ->where($db->quoteName('confirmed') . ' = 1')
+            ->where($db->quoteName('processed') . ' = 0')
+            ->whereIn($db->quoteName('ticketid'), $family)
+            ->group($db->quoteName('ordercode'))
+            ->order('MIN(' . $db->quoteName('date_added') . ') ASC');
+        $db->setQuery($query);
+
+        $promoted = 0;
+
+        foreach ($db->loadColumn() as $ordercode) {
+            // A waiting order is promoted as a whole, so every ticket in it has to fit.
+            $query = $db->getQuery(true)
+                ->select([$db->quoteName('ticketid'), 'COUNT(*) AS ' . $db->quoteName('total')])
+                ->from($db->quoteName('#__ticketstation_waitinglist'))
+                ->where($db->quoteName('ordercode') . ' = ' . $db->quote($ordercode))
+                ->where($db->quoteName('processed') . ' = 0')
+                ->group($db->quoteName('ticketid'));
             $db->setQuery($query);
-            $rows = $db->loadObjectList();
+            $lines = $db->loadObjectList();
 
-            $staleOrderIdsByTicket = array();
-
-            foreach ($rows as $row) {
-                $staleOrderIdsByTicket[$row->ticketid][] = $row->orderid;
+            if ($this->fits($lines) && $this->processWaitingListItem([$ordercode])) {
+                $promoted += array_sum(array_column($lines, 'total'));
             }
+        }
 
-            if (count($staleOrderIdsByTicket) == 0) {
+        return $promoted;
+    }
+
+    /**
+     * Whether all tickets of a waiting order fit in what is available. Tickets that sell from
+     * the same capacity count against it together.
+     */
+    private function fits(array $lines): bool
+    {
+        $needed    = [];
+        $available = [];
+
+        foreach ($lines as $line) {
+            $pool = Availability::poolOwner((int) $line->ticketid);
+
+            $needed[$pool]    = ($needed[$pool] ?? 0) + (int) $line->total;
+            $available[$pool] = Availability::forTicket((int) $line->ticketid);
+        }
+
+        foreach ($needed as $pool => $amount) {
+            if ($amount > $available[$pool]) {
                 return false;
             }
-
-            foreach ($staleOrderIdsByTicket as $ticketid => $orderIds) {
-
-                $total = count($orderIds);
-
-                ## The ordering is based on date added (First in goes first out if enough tickets).
-
-                $sql = 'SELECT COUNT( id ) AS total, ordercode
-						FROM #__ticketstation_waitinglist
-						WHERE confirmed = 1
-						AND processed = 0
-						AND ticketid = '.(int)$ticketid.'
-						GROUP BY ordercode, ticketid
-						HAVING COUNT( id ) <= '.(int)$total.'
-						ORDER BY date_added, total DESC';
-
-                $db->setQuery($sql);
-                $waiting_items = $db->loadObjectList();
-
-                ## Loop through the waiting list items:
-                for ($i2 = 0, $n2 = count($waiting_items); $i2 < $n2; $i2++ ){
-
-                    $waitinglist = $waiting_items[$i2];
-
-                    ## If the removable total is smaller or even to waiting list totals:
-                    if($waitinglist->total <= $total){
-
-                        ## Claim the oldest stale reservations for this ticket to hand over.
-                        $claimedOrderIds = array_splice($orderIds, 0, $waitinglist->total);
-
-                        ## Remaining total to remove:
-                        $total = $total-$waitinglist->total;
-                        ## Total processed waiting items:
-                        $this->remove = $this->remove+$waitinglist->total;
-
-                        $this->processWaitingListItem(array($waitinglist->ordercode), $claimedOrderIds);
-
-                    }
-
-                } // end for loop 2.
-
-            } // end foreach ticket.
-
-            return true;
         }
-
-        ## Explicit ordercodes were removed (e.g. Box Office refund/blacklist): free up
-        ## exactly those ticket slots for the waiting list.
-        $cids = implode( ',', $cid );
-
-        $query = $db->getQuery(true);
-
-        $query->select(array('COUNT(ticketid) as totals', 'ticketid'));
-        $query->from($db->quoteName('#__ticketstation_orders'));
-        $query->where($db->quoteName('ordercode') . ' IN ('.$cids.')');
-        $query->group('ticketid');
-
-        $db->setQuery($query);
-        $items= $db->loadObjectList();
-
-        if(count($items) == 0){
-            return false;
-        }
-
-        for ($i = 0, $n = count($items); $i < $n; $i++ ){
-
-            $row 		= $items[$i];
-            $ticketid 	= $row->ticketid;
-            $total 		= $row->totals;
-
-            $sql = 'SELECT COUNT( id ) AS total, ordercode
-					FROM #__ticketstation_waitinglist
-					WHERE confirmed = 1
-					AND processed = 0
-					AND ticketid = '.$ticketid.'
-					GROUP BY ordercode, ticketid
-					HAVING COUNT( id ) <= '.$total.'
-					ORDER BY date_added, total DESC';
-
-            $db->setQuery($sql);
-            $waiting_items = $db->loadObjectList();
-
-            ## Loop through the waiting list items:
-            for ($i2 = 0, $n2 = count($waiting_items); $i2 < $n2; $i2++ ){
-
-                $waitinglist = $waiting_items[$i2];
-
-                ## If the removable total is smaller or even to waiting list totals:
-                if($waitinglist->total <= $total){
-
-                    ## Remaining total to remove:
-                    $total = $total-$waitinglist->total;
-                    ## Total processed waiting items:
-                    $this->remove = $this->remove+$waitinglist->total;
-
-                    $this->processWaitingListItem(array($waitinglist->ordercode));
-
-                }
-
-            } // end for loop 2.
-
-        } //end for loop 1.
 
         return true;
-
     }
 
-    public function getRemovedTickets(){
-        return $this->remove;
-    }
-
-    private function processWaitingListItem($cid = array(), $staleOrderIdsToDelete = array()) {
+    private function processWaitingListItem($cid = array()) {
 
         ## Count the cids
         if (count( $cid )) {
@@ -183,7 +141,7 @@ class WaitingList
 
             $query = $db->getQuery(true);
 
-            $query->select(array('w.*', 't.parent AS parentticket'));
+            $query->select(array('w.*', 't.parent AS parentticket', 't.ticketprice', 't.vat_percentage AS ticket_vat'));
             $query->from($db->quoteName('#__ticketstation_waitinglist', 'w'));
             $query->join('LEFT', $db->quoteName('#__ticketstation_tickets', 't') . ' ON (' . $db->quoteName('w.ticketid') . ' = ' . $db->quoteName('t.ticketid') . ')');
             $query->where($db->quoteName('w.ordercode') . ' IN ('.$cids.')');
@@ -193,12 +151,23 @@ class WaitingList
             ## Getting the ticket id's
             $data = $db->loadObjectList();
 
+            $config = (new Config)->getPartialConfig(['variable_transcosts', 'transcosts']);
+
             ## Loop the ticketnumbers for deletion
             for ($i = 0, $n = count($data); $i < $n; $i++ ){
 
                 $row  = $data[$i];
 
+                ## Price, VAT and fees as a normal purchase records them (see OrderController::buyticket()),
+                ## so the invoice of this order shows the right amounts.
+                $pricing = (new Amount)->calculateVatFromPrice((float) $row->ticketprice, (float) $row->ticket_vat);
+
                 $process 				= new stdClass();
+                $process->price               = $row->ticketprice;
+                $process->vat                 = $pricing['vat_amount'];
+                $process->vat_percentage      = $pricing['vat_percentage'];
+                $process->price_excluding_vat = $pricing['price_excluding_vat'];
+                $process->fees                = $config->variable_transcosts == 1 ? ($row->ticketprice / 100) * $config->transcosts : 0;
                 $process->userid 		= $row->userid;
                 $process->ordercode 	= $row->ordercode;
                 $process->eventid		= $row->eventid;
@@ -236,36 +205,6 @@ class WaitingList
 
             if (!$result) {
                 return false;
-            }
-
-            ## For a date-based (Ticketcleaner) promotion, delete the specific stale order(s)
-            ## we're handing over to this waiting-list customer: ownership just transfers, so
-            ## the number of order rows (and with it the availability) stays the same.
-            ## Ticketcleaner's own cleanup pass deletes whatever stale orders remain unclaimed.
-            if (!empty($staleOrderIdsToDelete)) {
-
-                ArrayHelper::toInteger($staleOrderIdsToDelete);
-                $staleIds = implode(',', $staleOrderIdsToDelete);
-
-                ## A stale order may have been a seated reservation (seat plans share the same
-                ## orders table as counter tickets). Release its seat before
-                ## the row disappears, otherwise the seat stays locked forever - the promoted
-                ## waiting-list customer does not inherit it, so nobody would ever be able to
-                ## select it again.
-                $ticket_helper = new Tickets();
-                foreach ($staleOrderIdsToDelete as $staleOrderId) {
-                    $ticket_helper->resetSeatSate($staleOrderId);
-                }
-
-                $query = $db->getQuery(true);
-                $query->delete($db->quoteName('#__ticketstation_orders'));
-                $query->where($db->quoteName('orderid') . ' IN ('.$staleIds.')');
-
-                $db->setQuery($query);
-
-                if (!$db->execute()) {
-                    return false;
-                }
             }
 
             ## Send people a payment request.

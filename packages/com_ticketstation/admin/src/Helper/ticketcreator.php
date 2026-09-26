@@ -294,20 +294,10 @@ class ticketcreator
             $pdf->SetTextColor($rgb['r'], $rgb['g'], $rgb['b']);
             $pdf->SetXY($position[0], $position[1]);
 
-            $price = (new TicketstationFunctions)->showprice($config->priceformat, $order->ticketprice, '');
+            // Currency and price format from the Configuration, as on the invoice.
+            $price = trim((new TicketstationFunctions)->showprice($config->priceformat, $order->ticketprice, $config->valuta));
 
-            if($config->use_euros_in_pdf == 2)
-            {
-                $pdf->Write(0, TicketLanguage::_('COM_TICKETSTATION_PDF_PRICE') . ' ' . chr(128) . ' ' . $price);
-            }
-            elseif($config->use_euros_in_pdf == 3)
-            {
-                $pdf->Write(0, TicketLanguage::_('COM_TICKETSTATION_PDF_PRICE') . ' ' . chr(0x00A3) . ' ' . $price);
-            }
-            else
-            {
-                $pdf->Write(0, TicketLanguage::_('COM_TICKETSTATION_PDF_PRICE') . ' ' . $price);
-            }
+            $pdf->Write(0, PdfEncoding::toLatin1(TicketLanguage::_('COM_TICKETSTATION_PDF_PRICE') . ' ' . $price));
         }
 
         ## ORDERDATE

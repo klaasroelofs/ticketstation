@@ -49,15 +49,6 @@ class Ticketcleaner
             $cleanup = date('Y-m-d H:i:s', mktime(date('H'), date('i') - $minutes, date('s'), date('m'), date('d'), date('Y')));
         }
         
-        if ($config->show_waitinglist == 1) {
-            ## Promoting a waiting list customer already deletes the specific stale order(s)
-            ## it hands over to them (see WaitingList::processWaitingListItem). Whatever is
-            ## left over below is genuinely unclaimed and must still be released back to
-            ## stock (and logged), regardless of whether the waiting list is on.
-            $waiting = new WaitingList();
-            $waiting->processList(array(), $cleanup);
-        }
-
         $query = $db->getQuery(true)
             ->select(array('o.*', 't.parent AS parentticket'))
             ->from($db->quoteName('#__ticketstation_orders', 'o'))
@@ -110,17 +101,17 @@ class Ticketcleaner
                 }
 
                 $this->logAutoRemoval($data, 'unfinished', 'Removed (unfinished order)');
+
+                // The released tickets go to the waiting list first.
+                if ($config->show_waitinglist == 1) {
+                    (new WaitingList)->promote(array_column($data, 'ticketid'));
+                }
             }
         }
 
         ## THIS IS THE CLEAN UP OF PENDING ORDERS (STATUS UNPAID (0) OR PENDING (3))
         ## TYPICALLY, THESE ARE ORDERS THAT REACHED THE PAYMENT SCREEN OF FAILED PAYMENT (PAID = 0 / PUBLISHED = 0) OR FOR WHICH A PAYMENT LINK WAS SENT (PAID = 3 / PUBLISHED = 1), BUT THAT WERE NEVER ACTUALLY PAID
         $cleanup_pending = date('Y-m-d H:i:s', mktime(date('H'), date('i'), date('s'), date('m'), date('d') - $config->removal_days, date('Y')));
-
-        if ($config->show_waitinglist == 1) {
-            $waiting = new WaitingList();
-            $waiting->processList(array(), $cleanup_pending);
-        }
 
         $query = $db->getQuery(true)
             ->select(array('o.*', 't.parent AS parentticket'))
@@ -172,6 +163,10 @@ class Ticketcleaner
                 }
 
                 $this->logAutoRemoval($data_pending, 'pending', 'Removed (pending payment expired)');
+
+                if ($config->show_waitinglist == 1) {
+                    (new WaitingList)->promote(array_column($data_pending, 'ticketid'));
+                }
             }
         }
 

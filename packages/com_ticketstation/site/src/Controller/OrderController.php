@@ -122,7 +122,7 @@ class OrderController extends BaseController
 
         if ($this->amount > $available)
         {
-            $this->showMessage('ts-alert ts-alert--danger', Text::_(($config->show_waitinglist && $tickets->parent == 0) ? 'COM_TICKETSTATION_ADD_TO_WAITINGLIST' : 'COM_TICKETSTATION_EVENT_SOLD_OUT'));
+            $this->showMessage('ts-alert ts-alert--danger', Text::_($config->show_waitinglist ? 'COM_TICKETSTATION_ADD_TO_WAITINGLIST' : 'COM_TICKETSTATION_EVENT_SOLD_OUT'));
         }
 
         if ($config->variable_transcosts == 1)

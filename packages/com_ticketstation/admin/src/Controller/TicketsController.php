@@ -56,6 +56,11 @@ class TicketsController extends BaseController
         $this->setRedirect(Uri::base() . 'index.php?option=com_ticketstation&view=seatplans');
     }
 
+    public function events($cachable = false, $urlparams = [])
+    {
+        $this->setRedirect(Uri::base() . 'index.php?option=com_ticketstation&view=events');
+    }
+
     public function edit()
     {
         $jinput = Factory::getApplication()->getInput();

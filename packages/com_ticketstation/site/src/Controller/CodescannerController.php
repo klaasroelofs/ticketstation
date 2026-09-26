@@ -152,6 +152,11 @@ class CodescannerController extends BaseController
 			return $this->result(0, Text::_('COM_TICKETSTATION_TICKETSCANNING_NOT_ASSIGNED'), $order);
 		}
 
+		if (!Scanner::scanningAllowed($orderTicketid))
+		{
+			return $this->result(0, Text::_('COM_TICKETSTATION_TICKETSCANNING_SCANNING_OFF'), $order);
+		}
+
 		if ((int) $data->blacklisted === 1)
 		{
 			return $this->result(0, Text::_('COM_TICKETSTATION_TICKETSCANNING_BLACLISTED_BARCODE'), $order);

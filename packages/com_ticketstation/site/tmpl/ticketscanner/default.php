@@ -58,6 +58,7 @@ $config = [
     'texts'        => [
         'network'      => Text::_('COM_TICKETSTATION_TICKETSCANNING_NETWORK_ERROR'),
         'camera'       => Text::_('COM_TICKETSTATION_TICKETSCANNING_CAMERA_ERROR'),
+        'insecure'     => Text::_('COM_TICKETSTATION_TICKETSCANNING_CAMERA_HTTPS'),
         'unauthorized' => Text::_('COM_TICKETSTATION_TICKETSCANNING_UNAUTHORIZED'),
     ],
 ];

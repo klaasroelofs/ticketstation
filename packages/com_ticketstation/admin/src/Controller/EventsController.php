@@ -124,4 +124,9 @@ class EventsController extends BaseController
         $this->setRedirect(Uri::base() . 'index.php?option=com_ticketstation&view=controlpanel');
     }
 
+    public function tickets($cachable = false, $urlparams = [])
+    {
+        $this->setRedirect(Uri::base() . 'index.php?option=com_ticketstation&view=tickets');
+    }
+
 }

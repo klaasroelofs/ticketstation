@@ -371,7 +371,7 @@ if (version_compare(JVERSION, '4.999.999', 'gt')) {
                 </p>
 
                 <p class="text-muted">
-                    Copyright 2022-<?= date('Y') ?> <a href="mailto:<?php echo $this->data['authorEmail']; ?>"><?php echo $this->data['author']; ?></a> Overloon. <?= Text::_('COM_TICKETSTATION_CPANEL_FOOTER_RIGHTS'); ?>
+                    Copyright 2022-<?= date('Y') ?> <a href="https://github.com/klaasroelofs" target="_blank" rel="noopener"><?php echo $this->data['author']; ?></a> Overloon. <?= Text::_('COM_TICKETSTATION_CPANEL_FOOTER_RIGHTS'); ?>
                     <br/>
                     <?= Text::sprintf('COM_TICKETSTATION_CPANEL_FOOTER_LICENSE', $productName, '<a href="http://www.gnu.org/licenses/gpl-3.0.html">GNU General Public License</a>'); ?>
                 </p>
