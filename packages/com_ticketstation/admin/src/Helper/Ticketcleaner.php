@@ -103,14 +103,6 @@ class Ticketcleaner
 
                     $ticket_helper = new Tickets();
 
-                    // Increasing ticket totals:
-                    $ticket_helper->increaseTicketTotals($row->ticketid);
-
-                    // Increasing parentticket totals:
-                    if ($row->parentticket != 0) {
-                        $ticket_helper->increaseTicketTotals($row->parentticket);
-                    }
-
                     // Check if there was a seat booked:
                     if ($row->seat_sector != 0) {
                         $ticket_helper->resetSeatSate($row->orderid);
@@ -172,14 +164,6 @@ class Ticketcleaner
                     $this->attachSeatDescriptor($row);
 
                     $ticket_helper = new Tickets();
-
-                    // Increasing ticket totals:
-                    $ticket_helper->increaseTicketTotals($row->ticketid);
-
-                    // Increasing parentticket totals:
-                    if ($row->parentticket != 0) {
-                        $ticket_helper->increaseTicketTotals($row->parentticket);
-                    }
 
                     // Check if there was a seat booked:
                     if ($row->seat_sector != 0) {

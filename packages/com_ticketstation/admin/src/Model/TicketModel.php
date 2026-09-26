@@ -16,6 +16,7 @@ use Joomla\Filesystem\File;
 use Joomla\CMS\Form\Form;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\Model\AdminModel;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\Ticket;
 
 
 /**
@@ -47,6 +48,23 @@ class TicketModel extends AdminModel
         if (empty($form))
         {
             return false;
+        }
+
+        // How capacity is split between a parent and its child tickets is chosen on the
+        // parent; a child that shares the parent's capacity has none of its own to enter.
+        $parentId = (int) $form->getValue('parent');
+
+        if ($parentId > 0)
+        {
+            $form->removeField('counter_choice');
+
+            $parent = (new Ticket)->getTicketDetailsById($parentId);
+
+            if ($parent && $parent->counter_choice == 0)
+            {
+                $form->setFieldAttribute('starting_total_tickets', 'readonly', 'true');
+                $form->setFieldAttribute('starting_total_tickets', 'description', 'COM_TICKETSTATION_CAPACITY_SHARED_NOTE');
+            }
         }
 
         return $form;
@@ -277,7 +295,6 @@ class TicketModel extends AdminModel
         unset($data['ticketid']);
 
         $data['ticketname'] 	= $data['ticketname'] . ' ' . Text::_('COM_TICKETSTATION_COPIED');
-        $data['totaltickets'] 	= $data['starting_total_tickets'];
 
         return parent::save($data);
 

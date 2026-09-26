@@ -116,18 +116,13 @@ class OrderController extends BaseController
             }
         }
 
-        // Tickets left for this ticket: its own cap, or the parent's pool it shares with the
-        // other child tickets that use the parent totals.
-        $totaltickets = Availability::forPurchase((int) $this->id);
+        // Tickets left for this ticket: its own Capacity, or the pool of its parent when the
+        // parent shares its capacity with the child tickets.
+        $available = Availability::forPurchase((int) $this->id);
 
-        if ($this->amount > $totaltickets && $config->show_waitinglist && $tickets->parent == 0)
+        if ($this->amount > $available)
         {
-            $this->showMessage('ts-alert ts-alert--danger', Text::_('COM_TICKETSTATION_ADD_TO_WAITINGLIST'));
-        }
-
-        if ($this->amount > $totaltickets && ! $config->show_waitinglist)
-        {
-            $this->showMessage('ts-alert ts-alert--danger', Text::_('COM_TICKETSTATION_EVENT_SOLD_OUT'));
+            $this->showMessage('ts-alert ts-alert--danger', Text::_(($config->show_waitinglist && $tickets->parent == 0) ? 'COM_TICKETSTATION_ADD_TO_WAITINGLIST' : 'COM_TICKETSTATION_EVENT_SOLD_OUT'));
         }
 
         if ($config->variable_transcosts == 1)
@@ -155,37 +150,11 @@ class OrderController extends BaseController
         $post['ticketid']            = $this->id;
         $post['eventid']             = $this->eventid;
 
-        // Instantiate ticket class.♥
-        $ticket = new Ticket;
-
-        for ($i = 0, $n = $this->amount; $i < $n; $i++)
+        // Saving the order rows, all or nothing, while the capacity still allows it; another
+        // customer may have taken the last tickets since the check above.
+        if ( ! Availability::reserve((int) $this->id, (int) $this->amount, fn () => $models->store($post)))
         {
-            // Saving the order data.
-            if (!$models->store($post))
-            {
-                $this->showMessage('ts-alert ts-alert--danger', Text::_('COM_TICKETSTATION_FAILED_SAVING_CART'));
-            }
-
-            if ($tickets->counter_choice == 1)
-            {
-                // Decreasing the ticket total.
-                if ( ! $ticket->decreaseTicketTotals($this->id))
-                {
-                    $this->showMessage('ts-alert ts-alert--danger', Text::_('COM_TICKETSTATION_DB_QUERY_FAILED') . ' - 102');
-                }
-            }
-
-            if ($tickets->counter_choice == 0)
-            {
-                // Check if this ticket has a parent or not.
-                $ticketid = ($tickets->parent == 0) ? $this->id : $tickets->parent;
-
-                // Decreasing the ticket total of the parent ticket.
-                if ( ! $ticket->decreaseTicketTotals($ticketid))
-                {
-                    $this->showMessage('ts-alert ts-alert--danger', Text::_('COM_TICKETSTATION_DB_QUERY_FAILED') . ' - 101');
-                }
-            }
+            $this->showMessage('ts-alert ts-alert--danger', Text::_('COM_TICKETSTATION_EVENT_SOLD_OUT'));
         }
 
         if ($this->amount == 1)
@@ -420,9 +389,8 @@ class OrderController extends BaseController
         $ordercode = Factory::getApplication()->getSession()->get('ordercode');
 
         $query = $db->getQuery(true)
-            ->select(['o.*', 't.parent AS parentticket', 't.counter_choice'])
+            ->select(['o.*'])
             ->from($db->quoteName('#__ticketstation_orders', 'o'))
-            ->join('LEFT', $db->quoteName('#__ticketstation_tickets', 't') . ' ON ' . $db->quoteName('o.ticketid') . ' = ' . $db->quoteName('t.ticketid'))
             ->where($db->quoteName('orderid') . " = " . (int) $orderid)
             ->where($db->quoteName('ordercode') . " = " . $ordercode);
 
@@ -437,24 +405,10 @@ class OrderController extends BaseController
             return false;
         }
 
-        $ticket = new Ticket;
-
-        if ($tdata->counter_choice == 1)
-        {
-            // Increasing the ticket total
-            $ticket->increaseTicketTotals($tdata->ticketid);
-        }
-
-        if ($tdata->counter_choice == 0)
-        {
-            // Increasing the ticket total
-            $ticket->increaseTicketTotals($tdata->parentticket);
-        }
-
         if ($tdata->seat_sector != 0)
         {
             // Reset the seat state
-            $ticket->resetSeatSateForProVersion($tdata->orderid);
+            (new Ticket)->resetSeatSateForProVersion($tdata->orderid);
         }
 
         // Removing the order from the database.

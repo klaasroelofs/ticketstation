@@ -23,7 +23,6 @@ class WaitingList
 {
     private $remove;
     private $message;
-    private $removesTickets;
 
     public function processList($cid=array(), $date=null){
 
@@ -34,8 +33,6 @@ class WaitingList
         $db = Factory::getContainer()->get('DatabaseDriver');
 
         if( count($cid)== 0 ){
-
-            $this->removesTickets = false;
 
             ## Fetch the actual candidate stale/pending order rows (not just a count),
             ## oldest first, so we know exactly which ones to hand over to a waiting
@@ -109,8 +106,6 @@ class WaitingList
 
         ## Explicit ordercodes were removed (e.g. Box Office refund/blacklist): free up
         ## exactly those ticket slots for the waiting list.
-        $this->removesTickets = true;
-
         $cids = implode( ',', $cid );
 
         $query = $db->getQuery(true);
@@ -221,58 +216,6 @@ class WaitingList
 
                 ## Insert the object into the order table
                 $result = $db->insertObject('#__ticketstation_orders', $process);
-
-                ## If this is ticket removal
-                if($this->removesTickets === true){
-
-                    ## update the ticket totals:
-                    $query = $db->getQuery(true);
-
-                    $fields = array(
-                        $db->quoteName('totaltickets') . ' = totaltickets-1'
-                    );
-
-                    $conditions = array(
-                        $db->quoteName('ticketid') . ' = '.$row->ticketid
-                    );
-
-                    $query->update($db->quoteName('#__ticketstation_tickets'))->set($fields)->where($conditions);
-
-                    $db->setQuery($query);
-
-                    $result = $db->execute();
-
-                    if (!$result) {
-                        return false;
-                    }
-
-                    ## if it is a parent update that one too:
-                    if ($row->parentticket != 0){
-
-                        $query = $db->getQuery(true);
-
-                        $fields = array(
-                            $db->quoteName('totaltickets') . ' = totaltickets-1'
-                        );
-
-                        $conditions = array(
-                            $db->quoteName('ticketid') . ' = '.$row->parentticket
-                        );
-
-                        $query->update($db->quoteName('#__ticketstation_tickets'))->set($fields)->where($conditions);
-
-                        $db->setQuery($query);
-
-                        $result = $db->execute();
-
-                        if (!$result) {
-                            return false;
-                        }
-
-                    }
-
-                }
-
             }
 
             $query = $db->getQuery(true);
@@ -296,16 +239,16 @@ class WaitingList
             }
 
             ## For a date-based (Ticketcleaner) promotion, delete the specific stale order(s)
-            ## we're handing over to this waiting-list customer WITHOUT restoring their ticket
-            ## totals: ownership just transfers, net stock is unchanged. Ticketcleaner's own
-            ## cleanup pass restores totals for whatever stale orders remain unclaimed.
+            ## we're handing over to this waiting-list customer: ownership just transfers, so
+            ## the number of order rows (and with it the availability) stays the same.
+            ## Ticketcleaner's own cleanup pass deletes whatever stale orders remain unclaimed.
             if (!empty($staleOrderIdsToDelete)) {
 
                 ArrayHelper::toInteger($staleOrderIdsToDelete);
                 $staleIds = implode(',', $staleOrderIdsToDelete);
 
                 ## A stale order may have been a seated reservation (seat plans share the same
-                ## orders table and ticket totals as counter tickets). Release its seat before
+                ## orders table as counter tickets). Release its seat before
                 ## the row disappears, otherwise the seat stays locked forever - the promoted
                 ## waiting-list customer does not inherit it, so nobody would ever be able to
                 ## select it again.

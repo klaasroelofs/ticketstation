@@ -13,6 +13,7 @@ defined('_JEXEC') or die;
 
 use Joomla\CMS\Factory;
 use Joomla\CMS\MVC\Model\BaseDatabaseModel;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\Availability;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Date;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\SeatplanSettings;
 
@@ -50,15 +51,21 @@ class ReservationModel extends BaseDatabaseModel
         $db = Factory::getContainer()->get('DatabaseDriver');
 
         $query = $db->getQuery(true)
-            ->select(['ticketid', 'ticketname', 'ticketprice', 'show_seatplans', 'totaltickets'])
+            ->select(['ticketid', 'ticketname', 'ticketprice', 'show_seatplans'])
             ->from($db->quoteName('#__ticketstation_tickets'))
             ->where($db->quoteName('eventid') . ' = ' . (int) $eventid)
             ->where($db->quoteName('enddate') . ' > ' . $db->quote(Date::localNow()))
             ->order($db->quoteName('ticketname') . ' ASC');
 
         $db->setQuery($query);
+        $tickets = $db->loadObjectList();
 
-        return $db->loadObjectList();
+        foreach ($tickets as $ticket)
+        {
+            $ticket->available = Availability::forTicket((int) $ticket->ticketid);
+        }
+
+        return $tickets;
     }
 
     /**
@@ -183,25 +190,6 @@ class ReservationModel extends BaseDatabaseModel
         return (bool) $db->execute();
     }
 
-    /**
-     * Adjusts the remaining-tickets counter on a ticket type by $delta (negative to consume,
-     * positive to release).
-     */
-    public function adjustTicketTotal(int $ticketid, int $delta): bool
-    {
-        $db = Factory::getContainer()->get('DatabaseDriver');
-
-        $operator = $delta >= 0 ? '+' : '-';
-        $amount   = abs($delta);
-
-        $query = 'UPDATE ' . $db->quoteName('#__ticketstation_tickets')
-            . ' SET ' . $db->quoteName('totaltickets') . ' = ' . $db->quoteName('totaltickets') . ' ' . $operator . ' ' . $amount
-            . ' WHERE ' . $db->quoteName('ticketid') . ' = ' . (int) $ticketid;
-
-        $db->setQuery($query);
-
-        return (bool) $db->execute();
-    }
 
     /**
      * Finds a client by e-mail address (updating their name/phone if found), or creates a new
@@ -271,8 +259,8 @@ class ReservationModel extends BaseDatabaseModel
     }
 
     /**
-     * Abandons an in-progress reservation: frees any booked seats, restores ticket totals,
-     * and removes the order rows for this ordercode.
+     * Abandons an in-progress reservation: frees any booked seats and removes the order rows
+     * for this ordercode, which makes their tickets available again.
      */
     public function removeOrderRowsForOrdercode(string $ordercode): void
     {
@@ -292,8 +280,6 @@ class ReservationModel extends BaseDatabaseModel
             {
                 $this->freeSeatCoords((int) $row->seat_sector);
             }
-
-            $this->adjustTicketTotal((int) $row->ticketid, 1);
         }
 
         $deleteQuery = $db->getQuery(true)

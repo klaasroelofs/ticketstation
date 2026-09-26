@@ -72,14 +72,14 @@ $csrfTokenParam = \Joomla\CMS\Session\Session::getFormToken() . '=1';
                             <td>
                                 <form action="<?= Route::_('index.php?option=com_ticketstation&controller=reservation&task=selectTicket') ?>" method="post">
                                     <input type="hidden" name="ticketid" value="<?= (int) $ticket->ticketid ?>" />
-                                    <button type="submit" class="btn btn-primary" <?= $ticket->totaltickets < 1 ? 'disabled' : '' ?>>
+                                    <button type="submit" class="btn btn-primary" <?= $ticket->available < 1 ? 'disabled' : '' ?>>
                                         <?= Text::_('COM_TICKETSTATION_RESERVATION_SELECT_TICKET') ?>
                                     </button>
                                     <?= HTMLHelper::_( 'form.token' ); ?>
                                 </form>
                             </td>
                             <td><?= TicketstationFunctions::showprice($this->config->priceformat, $ticket->ticketprice, $this->config->valuta) ?></td>
-                            <td><?= (int) $ticket->totaltickets ?></td>
+                            <td><?= (int) $ticket->available ?></td>
                             <td><?= $ticket->show_seatplans == 1 ? Text::_('JYES') : Text::_('JNO') ?></td>
                         </tr>
                     <?php endforeach; ?>

@@ -697,54 +697,6 @@ class BoxofficeModel extends ListModel
                 File::delete($path_multi);
             }
 
-            $query = $db->getQuery(true);
-
-            $fields = [
-                $db->quoteName('totaltickets') . ' = totaltickets+1',
-            ];
-
-            $conditions = [
-                $db->quoteName('ticketid') . ' = ' . $row->ticketid,
-            ];
-
-            $query->update($db->quoteName('#__ticketstation_tickets'))->set($fields)->where($conditions);
-
-            $db->setQuery($query);
-
-            $result = $db->execute();
-
-            if ( ! $result)
-            {
-                return false;
-            }
-
-            ## This is for the parent ticket. (there is a parent available)
-            ## If not, then the query won't have to run as there is no parent.
-            if ($row->parentticket != 0)
-            {
-
-                $query = $db->getQuery(true);
-
-                $fields = [
-                    $db->quoteName('totaltickets') . ' = totaltickets+1',
-                ];
-
-                $conditions = [
-                    $db->quoteName('ticketid') . ' = ' . $row->parentticket,
-                ];
-
-                $query->update($db->quoteName('#__ticketstation_tickets'))->set($fields)->where($conditions);
-
-                $db->setQuery($query);
-
-                $result = $db->execute();
-
-                if ( ! $result)
-                {
-                    return false;
-                }
-            }
-
             if ($row->seat_sector != 0)
             {
                 $query = $db->getQuery(true);
@@ -1307,15 +1259,6 @@ class BoxofficeModel extends ListModel
                 $ticket_helper->removeCombinedTicketFromServer($row->ordercode);
                 $ticket_helper->removeTicketFromServer($row->orderid, $row->barcode);
                 $ticket_helper->removeMultiTicketFromServer($row->ordercode);
-
-                // Increasing ticket totals:
-                $ticket_helper->increaseTicketTotals($row->ticketid);
-
-                // Increasing parentticket totals:
-                if ($row->parentticket != 0)
-                {
-                    $ticket_helper->increaseTicketTotals($row->parentticket);
-                }
 
                 // Check if there was a seat booked:
                 if ($row->seat_sector != 0)

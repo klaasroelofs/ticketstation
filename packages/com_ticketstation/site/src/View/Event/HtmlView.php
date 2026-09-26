@@ -46,41 +46,6 @@ class HtmlView extends BaseHtmlView {
             $app->redirect(Route::_('index.php?option=com_ticketstation&view=upcoming' . ($itemid ? '&Itemid=' . $itemid : '')));
         }
 
-        $n = count($childs);
-
-        if ($n > 0)
-        {
-            $query = $db->getQuery(true);
-            $query->select(array('ticketid', 'ticketname'));
-            $query->from($db->quoteName('#__ticketstation_tickets'));
-            $query->where($db->quoteName('published')." = ".$db->quote(1));
-            $query->where($db->quoteName('parent')." = ".$db->quote($items->ticketid));
-            $query->where($db->quoteName('totaltickets')." > ".$db->quote(0));
-            $query->order('ticketname');
-
-            $db->setQuery($query);
-
-            $childlist[]	   = HTMLHelper::_('select.option',  '0', Text::_('COM_TICKETSTATION_SELECT_TICKET'), 'ticketid', 'ticketname' );
-            $childlist	       = array_merge( $childlist, $db->loadObjectList() );
-            $lists['tickets']  = HTMLHelper::_('select.genericlist',  $childlist, 'ticketid', 'class="inputbox" size="1" ', 'ticketid',
-                'ticketname', 0);
-        }
-        else
-        {
-            $query = $db->getQuery(true);
-            $query->select(array('ticketid', 'ticketname'));
-            $query->from($db->quoteName('#__ticketstation_tickets'));
-            $query->where($db->quoteName('published')." = ".$db->quote(1));
-            $query->where($db->quoteName('parent')." = ".$db->quote($items->ticketid));
-            $query->order('ticketname');
-
-            $db->setQuery($query);
-
-            $childlist[]	   = HTMLHelper::_('select.option',  $items->ticketid, $items->ticketname, 'ticketid', 'ticketname' );
-            $lists['tickets']  = HTMLHelper::_('select.genericlist',  $childlist, 'ticketid', 'class="inputbox" size="1" ', 'ticketid',
-                'ticketname', 0);
-        }
-
         ## Starting a session.
         $session = $app->getSession();
         ## Gettig the orderid if there is one.
@@ -120,7 +85,6 @@ class HtmlView extends BaseHtmlView {
         $this->items        = $items;
         $this->childs       = $childs;
         $this->config       = $config;
-        $this->lists        = $lists;
         $this->soldtickets  = $soldtickets;
 
         parent::display($tpl);

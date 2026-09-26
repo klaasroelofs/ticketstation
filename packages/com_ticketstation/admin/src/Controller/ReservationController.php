@@ -16,6 +16,7 @@ use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\Controller\BaseController;
 use Joomla\CMS\Uri\Uri;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Amount;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\Availability;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Order;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Ordercode;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\PaymentAPI;
@@ -150,7 +151,7 @@ class ReservationController extends BaseController
         // costs (variable or fixed) never apply here - always store a bare price.
         $fee     = 0;
 
-        if ($amount > $ticket->totaltickets)
+        if ($amount > Availability::forPurchase($ticketid))
         {
             $app->enqueueMessage(Text::_('COM_TICKETSTATION_EVENT_SOLD_OUT'), 'error');
             $this->setRedirect(Uri::base() . 'index.php?option=com_ticketstation&view=reservation&layout=quantity');
@@ -158,31 +159,27 @@ class ReservationController extends BaseController
             return;
         }
 
-        for ($i = 0; $i < $amount; $i++)
+        // All rows or none, while the capacity still allows it (see Availability::reserve()).
+        $saved = Availability::reserve($ticketid, $amount, fn () => (bool) $model->insertOrderRow([
+            'ordercode'           => $ordercode,
+            'ticketid'            => $ticketid,
+            'eventid'             => $ticket->eventid,
+            'price'               => $ticket->ticketprice,
+            'vat'                 => $pricing['vat_amount'],
+            'price_excluding_vat' => $pricing['price_excluding_vat'],
+            'vat_percentage'      => $pricing['vat_percentage'],
+            'fees'                => $fee,
+            'requires_seat'       => 0,
+            'orderdate'           => date('Y-m-d H:i:s'),
+            'ipaddress'           => $_SERVER['REMOTE_ADDR'] ?? '',
+        ]));
+
+        if (! $saved)
         {
-            $orderid = $model->insertOrderRow([
-                'ordercode'           => $ordercode,
-                'ticketid'            => $ticketid,
-                'eventid'             => $ticket->eventid,
-                'price'               => $ticket->ticketprice,
-                'vat'                 => $pricing['vat_amount'],
-                'price_excluding_vat' => $pricing['price_excluding_vat'],
-                'vat_percentage'      => $pricing['vat_percentage'],
-                'fees'                => $fee,
-                'requires_seat'       => 0,
-                'orderdate'           => date('Y-m-d H:i:s'),
-                'ipaddress'           => $_SERVER['REMOTE_ADDR'] ?? '',
-            ]);
+            $app->enqueueMessage(Text::_('COM_TICKETSTATION_RESERVATION_SAVE_FAILED'), 'error');
+            $this->setRedirect(Uri::base() . 'index.php?option=com_ticketstation&view=reservation&layout=quantity');
 
-            if (! $orderid)
-            {
-                $app->enqueueMessage(Text::_('COM_TICKETSTATION_RESERVATION_SAVE_FAILED'), 'error');
-                $this->setRedirect(Uri::base() . 'index.php?option=com_ticketstation&view=reservation&layout=quantity');
-
-                return;
-            }
-
-            $model->adjustTicketTotal($ticketid, -1);
+            return;
         }
 
         $this->setRedirect(Uri::base() . 'index.php?option=com_ticketstation&view=reservation&layout=customer');
@@ -218,9 +215,9 @@ class ReservationController extends BaseController
 
         $ticket = (new Ticket)->getTicketDetailsById($seat->ticketid);
 
-        if (! $ticket || $ticket->totaltickets == 0)
+        if (! $ticket)
         {
-            echo json_encode(['error' => '1', 'msg' => Text::_('COM_TICKETSTATION_SOLD_OUT'), 'id' => $coordId]);
+            echo json_encode(['error' => '1', 'msg' => Text::_('COM_TICKETSTATION_RESERVATION_SAVE_FAILED'), 'id' => $coordId]);
             $app->close();
         }
 
@@ -250,12 +247,11 @@ class ReservationController extends BaseController
 
         if (! $orderid)
         {
-            echo json_encode(['error' => '1', 'msg' => Text::_('COM_TICKETSTATION_ORDER_FAILED'), 'id' => $coordId]);
+            echo json_encode(['error' => '1', 'msg' => Text::_('COM_TICKETSTATION_RESERVATION_SAVE_FAILED'), 'id' => $coordId]);
             $app->close();
         }
 
         $model->updateSeatCoords($orderid, $coordId);
-        $model->adjustTicketTotal($seat->ticketid, -1);
 
         $state             = $this->getState();
         $state['eventid']  = $ticket->eventid;
@@ -294,7 +290,6 @@ class ReservationController extends BaseController
         }
 
         $model->deleteOrderRow((int) $order->orderid);
-        $model->adjustTicketTotal((int) $order->ticketid, 1);
         $model->freeSeatCoords($coordId);
 
         echo json_encode(['error' => '0', 'msg' => Text::_('COM_TICKETSTATION_THIS_SEAT_IS_REMOVED'), 'id' => $coordId]);

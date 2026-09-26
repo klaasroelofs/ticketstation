@@ -14,16 +14,16 @@ defined('_JEXEC') or die('Restricted access');
 use Joomla\CMS\Factory;
 
 /**
- * How many tickets are still available, following the ticket's settings.
+ * How many tickets are still available: the capacity minus the order rows that hold it,
+ * whatever their status. Nothing is counted up or down anywhere else; an order row exists
+ * exactly as long as its ticket is taken (the ticketcleaner, the Box Office and the cart
+ * delete the row to release it).
  *
- * Quantity tickets count sold order rows against Total Tickets (Start), as the rest of the
- * storefront does. A child ticket either shares the parent's pool (Choice for Ticketcounter
- * "Use Parent Totals") or has its own cap ("Use Child Totals"); the pool is used up by the
- * orders of the parent and of every child that shares it.
+ * Quantity tickets: the capacity is Capacity (starting_total_tickets). A parent with child
+ * tickets chooses, in its own counter_choice, whether the children share its capacity
+ * (0, one pool for the parent and all children) or each have their own (1).
  *
- * Seated tickets count free seats on the chart, limited by the Total Tickets counter the
- * seat-picker checks (see OrderseatedController::makeReservation()): the ticket's own for
- * Multi Seat = Yes, each section's (child ticket's) for Multi Seat = No.
+ * Seated tickets count free seats on the chart.
  */
 class Availability
 {
@@ -38,10 +38,9 @@ class Availability
 
     /**
      * Tickets available for a top-level ticket as a whole (see forListing()) together with
-     * the capacity they are part of, for the availability bar:
-     * {available, capacity}. Capacity is Total Tickets (Start) of the ticket, or for a parent
-     * with child tickets that of the shared pool plus that of every variant with its own cap;
-     * for a seated ticket the number of seats.
+     * the capacity they are part of, for the availability bar: {available, capacity}. With
+     * a capacity per child ticket, both are the sums over the published children; for a
+     * seated ticket, the seats.
      */
     public static function summary(int $ticketid): object
     {
@@ -58,31 +57,18 @@ class Availability
 
         $children = self::getChildren($ticketid);
 
-        if (!$children) {
-            $summary->available = self::remaining($ticket->starting_total_tickets, [$ticketid]);
+        if (!$children || $ticket->counter_choice == 0) {
+            $summary->available = self::remaining($ticket->starting_total_tickets, self::poolIds($ticket, $children));
             $summary->capacity  = (int) $ticket->starting_total_tickets;
 
             return $summary;
         }
 
-        $usesPool = false;
-
         foreach ($children as $child) {
-            if ($child->published != 1) {
-                continue;
-            }
-
-            if ($child->counter_choice == 0) {
-                $usesPool = true;
-            } else {
+            if ($child->published == 1) {
                 $summary->available += self::remaining($child->starting_total_tickets, [(int) $child->ticketid]);
                 $summary->capacity  += (int) $child->starting_total_tickets;
             }
-        }
-
-        if ($usesPool) {
-            $summary->available += self::poolRemaining($ticket, $children);
-            $summary->capacity  += (int) $ticket->starting_total_tickets;
         }
 
         return $summary;
@@ -93,27 +79,87 @@ class Availability
      */
     public static function forPurchase(int $ticketid): int
     {
+        $pool = self::pool($ticketid);
+
+        return $pool ? self::remaining($pool->capacity, $pool->ids) : 0;
+    }
+
+    /**
+     * Tickets available for any single ticket, for screens that list tickets one by one
+     * (the backend reservation tool): a child ticket's own or shared availability, a seated
+     * ticket's free seats, or a quantity ticket's Capacity left.
+     */
+    public static function forTicket(int $ticketid): int
+    {
         $ticket = self::getTicket($ticketid);
 
         if (!$ticket) {
             return 0;
         }
 
-        if ($ticket->parent > 0 && $ticket->counter_choice == 0) {
-            $parent = self::getTicket((int) $ticket->parent);
-
-            return $parent ? self::poolRemaining($parent, self::getChildren((int) $parent->ticketid)) : 0;
+        if ($ticket->parent > 0) {
+            return self::forVariant($ticketid)->available;
         }
 
-        return self::remaining($ticket->starting_total_tickets, [$ticketid]);
+        return $ticket->show_seatplans == 1 ? self::freeSeats($ticket)->available : self::forPurchase($ticketid);
+    }
+
+    /**
+     * Adds $amount order rows for a quantity ticket, but only while its capacity allows it.
+     * The pool's ticket row is locked for the duration, so two customers buying the last
+     * tickets at the same moment are handled one after the other instead of both passing
+     * the check. $store is called once per ticket and returns false on failure, which
+     * undoes every row added in this call.
+     *
+     * @return  bool  false when there is not enough capacity left or a row failed to save.
+     */
+    public static function reserve(int $ticketid, int $amount, callable $store): bool
+    {
+        $pool = self::pool($ticketid);
+
+        if (!$pool || $amount < 1) {
+            return false;
+        }
+
+        $db = Factory::getContainer()->get('DatabaseDriver');
+
+        $db->transactionStart();
+
+        try {
+            $db->setQuery('SELECT ' . $db->quoteName('ticketid') . ' FROM ' . $db->quoteName('#__ticketstation_tickets')
+                . ' WHERE ' . $db->quoteName('ticketid') . ' = ' . (int) $pool->ticketid . ' FOR UPDATE');
+            $db->execute();
+
+            if (self::remaining($pool->capacity, $pool->ids) < $amount) {
+                $db->transactionRollback();
+
+                return false;
+            }
+
+            for ($i = 0; $i < $amount; $i++) {
+                if (!$store()) {
+                    $db->transactionRollback();
+
+                    return false;
+                }
+            }
+
+            $db->transactionCommit();
+        } catch (\Throwable $e) {
+            $db->transactionRollback();
+
+            return false;
+        }
+
+        return true;
     }
 
     /**
      * Availability of one child ticket (variant) for the backend ticket list:
      * {available, capacity, shared}. "shared" is true when the variant has no stock of its
-     * own but draws on its parent: the parent's pool ("Use Parent Totals"), or the parent's
-     * seats for a price category of a seated ticket with Multi Seat = Yes. A section of a
-     * seated ticket with Multi Seat = No counts its own free seats.
+     * own but draws on its parent: the parent's shared capacity, or the parent's seats for
+     * a price category of a seated ticket with Multi Seat = Yes. A section of a seated
+     * ticket with Multi Seat = No counts its own free seats.
      */
     public static function forVariant(int $ticketid): object
     {
@@ -135,38 +181,69 @@ class Availability
             return $summary;
         }
 
-        if ($ticket->counter_choice == 0) {
-            $summary->available = self::poolRemaining($parent, self::getChildren((int) $parent->ticketid));
-            $summary->capacity  = (int) $parent->starting_total_tickets;
-            $summary->shared    = true;
+        $pool = self::pool($ticketid);
 
-            return $summary;
-        }
-
-        $summary->available = self::remaining($ticket->starting_total_tickets, [$ticketid]);
-        $summary->capacity  = (int) $ticket->starting_total_tickets;
+        $summary->available = self::remaining($pool->capacity, $pool->ids);
+        $summary->capacity  = $pool->capacity;
+        $summary->shared    = $pool->ticketid !== (int) $ticket->ticketid;
 
         return $summary;
     }
 
     /**
-     * What is left of a parent's pool after the orders of the parent itself and of every
-     * child that shares the pool.
+     * The capacity a quantity ticket sells from: {ticketid, capacity, ids}, where ticketid is
+     * the ticket whose Capacity applies (and whose row reserve() locks) and ids are the
+     * tickets whose order rows use it up. A child of a parent with shared capacity sells
+     * from the parent's pool; any other ticket from its own Capacity.
      */
-    private static function poolRemaining(object $parent, array $children): int
+    private static function pool(int $ticketid): ?object
     {
-        $ids = [(int) $parent->ticketid];
+        $ticket = self::getTicket($ticketid);
 
-        foreach ($children as $child) {
-            if ($child->counter_choice == 0) {
+        if (!$ticket) {
+            return null;
+        }
+
+        $owner = $ticket;
+
+        if ($ticket->parent > 0) {
+            $parent = self::getTicket((int) $ticket->parent);
+
+            if ($parent && $parent->counter_choice == 0) {
+                $owner = $parent;
+            }
+        }
+
+        $ids = $owner->ticketid === $ticket->ticketid && $ticket->parent > 0
+            ? [(int) $ticket->ticketid]
+            : self::poolIds($owner, self::getChildren((int) $owner->ticketid));
+
+        return (object) [
+            'ticketid' => (int) $owner->ticketid,
+            'capacity' => (int) $owner->starting_total_tickets,
+            'ids'      => $ids,
+        ];
+    }
+
+    /**
+     * The tickets whose orders use up a top-level ticket's Capacity: the ticket itself and,
+     * with shared capacity, all its child tickets. The parent's own orders always count, so
+     * a (manual) order on the parent can't let the pool overflow.
+     */
+    private static function poolIds(object $ticket, array $children): array
+    {
+        $ids = [(int) $ticket->ticketid];
+
+        if ($ticket->counter_choice == 0) {
+            foreach ($children as $child) {
                 $ids[] = (int) $child->ticketid;
             }
         }
 
-        return self::remaining($parent->starting_total_tickets, $ids);
+        return $ids;
     }
 
-    private static function remaining($total, array $ticketids): int
+    private static function remaining($capacity, array $ticketids): int
     {
         $db = Factory::getContainer()->get('DatabaseDriver');
 
@@ -177,7 +254,7 @@ class Availability
 
         $db->setQuery($query);
 
-        return max(0, (int) $total - (int) $db->loadResult());
+        return max(0, (int) $capacity - (int) $db->loadResult());
     }
 
     /**
@@ -203,25 +280,22 @@ class Availability
             return $summary;
         }
 
-        ## Multi Seat = No: per section, the free seats of that child ticket up to its counter.
-        ## Otherwise the seats belong to the ticket itself and draw on its own counter.
+        ## Multi Seat = No: the seats of the child tickets (sections), or of one section.
+        ## Otherwise the seats belong to the ticket itself.
         $query = $db->getQuery(true)
-            ->select(['t.totaltickets', 'SUM(c.booked = 0) AS free', 'COUNT(*) AS seats'])
+            ->select(['SUM(c.booked = 0) AS free', 'COUNT(*) AS seats'])
             ->from($db->quoteName('#__ticketstation_seatplancoords', 'c'))
-            ->join('INNER', $db->quoteName('#__ticketstation_tickets', 't') . ' ON ' . $db->quoteName('t.ticketid') . ' = ' . $db->quoteName('c.ticketid'))
-            ->where($db->quoteName($multiSeat == 1 ? 'c.ticketid' : 'c.parent') . ' = ' . (int) $ticket->ticketid)
-            ->group([$db->quoteName('c.ticketid'), $db->quoteName('t.totaltickets')]);
+            ->where($db->quoteName($multiSeat == 1 ? 'c.ticketid' : 'c.parent') . ' = ' . (int) $ticket->ticketid);
 
         if ($sectionId > 0 && $multiSeat != 1) {
             $query->where($db->quoteName('c.ticketid') . ' = ' . $sectionId);
         }
 
         $db->setQuery($query);
+        $row = $db->loadObject();
 
-        foreach ($db->loadObjectList() as $row) {
-            $summary->available += max(0, min((int) $row->free, (int) $row->totaltickets));
-            $summary->capacity  += (int) $row->seats;
-        }
+        $summary->available = (int) ($row->free ?? 0);
+        $summary->capacity  = (int) ($row->seats ?? 0);
 
         return $summary;
     }
@@ -231,7 +305,7 @@ class Availability
         $db = Factory::getContainer()->get('DatabaseDriver');
 
         $query = $db->getQuery(true)
-            ->select(['ticketid', 'parent', 'starting_total_tickets', 'totaltickets', 'counter_choice', 'show_seatplans', 'published'])
+            ->select(['ticketid', 'parent', 'starting_total_tickets', 'counter_choice', 'show_seatplans', 'published'])
             ->from($db->quoteName('#__ticketstation_tickets'))
             ->where($db->quoteName('ticketid') . ' = ' . $ticketid);
 
@@ -245,7 +319,7 @@ class Availability
         $db = Factory::getContainer()->get('DatabaseDriver');
 
         $query = $db->getQuery(true)
-            ->select(['ticketid', 'parent', 'starting_total_tickets', 'totaltickets', 'counter_choice', 'show_seatplans', 'published'])
+            ->select(['ticketid', 'parent', 'starting_total_tickets', 'counter_choice', 'show_seatplans', 'published'])
             ->from($db->quoteName('#__ticketstation_tickets'))
             ->where($db->quoteName('parent') . ' = ' . $parentid);
 

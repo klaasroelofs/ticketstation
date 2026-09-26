@@ -279,6 +279,7 @@ CREATE TABLE IF NOT EXISTS `#__ticketstation_orders` (
   PRIMARY KEY (`orderid`),
   KEY `ordercode` (`ordercode`),
   KEY `idx_barcode` (`barcode`),
+  KEY `idx_ticketid` (`ticketid`),
   UNIQUE KEY `idx_validation_token_orders` (`validation_token`)
 )  AUTO_INCREMENT=10000 ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 DEFAULT COLLATE=utf8mb4_unicode_ci;
 

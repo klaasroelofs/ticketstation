@@ -54,25 +54,22 @@
             <option value="">COM_TICKETSTATION_CHOOSE_VENUE</option>
         </field>
         <field
-                name="totaltickets"
-                type="number"
-                label="COM_TICKETSTATION_TOTAL_TICKETS"
-        />
-        <field
                 name="starting_total_tickets"
                 type="number"
-                label="COM_TICKETSTATION_TOTAL_TICKETS_START"
-                description="COM_TICKETSTATION_TOTAL_TICKETS_START_EXPLANATION"
+                label="COM_TICKETSTATION_CAPACITY"
+                description="COM_TICKETSTATION_CAPACITY_EXPLANATION"
+                min="0"
+                showon="show_seatplans:0"
         />
         <field
                 name="counter_choice"
                 type="list"
-                label="COM_TICKETSTATION_COUNTER_CHOICE"
-                description="COM_TICKETSTATION_COUNTER_CHOICE_EXPLANATION"
+                label="COM_TICKETSTATION_CAPACITY_MODE"
+                description="COM_TICKETSTATION_CAPACITY_MODE_EXPLANATION"
                 default="0"
         >
-            <option value="0">COM_TICKETSTATION_USE_PARENT</option>
-            <option value="1">COM_TICKETSTATION_USE_CHILD</option>
+            <option value="0">COM_TICKETSTATION_CAPACITY_SHARED</option>
+            <option value="1">COM_TICKETSTATION_CAPACITY_PER_CHILD</option>
         </field>
     </fieldset>
 

@@ -179,43 +179,6 @@ class TicketsModel extends ListModel
         return $this->data;
     }
 
-    function update($event = 0)
-    {
-        $db = Factory::getContainer()->get('DatabaseDriver');
-
-        $query = $db->getQuery(true);
-
-        $query->select(array('SUM(totaltickets) AS totals'));
-        $query->from($db->quoteName('#__ticketstation_tickets'));
-        $query->where($db->quoteName('eventid') . ' = '. $db->quote((int)$event));
-
-        $db->setQuery($query);
-        $data = $db->loadObject();
-
-        $query = $db->getQuery(true);
-
-        $fields = array(
-            $db->quoteName('ticketcounter') . ' = ' . $db->quote((int)$data->totals)
-        );
-
-        $conditions = array(
-            $db->quoteName('eventid') . ' = ' . $db->quote((int)$event)
-        );
-
-        $query->update($db->quoteName('#__ticketstation_events'))->set($fields)->where($conditions);
-
-        $db->setQuery($query);
-
-        $result = $db->execute();
-
-        if (!$result)
-        {
-            return false;
-        }
-
-        return true;
-    }
-
     function publish($cid = array(), $publish = 1)
     {
         if (count( $cid ))

@@ -94,25 +94,6 @@ class OrderseatedController extends BaseController {
             exit();
         }
 
-        ## Give the seat back to the counter makeReservation() took it from: the seat's own
-        ## ticket, whatever price category the order ended up with.
-        $counterid = $seat ? (int) $seat->ticketid : (int) $item->ticketid;
-
-        $query = 'UPDATE #__ticketstation_tickets SET totaltickets = totaltickets+1
-				  WHERE ticketid = '.$counterid;
-
-        ## Do the query now
-        $db->setQuery( $query );
-
-        ## When query goes wrong.. Show message with error.
-        if (!$db->execute()) {
-
-            $msg = Text::_( 'COM_TICKETSTATION_COULD_NOT_UPDATE_ORDER_TABLE' );
-            $arr = array('error' => '1', 'msg' => $msg, 'id' => $id);
-            echo json_encode($arr);
-            exit();
-        }
-
         ### NOW UPADTE THE COORDS TABLE
         $query = 'UPDATE #__ticketstation_seatplancoords
 				  SET orderid = 0, booked = 0
@@ -338,14 +319,14 @@ class OrderseatedController extends BaseController {
      * Reserves the clicked seat: adds an order row for it to the session's order and marks
      * the seat as booked.
      *
-     * Which ticket is sold, and which Total Tickets counter it draws on, follows from the
-     * seat plan set-up (see the Seated tickets topic on the Documentation page):
-     * - Multi Seat = Yes, no child tickets: the seat's own ticket; its counter.
+     * Which ticket is sold follows from the seat plan set-up (see the Seated tickets topic on
+     * the Documentation page):
+     * - Multi Seat = Yes, no child tickets: the seat's own ticket.
      * - Multi Seat = Yes, with child tickets (price per person): the most expensive published
-     *   child, which the customer can change afterwards (updateSeat()); the counter of the
-     *   seat's own (parent) ticket, shared by all price categories.
-     * - Multi Seat = No (price per section): the child ticket the seat belongs to; its counter.
-     * In every case the counter is that of the seat's own ticket (seatplancoords.ticketid).
+     *   child, which the customer can change afterwards (updateSeat()).
+     * - Multi Seat = No (price per section): the child ticket the seat belongs to.
+     * No counter is kept: the seats themselves are the capacity, and claiming the seat below
+     * is what makes it unavailable.
      */
     function makeReservation(){
 
@@ -387,8 +368,8 @@ class OrderseatedController extends BaseController {
             exit();
         }
 
-        $counterid = (int) $item->ticketid;
-        $ticketid  = $counterid;
+        $seatTicketId = (int) $item->ticketid;
+        $ticketid  = $seatTicketId;
 
         if ($item->multi_seat == 1) {
 
@@ -396,12 +377,12 @@ class OrderseatedController extends BaseController {
             $query = $db->getQuery(true)
                 ->select('ticketid')
                 ->from($db->quoteName('#__ticketstation_tickets'))
-                ->where($db->quoteName('parent') . ' = ' . $counterid)
+                ->where($db->quoteName('parent') . ' = ' . $seatTicketId)
                 ->where($db->quoteName('published') . ' = 1')
                 ->order($db->quoteName('ticketprice') . ' DESC');
 
             $db->setQuery($query, 0, 1);
-            $ticketid = (int) $db->loadResult() ?: $counterid;
+            $ticketid = (int) $db->loadResult() ?: $seatTicketId;
         }
 
         $sql = 'SELECT eventid, ticketprice, vat_percentage
@@ -411,17 +392,9 @@ class OrderseatedController extends BaseController {
         $db->setQuery($sql);
         $ticket = $db->loadObject();
 
-        $sql = 'SELECT totaltickets
-				FROM #__ticketstation_tickets
-				WHERE ticketid = '.$counterid;
+        if (!$ticket) {
 
-        $db->setQuery($sql);
-        $totaltickets = (int) $db->loadResult();
-
-        if (!$ticket || $totaltickets <= 0) {
-
-            ## Not enough tickets available.
-            $msg = Text::_( $item->multi_seat == 1 ? 'COM_TICKETSTATION_NO_SEATS_AVAILABLE' : 'COM_TICKETSTATION_SOLD_OUT' );
+            $msg = Text::_( 'COM_TICKETSTATION_ORDER_FAILED' );
             $arr = array('error' => '1', 'msg' => $msg, 'id' => $id, 'multiseat' => $multiseat);
             echo json_encode($arr);
             exit();
@@ -474,23 +447,8 @@ class OrderseatedController extends BaseController {
         ### WE NEED TO UPDATE THE SEAT NUMBER NOW ### --> ORDERID NEEDS TO BE ENTERED IN SEAT!
         $model->updateCoords($model->getOrderid(), $id);
 
-        ## Update the tickets-totals that where removed.
-        $query = 'UPDATE #__ticketstation_tickets'
-            . ' SET totaltickets = totaltickets-1'
-            . ' WHERE ticketid = '.$counterid;
-
-        $db->setQuery( $query );
-
-        if (!$db->execute()) {
-
-            $msg = Text::_('COM_TICKETSTATION_DB_QUERY_FAILED').' (Error: #101)';
-            $arr = array('error' => '1', 'msg' => $msg, 'id' => $id, 'multiseat' => $multiseat);
-            echo json_encode($arr);
-            exit();
-        }
-
         ## With price categories the page opens the category choice for this seat straight away.
-        $pricechoice = $ticketid !== $counterid ? '1' : '0';
+        $pricechoice = $ticketid !== $seatTicketId ? '1' : '0';
 
         $msg = Text::_( $pricechoice === '1' ? 'COM_TICKETSTATION_SEAT_HAS_BEEN_ORDERED_CHOOSE_PRICE' : 'COM_TICKETSTATION_SEAT_HAS_BEEN_ORDERED' );
         $arr = array('error' => '0', 'msg' => $msg, 'id' => $id, 'multiseat' => $multiseat, 'pricechoice' => $pricechoice, 'seatid' => $item->row_name.$item->seatid);

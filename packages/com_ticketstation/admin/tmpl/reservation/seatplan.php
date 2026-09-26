@@ -109,7 +109,7 @@ else
         <p>
             <strong><?= htmlspecialchars($this->ticket->ticketname, ENT_QUOTES, 'UTF-8') ?></strong>
             &mdash; <?= TicketstationFunctions::showprice($this->config->priceformat, $this->ticket->ticketprice, $this->config->valuta) ?>
-            &mdash; <?= (int) $this->ticket->totaltickets ?> <?= Text::_('COM_TICKETSTATION_AVAILABLE') ?>
+            &mdash; <?= (int) $this->available ?> <?= Text::_('COM_TICKETSTATION_AVAILABLE') ?>
         </p>
 
         <div class="row">
