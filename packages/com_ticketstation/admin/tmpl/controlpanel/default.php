@@ -195,6 +195,18 @@ if (version_compare(JVERSION, '4.999.999', 'gt')) {
                             </td>
                             <td>
                                 <?php echo $this->data['version']; ?>
+                                <?php if ($this->update) { ?>
+                                    <?php $updateLabel = Text::sprintf('COM_TICKETSTATION_VIEW_CPANEL_UPDATE_AVAILABLE', $this->escape($this->update)); ?>
+                                    <?php if ($app->getIdentity()->authorise('core.manage', 'com_installer')) { ?>
+                                        <a href="index.php?option=com_installer&view=update" class="badge bg-warning text-dark ms-1">
+                                            <span class="fa fa-arrow-circle-up" aria-hidden="true"></span> <?= $updateLabel ?>
+                                        </a>
+                                    <?php } else { ?>
+                                        <span class="badge bg-warning text-dark ms-1">
+                                            <span class="fa fa-arrow-circle-up" aria-hidden="true"></span> <?= $updateLabel ?>
+                                        </span>
+                                    <?php } ?>
+                                <?php } ?>
                             </td>
                         </tr>
                         <tr>

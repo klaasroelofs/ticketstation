@@ -35,12 +35,15 @@ class HtmlView extends BaseHtmlView {
 
     public $attention = [];
 
+    public $update = null;
+
     function display($tpl = null) {
 
         ToolbarHelper::title(Text::_('COM_TICKETSTATION_VIEW_CPANEL_TITLE'), 'icon-home');
 
         $model = $this->getModel('Controlpanel', 'Administrator');
         $this->data 	= $model->getData();
+        $this->update   = $model->getAvailableUpdate();
 		$this->mollie   = $model->getMollie();
         $this->config   = $model->getConfig();
 

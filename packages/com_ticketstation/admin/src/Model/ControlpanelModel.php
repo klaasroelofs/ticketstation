@@ -11,9 +11,11 @@ namespace Ticketstation\Component\Ticketstation\Administrator\Model;
 
 defined('_JEXEC') or die;
 
+use Joomla\CMS\Component\ComponentHelper;
 use Joomla\CMS\Factory;
 use Joomla\CMS\Mail\MailHelper;
 use Joomla\CMS\MVC\Model\BaseDatabaseModel;
+use Joomla\CMS\Updater\Updater;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Availability;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Coupon;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Date;
@@ -48,6 +50,71 @@ class ControlpanelModel extends BaseDatabaseModel
         $this->data = json_decode($db->loadResult(), true);
 
         return $this->data;
+    }
+
+    /**
+     * The newer package version that Joomla's update system offers, or null when there is none.
+     *
+     * Uses Joomla's own update check for pkg_ticketstation, with the cache time and minimum
+     * stability from the Joomla Update settings (com_installer), so the answer matches
+     * System → Update → Extensions. The update server is only contacted when the last
+     * check is older than that cache time.
+     *
+     * @return  string|null
+     */
+    function getAvailableUpdate()
+    {
+        $db = Factory::getContainer()->get('DatabaseDriver');
+
+        $query = $db->getQuery(true)
+            ->select($db->quoteName(['extension_id', 'manifest_cache']))
+            ->from($db->quoteName('#__extensions'))
+            ->where($db->quoteName('type') . ' = ' . $db->quote('package'))
+            ->where($db->quoteName('element') . ' = ' . $db->quote('pkg_ticketstation'));
+
+        $db->setQuery($query);
+        $package = $db->loadObject();
+
+        if (!$package)
+        {
+            return null;
+        }
+
+        $params = ComponentHelper::getParams('com_installer');
+
+        try
+        {
+            Updater::getInstance()->findUpdates(
+                (int) $package->extension_id,
+                3600 * (int) $params->get('cachetimeout', 6),
+                (int) $params->get('minimum_stability', Updater::STABILITY_STABLE)
+            );
+        }
+        catch (\Throwable $e)
+        {
+            // Update server unreachable: fall back to what an earlier check stored.
+        }
+
+        $query = $db->getQuery(true)
+            ->select($db->quoteName('version'))
+            ->from($db->quoteName('#__updates'))
+            ->where($db->quoteName('extension_id') . ' = ' . (int) $package->extension_id);
+
+        $db->setQuery($query);
+        $versions = $db->loadColumn();
+
+        $installed = json_decode((string) $package->manifest_cache, true)['version'] ?? '0';
+        $newest    = null;
+
+        foreach ($versions as $version)
+        {
+            if (version_compare($version, $newest ?? $installed, '>'))
+            {
+                $newest = $version;
+            }
+        }
+
+        return $newest;
     }
 	
 	function getMollie() {
