@@ -17,7 +17,7 @@ use Joomla\CMS\Factory;
 use Joomla\CMS\Uri\Uri;
 use Joomla\CMS\HTML\HTMLHelper;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Amount;
-use Ticketstation\Component\Ticketstation\Administrator\Helper\getAmount;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\OrderTotals;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\SeatplanSettings;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Shop;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\TicketstationFunctions;
@@ -250,9 +250,8 @@ class OrderseatedController extends BaseController {
         $session_ordercode = $session->get('ordercode');
 
         ## Total for this order:
-        $total = (new getAmount)->_getAmount($session->get('ordercode'));
-        $fees = (new getAmount)->_getFees($session->get('ordercode'));
-        $ordertotal = $total-$fees;
+        $totals     = OrderTotals::get($session->get('ordercode'), true);
+        $ordertotal = $totals->subtotal;
 
         $db     = Factory::getContainer()->get('DatabaseDriver');
 

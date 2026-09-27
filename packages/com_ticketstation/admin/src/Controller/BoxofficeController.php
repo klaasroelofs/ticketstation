@@ -360,12 +360,17 @@ class BoxofficeController extends BaseController {
         }
         else
         {
-            $app->enqueueMessage(Text::_('COM_TICKETSTATION_PAYMENT_REQUESTS_SENT'));
+            if (count($model->skippedPaymentRequests) < count($cid))
+            {
+                $app->enqueueMessage(Text::_('COM_TICKETSTATION_PAYMENT_REQUESTS_SENT'));
+            }
 
+            if ($model->skippedPaymentRequests)
+            {
+                $app->enqueueMessage(Text::sprintf('COM_TICKETSTATION_PAYMENT_REQUESTS_SKIPPED', implode(', ', $model->skippedPaymentRequests)), 'warning');
+            }
         }
-		
 
-		
         $this->setRedirect($link);
     }
 

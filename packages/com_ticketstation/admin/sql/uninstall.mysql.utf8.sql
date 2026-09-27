@@ -9,6 +9,7 @@ DROP TABLE IF EXISTS `#__ticketstation_invoices`;
 DROP TABLE IF EXISTS `#__ticketstation_invoice_items`;
 DROP TABLE IF EXISTS `#__ticketstation_mollie`;
 DROP TABLE IF EXISTS `#__ticketstation_orders`;
+DROP TABLE IF EXISTS `#__ticketstation_ordertotals`;
 DROP TABLE IF EXISTS `#__ticketstation_remarks`;
 DROP TABLE IF EXISTS `#__ticketstation_scannermap`;
 DROP TABLE IF EXISTS `#__ticketstation_seatplancoords`;

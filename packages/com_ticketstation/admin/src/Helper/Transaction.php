@@ -61,6 +61,19 @@ class Transaction
 
         $db->setQuery($query);
 
+        if (!$db->execute())
+        {
+            return false;
+        }
+
+        // And its payment attempts at Mollie, so a new order that reuses the ordercode doesn't
+        // pick up the attempt of this one.
+        $query = $db->getQuery(true)
+            ->delete($db->quoteName('#__ticketstation_transactions_temp'))
+            ->where($db->quoteName('ordercode') . ' = ' . (int) $ordercode);
+
+        $db->setQuery($query);
+
         return (bool) $db->execute();
     }
 }

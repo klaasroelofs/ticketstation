@@ -14,8 +14,8 @@ use Joomla\CMS\Layout\LayoutHelper;
 use Joomla\CMS\Router\Route;
 use Joomla\CMS\Uri\Uri;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Ordercode;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\OrderTotals;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\TicketstationFunctions;
-use Ticketstation\Component\Ticketstation\Administrator\Helper\getAmount;
 
 // No direct access to this file
 defined('_JEXEC') or die('Restricted Access');
@@ -30,11 +30,10 @@ $document->addStyleSheet( 'components/com_ticketstation/assets/css/component.css
 HTMLHelper::_('jquery.framework');
 
 ## Total for this order:
-$total      = (new getAmount)->_getAmount($session->get('ordercode'));
-$fees       = (new getAmount)->_getFees($session->get('ordercode'));
-$discount   = (new getAmount)->_getDiscount($session->get('ordercode'));
-
-$ordertotal = $total;
+$totals     = OrderTotals::get($session->get('ordercode'), true);
+$fees       = $totals->fees;
+$discount   = $totals->discount;
+$ordertotal = $totals->total;
 
 $itemid = TicketstationFunctions::getSiteItemid();
 $link = Route::_('index.php?option=com_ticketstation&view=checkout' . ($itemid ? '&Itemid=' . $itemid : ''));
@@ -174,7 +173,7 @@ $trashIcon = '<svg class="ts-icon" viewBox="0 0 16 16" aria-hidden="true"><path 
                                 <?php echo $trashIcon; ?>
                                 <span class="ts-visually-hidden"><?php echo Text::_('COM_TICKETSTATION_REMOVE'); ?></span>
                             </a>
-                            <span class="ts-summary__amount"><?php echo (new TicketstationFunctions)->showprice($this->config->priceformat, $row->ticketprice, $this->config->valuta); ?></span>
+                            <span class="ts-summary__amount"><?php echo (new TicketstationFunctions)->showprice($this->config->priceformat, $row->price, $this->config->valuta); ?></span>
                         </span>
                     </td>
                 </tr>
@@ -224,19 +223,19 @@ $trashIcon = '<svg class="ts-icon" viewBox="0 0 16 16" aria-hidden="true"><path 
         <tfoot>
             <tr class="ts-summary__subtotal">
                 <th scope="row"><?php echo Text::_('COM_TICKETSTATION_SUBTOTAL'); ?></th>
-                <td class="ts-price"><?php echo (new TicketstationFunctions)->showprice($this->config->priceformat , ($ordertotal-$fees)+$discount, $this->config->valuta); ?></td>
+                <td class="ts-price"><?php echo (new TicketstationFunctions)->showprice($this->config->priceformat , $totals->tickets, $this->config->valuta); ?></td>
             </tr>
 
             <?php if ($discount > 0): ?>
                 <tr class="ts-summary__discount">
-                    <th scope="row"><?php echo Text::_('COM_TICKETSTATION_DISCOUNT'); ?><?php if ($this->items[0]->discount_type == 1):?> (<?php echo $this->items[0]->discount_amount;?>%)<?php endif; ?></th>
+                    <th scope="row"><?php echo Text::_('COM_TICKETSTATION_DISCOUNT'); ?><?php if ($totals->discount_type == 1):?> (<?php echo (float) $totals->discount_amount;?>%)<?php endif; ?></th>
                     <td class="ts-price">- <?php echo (new TicketstationFunctions)->showprice($this->config->priceformat, $discount, $this->config->valuta); ?></td>
                 </tr>
             <?php endif; ?>
 
-            <?php if ($fees > 0 && $this->config->variable_transcosts != 2): ?>
+            <?php if ($fees > 0 && $totals->fee_type != OrderTotals::FEE_NONE): ?>
                 <tr class="ts-summary__fees">
-                    <th scope="row"><?php echo Text::_('COM_TICKETSTATION_FEES'); ?><?php if ($this->config->variable_transcosts == '1') { ?> (<?php echo $this->config->transcosts ?>%)<?php } ?></th>
+                    <th scope="row"><?php echo Text::_('COM_TICKETSTATION_FEES'); ?><?php if ($totals->fee_type == OrderTotals::FEE_VARIABLE) { ?> (<?php echo (float) $totals->fee_rate ?>%)<?php } ?></th>
                     <td class="ts-price"><?php echo (new TicketstationFunctions)->showprice($this->config->priceformat, $fees, $this->config->valuta); ?></td>
                 </tr>
             <?php endif; ?>

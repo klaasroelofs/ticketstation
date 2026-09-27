@@ -19,6 +19,7 @@ use Ticketstation\Component\Ticketstation\Administrator\Helper\Amount;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Availability;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Order;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Ordercode;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\OrderTotals;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\PaymentAPI;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\SeatplanSettings;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Ticket;
@@ -436,6 +437,10 @@ class ReservationController extends BaseController
         // Order::update() rewrites the ordercode to its final value and stores that in the
         // session - read it back so the rest of this method (and the redirect) use it.
         $finalOrdercode = Factory::getApplication()->getSession()->get('ordercode');
+
+        // A reservation never has transaction costs, also when it is paid later through a
+        // payment link.
+        OrderTotals::capture($finalOrdercode, false);
 
         if ($paid == 1)
         {

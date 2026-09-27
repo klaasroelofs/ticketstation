@@ -13,6 +13,7 @@ use Joomla\CMS\Language\Text;
 use Joomla\CMS\Router\Route;
 use Joomla\CMS\Uri\Uri;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Date;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\OrderTotals;
 
 // No direct access to this file
 defined('_JEXEC') or die('Restricted Access');
@@ -49,6 +50,7 @@ $history_icons = [
     'order_paid'             => ['fa-check-circle', 'success'],
     'order_status_pending'   => ['fa-clock', 'warning'],
     'order_status_refunded'  => ['fa-reply', 'info'],
+    'order_status_unpaid'    => ['fa-times-circle', 'danger'],
     'payment_failed'         => ['fa-times-circle', 'danger'],
     'payment_cancelled'      => ['fa-ban', 'secondary'],
     'payment_expired'        => ['fa-hourglass-end', 'secondary'],
@@ -156,6 +158,22 @@ $history_icons = [
                             </td>
                         </tr>
                     <?php } ?>
+
+                    <?php // The service fee with the terms kept for this order (see OrderTotals). ?>
+                    <tr>
+                        <td><?= Text::_('COM_TICKETSTATION_SERVICE_FEE'); ?><?= $this->totals->fee_type == OrderTotals::FEE_VARIABLE ? ' (' . (float) $this->totals->fee_rate . '%)' : ''; ?></td>
+                        <td>
+                            <?php if ($this->totals->fee_type == OrderTotals::FEE_NONE) { ?>
+                                <?= Text::_('COM_TICKETSTATION_NONE'); ?>
+                            <?php } else { ?>
+                                <?= $this->config->valuta; ?> <?= number_format($this->totals->fees, 2, ',', ''); ?>
+                            <?php } ?>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><?= Text::_('COM_TICKETSTATION_VAT_TOTAL'); ?></td>
+                        <td><?= $this->config->valuta; ?> <?= number_format($this->totals->vat, 2, ',', ''); ?></td>
+                    </tr>
 
                 </table>
             </div>

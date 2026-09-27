@@ -18,6 +18,7 @@ use Joomla\CMS\MVC\View\HtmlView as BaseHtmlView;
 use Joomla\CMS\Toolbar\Toolbar;
 use Joomla\CMS\Toolbar\ToolbarHelper;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\CustomerNote;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\OrderTotals;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\ticketcreator;
 
 /**
@@ -240,18 +241,17 @@ class HtmlView extends BaseHtmlView
 
         $this->qrcode_folder = '/administrator/components/com_ticketstation/tickets/qrcodes/';
 
-        ## Orderprice
+        ## Orderprice: what was paid, or else what the customer pays (tickets after the discount,
+        ## plus the service fee).
+        $this->totals = OrderTotals::get($items->ordercode ?? 0);
+
         if ($data[0]->transaction_amount > 0)
         {
             $orderprice = $data[0]->transaction_amount;
         }
         else
         {
-            $orderprice = 0;
-            foreach($data as $item)
-            {
-                $orderprice = ($orderprice + $item->price);
-            }
+            $orderprice = $this->totals->total;
         }
 
         $this->data     = $data;

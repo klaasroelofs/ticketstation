@@ -115,17 +115,7 @@ class eTicketsMessage
         $db->setQuery($query);
         $orderdate = $db->loadResult();
 
-        // _getAmount() counts what is still to be paid, so a paid order needs its paid rows.
-        $query = $db->getQuery(true)
-            ->select('COUNT(*)')
-            ->from($db->quoteName('#__ticketstation_orders'))
-            ->where($db->quoteName('ordercode') . ' = ' . $ordercode)
-            ->where($db->quoteName('paid') . ' = 1');
-
-        $db->setQuery($query);
-        $total = (int) $db->loadResult() > 0
-            ? (new getAmount())->_getAmount($ordercode, 0, 1)
-            : (new getAmount())->_getAmount($ordercode);
+        $total = OrderTotals::get($ordercode)->total;
 
         return [
             'ordercode' => $ordercode,

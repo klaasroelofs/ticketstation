@@ -407,10 +407,10 @@ class PaymentAPI
         if ($config->pro_installed == 1) {
             $select = array('o.*', 't.*', 'e.eventname', 'c.*', 't.startdate',
                 'o.paid', 'e.eventcode', 't.ticketcode',
-                't.ticketprice AS price', 'ext.seatid', 'ext.row_name');
+                'o.price AS price', 'ext.seatid', 'ext.row_name');
         }
         else {
-            $select = array('o.*', 't.*', 'e.eventname', 'c.*', 't.startdate', 'o.paid', 'e.eventcode', 't.ticketcode', 't.ticketprice AS price');
+            $select = array('o.*', 't.*', 'e.eventname', 'c.*', 't.startdate', 'o.paid', 'e.eventcode', 't.ticketcode', 'o.price AS price');
         }
 
         $db = Factory::getContainer()->get('DatabaseDriver');
@@ -441,7 +441,7 @@ class PaymentAPI
         for ($i = 0, $n = count($this->orderData); $i < $n; $i++) {
             $row = $this->orderData[$i];
 
-            $price = TicketstationFunctions::showprice($config->priceformat, $row->ticketprice, $config->valuta);
+            $price = TicketstationFunctions::showprice($config->priceformat, $row->price, $config->valuta);
             $ticketdate = date($config->dateformat, strtotime($row->startdate));
 
             if ($row->seatid == '') {

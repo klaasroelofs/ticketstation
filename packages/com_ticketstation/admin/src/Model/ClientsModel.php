@@ -25,6 +25,13 @@ class ClientsModel extends BaseDatabaseModel
 {
     private $id;
 
+    /**
+     * Customers remove() left alone because they have orders or waiting-list entries.
+     *
+     * @var int[]
+     */
+    public $keptClients = [];
+
     function __construct(){
 
         parent::__construct();
@@ -213,14 +220,29 @@ class ClientsModel extends BaseDatabaseModel
 
             $db = Factory::getContainer()->get('DatabaseDriver');
 
-            $query = $db->getQuery(true);
-
-            $query->select(array('clientid'));
-            $query->from($db->quoteName('#__ticketstation_clients'));
-            $query->where( $db->quoteName('clientid') . ' IN ('.$cids.')' );
+            // A customer with orders (or on the waiting list) stays: their orders, tickets and
+            // invoices refer to them.
+            $query = $db->getQuery(true)
+                ->select('DISTINCT ' . $db->quoteName('userid'))
+                ->from($db->quoteName('#__ticketstation_orders'))
+                ->where($db->quoteName('userid') . ' IN (' . $cids . ')')
+                ->union(
+                    $db->getQuery(true)
+                        ->select('DISTINCT ' . $db->quoteName('userid'))
+                        ->from($db->quoteName('#__ticketstation_waitinglist'))
+                        ->where($db->quoteName('userid') . ' IN (' . $cids . ')')
+                );
 
             $db->setQuery($query);
-            $data = $db->loadObjectList();
+            $this->keptClients = array_map('intval', $db->loadColumn());
+
+            $cid = array_values(array_diff($cid, $this->keptClients));
+
+            if (!count($cid)) {
+                return true;
+            }
+
+            $cids = implode(',', $cid);
 
             $query = $db->getQuery(true);
 

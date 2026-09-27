@@ -20,7 +20,7 @@ use Ticketstation\Component\Ticketstation\Administrator\Helper;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Amount;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Availability;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Config;
-use Ticketstation\Component\Ticketstation\Administrator\Helper\getAmount;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\OrderTotals;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Order;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Shop;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Ticket;
@@ -323,7 +323,6 @@ class OrderController extends BaseController
     public function updatecart()
     {
         $order = new Order;
-        $getAmount = new getAmount();
         $TicketstationFunctions = new TicketstationFunctions();
 
         // Getting the config
@@ -334,16 +333,16 @@ class OrderController extends BaseController
         // Show more or one ticket(s)
         $tickets = ($ordered > 1) ? Text::_('COM_TICKETSTATION_TICKETS') : Text::_('COM_TICKETSTATION_TICKET');
 
-        $ordertotal = $getAmount->_getAmount($this->ordercode);
-        $fees       = $getAmount->_getFees($this->ordercode);
-        //ordertotal = $total; //- $fees;
+        $totals     = OrderTotals::get($this->ordercode, true);
+        $ordertotal = $totals->total;
+        $fees       = $totals->fees;
 
         $update = '';
 
         // Transaction costs switched off in the configuration: no fees row at all.
         $feesRow = '';
 
-        if ($config->variable_transcosts != 2) {
+        if ($totals->fee_type != OrderTotals::FEE_NONE) {
             $feesRow = '<tr>
 								<td>' . Text::_('COM_TICKETSTATION_FEES') . '</td>
 								<td>' . $TicketstationFunctions->showprice($config->priceformat, $fees, $config->valuta) . '</td>

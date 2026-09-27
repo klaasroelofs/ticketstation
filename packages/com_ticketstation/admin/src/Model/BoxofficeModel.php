@@ -23,9 +23,10 @@ use stdClass;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\CustomerNote;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\QueryHelper;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\eTicketsMessage;
-use Ticketstation\Component\Ticketstation\Administrator\Helper\getAmount;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\History;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Invoice;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\Coupon;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\OrderTotals;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\PaymentAPI;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\SendonPayment;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\SendTicketCopy;
@@ -60,6 +61,13 @@ class BoxofficeModel extends ListModel
      * @var array|false|null
      */
     private $ghostSnapshot;
+
+    /**
+     * Ordercodes paymentResender() sent no payment link for, because they are paid or refunded.
+     *
+     * @var string[]
+     */
+    public $skippedPaymentRequests = [];
 
     function __construct()
     {
@@ -658,6 +666,12 @@ class BoxofficeModel extends ListModel
                 (new Invoice)->remove($affected_ordercode);
                 (new Transaction)->remove($affected_ordercode);
                 (new CustomerNote)->remove($affected_ordercode);
+                OrderTotals::remove($affected_ordercode);
+            }
+            else
+            {
+                // The discount of the order is spread over the tickets that are left.
+                Coupon::refresh((int) $affected_ordercode);
             }
         }
 
@@ -1032,6 +1046,16 @@ class BoxofficeModel extends ListModel
             return false;
         }
 
+        // Same entries as the Actions menu writes (changePaymentState()).
+        if ($paid == 1)
+        {
+            History::log($ordercode, 'order_paid', 'New order status: Paid');
+        }
+        else
+        {
+            History::log($ordercode, 'order_status_unpaid', 'New order status: Unpaid');
+        }
+
         return true;
     }
 
@@ -1110,21 +1134,23 @@ class BoxofficeModel extends ListModel
 
             $row = $data[$i];
 
-            ## Getting the order amount. 
-            $total = (new getAmount)->_getAmount($row->ordercode, 1);
-            $price = TicketstationFunctions::showprice($config->priceformat, $total, $config->valuta);
-
+            ## Only an order that is still to be paid (not paid, or pending) gets a payment
+            ## link: a paid or refunded order is left alone.
             $query = $db->getQuery(true);
 
-            $query->select(['COUNT(orderid) AS total', 'userid']);
+            $query->select(['COUNT(orderid) AS total', 'MAX(userid) AS userid']);
             $query->from($db->quoteName('#__ticketstation_orders'));
-            $query->where($db->quoteName('paid') . ' != ' . $db->quote('1'));
+            $query->whereIn($db->quoteName('paid'), [0, 3]);
             $query->where($db->quoteName('ordercode') . ' = ' . $db->quote((int) $row->ordercode));
 
             $db->setQuery($query);
             $item = $db->loadObject();
 
-            if ($item->total > 0)
+            if ($item->total == 0)
+            {
+                $this->skippedPaymentRequests[] = $row->ordercode;
+            }
+            else
             {
 				## Update the paymentstate to Pending (3) and the orderdate to now
 				## The latter is done to prevent premature removal of unpaid orders by the ticketcleaner. We should give the customer some time to complete payment.
@@ -1232,6 +1258,9 @@ class BoxofficeModel extends ListModel
 
                 // And the note the customer added in the cart.
                 (new CustomerNote)->remove($removed_ordercode);
+
+                // And the terms of its service fee.
+                OrderTotals::remove($removed_ordercode);
             }
 
             $ticket_helper = new Tickets;

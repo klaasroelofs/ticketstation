@@ -170,6 +170,9 @@ class Ticketcleaner
             }
         }
 
+        // The service fee terms of the orders removed above.
+        OrderTotals::sweep();
+
         return true;
 
     }

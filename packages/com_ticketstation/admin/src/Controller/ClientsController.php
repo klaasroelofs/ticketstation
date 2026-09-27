@@ -137,8 +137,18 @@ class ClientsController extends BaseController {
         {
             $app->enqueueMessage(Text::_('COM_TICKETSTATION_CLIENTS_REMOVED_FAILED'), 'error');
         }
+        else
+        {
+            if (count($model->keptClients) < count($cid))
+            {
+                $app->enqueueMessage(Text::_('COM_TICKETSTATION_CLIENT_REMOVED'));
+            }
 
-        $app->enqueueMessage(Text::_('COM_TICKETSTATION_CLIENT_REMOVED'));
+            if ($model->keptClients)
+            {
+                $app->enqueueMessage(Text::plural('COM_TICKETSTATION_CLIENTS_KEPT_WITH_ORDERS', count($model->keptClients)), 'warning');
+            }
+        }
         $app->redirect('index.php?option=com_ticketstation&controller=clients');
     }
 

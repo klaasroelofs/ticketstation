@@ -14,7 +14,7 @@ use Joomla\CMS\Language\Text;
 /**
  * @var  integer  $itemCount  Tickets in the cart
  * @var  string   $cartUrl    URL of the cart view
- * @var  object   $totals     Price strings: subtotal, fees, total; showFees is false when transaction costs are switched off
+ * @var  object   $totals     Price strings: subtotal, fees, total; showFees is false when the order has no service fee
  *
  * The count is not displayed separately (the table has it). The hidden counter stands in for
  * #basket-item-count when no mini basket is on the page: com_ticketstation's JavaScript writes the

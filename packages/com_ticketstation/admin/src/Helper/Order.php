@@ -246,6 +246,9 @@ class Order
         // The note the customer added in the cart was saved under the temporary ordercode.
         (new CustomerNote)->move($ordercode, $new_ordercode);
 
+        // From here on the transaction costs of the order no longer follow the Configuration.
+        OrderTotals::move($ordercode, $new_ordercode);
+
         // The rows are final now: bring their discount in line with the coupon of the order,
         // also for tickets added after it was applied (the payment screen lists the rows).
         Coupon::refresh((int) $new_ordercode);

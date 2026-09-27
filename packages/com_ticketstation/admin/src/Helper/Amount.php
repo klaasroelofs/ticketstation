@@ -111,9 +111,8 @@ class Amount
 
         $amounts = $db->loadObject();
 
-        // todo making fees configurable per ticket.
-        // Over the total after the coupon discount, as the customer pays it (getAmount::_getAmount()).
-        $this->setFeesByOrderTotals($amounts->total_discounted);
+        // Over the total after the coupon discount, with the terms kept for this order.
+        $this->order_fees = OrderTotals::feesFor((float) $amounts->total_discounted, OrderTotals::terms($ordercode));
 
         $amounts->fees                    = $this->order_fees;
         $amounts->total_discounted_ex_vat = $amounts->total_discounted - $amounts->vat;
@@ -131,34 +130,6 @@ class Amount
     public function getAmountByOrdercode($ordercode)
     {
         return $this->getAmount($ordercode);
-    }
-
-    /**
-     * Setting order feess
-     *
-     * @param $amount
-     *
-     * @since 3.5.0
-     */
-    private function setFeesByOrderTotals($amount)
-    {
-        $config = (new Config)->getPartialConfig(['variable_transcosts', 'transactioncosts', 'transcosts']);
-
-        if ($config->variable_transcosts == 2 || round((float) $amount, 2) == 0)
-        {
-            // Transaction costs are switched off completely, or there is nothing to pay.
-            $this->order_fees = 0;
-        }
-        elseif ($config->variable_transcosts != 1)
-        {
-            // When no variable transaction costs are here.
-            $this->order_fees = $config->transactioncosts;
-        }
-        else
-        {
-            // Total order amount for ordercode (eid) --> variable cost is on.
-            $this->order_fees = (($amount / 100) * $config->transcosts);
-        }
     }
 
     /**

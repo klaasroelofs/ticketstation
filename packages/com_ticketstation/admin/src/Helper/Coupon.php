@@ -154,7 +154,7 @@ class Coupon
      * with the coupon it carries, for everything that adds up the rows: the invoice, the
      * Box Office. The order's discount is spread over its rows in proportion to their price,
      * the last row taking the rounding difference, so the rows always add up to exactly the
-     * discount the customer pays with (see getAmount::_getAmount()). Rows added after the
+     * discount the customer pays with (see OrderTotals::get()). Rows added after the
      * coupon was applied get its terms too. An order without a coupon is left alone.
      */
     public static function refresh(int $ordercode): bool

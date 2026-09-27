@@ -14,8 +14,8 @@ defined('_JEXEC') or die;
 use Joomla\CMS\Factory;
 use Joomla\CMS\Router\Route;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Config;
-use Ticketstation\Component\Ticketstation\Administrator\Helper\getAmount;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Order;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\OrderTotals;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\TicketstationFunctions;
 
 /**
@@ -35,7 +35,7 @@ class BasketHelper
      */
     public function isComponentAvailable(): bool
     {
-        return class_exists(Order::class) && class_exists(getAmount::class);
+        return class_exists(Order::class) && class_exists(OrderTotals::class);
     }
 
     /**
@@ -92,12 +92,12 @@ class BasketHelper
     public function getTotals(int $itemCount): object
     {
         $ordercode = (int) Factory::getApplication()->getSession()->get('ordercode');
-        $config    = (new Config())->getPartialConfig(['priceformat', 'valuta', 'variable_transcosts']);
-        $amounts   = new getAmount();
+        $config    = (new Config())->getPartialConfig(['priceformat', 'valuta']);
+        $totals    = OrderTotals::get($ordercode, true);
         $functions = new TicketstationFunctions();
 
-        $total = $itemCount > 0 ? (float) $amounts->_getAmount($ordercode) : 0.0;
-        $fees  = $itemCount > 0 ? (float) $amounts->_getFees($ordercode) : 0.0;
+        $total = $itemCount > 0 ? $totals->total : 0.0;
+        $fees  = $itemCount > 0 ? $totals->fees : 0.0;
 
         $format = static fn (float $price): string => $functions->showprice($config->priceformat ?? 1, $price, $config->valuta ?? '€');
 
@@ -105,8 +105,8 @@ class BasketHelper
             'subtotal' => $format($total - $fees),
             'fees'     => $format($fees),
             'total'    => $format($total),
-            // Transaction costs switched off in the component: the fees row must not be shown.
-            'showFees' => (int) ($config->variable_transcosts ?? 0) !== 2,
+            // No service fee for this order (switched off, or a reservation): no fees row.
+            'showFees' => $totals->fee_type !== OrderTotals::FEE_NONE,
         ];
     }
 

@@ -14,7 +14,7 @@ use Joomla\CMS\Layout\LayoutHelper;
 use Joomla\CMS\Plugin\PluginHelper;
 use Joomla\CMS\Router\Route;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Config;
-use Ticketstation\Component\Ticketstation\Administrator\Helper\getAmount;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\OrderTotals;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\TicketstationFunctions;
 
 // No direct access to this file
@@ -35,11 +35,10 @@ $itemid = TicketstationFunctions::getSiteItemid();
 $shop_on = Route::_('index.php?option=com_ticketstation&view=upcoming' . ($itemid ? '&Itemid=' . $itemid : ''));
 $gotocheckout = Route::_('index.php?option=com_ticketstation&view=checkout' . ($itemid ? '&Itemid=' . $itemid : ''));
 
-$getamount = new getAmount();
-
-$ordertotal = $getamount->_getAmount($ordercode);
-$fees 		= $getamount->_getFees($ordercode);
-$discount 	= $getamount->_getDiscount($ordercode);
+$totals     = OrderTotals::get($ordercode, true);
+$ordertotal = $totals->total;
+$fees       = $totals->fees;
+$discount   = $totals->discount;
 
 $count = count($this->items);
 
@@ -185,7 +184,7 @@ foreach (['terms_url' => 'COM_TICKETSTATION_TERMS_AND_CONDITIONS', 'privacy_url'
 
                             <span class="ts-summary__date"><?= Text::_( 'COM_TICKETSTATION_DATE' ); ?>: <?= date ($this->config->dateformat, strtotime($row->startdate)); ?></span>
                         </td>
-                        <td class="ts-price"><?= (new TicketstationFunctions)->showprice($this->config->priceformat ,$row->ticketprice,$this->config->valuta); ?></td>
+                        <td class="ts-price"><?= (new TicketstationFunctions)->showprice($this->config->priceformat, $row->price, $this->config->valuta); ?></td>
                     </tr>
 
                 <?php } ?>
@@ -194,19 +193,19 @@ foreach (['terms_url' => 'COM_TICKETSTATION_TERMS_AND_CONDITIONS', 'privacy_url'
             <tfoot>
                 <tr class="ts-summary__subtotal">
                     <th scope="row"><?= Text::_('COM_TICKETSTATION_SUBTOTAL'); ?></th>
-                    <td class="ts-price"><?= (new TicketstationFunctions)->showprice($this->config->priceformat , ($ordertotal-$fees)+$discount, $this->config->valuta); ?></td>
+                    <td class="ts-price"><?= (new TicketstationFunctions)->showprice($this->config->priceformat , $totals->tickets, $this->config->valuta); ?></td>
                 </tr>
 
                 <?php if($discount != 0) { ?>
                     <tr class="ts-summary__discount">
-                        <th scope="row"><?= Text::_('COM_TICKETSTATION_DISCOUNT'); ?><?php if ($this->items[0]->discount_type == 1):?> (<?= $this->items[0]->discount_amount;?>%)<?php endif; ?></th>
+                        <th scope="row"><?= Text::_('COM_TICKETSTATION_DISCOUNT'); ?><?php if ($totals->discount_type == 1):?> (<?= (float) $totals->discount_amount;?>%)<?php endif; ?></th>
                         <td class="ts-price">- <?= (new TicketstationFunctions)->showprice($this->config->priceformat , $discount, $this->config->valuta); ?></td>
                     </tr>
                 <?php } ?>
 
-                <?php if ($this->config->variable_transcosts != 2) { ?>
+                <?php if ($totals->fee_type != OrderTotals::FEE_NONE) { ?>
                     <tr class="ts-summary__fees">
-                        <th scope="row"><?= Text::_('COM_TICKETSTATION_FEES'); ?><?php if ($this->config->variable_transcosts == '1') { ?> (<?= $this->config->transcosts ?>%)<?php } ?></th>
+                        <th scope="row"><?= Text::_('COM_TICKETSTATION_FEES'); ?><?php if ($totals->fee_type == OrderTotals::FEE_VARIABLE) { ?> (<?= (float) $totals->fee_rate ?>%)<?php } ?></th>
                         <td class="ts-price"><?= (new TicketstationFunctions)->showprice($this->config->priceformat , $fees, $this->config->valuta); ?></td>
                     </tr>
                 <?php } ?>

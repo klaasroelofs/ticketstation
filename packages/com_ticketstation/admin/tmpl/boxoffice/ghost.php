@@ -34,6 +34,7 @@ $history_icons = [
     'order_paid'             => ['fa-check-circle', 'success'],
     'order_status_pending'   => ['fa-clock', 'warning'],
     'order_status_refunded'  => ['fa-reply', 'info'],
+    'order_status_unpaid'    => ['fa-times-circle', 'danger'],
     'payment_failed'         => ['fa-times-circle', 'danger'],
     'payment_cancelled'      => ['fa-ban', 'secondary'],
     'payment_expired'        => ['fa-hourglass-end', 'secondary'],

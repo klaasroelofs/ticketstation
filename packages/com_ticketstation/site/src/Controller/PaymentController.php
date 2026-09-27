@@ -17,9 +17,9 @@ use Joomla\CMS\Factory;
 use Joomla\CMS\Router\Route;
 use Joomla\CMS\Uri\Uri;
 use Mollie\Api\MollieApiClient;
-use Ticketstation\Component\Ticketstation\Administrator\Helper\getAmount;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\History;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\MolliePaymentMethods;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\OrderTotals;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\PaymentAPI;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Shop;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\TicketstationFunctions;
@@ -68,7 +68,7 @@ class PaymentController extends BaseController
 
         $this->ordercode = $jinput->get('ordercode', '0', 'int');
 
-        $orderamount = (new getAmount)->_getAmount($this->ordercode);
+        $orderamount = OrderTotals::get($this->ordercode, true)->total;
         //$return_url = URI::root() . 'index.php?option=com_ticketstation&controller=payment&task=mollie';
         $return_url = URI::root() . 'index.php?option=com_ticketstation&controller=payment&task=mollie';
         $notify_url = URI::root() . 'index.php?option=com_ticketstation&controller=payment&task=IPNProcessPayment';
@@ -97,10 +97,13 @@ class PaymentController extends BaseController
 
             ## Start the API to process everything.
             $newPayment = new PaymentAPI((int)$this->ordercode);
-            $transactions = $newPayment->checkTempTransactionAmount();
+            $existing = $newPayment->getTempTransactionByOrdercode($this->ordercode);
 
-            ## If there are no transactions, insert now.
-            if ($transactions == 0) {
+            ## A new payment attempt gets its own temporary transaction, unless an earlier attempt
+            ## for this order is still open. A paid one (processed = 1) belongs to an earlier,
+            ## removed order that had the same ordercode (ordercodes get reused): reusing it would
+            ## make the webhook take this payment for a second payment of a paid order.
+            if (!$existing || (int) $existing->processed === 1) {
                 ## Get the user object:
                 //$user =  JFactory::getUser();
 
@@ -122,8 +125,7 @@ class PaymentController extends BaseController
                     exit(Text::_('COM_TICKETSTATION_MOLLIE_ERROR_1000'));
                 }
             } else {
-                ## Transaction already exists for this ordercode; look it up to get the token
-                $existing = $newPayment->getTempTransactionByOrdercode($this->ordercode);
+                ## An open attempt for this order exists: reuse its token.
                 $return_token = $existing->return_token;
 
                 ## Existing rows created before the return_token column existed (or otherwise
@@ -208,25 +210,9 @@ class PaymentController extends BaseController
         ## Update the order state in the order table:
         $payment_state = $newPayment->updateOrder();
 
-        ## set fees to 0. No payment was done as we bypass Mollie, therefore no fees applicable
-        $db = Factory::getContainer()->get('DatabaseDriver');
-
-        $query = $db->getQuery(true);
-
-        $fields = array(
-            $db->quoteName('fees') . ' = 0',
-        );
-
-        $conditions = array(
-            $db->quoteName('ordercode') . ' = ' . $db->quote((int)$ordercode)
-        );
-
-        $query->update($db->quoteName('#__ticketstation_orders'))
-            ->set($fields)
-            ->where($conditions);
-
-        $db->setQuery($query);
-        $db->execute();
+        ## No payment was made as Mollie is bypassed, so no transaction costs either (the
+        ## invoice reads them from the order).
+        OrderTotals::capture($ordercode, false);
 
         ## if state is true, create the tickets:
         if ($payment_state == true) {
@@ -398,7 +384,7 @@ class PaymentController extends BaseController
         ## PAYMENT SUCCESFULL
         if ($payment->isPaid() == true) {
             ## Getting the amounts for this order.
-            $amount = (new getAmount)->_getAmount((int)$order_id, 1);
+            $amount = OrderTotals::get((int) $order_id, true)->total;
 
             $netto_price = number_format($amount, 2, '.', '');
             $paid_price = $payment->amount->value;

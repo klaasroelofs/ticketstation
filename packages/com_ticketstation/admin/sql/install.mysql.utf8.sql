@@ -284,6 +284,15 @@ CREATE TABLE IF NOT EXISTS `#__ticketstation_orders` (
   UNIQUE KEY `idx_validation_token_orders` (`validation_token`)
 )  AUTO_INCREMENT=10000 ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 DEFAULT COLLATE=utf8mb4_unicode_ci;
 
+DROP TABLE IF EXISTS `#__ticketstation_ordertotals`;
+CREATE TABLE IF NOT EXISTS `#__ticketstation_ordertotals` (
+  `ordercode` varchar(50) NOT NULL,
+  `fee_type` tinyint(1) NOT NULL DEFAULT '0',
+  `fee_rate` decimal(10,4) NOT NULL DEFAULT '0.0000',
+  `captured` datetime NOT NULL,
+  PRIMARY KEY (`ordercode`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 DEFAULT COLLATE=utf8mb4_unicode_ci;
+
 DROP TABLE IF EXISTS `#__ticketstation_tickets`;
 CREATE TABLE IF NOT EXISTS `#__ticketstation_tickets` (
   `ticketid` int(10) NOT NULL AUTO_INCREMENT,

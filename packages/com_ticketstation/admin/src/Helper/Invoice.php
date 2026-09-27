@@ -210,17 +210,8 @@ class Invoice
         // the order, also for tickets added after the coupon was applied.
         Coupon::refresh((int) $ordercode);
 
-        $amount      = (new Amount)->getAmountByOrdercode($ordercode);
+        $amount      = OrderTotals::get($ordercode);
         $transaction = (new Transaction)->getTransactionDetails($ordercode);
-
-        $query = $db->getQuery(true)
-            ->select($db->quoteName('coupon'))
-            ->from($db->quoteName('#__ticketstation_orders'))
-            ->where($db->quoteName('ordercode') . ' = ' . (int) $ordercode)
-            ->where($db->quoteName('coupon') . ' != ' . $db->quote(''));
-
-        $db->setQuery($query, 0, 1);
-        $coupon_code = $db->loadResult();
 
         $invoice                   = new stdClass;
         $invoice->ordercode        = $ordercode;
@@ -232,12 +223,14 @@ class Invoice
         // timezone (UTC in this Joomla environment) and converted to the site's configured
         // display offset via Date::_() wherever it's shown, never plain date()/strtotime().
         $invoice->invoicedate      = date('Y-m-d H:i:s', time());
-        $invoice->netto            = $amount->total_discounted;
-        $invoice->bruto            = $amount->total;
-        $invoice->vat              = $amount->vat;
+        // All amounts include VAT: netto is what the tickets cost after the discount, the
+        // service fee comes on top of it. The VAT is filled in below, from the invoice lines.
+        $invoice->netto            = $amount->subtotal;
+        $invoice->bruto            = $amount->tickets;
+        $invoice->vat              = 0;
         $invoice->discount         = $amount->discount;
         $invoice->fees             = $amount->fees;
-        $invoice->coupon_code      = $coupon_code ?: null;
+        $invoice->coupon_code      = $amount->coupon !== '' ? $amount->coupon : null;
         $invoice->payment_provider = ! empty($transaction->type) ? $transaction->type : null;
 
         if ( ! $db->insertObject('#__ticketstation_invoices', $invoice))
@@ -284,6 +277,45 @@ class Invoice
 
             $db->insertObject('#__ticketstation_invoice_items', $row);
         }
+
+        // The service fee as its own line (ticketid 0) per VAT rate of the tickets, as it
+        // carries the VAT of the tickets it belongs to (see OrderTotals::vatByRate()).
+        foreach ($amount->vat_rates as $rate)
+        {
+            if ($rate->fees <= 0)
+            {
+                continue;
+            }
+
+            $row                    = new stdClass;
+            $row->invoiceid         = $invoiceid;
+            $row->ordercode         = $ordercode;
+            $row->ticketid          = 0;
+            $row->eventid           = 0;
+            $row->ticketname        = '';
+            $row->quantity          = 1;
+            $row->ticketprice       = $rate->fees;
+            $row->vat_percentage    = $rate->rate;
+            $row->discount          = 0;
+            $row->netto_ticketprice = $rate->fees;
+            $row->couponcode        = null;
+
+            $db->insertObject('#__ticketstation_invoice_items', $row);
+        }
+
+        $vat = 0.0;
+
+        foreach ($this->getInvoiceItems($invoiceid) as $item)
+        {
+            $vat += $this->lineAmounts($item)->vat;
+        }
+
+        $query = $db->getQuery(true)
+            ->update($db->quoteName('#__ticketstation_invoices'))
+            ->set($db->quoteName('vat') . ' = ' . round($vat, 2))
+            ->where($db->quoteName('invoiceid') . ' = ' . (int) $invoiceid);
+
+        $db->setQuery($query)->execute();
 
         $prefix = (new Config)->getPartialConfig(['invoice_prefix'])->invoice_prefix;
         History::log($ordercode, 'invoice_created', 'Invoice ' . $this->getInvoiceNumber($invoiceid, $prefix) . ' created');
@@ -398,55 +430,77 @@ class Invoice
         $pdf->MultiCell(0, 5, PdfEncoding::toLatin1($this->buildClientAddress($config->address_format_client, $client, $salutation)), 0, 'L', 0);
 
         $pdf->SetFont($font_name, '', $font_size);
+
+        // Amounts are right-aligned in their column, ending at the right margin (x = 200).
+        $amountCell = function ($x, $width, $y, $text) use ($pdf) {
+            $pdf->SetXY($x, $y - 2.5);
+            $pdf->Cell($width, 5, PdfEncoding::toLatin1($text), 0, 0, 'R');
+        };
+        $price = fn ($amount) => TicketstationFunctions::showprice($config->priceformat, $amount, $config->valuta);
+
+        // Every line and the subtotal exclude VAT; the VAT follows as its own line(s), per
+        // rate, and the total is what the customer paid, VAT included.
         $pdf->SetXY(10, 115);
         $pdf->Write(0, PdfEncoding::toLatin1(Text::_('COM_TICKETSTATION_INVOICE_QUANTITY')));
         $pdf->SetXY(25, 115);
         $pdf->Write(0, PdfEncoding::toLatin1(Text::_('COM_TICKETSTATION_DESCRIPTION')));
-        $pdf->SetXY(120, 115);
-        $pdf->Write(0, PdfEncoding::toLatin1(Text::_('COM_TICKETSTATION_VAT_PERCENTAGE')));
-        $pdf->SetXY(137, 115);
-        $pdf->Write(0, PdfEncoding::toLatin1(Text::_('COM_TICKETSTATION_TICKETPRICE')));
-        $pdf->SetXY(163, 115);
-        $pdf->Write(0, PdfEncoding::toLatin1(Text::_('COM_TICKETSTATION_DISCOUNT')));
-        $pdf->SetXY(182, 115);
-        $pdf->Write(0, PdfEncoding::toLatin1(Text::_('COM_TICKETSTATION_TOTAL_PRICE')));
+        $amountCell(110, 16, 115, Text::_('COM_TICKETSTATION_VAT_PERCENTAGE'));
+        $amountCell(126, 26, 115, Text::_('COM_TICKETSTATION_INVOICE_PRICE_EXCL_VAT'));
+        $amountCell(152, 22, 115, Text::_('COM_TICKETSTATION_DISCOUNT'));
+        $amountCell(174, 26, 115, Text::_('COM_TICKETSTATION_INVOICE_TOTAL_EXCL_VAT'));
 
         $pdf->SetDrawColor(200, 200, 200);
         $pdf->Line(10, 117, 200, 117);
         $pdf->Line(10, 117.5, 200, 117.5);
 
-        $height = 123;
+        $height   = 123;
+        $subtotal = 0.0;
+        $total    = 0.0;
+        $vatRates = [];
+        $lines    = $this->getInvoiceItems($invoice->invoiceid);
 
-        foreach ($this->getInvoiceItems($invoice->invoiceid) as $row)
+        // Invoices from before 2.5.2 have no line for the service fee, which then carried no VAT.
+        $hasFeeLine = (bool) array_filter($lines, fn ($line) => (int) $line->ticketid === 0);
+
+        if ( ! $hasFeeLine && $invoice->fees > 0)
         {
+            $lines[] = (object) [
+                'ticketid' => 0, 'quantity' => 1, 'ticketprice' => $invoice->fees, 'netto_ticketprice' => $invoice->fees,
+                'discount' => 0, 'vat_percentage' => 0, 'couponcode' => null, 'eventname' => '', 'ticketname' => '',
+            ];
+        }
+
+        foreach ($lines as $row)
+        {
+            $amounts = $this->lineAmounts($row);
+            $rate    = (float) $row->vat_percentage;
+
+            $subtotal += $amounts->excl;
+            $total    += $amounts->incl;
+            $vatRates[(string) $rate] = ($vatRates[(string) $rate] ?? 0) + $amounts->vat;
+
+            if ((int) $row->ticketid === 0)
+            {
+                $description = Text::_('COM_TICKETSTATION_INVOICE_SERVICE_FEE');
+            }
+            else
+            {
+                $description = ! empty($row->eventname) ? $row->eventname . ' - ' . $row->ticketname : $row->ticketname;
+            }
+
+            // FPDF's Write() doesn't clip or wrap: shrink the description to fit before the
+            // VAT column.
+            $description = $this->truncateToWidth($pdf, $description, 85);
+
             $pdf->SetXY(10, $height);
             $pdf->Write(0, $row->quantity);
-
-            $description = ! empty($row->eventname) ? $row->eventname . ' - ' . $row->ticketname : $row->ticketname;
-
-            // FPDF's Write() doesn't clip or wrap - an untruncated description (now
-            // potentially "Eventname - Ticketname", longer than plain ticketname alone) can
-            // run straight through the VAT%/price columns that start at x=120, silently
-            // hiding them under the description text. Shrink to fit the ~90mm available
-            // before that column.
-            $description = $this->truncateToWidth($pdf, $description, 90);
-
             $pdf->SetXY(25, $height);
             $pdf->Write(0, PdfEncoding::toLatin1($description));
 
-            $pdf->SetXY(120, $height);
-            $pdf->Write(0, $row->vat_percentage . '%');
-
-            $pdf->SetXY(140, $height);
-            $pdf->Write(0, PdfEncoding::toLatin1(TicketstationFunctions::showprice($config->priceformat, $row->ticketprice, $config->valuta)));
-
-            $pdf->SetXY(165, $height);
-            $pdf->Write(0, PdfEncoding::toLatin1(TicketstationFunctions::showprice($config->priceformat, $row->discount, $config->valuta)));
-
-            $price_to_pay = ($row->quantity * $row->ticketprice) - $row->discount;
-
-            $pdf->SetXY(185, $height);
-            $pdf->Write(0, PdfEncoding::toLatin1(TicketstationFunctions::showprice($config->priceformat, $price_to_pay, $config->valuta)));
+            $amountCell(110, 16, $height, rtrim(rtrim(number_format($rate, 2, '.', ''), '0'), '.') . '%');
+            $amountCell(126, 26, $height, $price($this->excludingVat((float) $row->ticketprice, $rate)));
+            $amountCell(152, 22, $height, (float) $row->discount > 0 ? $price($this->excludingVat((float) $row->discount, $rate)) : '');
+            $amountCell(174, 26, $height, $price($amounts->excl));
 
             if ( ! empty($row->couponcode))
             {
@@ -463,51 +517,35 @@ class Invoice
 
         $height += 10;
 
-        // "Subtotal" here means "before VAT" - the line right below it is the VAT amount that
-        // gets added back on to reach the grand total, so this must be the excl-VAT figure
-        // (bruto minus the VAT already baked into it), not bruto itself. bruto/ticketprice
-        // stay stored as the inclusive amounts they are (ticket prices are entered incl. VAT) -
-        // this is purely how the breakdown is presented.
-        $pdf->SetFont($font_name, '', $font_size);
-        $pdf->SetXY(150, $height);
-        $pdf->Write(0, PdfEncoding::toLatin1(Text::_('COM_TICKETSTATION_SUBTOTAL')));
-        $pdf->SetXY(184, $height);
-        $pdf->Write(0, PdfEncoding::toLatin1(TicketstationFunctions::showprice($config->priceformat, $invoice->bruto - $invoice->vat, $config->valuta)));
+        $pdf->SetXY(120, $height);
+        $pdf->Write(0, PdfEncoding::toLatin1(Text::_('COM_TICKETSTATION_INVOICE_SUBTOTAL_EXCL_VAT')));
+        $amountCell(174, 26, $height, $price($subtotal));
 
-        if ($invoice->discount > 0)
+        ksort($vatRates, SORT_NUMERIC);
+
+        foreach ($vatRates as $rate => $vat)
         {
-            $height += 5;
-            $pdf->SetXY(150, $height);
-            $pdf->Write(0, PdfEncoding::toLatin1(Text::_('COM_TICKETSTATION_TOTAL_DISCOUNT')));
-            $pdf->SetXY(184, $height);
-            $pdf->Write(0, PdfEncoding::toLatin1(TicketstationFunctions::showprice($config->priceformat, $invoice->discount, $config->valuta)));
-        }
+            // A rate without VAT (0%) needs no line of its own.
+            if ((float) $rate <= 0)
+            {
+                continue;
+            }
 
-        if ($invoice->fees > 0)
-        {
             $height += 5;
-            $pdf->SetXY(150, $height);
-            $pdf->Write(0, PdfEncoding::toLatin1(Text::_('COM_TICKETSTATION_INVOICE_TRANSACTION_COSTS')));
-            $pdf->SetXY(184, $height);
-            $pdf->Write(0, PdfEncoding::toLatin1(TicketstationFunctions::showprice($config->priceformat, $invoice->fees, $config->valuta)));
+            $pdf->SetXY(120, $height);
+            $pdf->Write(0, PdfEncoding::toLatin1(Text::sprintf('COM_TICKETSTATION_INVOICE_VAT_RATE', rtrim(rtrim(number_format((float) $rate, 2, '.', ''), '0'), '.'))));
+            $amountCell(174, 26, $height, $price($vat));
         }
-
-        $height += 5;
-        $pdf->SetXY(150, $height);
-        $pdf->Write(0, PdfEncoding::toLatin1(Text::_('COM_TICKETSTATION_VAT_TOTAL')));
-        $pdf->SetXY(184, $height);
-        $pdf->Write(0, PdfEncoding::toLatin1(TicketstationFunctions::showprice($config->priceformat, $invoice->vat, $config->valuta)));
 
         $pdf->SetDrawColor(0, 0, 0);
-        $pdf->Line(150, $height + 4, 200, $height + 4);
-        $pdf->Line(150, $height + 4.5, 200, $height + 4.5);
+        $pdf->Line(120, $height + 4, 200, $height + 4);
+        $pdf->Line(120, $height + 4.5, 200, $height + 4.5);
 
         $height += 7;
         $pdf->SetFont($font_name, 'B', $font_size);
-        $pdf->SetXY(150, $height);
+        $pdf->SetXY(120, $height);
         $pdf->Write(0, PdfEncoding::toLatin1(Text::_('COM_TICKETSTATION_GRAND_TOTAL')));
-        $pdf->SetXY(184, $height);
-        $pdf->Write(0, PdfEncoding::toLatin1(TicketstationFunctions::showprice($config->priceformat, $invoice->netto + $invoice->fees, $config->valuta)));
+        $amountCell(174, 26, $height, $price($total));
 
         $dir = JPATH_ADMINISTRATOR . '/components/com_ticketstation/invoices';
 
@@ -630,6 +668,23 @@ class Invoice
         }
 
         return $text . '...';
+    }
+
+    /**
+     * An invoice line's amount after its discount, including VAT, excluding VAT and the VAT
+     * itself. The VAT is the difference of the two, so the lines always add up to the total.
+     */
+    private function lineAmounts($line): object
+    {
+        $incl = round((float) $line->netto_ticketprice - (float) $line->discount, 2);
+        $excl = $this->excludingVat($incl, (float) $line->vat_percentage);
+
+        return (object) ['incl' => $incl, 'excl' => $excl, 'vat' => round($incl - $excl, 2)];
+    }
+
+    private function excludingVat(float $amount, float $rate): float
+    {
+        return round($amount / (100 + $rate) * 100, 2);
     }
 
     private function getInvoiceItems($invoiceid)

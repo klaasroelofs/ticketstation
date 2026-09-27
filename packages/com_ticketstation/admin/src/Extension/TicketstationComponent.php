@@ -81,6 +81,7 @@ BootableExtensionInterface, RouterServiceInterface
 
             $auto_cleanup = $session->get('auto_cleanup', '0');
 
+            // The setting is looked up once per session (and on every request while it is off).
             if ($auto_cleanup == 0)
             {
                 $db = Factory::getContainer()->get('DatabaseDriver');
@@ -92,10 +93,13 @@ BootableExtensionInterface, RouterServiceInterface
 
                 $db->setQuery($query);
 
-                $data = $db->loadObject();
-                $session->set('auto_cleanup', $data->remove_unfinished ?? 0);
+                $data         = $db->loadObject();
+                $auto_cleanup = $data->remove_unfinished ?? 0;
+                $session->set('auto_cleanup', $auto_cleanup);
             }
-            else
+
+            // Also on the first request of a session, not only from the second one on.
+            if ($auto_cleanup == 1)
             {
                 $ticketcleaner = new Ticketcleaner;
                 $ticketcleaner->cleanup();

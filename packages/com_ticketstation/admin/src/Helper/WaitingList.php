@@ -207,6 +207,11 @@ class WaitingList
                 return false;
             }
 
+            ## The payment link is sent now: the transaction costs are those of this moment.
+            foreach (array_unique(array_column($data, 'ordercode')) as $ordercode) {
+                OrderTotals::capture($ordercode);
+            }
+
             ## Send people a payment request.
             $this->sendPayment($cids);
 
