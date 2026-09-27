@@ -12,6 +12,7 @@ use \Joomla\CMS\HTML\HTMLHelper;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\Router\Route;
 use Joomla\CMS\Editor\Editor;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\eTicketsMessage;
 
 // No direct access to this file
 defined('_JEXEC') or die('Restricted Access');
@@ -21,6 +22,11 @@ $document->setTitle(Text::sprintf('COM_TICKETSTATION_VIEW_EDIT_TEMPLATES_TITLE',
 
 $user = $this->getCurrentUser();
 $editor = Editor::getInstance($user->getParam('editor', Factory::getConfig()->get('editor')));
+
+$language     = $app->getLanguage();
+$mailid       = (int) ($this->data->mailid ?? 0);
+$placeholders = eTicketsMessage::placeholders($mailid);
+$required     = eTicketsMessage::requiredPlaceholders($mailid);
 
 ?>
 
@@ -47,7 +53,7 @@ $editor = Editor::getInstance($user->getParam('editor', Factory::getConfig()->ge
                     <div class="col-sm-9">
                         <input type="text" name="mailsubject" id="mailsubject"
                                class="form-control"
-                               value="<?= isset($this->data->mailsubject)?$this->data->mailsubject:null; ?>"/>
+                               value="<?= htmlspecialchars($this->data->mailsubject ?? '', ENT_QUOTES, 'UTF-8'); ?>"/>
                     </div>
                     <label for="mailbody" class="col-sm-3 col-form-label"
                            rel="popover"
@@ -63,52 +69,31 @@ $editor = Editor::getInstance($user->getParam('editor', Factory::getConfig()->ge
                         <?= Text::_('COM_TICKETSTATION_TEMPLATE_DYNAMIC_FIELDS'); ?>
                     </h3>
 
-                    <div class="row mb-3">
-                        <div class="row mb-3">
-                            <div style="margin-bottom:15px;">
-                                <?= Text::_('COM_TICKETSTATION_TEMPLATE_DYNAMIC_FIELDS_DESC'); ?>
-                            </div>
-                            <h4>
-                                <?= Text::_('COM_TICKETSTATION_TEMPLATE_FIELDS_CLIENT'); ?>
-                            </h4>
-                            <div>
-                                {firstname}<br/>
-                                {name}<br/>
-                                {emailaddress}<br/>
-                                {phonenumber}<br/>
-                                {ipaddress}<br/>
-                            </div>
-                        </div>
-                        <div class="row mb-3">
-                            <h4>
-                                <?= Text::_('COM_TICKETSTATION_TEMPLATE_FIELDS_ORDER'); ?>
-                            </h4>
-                            <div>
-                                {ordercode}<br/>
-                                {orderdate}<br/>
-                            </div>
-                        </div>
-                        <div class="row mb-3">
-                            <h4>
-                                <?= Text::_('COM_TICKETSTATION_TEMPLATE_FIELDS_COMPANY'); ?>
-                            </h4>
-                            <div>
-                                {company_name}<br/>
-                                {company_website}<br/>
-                            </div>
-                        </div>
-                        <?php if ($this->data->mailid == 3) { ?>
-                            <div class="row mb-3">
-                                <h4>
-                                    <?= Text::_('COM_TICKETSTATION_TEMPLATE_FIELDS_PAYMENT'); ?>
-                                </h4>
-                                <div>
-                                    {paymentlink}<br/>
-                                </div>
-                            </div>
-                        <?php } ?>
+                    <p class="mt-3"><?= Text::_('COM_TICKETSTATION_TEMPLATE_DYNAMIC_FIELDS_DESC'); ?></p>
 
-                    </div>
+                    <?php // Exactly the placeholders the code that sends this mail fills in (eTicketsMessage::placeholders()) ?>
+                    <?php foreach ($placeholders as $group => $tags) { ?>
+                        <h4 class="h5 mt-3"><?= Text::_($group); ?></h4>
+                        <table class="table table-sm mb-3">
+                            <tbody>
+                                <?php foreach ($tags as $tag) {
+                                    // A template may describe a placeholder in its own words (e.g. {price} on the invoice mail).
+                                    $key = 'COM_TICKETSTATION_TEMPLATE_FIELD_' . strtoupper($tag);
+                                    $key = $language->hasKey($key . '_' . $mailid) ? $key . '_' . $mailid : $key;
+                                    ?>
+                                    <tr>
+                                        <td class="w-50"><code>{<?= $tag ?>}</code></td>
+                                        <td>
+                                            <?= Text::_($key); ?>
+                                            <?php if (in_array($tag, $required, true)) { ?>
+                                                <span class="badge bg-danger ms-1"><?= Text::_('COM_TICKETSTATION_TEMPLATE_FIELD_REQUIRED'); ?></span>
+                                            <?php } ?>
+                                        </td>
+                                    </tr>
+                                <?php } ?>
+                            </tbody>
+                        </table>
+                    <?php } ?>
                 </div>
             </div>
         </div>

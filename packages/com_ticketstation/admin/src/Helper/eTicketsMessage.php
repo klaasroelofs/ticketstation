@@ -28,6 +28,113 @@ class eTicketsMessage
     var $templates    = null;
     var $language     = '';
 
+    /**
+     * The placeholders every mail can use: the customer's details (from the client row, see
+     * user()) and the company details from the Configuration (see setDefaultVariables()).
+     */
+    private const COMMON_FIELDS = [
+        'COM_TICKETSTATION_TEMPLATE_FIELDS_CLIENT'  => ['firstname', 'name', 'emailaddress', 'phonenumber', 'address', 'zipcode', 'city'],
+        'COM_TICKETSTATION_TEMPLATE_FIELDS_COMPANY' => ['company_name', 'company_address', 'company_zipcode', 'company_city', 'company_email', 'company_website'],
+    ];
+
+    /**
+     * The order placeholders each template (mailid) gets filled in by the code that sends it.
+     * The edit screen lists exactly these, so keep them in step with the senders.
+     */
+    private const TEMPLATE_FIELDS = [
+        1 => ['ordercode', 'orderdate', 'orderlist', 'price'],
+        2 => ['ordercode', 'orderdate', 'orderlist', 'price'],
+        3 => ['ordercode', 'orderdate', 'orderlist', 'price', 'paymentlink'],
+        4 => ['ordercode', 'orderdate', 'orderlist', 'confirmationlink'],
+        5 => ['ordercode', 'orderdate', 'price', 'invoice_id'],
+    ];
+
+    /**
+     * Placeholders a template's body must contain: without them the mail has no purpose.
+     */
+    private const REQUIRED_FIELDS = [
+        3 => ['paymentlink'],
+        4 => ['confirmationlink'],
+    ];
+
+    /**
+     * The placeholders the edit screen offers for a template, grouped by language key of the
+     * group heading: [group => [tag, ...]].
+     */
+    public static function placeholders(int $mailid): array
+    {
+        $order = self::TEMPLATE_FIELDS[$mailid] ?? [];
+
+        return array_filter([
+            'COM_TICKETSTATION_TEMPLATE_FIELDS_CLIENT'  => self::COMMON_FIELDS['COM_TICKETSTATION_TEMPLATE_FIELDS_CLIENT'],
+            'COM_TICKETSTATION_TEMPLATE_FIELDS_ORDER'   => $order,
+            'COM_TICKETSTATION_TEMPLATE_FIELDS_COMPANY' => self::COMMON_FIELDS['COM_TICKETSTATION_TEMPLATE_FIELDS_COMPANY'],
+        ]);
+    }
+
+    /**
+     * The placeholders a template's body must contain.
+     */
+    public static function requiredPlaceholders(int $mailid): array
+    {
+        return self::REQUIRED_FIELDS[$mailid] ?? [];
+    }
+
+    /**
+     * The required placeholders missing from a mail body, as tags ("{paymentlink}").
+     */
+    public static function missingPlaceholders(int $mailid, string $body): array
+    {
+        $missing = [];
+
+        foreach (self::requiredPlaceholders($mailid) as $tag) {
+            if (strpos($body, '{' . $tag . '}') === false && strpos($body, '%%' . strtoupper($tag) . '%%') === false) {
+                $missing[] = '{' . $tag . '}';
+            }
+        }
+
+        return $missing;
+    }
+
+    /**
+     * The order placeholders shared by the mails about an order: its number, date, the list
+     * of its tickets and its total, formatted with the date and price format of the
+     * Configuration.
+     */
+    public static function orderVariables(int $ordercode): array
+    {
+        $payment = new PaymentAPI($ordercode);
+        $config  = $payment->getConfig();
+        $db      = Factory::getContainer()->get('DatabaseDriver');
+
+        $query = $db->getQuery(true)
+            ->select('MIN(' . $db->quoteName('orderdate') . ')')
+            ->from($db->quoteName('#__ticketstation_orders'))
+            ->where($db->quoteName('ordercode') . ' = ' . $ordercode);
+
+        $db->setQuery($query);
+        $orderdate = $db->loadResult();
+
+        // _getAmount() counts what is still to be paid, so a paid order needs its paid rows.
+        $query = $db->getQuery(true)
+            ->select('COUNT(*)')
+            ->from($db->quoteName('#__ticketstation_orders'))
+            ->where($db->quoteName('ordercode') . ' = ' . $ordercode)
+            ->where($db->quoteName('paid') . ' = 1');
+
+        $db->setQuery($query);
+        $total = (int) $db->loadResult() > 0
+            ? (new getAmount())->_getAmount($ordercode, 0, 1)
+            : (new getAmount())->_getAmount($ordercode);
+
+        return [
+            'ordercode' => $ordercode,
+            'orderdate' => $orderdate ? date($config->dateformat, strtotime($orderdate)) : '',
+            'orderlist' => $payment->getOrderList(),
+            'price'     => TicketstationFunctions::showprice($config->priceformat, $total, $config->valuta),
+        ];
+    }
+
     public function __construct($alias = '')
     {
         $this->setDefaultVariables();

@@ -14,6 +14,7 @@ defined('_JEXEC') or die;
 use Joomla\CMS\Factory;
 use Joomla\CMS\MVC\View\HtmlView as BaseHtmlView;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Config;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\Shop;
 
 class HtmlView extends BaseHtmlView {
 
@@ -28,8 +29,6 @@ class HtmlView extends BaseHtmlView {
     {
         $db      = Factory::getContainer()->get('DatabaseDriver');
         $app 	 = Factory::getApplication();
-        $user 	 = $this->getCurrentUser();
-        $isadmin = $user->authorise('core.manage');
 
         $this->config = (new Config)->getPartialConfig([
             'show_waitinglist', 'dateformat', 'priceformat', 'valuta', 'show_quantity_eventlist', 'show_price_eventlist', 'show_venue', 'transactioncosts', 'transcosts', 'variable_transcosts',
@@ -42,6 +41,14 @@ class HtmlView extends BaseHtmlView {
         $sold       = $this->get('sold');
         $pagination = $this->get('pagination');
         $mollie     = $this->get('mollie');
+
+        // In test or bypass mode only logged-in users see the tickets (with a warning that the
+        // mode is on); other visitors only see the events whose sale is about to start.
+        if (Shop::isClosed())
+        {
+            $items  = [];
+            $events = [];
+        }
 
         ## Starting a session.
         $session = $app->getSession();
@@ -63,7 +70,7 @@ class HtmlView extends BaseHtmlView {
         $this->added      = $added;
         $this->sold       = $sold;
         $this->pagination = $pagination;
-        $this->isadmin    = $isadmin;
+        $this->testmode   = Shop::inTestMode() && !Shop::isClosed();
         $this->mollie     = $mollie;
 
         // Call the parent display to display the layout file

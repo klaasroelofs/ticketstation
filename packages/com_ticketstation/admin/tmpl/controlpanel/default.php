@@ -10,6 +10,7 @@
 use Joomla\CMS\Factory;
 use Joomla\CMS\HTML\HTMLHelper;
 use Joomla\CMS\Language\Text;
+use Joomla\CMS\Uri\Uri;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Price;
 
 // No direct access to this file
@@ -17,11 +18,11 @@ defined('_JEXEC') or die('Restricted Access');
 $app = Factory::getApplication();
 $document = $app->getDocument();
 $document->setTitle(Text::_('COM_TICKETSTATION_VIEW_CPANEL_BROWSER_TITLE') . ' - ' . $app->get('sitename'));
-$document->addStyleSheet( '/administrator/components/com_ticketstation/assets/css/ticketstation.css' );
+$document->addStyleSheet(Uri::base() . 'components/com_ticketstation/assets/css/ticketstation.css');
 
 ## Load dark theme only for J5!
 if (version_compare(JVERSION, '4.999.999', 'gt')) {
-    $document->addStyleSheet('/administrator/components/com_ticketstation/assets/css/j5dark.css');
+    $document->addStyleSheet(Uri::base() . 'components/com_ticketstation/assets/css/j5dark.css');
 }
 
 ?>
@@ -208,16 +209,26 @@ if (version_compare(JVERSION, '4.999.999', 'gt')) {
                 </div>
             </div>
             <div class="card mb-2">
-                <div class="card-body">
-                    <div style="margin-bottom: 10px; text-align: center;"><?= Text::_('COM_TICKETSTATION_ENJOYING') ?></div>
-                    <div style="text-align: center;">
-                        <a
-                                href="https://ko-fi.com/klaasroelofs"
-                                class="btn btn-outline-success mb-2" target="blank" rel="noopener noreferrer">
-                            <span class="fa fa-mug-hot" aria-hidden="true"></span>
-                            <?= Text::_('COM_TICKETSTATION_DONATE') ?>
-                        </a>
+                <div class="card-body text-center">
+                    <div class="mb-2"><?= Text::_('COM_TICKETSTATION_ENJOYING') ?></div>
+                    <?php // A review costs nothing and helps others find the extension, so it comes before the donation ?>
+                    <div class="text-warning fs-4 mb-2" aria-hidden="true">
+                        <?php for ($star = 0; $star < 5; $star++) { ?><span class="fa fa-star"></span><?php } ?>
                     </div>
+                    <p class="small text-muted"><?= Text::_('COM_TICKETSTATION_CPANEL_REVIEW_TEXT') ?></p>
+                    <a
+                            href="https://extensions.joomla.org/extension/calendars-a-events/ticketstation/"
+                            class="btn btn-primary mb-3" target="blank" rel="noopener noreferrer">
+                        <span class="fa fa-star" aria-hidden="true"></span>
+                        <?= Text::_('COM_TICKETSTATION_CPANEL_REVIEW_BUTTON') ?>
+                    </a>
+                    <p class="small text-muted border-top pt-3 mb-2"><?= Text::_('COM_TICKETSTATION_CPANEL_COFFEE_TEXT') ?></p>
+                    <a
+                            href="https://ko-fi.com/klaasroelofs"
+                            class="btn btn-outline-success mb-2" target="blank" rel="noopener noreferrer">
+                        <span class="fa fa-mug-hot" aria-hidden="true"></span>
+                        <?= Text::_('COM_TICKETSTATION_DONATE') ?>
+                    </a>
                 </div>
             </div>
         </div>
@@ -362,16 +373,16 @@ if (version_compare(JVERSION, '4.999.999', 'gt')) {
 
     <div class="row">
         <div class="col">
-            <div class="ticketstation-cpanel-footer small mt-3 p-3 bg-light border-top border-4 d-flex flex-column">
+            <div class="ticketstation-cpanel-footer card small mt-3 p-3 border-top border-4">
                 <?php // Colours follow the logo: "Ticket" and "for Joomla!" in brand blue, "station" in dark navy ?>
-                <?php $productName = '<b style="white-space: nowrap;"><span style="color:#1350db;">Ticket</span><span style="color:#0e1f3d;">station</span> <span style="color:#1350db;">for Joomla!</span></b>'; ?>
+                <?php $productName = '<b class="text-nowrap"><span class="ticketstation-brand-blue">Ticket</span><span class="ticketstation-brand-navy">station</span> <span class="ticketstation-brand-blue">for Joomla!</span></b>'; ?>
                 <p class="text-muted">
                     <?= Text::sprintf('COM_TICKETSTATION_CPANEL_FOOTER_ABOUT', $productName); ?><br/>
                     <strong><?= Text::_('COM_TICKETSTATION_CPANEL_FOOTER_SUPPORT'); ?></strong>
                 </p>
 
                 <p class="text-muted">
-                    Copyright 2022-<?= date('Y') ?> <a href="https://github.com/klaasroelofs" target="_blank" rel="noopener"><?php echo $this->data['author']; ?></a> Overloon. <?= Text::_('COM_TICKETSTATION_CPANEL_FOOTER_RIGHTS'); ?>
+                    Copyright 2022-<?= date('Y') ?> <a href="https://github.com/klaasroelofs" target="blank" rel="noopener"><?php echo $this->data['author']; ?></a> Overloon. <?= Text::_('COM_TICKETSTATION_CPANEL_FOOTER_RIGHTS'); ?>
                     <br/>
                     <?= Text::sprintf('COM_TICKETSTATION_CPANEL_FOOTER_LICENSE', $productName, '<a href="http://www.gnu.org/licenses/gpl-3.0.html">GNU General Public License</a>'); ?>
                 </p>

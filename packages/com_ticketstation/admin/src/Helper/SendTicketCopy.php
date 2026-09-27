@@ -134,9 +134,8 @@ class SendTicketCopy
 
         $message = new eTicketsMessage;
 
-        $variables = array(
-            'orderlist' => $payment_helper->getOrderList(),
-        );
+        ## The same order placeholders as the mail after payment (see eTicketsMessage::TEMPLATE_FIELDS).
+        $variables = eTicketsMessage::orderVariables((int) $this->eid);
 
         $message->id('2')
             ->user($user->clientid)

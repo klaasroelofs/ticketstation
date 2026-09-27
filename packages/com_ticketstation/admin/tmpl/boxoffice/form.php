@@ -24,15 +24,18 @@ $wa = $document->getWebAssetManager();
 $wa->useScript('jquery');
 $wa->registerAndUseStyle('ticketstation', Uri::base() . 'components/com_ticketstation/assets/css/ticketstation.css');
 
-if (isset($this->data[0]->coupon_type)) {
-    if ($this->data[0]->coupon_type == 1) {
-        $ticket_amount = count($this->data);
-        $discount = (($this->data[0]->ticketprice / 100) * $this->data[0]->coupon_discount) * $ticket_amount;
-        $discount_text = '(' . $this->data[0]->coupon_discount . '%)';
-    } else {
-        $ticket_amount = count($this->data);
-        $discount = $this->data[0]->coupon_discount;
-        $discount_text = '';
+// The coupon of the order and its discount as stored on the order rows when it was applied
+// (see Coupon::refresh()), not the coupon's current settings.
+$coupon        = '';
+$discount      = 0.0;
+$discount_text = '';
+
+foreach ($this->data as $orderRow) {
+    $discount += (float) $orderRow->discount;
+
+    if ($coupon === '' && (string) $orderRow->coupon !== '') {
+        $coupon        = $orderRow->coupon;
+        $discount_text = (int) $orderRow->discount_type === 1 ? '(' . (float) $orderRow->discount_amount . '%)' : '';
     }
 }
 
@@ -49,6 +52,8 @@ $history_icons = [
     'payment_failed'         => ['fa-times-circle', 'danger'],
     'payment_cancelled'      => ['fa-ban', 'secondary'],
     'payment_expired'        => ['fa-hourglass-end', 'secondary'],
+    'payment_duplicate'      => ['fa-exclamation-triangle', 'danger'],
+    'payment_refund_reported' => ['fa-reply', 'warning'],
     'tickets_generated'      => ['fa-ticket-alt', 'secondary'],
     'tickets_sent'           => ['fa-paper-plane', 'info'],
     'ticket_copy_sent'       => ['fa-paper-plane', 'info'],
@@ -138,23 +143,18 @@ $history_icons = [
                         </td>
                     </tr>
 
-                    <?php if(isset($this->data[0]->coupon_type)) { ?>
+                    <?php if ($coupon !== '') { ?>
                         <tr>
                             <td><?= Text::_( 'COM_TICKETSTATION_COUPON_CODE' ); ?></td>
-                            <td><?php if ($this->data[0]->coupon != '') { ?>
-                                    <span class="badge bg-warning" style="padding-left: 10px; padding-right: 10px;"><?= $this->data[0]->coupon; ?></span>
-                                <?php } else { ?>
-                                    <span class="badge bg-danger" style="padding-left: 10px; padding-right: 10px;"><?= Text::_( 'COM_TICKETSTATION_NO' ); ?></span>
-                                <?php } ?>
+                            <td>
+                                <span class="badge bg-warning" style="padding-left: 10px; padding-right: 10px;"><?= htmlspecialchars($coupon, ENT_QUOTES, 'UTF-8'); ?></span>
                             </td>
                         </tr>
-                        <?php if ($this->data[0]->coupon != '') { ?>
-                            <tr>
-                                <td><?= Text::_( 'COM_TICKETSTATION_DISCOUNT' ); ?> <?= $discount_text; ?></td>
-                                <td><div> <?= $this->config->valuta; ?> <?= number_format($discount, 2, ',', ''); ?></div>
-                                </td>
-                            </tr>
-                        <?php } ?>
+                        <tr>
+                            <td><?= Text::_( 'COM_TICKETSTATION_DISCOUNT' ); ?> <?= $discount_text; ?></td>
+                            <td><div> <?= $this->config->valuta; ?> <?= number_format($discount, 2, ',', ''); ?></div>
+                            </td>
+                        </tr>
                     <?php } ?>
 
                 </table>

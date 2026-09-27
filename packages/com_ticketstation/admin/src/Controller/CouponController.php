@@ -57,6 +57,9 @@ class CouponController extends FormController
         $model	    = $this->getModel('coupon');
         $data       = $this->input->post->get('jform', array(), 'array');
 
+        // Customers' input is compared in capitals (Coupon::check()), so store the code that way.
+        $data['coupon_code'] = strtoupper(trim((string) ($data['coupon_code'] ?? '')));
+
         $coupon_name  = $data['coupon_name'];
         $coupon_id  = $data['coupon_id'];
         $couponcode = $data['coupon_code'];

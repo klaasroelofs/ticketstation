@@ -112,7 +112,8 @@ class Amount
         $amounts = $db->loadObject();
 
         // todo making fees configurable per ticket.
-        $this->setFeesByOrderTotals($amounts->total);
+        // Over the total after the coupon discount, as the customer pays it (getAmount::_getAmount()).
+        $this->setFeesByOrderTotals($amounts->total_discounted);
 
         $amounts->fees                    = $this->order_fees;
         $amounts->total_discounted_ex_vat = $amounts->total_discounted - $amounts->vat;
@@ -143,9 +144,9 @@ class Amount
     {
         $config = (new Config)->getPartialConfig(['variable_transcosts', 'transactioncosts', 'transcosts']);
 
-        if ($config->variable_transcosts == 2)
+        if ($config->variable_transcosts == 2 || round((float) $amount, 2) == 0)
         {
-            // Transaction costs are switched off completely.
+            // Transaction costs are switched off completely, or there is nothing to pay.
             $this->order_fees = 0;
         }
         elseif ($config->variable_transcosts != 1)

@@ -37,8 +37,8 @@ $exampleResponse = <<<XML
 <xml>
     <message>
         <status>1</status>
-        <text>Ticket goedgekeurd</text>
-        <order>ABC123-10234</order>
+        <text>Ticket approved</text>
+        <order>26102-10234</order>
         <totalscanned>57</totalscanned>
     </message>
 </xml>
@@ -56,7 +56,7 @@ XML;
             <summary class="h5 mb-0"><span class="fa fa-mobile-alt me-2" aria-hidden="true"></span><?= Text::_('COM_TICKETSTATION_SCANNING_DOCS_WEB_TITLE') ?></summary>
 
             <h3 class="h6 mt-3"><?= Text::_('COM_TICKETSTATION_SCANNING_DOCS_SETUP') ?></h3>
-            <?php $steps('COM_TICKETSTATION_SCANNING_DOCS_WEB_SETUP_', 5, [4 => '<a href="' . $this->escape($scanningUrl) . '" target="_blank" rel="noopener"><code>' . $this->escape($scanningUrl) . '</code></a>']); ?>
+            <?php $steps('COM_TICKETSTATION_SCANNING_DOCS_WEB_SETUP_', 5, [4 => '<a href="' . $this->escape($scanningUrl) . '" target="blank" rel="noopener"><code>' . $this->escape($scanningUrl) . '</code></a>']); ?>
 
             <h3 class="h6 mt-3"><?= Text::_('COM_TICKETSTATION_SCANNING_DOCS_USE') ?></h3>
             <?php $steps('COM_TICKETSTATION_SCANNING_DOCS_WEB_USE_', 5); ?>

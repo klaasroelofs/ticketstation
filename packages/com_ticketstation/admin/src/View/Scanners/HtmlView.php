@@ -67,10 +67,12 @@ class HtmlView extends BaseHtmlView
         $events		= $this->get('events');
         $tickets	= $this->get('tickets');
 
-        $users[]	     = HTMLHelper::_('select.option',  '0', Text::_( 'COM_TICKETSTATION_SCANNING_SELECT_USER' ), 'id', 'name' );
+        // A scanner needs a user: the browser scanner logs in with it and every approved ticket records it.
+        // The empty placeholder value lets the form validator refuse saving without a choice.
+        $users[]	     = HTMLHelper::_('select.option',  '', Text::_( 'COM_TICKETSTATION_SCANNING_SELECT_USER' ), 'id', 'name' );
         $users	         = array_merge( $users, $this->get('users'));
-        $lists['users'] = HTMLHelper::_('select.genericlist',  $users, 'userid', 'class="form-select" ','id',
-            'name', isset($data->userid)?$data->userid:0 );
+        $lists['users'] = HTMLHelper::_('select.genericlist',  $users, 'userid', 'class="form-select required" required','id',
+            'name', !empty($data->userid) ? $data->userid : '' );
 
         $yesno = array(
             '1' => array('value' => '1', 'text' => Text::_( 'COM_TICKETSTATION_YES' )),

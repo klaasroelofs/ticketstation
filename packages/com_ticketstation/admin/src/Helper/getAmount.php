@@ -48,7 +48,9 @@ class getAmount
 
         $query = $db->getQuery(true);
 
-        $query->select(array('a.userid', 'SUM(t.ticketprice) AS orderprice', 'a.coupon'));
+        ## The coupon terms were stored on the rows when it was applied (see Coupon); rows added
+        ## afterwards don't have them yet, hence MAX().
+        $query->select(array('a.userid', 'SUM(t.ticketprice) AS orderprice', 'MAX(a.coupon) AS coupon', 'MAX(a.discount_type) AS discount_type', 'MAX(a.discount_amount) AS discount_amount'));
         $query->from($db->quoteName('#__ticketstation_tickets', 't'));
         $query->join('LEFT', $db->quoteName('#__ticketstation_orders', 'a') . ' ON ' . $db->quoteName('a.ticketid') . ' = ' . $db->quoteName('t.ticketid'));
         $query->where($db->quoteName('a.ordercode') . " = " . $db->quote($eid));
@@ -110,33 +112,8 @@ class getAmount
             ## Get the order price!
             $orderprice = $result->orderprice;
 
-            $couponcode = $result->coupon;
-
-            if ($couponcode != '') {
-
-                $query = $db->getQuery(true);
-                $query->select('*');
-                $query->from($db->quoteName('#__ticketstation_coupons'));
-                $query->where($db->quoteName('coupon_code') . " = " . $db->quote($couponcode));
-
-                $db->setQuery($query);
-
-                $coupon = $db->loadObject();
-
-                if ($coupon->coupon_type == 1) {
-
-                    ## Discount in %
-                    $discount = ($orderprice / 100) * $coupon->coupon_discount;
-
-                } else {
-
-                    ## Discount in amounts :)
-                    $discount = $coupon->coupon_discount;
-
-                }
-
-                $orderprice = $orderprice - $discount;
-
+            if ((string) $result->coupon !== '') {
+                $orderprice = $orderprice - Coupon::discountFor((float) $orderprice, $result->discount_type, $result->discount_amount);
             }
 
             ## Now let's do the counting of the price again.
@@ -151,7 +128,7 @@ class getAmount
                 $transcost = (($orderprice / 100) * $config->transcosts);
             }
 
-            if ($orderprice != 0) {
+            if (round($orderprice, 2) != 0) {
                 ## Amount is not 0.00 so transactin costs are needed.
                 $amount = $orderprice + $transcost;
             } else {
@@ -197,7 +174,9 @@ class getAmount
 
         $query = $db->getQuery(true);
 
-        $query->select(array('a.userid', 'SUM(t.ticketprice) AS orderprice', 'a.coupon'));
+        ## The coupon terms were stored on the rows when it was applied (see Coupon); rows added
+        ## afterwards don't have them yet, hence MAX().
+        $query->select(array('a.userid', 'SUM(t.ticketprice) AS orderprice', 'MAX(a.coupon) AS coupon', 'MAX(a.discount_type) AS discount_type', 'MAX(a.discount_amount) AS discount_amount'));
         $query->from($db->quoteName('#__ticketstation_tickets', 't'));
         $query->join('LEFT', $db->quoteName('#__ticketstation_orders', 'a') . ' ON ' . $db->quoteName('a.ticketid') . ' = ' . $db->quoteName('t.ticketid'));
         $query->where($db->quoteName('a.ordercode') . " = " . $db->quote($eid));
@@ -223,33 +202,8 @@ class getAmount
             ## Get the order price!
             $orderprice = $result->orderprice;
 
-            ## Gettig the orderid if there is one.
-            //$couponcode = $session->get('coupon');
-            $couponcode = $result->coupon;
-
-            if ($couponcode != '') {
-
-                $query = $db->getQuery(true);
-                $query->select('*');
-                $query->from($db->quoteName('#__ticketstation_coupons'));
-                $query->where($db->quoteName('coupon_code') . " = " . $db->quote($couponcode));
-
-                $db->setQuery($query);
-
-                $coupon = $db->loadObject();
-
-                if ($coupon->coupon_type == 1) {
-
-                    ## Discount in %
-                    $discount = ($orderprice / 100) * $coupon->coupon_discount;
-
-                } else {
-
-                    ## Discount in amounts :)
-                    $discount = $coupon->coupon_discount;
-
-                }
-
+            if ((string) $result->coupon !== '') {
+                $discount = Coupon::discountFor((float) $orderprice, $result->discount_type, $result->discount_amount);
             }
 
         }
@@ -304,7 +258,9 @@ class getAmount
 
         $query = $db->getQuery(true);
 
-        $query->select(array('a.userid', 'SUM(t.ticketprice) AS orderprice', 'a.coupon'));
+        ## The coupon terms were stored on the rows when it was applied (see Coupon); rows added
+        ## afterwards don't have them yet, hence MAX().
+        $query->select(array('a.userid', 'SUM(t.ticketprice) AS orderprice', 'MAX(a.coupon) AS coupon', 'MAX(a.discount_type) AS discount_type', 'MAX(a.discount_amount) AS discount_amount'));
         $query->from($db->quoteName('#__ticketstation_tickets', 't'));
         $query->join('LEFT', $db->quoteName('#__ticketstation_orders', 'a') . ' ON ' . $db->quoteName('a.ticketid') . ' = ' . $db->quoteName('t.ticketid'));
         $query->where($db->quoteName('a.ordercode') . " = " . $db->quote($ordercode));
@@ -324,37 +280,13 @@ class getAmount
             $orderprice = $result->orderprice;
 
 
-            $couponcode = $result->coupon;
-
-            if ($couponcode != '') {
-
-                $query = $db->getQuery(true);
-                $query->select('*');
-                $query->from($db->quoteName('#__ticketstation_coupons'));
-                $query->where($db->quoteName('coupon_code') . " = " . $db->quote($couponcode));
-
-                $db->setQuery($query);
-                $coupon = $db->loadObject();
-
-                if ($coupon->coupon_type == 1) {
-
-                    ## Discount in %
-                    $discount = ($orderprice / 100) * $coupon->coupon_discount;
-
-                } else {
-
-                    ## Discount in amounts :)
-                    $discount = $coupon->coupon_discount;
-
-                }
-
-                $orderprice = $orderprice - $discount;
-
+            if ((string) $result->coupon !== '') {
+                $orderprice = $orderprice - Coupon::discountFor((float) $orderprice, $result->discount_type, $result->discount_amount);
             }
 
             ## Check the order price again
             ## If the total orderprice is 0.00 then no transaction costs have to charged.
-            if ($orderprice == 0) {
+            if (round($orderprice, 2) == 0) {
                 $transcost = 0;
                 return $transcost;
             }

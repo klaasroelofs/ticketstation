@@ -22,6 +22,7 @@ use Ticketstation\Component\Ticketstation\Administrator\Helper\Availability;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Config;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\getAmount;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Order;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\Shop;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Ticket;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\TicketstationFunctions;
 use Ticketstation\Component\Ticketstation\Site\Model\OrderModel;
@@ -275,6 +276,15 @@ class OrderController extends BaseController
         if ($this->ordercode != $this->session)
         {
             $this->error = Text::_('COM_TICKETSTATION_EVENT_FAILED_ADD_TO_CART') . '#100';
+
+            return false;
+        }
+
+        // Only what the ticket page offers this visitor: a published ticket, and in test or
+        // bypass mode only to logged-in users.
+        if ( ! Shop::sells((int) $this->id))
+        {
+            $this->error = Text::_('COM_TICKETSTATION_TICKET_NOT_AVAILABLE');
 
             return false;
         }

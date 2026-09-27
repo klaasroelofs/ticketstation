@@ -11,6 +11,7 @@ namespace Ticketstation\Component\Ticketstation\Administrator\View\Templates;
 
 defined('_JEXEC') or die;
 
+use Joomla\CMS\Factory;
 use Joomla\CMS\HTML\HTMLHelper;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\View\HtmlView as BaseHtmlView;
@@ -58,6 +59,18 @@ class HtmlView extends BaseHtmlView {
         $model = $this->getModel('Templates');
 
         $this->data = $model->getData();
+
+        // After a refused save (a required placeholder missing) show what was typed, not the
+        // stored text (see TemplatesController::apply()).
+        $app      = Factory::getApplication();
+        $refused  = $app->getUserState('com_ticketstation.edit.template.data');
+        $app->setUserState('com_ticketstation.edit.template.data', null);
+
+        if ($this->data && is_array($refused) && (int) $refused['mailid'] === (int) $this->data->mailid)
+        {
+            $this->data->mailsubject = $refused['mailsubject'];
+            $this->data->mailbody    = $refused['mailbody'];
+        }
 
         ToolBarHelper::title(Text::sprintf('COM_TICKETSTATION_VIEW_EDIT_TEMPLATES_TITLE', $this->data->alias), 'fa fa-envelope');
 

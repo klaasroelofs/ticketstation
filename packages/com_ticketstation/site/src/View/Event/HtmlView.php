@@ -17,6 +17,7 @@ use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\View\HtmlView as BaseHtmlView;
 use Joomla\CMS\Router\Route;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Config;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\Shop;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\TicketstationFunctions;
 
 
@@ -39,7 +40,7 @@ class HtmlView extends BaseHtmlView {
         $config	= $this->get('config');
         $soldtickets = $this->get('soldtickets');
 
-        if(!$items)
+        if (!$items || Shop::isClosed())
         {
             $app->enqueueMessage(Text::_('COM_TICKETSTATION_TICKET_NOT_AVAILABLE'), 'error');
             $itemid = TicketstationFunctions::getSiteItemid();

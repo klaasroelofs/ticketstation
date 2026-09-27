@@ -129,37 +129,121 @@ class ScannersModel extends BaseDatabaseModel
         return $db->loadObjectList();
     }
 
+    /**
+     * Tickets with Scanning Allowed in date order, each child ticket directly below its parent
+     * (->child = 1). A child ticket whose parent has scanning switched off keeps its own place
+     * and carries the parent's name in ->parentname.
+     *
+     * @return  array
+     */
     function getTickets()
     {
         $db = Factory::getContainer()->get('DatabaseDriver');
 
         $query = $db->getQuery(true)
             ->select([
-                't.ticketname', 't.ticketid', 't.ticketcode', 'e.eventname', 'e.eventid', 'e.eventcode',
+                't.ticketname', 't.ticketid', 't.ticketcode', 't.parent', 'p.ticketname AS parentname',
+                'e.eventname', 'e.eventid', 'e.eventcode',
             ])
             ->from($db->quoteName('#__ticketstation_tickets', 't'))
             ->join('LEFT', $db->quoteName('#__ticketstation_events', 'e') . ' ON ' . $db->quoteName('t.eventid') . ' = ' . $db->quoteName('e.eventid'))
+            ->join('LEFT', $db->quoteName('#__ticketstation_tickets', 'p') . ' ON ' . $db->quoteName('t.parent') . ' = ' . $db->quoteName('p.ticketid'))
             ->where($db->quoteName('t.scans_on') . ' = 1')
-            ->order('t.startdate ASC');
+            ->order('t.startdate ASC, t.ticketid ASC');
+
+        $db->setQuery($query);
+        $tickets = $db->loadObjectList();
+
+        $listed   = [];
+        $children = [];
+
+        foreach ($tickets as $ticket)
+        {
+            if ((int) $ticket->parent === 0)
+            {
+                $listed[(int) $ticket->ticketid] = true;
+            }
+        }
+
+        foreach ($tickets as $ticket)
+        {
+            if (isset($listed[(int) $ticket->parent]))
+            {
+                $children[(int) $ticket->parent][] = $ticket;
+            }
+        }
+
+        $ordered = [];
+
+        foreach ($tickets as $ticket)
+        {
+            if (isset($listed[(int) $ticket->parent]))
+            {
+                continue;
+            }
+
+            $ticket->child = 0;
+            $ordered[]     = $ticket;
+
+            foreach ($children[(int) $ticket->ticketid] ?? [] as $child)
+            {
+                $child->child = 1;
+                $ordered[]    = $child;
+            }
+        }
+
+        return $ordered;
+    }
+
+    /**
+     * Users that can be linked to this scanner. Users of other scanners are left out, because the
+     * browser scanner only ever uses a user's first scanner; this scanner's own user always stays.
+     *
+     * @return  array
+     */
+    function getUsers()
+    {
+        $db = Factory::getContainer()->get('DatabaseDriver');
+
+        $scannerUsers = function ($operator) use ($db) {
+            return $db->getQuery(true)
+                ->select($db->quoteName('userid'))
+                ->from($db->quoteName('#__ticketstation_scannermap'))
+                ->where($db->quoteName('id') . ' ' . $operator . ' ' . (int) $this->id)
+                ->where($db->quoteName('userid') . ' IS NOT NULL');
+        };
+
+        $query = $db->getQuery(true)
+            ->select([
+                'id', 'CONCAT(name, " (" , id, ")") AS name',
+            ])
+            ->from($db->quoteName('#__users'))
+            ->where('(' . $db->quoteName('id') . ' NOT IN (' . $scannerUsers('!=') . ')'
+                . ' OR ' . $db->quoteName('id') . ' IN (' . $scannerUsers('=') . '))');
 
         $db->setQuery($query);
 
         return $db->loadObjectList();
     }
 
-    function getUsers()
+    /**
+     * Whether the user is already linked to a scanner other than the one with this id.
+     *
+     * @return  bool
+     */
+    function isUserTaken(int $userid, int $id)
     {
         $db = Factory::getContainer()->get('DatabaseDriver');
 
         $query = $db->getQuery(true)
-            ->select([
-                'id', 'CONCAT(name, " (" , id, ")") AS name',
-            ])
-            ->from($db->quoteName('#__users'));
+            ->select('COUNT(*)')
+            ->from($db->quoteName('#__ticketstation_scannermap'))
+            ->where($db->quoteName('userid') . ' = ' . $userid)
+            ->where($db->quoteName('id') . ' != ' . $id);
 
         $db->setQuery($query);
 
-        return $db->loadObjectList();
+        return (int) $db->loadResult() > 0;
     }
 
     function publish($cid = array(), $publish = 1)

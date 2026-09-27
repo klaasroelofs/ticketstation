@@ -67,12 +67,6 @@
         background-color:var(--light);color:var(--dark);
     }
 
-    body.com_ticketstation main .ticketstation-cpanel-footer
-    {
-        background-color:var(--secondary) !important;
-        border-top-color:var(--primary-text-emphasis) !important;
-    }
-
     body.com_ticketstation main #finishedframe .btn-outline-dark
     {
         border-color:var(--light);

@@ -25,6 +25,7 @@ CREATE TABLE IF NOT EXISTS `#__ticketstation_mollie` (
   `change_payment_state` tinyint(1) DEFAULT '1',
   `send_tickets_directly` tinyint(1) DEFAULT '1',
   `send_mail_after_return` tinyint(1) DEFAULT '0',
+  `payment_methods` varchar(255) NOT NULL DEFAULT 'ideal',
   PRIMARY KEY (`configid`)
 )  ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 DEFAULT COLLATE=utf8mb4_unicode_ci;
 
@@ -763,7 +764,8 @@ INSERT IGNORE INTO `#__ticketstation_mollie` VALUES(
 "en_GB",
 "1",
 "1",
-"0");
+"0",
+"ideal");
 
 INSERT IGNORE INTO `#__ticketstation_config` VALUES(
 "1",

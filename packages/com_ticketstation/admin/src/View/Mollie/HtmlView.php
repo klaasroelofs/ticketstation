@@ -15,6 +15,7 @@ use Joomla\CMS\HTML\HTMLHelper;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\View\HtmlView as BaseHtmlView;
 use Joomla\CMS\Toolbar\ToolbarHelper;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\MolliePaymentMethods;
 
 /**
  * Ticketstation Mollie Admin View
@@ -29,6 +30,20 @@ class HtmlView extends BaseHtmlView {
      */
 
     public $config = [];
+
+    /**
+     * The payment methods chosen for checkout.
+     *
+     * @var array
+     */
+    public $paymentMethods = [];
+
+    /**
+     * The methods active in the Mollie account, or null when Mollie could not be asked.
+     *
+     * @var array|null
+     */
+    public $activeMethods = null;
 
     function display($tpl = null) {
 
@@ -68,6 +83,12 @@ class HtmlView extends BaseHtmlView {
         $lists['send_tickets_directly'] = HTMLHelper::_('select.genericList', $yesno, 'send_tickets_directly', ' class="form-select" ' . '',
             'value', 'text', $config->send_tickets_directly);
 
+
+        $this->paymentMethods = MolliePaymentMethods::fromConfig($config->payment_methods ?? '');
+
+        // Ask Mollie with the key the checkout uses, so the screen can flag chosen methods
+        // that are not activated in the Mollie Dashboard (Mollie would refuse those).
+        $this->activeMethods = MolliePaymentMethods::activeInMollie($config->test_mode == '1' ? $config->api_key_test : $config->api_key);
 
         $this->config = $config;
         $this->lists = $lists;

@@ -206,6 +206,10 @@ class Invoice
     {
         $db = Factory::getContainer()->get('DatabaseDriver');
 
+        // The invoice adds up the order rows: make sure their discount matches the coupon of
+        // the order, also for tickets added after the coupon was applied.
+        Coupon::refresh((int) $ordercode);
+
         $amount      = (new Amount)->getAmountByOrdercode($ordercode);
         $transaction = (new Transaction)->getTransactionDetails($ordercode);
 
@@ -532,11 +536,12 @@ class Invoice
 
         $message = new eTicketsMessage;
 
-        $variables = [
-            'ordercode'  => $invoice->ordercode,
+        // The order placeholders (see eTicketsMessage::TEMPLATE_FIELDS), with {price} as the
+        // invoice total.
+        $variables = array_merge(eTicketsMessage::orderVariables((int) $invoice->ordercode), [
             'invoice_id' => $this->getInvoiceNumber($invoice->invoiceid, $config->invoice_prefix),
             'price'      => TicketstationFunctions::showprice($config->priceformat, $invoice->netto + $invoice->fees, $config->valuta),
-        ];
+        ]);
 
         $message->id(5)
             ->user($invoice->userid)

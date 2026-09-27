@@ -246,6 +246,10 @@ class Order
         // The note the customer added in the cart was saved under the temporary ordercode.
         (new CustomerNote)->move($ordercode, $new_ordercode);
 
+        // The rows are final now: bring their discount in line with the coupon of the order,
+        // also for tickets added after it was applied (the payment screen lists the rows).
+        Coupon::refresh((int) $new_ordercode);
+
         // This is the point where the temporary (session) ordercode used while building the
         // cart/reservation becomes the order's real, final ordercode - so this is where "order
         // created" belongs, not at the individual add-to-cart/add-ticket-row calls (those still
@@ -417,8 +421,9 @@ class Order
             ->from($db->quoteName('#__ticketstation_orders'))
             ->where($db->quoteName('scanned') . ' = ' . $db->quote(1));
 
-        if ($ticket != 0) {
-            $query->where($db->quoteName('ticketid') . ' = ' . (int) $ticket);
+        // $ticket is one ticket id or a list of them (a parent ticket with its child tickets)
+        if (!empty($ticket)) {
+            $query->whereIn($db->quoteName('ticketid'), array_map('intval', (array) $ticket));
         } else {
             $query->where($db->quoteName('eventid') . ' = ' . (int) $event);
         }

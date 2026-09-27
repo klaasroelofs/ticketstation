@@ -12,7 +12,9 @@ namespace Ticketstation\Component\Ticketstation\Administrator\Model;
 defined('_JEXEC') or die;
 
 use Joomla\CMS\Factory;
+use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\Model\BaseDatabaseModel;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\MolliePaymentMethods;
 
 /**
  * Ticketstation Configuration Model
@@ -58,6 +60,17 @@ class MollieModel extends BaseDatabaseModel
             if (empty($data[$field]) && isset($existing->$field)) {
                 $data[$field] = $existing->$field;
             }
+        }
+
+        // The payment methods arrive as a checkbox list. A list that would leave some
+        // customers without a way to pay keeps the stored methods instead.
+        $methods = MolliePaymentMethods::filter((array) ($data['payment_methods'] ?? []));
+
+        if (MolliePaymentMethods::isUsable($methods)) {
+            $data['payment_methods'] = implode(',', $methods);
+        } else {
+            unset($data['payment_methods']);
+            Factory::getApplication()->enqueueMessage(Text::_('COM_TICKETSTATION_MOLLIE_PAYMENT_METHODS_INVALID'), 'warning');
         }
 
         // Bind the data.

@@ -15,6 +15,7 @@ use Joomla\CMS\Factory;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\Uri\Uri;
 use Ticketstation\Component\Ticketstation\Administrator\Controller\Mixin\RegisterControllerTasks;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\eTicketsMessage;
 use Joomla\CMS\Application\CMSApplication;
 use Joomla\CMS\MVC\Controller\BaseController;
 use Joomla\CMS\MVC\Factory\MVCFactoryInterface;
@@ -73,26 +74,47 @@ class TemplatesController extends BaseController {
 
         $this->id = $jinput->get('cid', '0', 'INT');
 
+        $editUrl = Uri::base() . 'index.php?option=com_ticketstation&controller=templates&task=edit&cid=' . $this->id;
+
+        // A payment-link mail without {paymentlink} (or a waiting-list mail without
+        // {confirmationlink}) leaves the customer nothing to click: refuse it, and keep what
+        // was typed so the form shows it again (see HtmlView::_displayForm()).
+        $missing = eTicketsMessage::missingPlaceholders((int) $this->id, (string) $post['mailbody']);
+
+        if ($missing)
+        {
+            $app->setUserState('com_ticketstation.edit.template.data', [
+                'mailid'      => (int) $this->id,
+                'mailsubject' => $post['mailsubject'] ?? '',
+                'mailbody'    => $post['mailbody'],
+            ]);
+            $this->setRedirect($editUrl, Text::sprintf('COM_TICKETSTATION_TEMPLATE_REQUIRED_MISSING', implode(', ', $missing)), 'error');
+
+            return false;
+        }
+
         $model = $this->getModel('templates');
 
         if ($model->store($post))
         {
-            $this->setRedirect(Uri::base() . 'index.php?option=com_ticketstation&controller=templates&task=edit&cid=' . $this->id, Text::_('COM_TICKETSTATION_TEMPLATES_SAVED'));
+            $this->setRedirect($editUrl, Text::_('COM_TICKETSTATION_TEMPLATES_SAVED'));
 
-        } else {
-
-            $this->setRedirect(Uri::base() . 'index.php?option=com_ticketstation&controller=templates&task=edit&cid=' . $this->id, Text::_('COM_TICKETSTATION_TEMPLATES_NOTSAVED'));
-
+            return true;
         }
 
+        $this->setRedirect($editUrl, Text::_('COM_TICKETSTATION_TEMPLATES_NOTSAVED'), 'error');
 
+        return false;
     }
     /**
      * Handle the save task which saves the configuration settings and returns to the Templates view
      */
     public function save($cachable = false, $urlparams = []) {
-        $this->apply();
-        $this->setRedirect(Uri::base() . 'index.php?option=com_ticketstation&view=templates', Text::_('COM_TICKETSTATION_TEMPLATES_SAVED'));
+        // When saving fails, apply() has already sent the user back to the form with the reason.
+        if ($this->apply())
+        {
+            $this->setRedirect(Uri::base() . 'index.php?option=com_ticketstation&view=templates', Text::_('COM_TICKETSTATION_TEMPLATES_SAVED'));
+        }
     }
 
     public function cancel($cachable = false, $urlparams = [])

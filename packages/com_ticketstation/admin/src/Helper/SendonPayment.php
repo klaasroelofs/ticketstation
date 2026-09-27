@@ -127,21 +127,15 @@ class SendonPayment
             $paymentstatus = '<span style="font-color=#006600;">'.Text::_( 'COM_TICKETSTATION_ORDERSTATUS_PAID' ).'</span>';
         }
 
-        $to_be_paid 	= (new getAmount())->_getAmount($this->eid);
-        $price 			= (new TicketstationFunctions())->showprice($config->priceformat ,$to_be_paid , $config->valuta);
-
         require_once __DIR__ . '/eTicketsMessage.php';
 
         $message = new eTicketsMessage();
 
-        $variables = array(
-            'orderlist' 		=> $payment_helper->getOrderList(),
-            'orderdate' 		=> $info[0]->orderdate,
-            'ordercode' 		=> $this->eid,
-            'price' 			=> $price,
-            'paymentstatus' 	=> $paymentstatus,
-            'ordercount'		=> $payment_helper->getOrderCount(),
-        );
+        ## The order placeholders every order mail gets (see eTicketsMessage::TEMPLATE_FIELDS);
+        ## paymentstatus and ordercount aren't offered any more, but stay for older templates.
+        $variables = eTicketsMessage::orderVariables((int) $this->eid);
+        $variables['paymentstatus'] = $paymentstatus;
+        $variables['ordercount']    = count($info);
 
         $message->id('1')
             ->user($user->clientid)

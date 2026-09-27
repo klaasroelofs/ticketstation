@@ -17,10 +17,11 @@ use Joomla\CMS\Factory;
 use Joomla\CMS\Router\Route;
 use Joomla\CMS\Uri\Uri;
 use Mollie\Api\MollieApiClient;
-use Mollie\Api\Types\PaymentMethod;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\getAmount;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\History;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\MolliePaymentMethods;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\PaymentAPI;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\Shop;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\TicketstationFunctions;
 
 /**
@@ -56,6 +57,14 @@ class PaymentController extends BaseController
 
         $jinput = Factory::getApplication()->getInput();
         $db = Factory::getContainer()->get('DatabaseDriver');
+
+        ## Test and bypass mode are for logged-in staff only: a visitor who still has a cart from
+        ## before the mode was switched on can't pay it (and in bypass mode get it for free).
+        if (Shop::isClosed()) {
+            $itemid = TicketstationFunctions::getSiteItemid();
+            Factory::getApplication()->enqueueMessage(Text::_('COM_TICKETSTATION_TICKET_NOT_AVAILABLE'), 'error');
+            Factory::getApplication()->redirect(Route::_('index.php?option=com_ticketstation&view=upcoming' . ($itemid ? '&Itemid=' . $itemid : '')));
+        }
 
         $this->ordercode = $jinput->get('ordercode', '0', 'int');
 
@@ -135,7 +144,7 @@ class PaymentController extends BaseController
                         "value"     => $ordertotal,
                         "currency"  => "EUR",
                     ),
-                    "method"        => PaymentMethod::IDEAL,
+                    "method"        => MolliePaymentMethods::fromConfig($this->mollieconfig->payment_methods ?? ''),
                     "description"   => $this->mollieconfig->description . ' ' . $this->ordercode,
                     "redirectUrl"   => $return_url . '&order=' . $return_token,
                     "webhookUrl"    => $notify_url,
@@ -367,6 +376,24 @@ class PaymentController extends BaseController
 
         ## Extract the return_token for use in updateTempTransaction calls.
         $return_token = $tmpTransaction->return_token;
+
+        ## Mollie also calls the webhook after a payment was paid (a refund or a chargeback),
+        ## and a customer may pay a second attempt of the same order. The order is complete
+        ## by then, so only note it: running the paid branch again would add a transaction
+        ## and create and send the tickets and the invoice once more. Another attempt that
+        ## fails or expires must not overwrite the paid state either.
+        if ((int) $tmpTransaction->processed === 1) {
+            if ($tmpTransaction->message !== $payment->id) {
+                if ($payment->isPaid()) {
+                    History::log($order_id, 'payment_duplicate', 'Second payment ' . $payment->id . ' received for an order that was already paid (transaction ' . $tmpTransaction->message . '); refund one of them in Mollie', ['mollie_id' => $payment->id, 'method' => $payment->method]);
+                }
+            } elseif ($payment->hasRefunds() || $payment->hasChargebacks()) {
+                History::log($order_id, 'payment_refund_reported', 'Mollie reports a refund or chargeback for transaction ' . $payment->id . '; the order and its tickets were not changed', ['mollie_id' => $payment->id, 'method' => $payment->method]);
+            }
+
+            $this->log('Payment ' . $payment->id . ' for an already paid order, not processed again.');
+            exit();
+        }
 
         ## PAYMENT SUCCESFULL
         if ($payment->isPaid() == true) {

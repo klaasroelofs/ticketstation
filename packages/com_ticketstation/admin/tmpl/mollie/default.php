@@ -12,6 +12,7 @@ use \Joomla\CMS\HTML\HTMLHelper;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\Router\Route;
 use Joomla\CMS\Uri\Uri;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\MolliePaymentMethods;
 
 // No direct access to this file
 defined('_JEXEC') or die('Restricted Access');
@@ -77,6 +78,9 @@ $wa->registerAndUseScript('passwordview', Uri::root() . 'media/system/js/fields/
                 </label>
                 <div class="col-sm-9">
                     <?= $this->lists['test_mode']; ?>
+                    <small class="form-text">
+                        <?= Text::_('COM_TICKETSTATION_MOLLIE_TEST_MODE_DESC') ?>
+                    </small>
                 </div>
             </div>
 
@@ -94,21 +98,34 @@ $wa->registerAndUseScript('passwordview', Uri::root() . 'media/system/js/fields/
                 </div>
             </div>
 
-            <div class="row mb-3">
-                <label for="trans_cost" class="col-sm-3 col-form-label"
-                       rel="popover"
-                       title="<?= Text::_('COM_TICKETSTATION_MOLLIE_TRANS_COSTS') ?>">
-                    <?= Text::_('COM_TICKETSTATION_MOLLIE_TRANS_COSTS') ?>
-                </label>
+            <fieldset class="row mb-3">
+                <legend class="col-sm-3 col-form-label pt-0">
+                    <?= Text::_('COM_TICKETSTATION_MOLLIE_PAYMENT_METHODS') ?>
+                </legend>
                 <div class="col-sm-9">
-                    <input type="text" name="trans_cost" id="trans_cost"
-                           class="form-control"
-                           value="<?= isset($this->config->trans_cost)?$this->config->trans_cost:null; ?>"/>
+                    <?php foreach (MolliePaymentMethods::METHODS as $method => $label) : ?>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="payment_methods[]"
+                                   id="payment_method_<?= $method ?>" value="<?= $method ?>"
+                                   <?= in_array($method, $this->paymentMethods, true) ? 'checked' : '' ?>/>
+                            <label class="form-check-label" for="payment_method_<?= $method ?>">
+                                <?= htmlspecialchars(MolliePaymentMethods::label($method), ENT_QUOTES, 'UTF-8') ?>
+                            </label>
+                            <?php if ($this->activeMethods !== null && !in_array($method, $this->activeMethods, true)) : ?>
+                                <span class="badge <?= in_array($method, $this->paymentMethods, true) ? 'bg-danger' : 'bg-secondary' ?> ms-1">
+                                    <?= Text::_('COM_TICKETSTATION_MOLLIE_METHOD_NOT_ACTIVE') ?>
+                                </span>
+                            <?php endif; ?>
+                        </div>
+                    <?php endforeach; ?>
                     <small class="form-text">
-                        <?= Text::_('COM_TICKETSTATION_MOLLIE_TRANS_COSTS_DESC') ?>
+                        <?= Text::_('COM_TICKETSTATION_MOLLIE_PAYMENT_METHODS_DESC') ?>
+                        <?php if ($this->activeMethods === null) : ?>
+                            <br/><?= Text::_('COM_TICKETSTATION_MOLLIE_METHODS_UNKNOWN') ?>
+                        <?php endif; ?>
                     </small>
                 </div>
-            </div>
+            </fieldset>
 
             <div class="row mb-3">
                 <label for="description" class="col-sm-3 col-form-label"

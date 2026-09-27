@@ -89,7 +89,7 @@ class TicketscannerModel extends BaseDatabaseModel
             ->select('COUNT(orderid)')
             ->from($db->quoteName('#__ticketstation_orders'))
             ->where($db->quoteName('paid') . ' = ' . $db->quote(1))
-            ->where($db->quoteName('ticketid') . ' = '. $db->quote((int) $this->ticketid));
+            ->whereIn($db->quoteName('ticketid'), Scanner::ticketGroup((int) $this->ticketid));
 
         $db->setQuery($query);
 

@@ -65,10 +65,8 @@ class Confirmation
         $config = $payment_helper->getConfig();
         ## Global things for this email:
 
-        $date       = mktime(0, 0, 0, date("m"), date("d"), date("Y"));
-        $date       = date($config->dateformat, strtotime($date));
-        $to_be_paid = (new getAmount())->_getAmount($this->eid);
-        $price      = TicketstationFunctions::showprice($config->priceformat, $to_be_paid, $config->valuta);
+        ## The mail goes out when the signup is completed at checkout, so today is its date.
+        $date       = date($config->dateformat);
 
         ## getOrderCount() only reflects the previous getWaitingList()/getOrderList() call,
         ## so it must run after getWaitingList() below, not before it.
@@ -88,11 +86,12 @@ class Confirmation
             $confirmationlink = $payment_helper->generateConfirmationLink($this->eid);
         }
 
+        ## See eTicketsMessage::TEMPLATE_FIELDS. There is no {price}: a waiting-list signup has
+        ## no order rows yet. tickets isn't offered any more, but stays for older templates.
         $variables = [
             'orderlist'        => $orderlist,
             'orderdate'        => $date,
             'ordercode'        => $this->eid,
-            'price'            => $price,
             'confirmationlink' => $confirmationlink,
             'tickets'          => $total_tickets,
         ];

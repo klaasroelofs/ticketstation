@@ -254,18 +254,10 @@ class WaitingList
 
             if( $item->total > 0 ){
 
-                ## Getting the order amount.
-                $total = (new getAmount)->_getAmount($row->ordercode, 1);
-                $price = TicketstationFunctions::showprice($config->priceformat, $total, $config->valuta);
-
                 $message = new eTicketsMessage;
 
-                $variables = array(
-                    'orderlist'   => $payment_helper->getOrderList(),
-                    'ordercode'   => $row->ordercode,
-                    'price'       => $price,
-                    'paymentlink' => $payment_helper->generatePaymentLink($row->ordercode),
-                );
+                $variables = eTicketsMessage::orderVariables((int) $row->ordercode);
+                $variables['paymentlink'] = $payment_helper->generatePaymentLink($row->ordercode);
 
                 $message->id(3)
                     ->user($item->userid)

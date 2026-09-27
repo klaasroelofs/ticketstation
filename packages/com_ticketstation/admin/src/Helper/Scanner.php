@@ -93,10 +93,60 @@ class Scanner
         return \in_array($eventid, $scanner->events, true);
     }
 
+    /**
+     * An assigned parent ticket includes its child tickets: an order carries the ticket actually
+     * bought, which for a parent with child tickets is mostly one of the children.
+     */
     public static function mayScanTicket(object $scanner, int $ticketid, int $eventid = 0): bool
     {
         return \in_array($ticketid, $scanner->tickets, true)
+            || \in_array(self::parentOf($ticketid), $scanner->tickets, true)
             || ($eventid > 0 && self::mayScanEvent($scanner, $eventid));
+    }
+
+    /**
+     * The ticket followed by its child tickets: everything that scanning for this ticket accepts
+     * and counts.
+     *
+     * @return  int[]
+     */
+    public static function ticketGroup(int $ticketid): array
+    {
+        if ($ticketid <= 0) {
+            return [];
+        }
+
+        $db    = Factory::getContainer()->get('DatabaseDriver');
+        $query = $db->getQuery(true)
+            ->select($db->quoteName('ticketid'))
+            ->from($db->quoteName('#__ticketstation_tickets'))
+            ->where($db->quoteName('parent') . ' = :ticketid')
+            ->bind(':ticketid', $ticketid, ParameterType::INTEGER);
+
+        $db->setQuery($query);
+
+        return array_merge([$ticketid], array_map('intval', $db->loadColumn()));
+    }
+
+    /**
+     * Parent of a child ticket, 0 for a ticket without parent.
+     */
+    private static function parentOf(int $ticketid): int
+    {
+        if ($ticketid <= 0) {
+            return 0;
+        }
+
+        $db    = Factory::getContainer()->get('DatabaseDriver');
+        $query = $db->getQuery(true)
+            ->select($db->quoteName('parent'))
+            ->from($db->quoteName('#__ticketstation_tickets'))
+            ->where($db->quoteName('ticketid') . ' = :ticketid')
+            ->bind(':ticketid', $ticketid, ParameterType::INTEGER);
+
+        $db->setQuery($query);
+
+        return (int) $db->loadResult();
     }
 
     /**

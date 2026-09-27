@@ -15,6 +15,7 @@ use Joomla\CMS\Factory;
 use Joomla\CMS\MVC\Model\BaseDatabaseModel;
 use Joomla\CMS\Pagination\Pagination;
 use Joomla\Utilities\ArrayHelper;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\Coupon;
 
 /**
  * Ticketstation Coupons Model
@@ -72,8 +73,10 @@ class CouponsModel extends BaseDatabaseModel
 
         $query = $db->getQuery(true);
 
-        $query->select('*');
-        $query->from($db->quoteName('#__ticketstation_coupons'));
+        // coupon_used is the number of orders that carry the code (see Coupon::usage()); the
+        // stored column is no longer kept up to date.
+        $query->select(['c.*', Coupon::usageSql('c.coupon_code') . ' AS coupon_used']);
+        $query->from($db->quoteName('#__ticketstation_coupons', 'c'));
 
         $db->setQuery($query, $this->getState('limitstart'), $this->getState('limit' ));
         $this->data = $db->loadObjectList();

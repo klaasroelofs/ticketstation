@@ -99,19 +99,48 @@ class ScannersController extends BaseController
         $data['events'] = json_encode($this->input->get('event', array(), 'int'));
         $data['tickets'] = json_encode($this->input->get('ticket', array(), 'int'));
 
+        // Every scanner needs a user of its own. The form validator already asks for one and the user
+        // list leaves out users of other scanners; this also catches a request that skipped both.
+        $id     = (int) ($data['id'] ?? 0);
+        $userid = (int) ($data['userid'] ?? 0);
+        $error  = null;
+
+        if ($userid <= 0)
+        {
+            $error = 'COM_TICKETSTATION_SCANNING_USER_REQUIRED';
+        }
+        elseif ($model->isUserTaken($userid, $id))
+        {
+            $error = 'COM_TICKETSTATION_SCANNING_USER_TAKEN';
+        }
+
+        if ($error)
+        {
+            // Back to the form; for a new scanner edit without an id, since the CSRF gate refuses a GET for add.
+            $this->setRedirect(Uri::base() . 'index.php?option=com_ticketstation&controller=scanners&task=edit' . ($id > 0 ? '&cid=' . $id : ''), Text::_($error), 'error');
+
+            return false;
+        }
+
         if ($model->store($data))
         {
             $this->setRedirect(Uri::base() . 'index.php?option=com_ticketstation&controller=scanners&task=edit&cid=' . $model->getScannerID(), Text::_('COM_TICKETSTATION_SCANNING_SCANNER_SAVED'));
-        } else {
-            $this->setRedirect(Uri::base() . 'index.php?option=com_ticketstation&controller=scanners', Text::_('COM_TICKETSTATION_SCANNING_SCANNER_SAVED_FAILED'));
+
+            return true;
         }
 
+        $this->setRedirect(Uri::base() . 'index.php?option=com_ticketstation&controller=scanners', Text::_('COM_TICKETSTATION_SCANNING_SCANNER_SAVED_FAILED'), 'error');
+
+        return false;
     }
 
     public function save($cachable = false, $urlparams = [])
     {
-        $this->apply();
-        $this->setRedirect(Uri::base() . 'index.php?option=com_ticketstation&view=Scanners', Text::_('COM_TICKETSTATION_SCANNING_SCANNER_SAVED'));
+        // Only a successful save goes back to the list; otherwise keep the redirect and message of apply()
+        if ($this->apply())
+        {
+            $this->setRedirect(Uri::base() . 'index.php?option=com_ticketstation&view=Scanners', Text::_('COM_TICKETSTATION_SCANNING_SCANNER_SAVED'));
+        }
     }
 
     public function cancel($cachable = false, $urlparams = [])

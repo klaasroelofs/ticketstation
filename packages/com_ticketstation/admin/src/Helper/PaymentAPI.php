@@ -441,7 +441,7 @@ class PaymentAPI
         for ($i = 0, $n = count($this->orderData); $i < $n; $i++) {
             $row = $this->orderData[$i];
 
-            $price = $row->ticketprice;
+            $price = TicketstationFunctions::showprice($config->priceformat, $row->ticketprice, $config->valuta);
             $ticketdate = date($config->dateformat, strtotime($row->startdate));
 
             if ($row->seatid == '') {

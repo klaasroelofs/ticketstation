@@ -105,3 +105,17 @@ a.badge:focus {
     transition: transform 0.5s;
     transform: scale(2.5);
 }
+/* Product name in the control panel footer, in the logo's colours. Atum's dark theme
+   needs lighter shades, because the navy is unreadable on its dark background. */
+.ticketstation-brand-blue {
+    color: #1350db;
+}
+.ticketstation-brand-navy {
+    color: #0e1f3d;
+}
+[data-bs-theme="dark"] .ticketstation-brand-blue {
+    color: #7aa2ff;
+}
+[data-bs-theme="dark"] .ticketstation-brand-navy {
+    color: #fff;
+}

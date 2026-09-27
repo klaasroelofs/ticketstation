@@ -19,11 +19,14 @@ $app = Factory::getApplication();
 $document = $app->getDocument();
 $text = empty($this->data->id) ? Text::_( 'COM_TICKETSTATION_ADD' ) : Text::_( 'COM_TICKETSTATION_EDIT' );
 $document->setTitle($text.' '.Text::_('COM_TICKETSTATION_VIEW_SCANNER_TITLE') . ' - ' . $app->get('sitename'));
-$editor = Editor::getInstance()
+$editor = Editor::getInstance();
+
+// Saving needs a user (see HtmlView); data-cancel-task keeps Cancel free of that check.
+HTMLHelper::_('behavior.formvalidator');
 
 ?>
 
-<form action = "<?php echo Route::_('index.php?option=com_ticketstation&view=Scanners&task=edit'); ?>" method="post" name="adminForm" id="adminForm" enctype="multipart/form-data">
+<form action = "<?php echo Route::_('index.php?option=com_ticketstation&view=Scanners&task=edit'); ?>" method="post" name="adminForm" id="adminForm" class="form-validate" data-cancel-task="cancel" enctype="multipart/form-data">
 
     <div class="card">
         <h3 class="card-header">
@@ -31,7 +34,7 @@ $editor = Editor::getInstance()
         </h3>
         <div class="card-body">
             <div class="row mb-3">
-                <label for="" class="col-sm-3 col-form-label"
+                <label for="userid" class="col-sm-3 col-form-label"
                        rel="popover"
                        title="<?= Text::_('COM_TICKETSTATION_SCANNING_USER') ?>">
                     <?= Text::_('COM_TICKETSTATION_SCANNING_USER') ?>
@@ -108,7 +111,7 @@ $editor = Editor::getInstance()
 
 
                     <thead>
-                    <th><div style="font-size:120%;"><?= Text::_('COM_TICKETSTATION_TICKET'); ?></div></th>
+                    <th><div style="font-size:120%;"><?= Text::_('COM_TICKETSTATION_TICKET'); ?></div><small class="form-text"><?= Text::_('COM_TICKETSTATION_SCANNING_NOTE_PARENT_TICKET') ?></small></th>
                     <th></th>
                     </thead>
                     <?php
@@ -120,8 +123,15 @@ $editor = Editor::getInstance()
 
                         ?>
                         <tr>
-                            <td>
-                                <?php echo $row->eventcode; ?> | <?php echo $row->ticketname; ?>
+                            <?php // A child ticket sits indented below its parent, as in the Tickets list ?>
+                            <td<?= $row->child ? ' class="ps-4"' : ''; ?>>
+                                <label for="ti<?= $i; ?>">
+                                    <?php if ($row->child) { ?>
+                                        &ndash; <?= $this->escape($row->ticketname); ?>
+                                    <?php } else { ?>
+                                        <?= $this->escape($row->eventcode); ?> | <?= $row->parentname ? $this->escape($row->parentname) . ' &ndash; ' : ''; ?><?= $this->escape($row->ticketname); ?>
+                                    <?php } ?>
+                                </label>
                             </td>
                             <td>
                                 <input type="checkbox" id="ti<?php echo $i; ?>" name="ticket[]" value="<?php echo $row->ticketid ?>" <?php if(!empty($this->data->id)){echo (in_array($row->ticketid, $this->assigned_tickets) ? 'checked' : '');}?>>

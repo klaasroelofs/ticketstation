@@ -46,7 +46,8 @@ $wa->registerAndUseStyle('ticketstation', Uri::base() . 'components\com_ticketst
                         $row        = $this->items[$i];
                         $checked    = HTMLHelper::_('grid.id', $i, $row->id );
                         $link		= 'index.php?option=com_ticketstation&controller=scanners&task=edit&cid=' . $row->id;
-                        $assigned   = count(Scanner::idList($row->tickets)) + count(Scanner::idList($row->events));
+                        $events     = count(Scanner::idList($row->events));
+                        $tickets    = count(Scanner::idList($row->tickets));
 
                         ?>
                         <tr class="row<?php echo $i;?>">
@@ -54,8 +55,8 @@ $wa->registerAndUseStyle('ticketstation', Uri::base() . 'components\com_ticketst
                             <td><div align="left"><a href="<?php echo $link; ?>"><?php echo $this->escape($row->name); ?></a></div></td>
                             <td>
                                 <div align="left">
-                                    <?php if ($assigned > 0): ?>
-                                        <span class="label label-success"><?php echo $assigned; ?></span>
+                                    <?php if ($events + $tickets > 0): ?>
+                                        <span class="label label-success"><?php echo $events; ?> / <?php echo $tickets; ?></span>
                                     <?php else: ?>
                                         <span class="label label-important"><?php echo Text::_('JNONE'); ?></span>
                                     <?php endif; ?>

@@ -12,8 +12,10 @@ namespace Ticketstation\Component\Ticketstation\Administrator\Model;
 defined('_JEXEC') or die;
 
 use Joomla\CMS\Factory;
+use Joomla\CMS\Mail\MailHelper;
 use Joomla\CMS\MVC\Model\BaseDatabaseModel;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Availability;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\Coupon;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Date;
 
 /**
@@ -274,6 +276,19 @@ class ControlpanelModel extends BaseDatabaseModel
             $add('COM_TICKETSTATION_CPANEL_ATTENTION_MOLLIE_KEY_INVALID', 1, $mollieLink, 'fa-exclamation-circle', 'danger');
         }
 
+        // Company details and mail sender, both on the Company tab of the Configuration.
+        $companyLink = 'index.php?option=com_ticketstation&view=configuration#company';
+
+        $add('COM_TICKETSTATION_CPANEL_ATTENTION_COMPANY_INCOMPLETE', $this->isCompanyIncomplete($config) ? 1 : 0,
+            $companyLink, 'fa-building');
+
+        // The sender is resolved as in eTicketsMessage: the Sender Mail Address, else the company email.
+        // Without a valid address the mailer keeps Joomla's global sender.
+        $sender = trim((string) $config->from_email) ?: trim((string) $config->email);
+
+        $add('COM_TICKETSTATION_CPANEL_ATTENTION_MAIL_JOOMLA_SENDER', MailHelper::isEmailAddress($sender) ? 0 : 1,
+            $companyLink, 'fa-at');
+
         // Payments still pending (Mollie status open/pending).
         $query = $db->getQuery(true)
             ->select('COUNT(DISTINCT ordercode)')
@@ -322,11 +337,11 @@ class ControlpanelModel extends BaseDatabaseModel
 
         // Published coupons that expire within 7 days, or have used 90% or more of their limit.
         $query = $db->getQuery(true)
-            ->select('COUNT(coupon_id)')
-            ->from($db->quoteName('#__ticketstation_coupons'))
-            ->where($db->quoteName('published') . ' = 1')
-            ->where('((' . $db->quoteName('coupon_valid_to') . ' BETWEEN ' . $db->quote(substr($now, 0, 10)) . ' AND ' . $db->quote(substr($soon, 0, 10)) . ')'
-                . ' OR (' . $db->quoteName('coupon_limit') . ' > 0 AND ' . $db->quoteName('coupon_used') . ' >= 0.9 * ' . $db->quoteName('coupon_limit') . '))');
+            ->select('COUNT(c.coupon_id)')
+            ->from($db->quoteName('#__ticketstation_coupons', 'c'))
+            ->where($db->quoteName('c.published') . ' = 1')
+            ->where('((' . $db->quoteName('c.coupon_valid_to') . ' BETWEEN ' . $db->quote(substr($now, 0, 10)) . ' AND ' . $db->quote(substr($soon, 0, 10)) . ')'
+                . ' OR (' . $db->quoteName('c.coupon_limit') . ' > 0 AND ' . Coupon::usageSql('c.coupon_code') . ' >= 0.9 * ' . $db->quoteName('c.coupon_limit') . '))');
         $db->setQuery($query);
         $add('COM_TICKETSTATION_CPANEL_ATTENTION_COUPONS', $db->loadResult(),
             'index.php?option=com_ticketstation&view=coupons', 'fa-percent', 'secondary');
@@ -344,5 +359,40 @@ class ControlpanelModel extends BaseDatabaseModel
             'index.php?option=com_ticketstation&view=tickets', 'fa-calendar-alt', 'secondary');
 
         return $items;
+    }
+
+    /**
+     * Whether the company details still lack what invoices and mails need: an empty name, address,
+     * postcode, city or email, or example data that a fresh install seeds (install.mysql.utf8.sql).
+     *
+     * @return  bool
+     */
+    private function isCompanyIncomplete($config)
+    {
+        foreach (['companyname', 'address1', 'zipcode', 'city', 'email'] as $field)
+        {
+            if (trim((string) $config->$field) === '')
+            {
+                return true;
+            }
+        }
+
+        $examples = [
+            'companyname' => 'Company',
+            'address1'    => 'My Contact Adres 12',
+            'city'        => 'YourCity',
+            'phone'       => '0123-456789',
+        ];
+
+        foreach ($examples as $field => $example)
+        {
+            if (trim((string) $config->$field) === $example)
+            {
+                return true;
+            }
+        }
+
+        // Seeded email and website: info@yourdomain.com and https://www.yourdomain.com
+        return stripos($config->email . ' ' . $config->website, 'yourdomain.com') !== false;
     }
 }

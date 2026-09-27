@@ -73,7 +73,7 @@ $backgroundStyle = function (string $name): string {
         <h1 class="ts-page-title"><?= Text::_('COM_TICKETSTATION_PAGE_HEADING_TICKETS'); ?></h1>
     </div>
 
-    <?php if ((($this->mollie->test_mode == '1') || ($this->mollie->bypass_mode == '1')) && (($this->isadmin == '1'))) { ?>
+    <?php if ($this->testmode) { ?>
         <?php if (($this->mollie->test_mode == '1') && ($this->mollie->bypass_mode == '1')) {
             $mollie_text = Text::_('COM_TICKETSTATION_MOLLIE_MODE_BYPASS_AND_TEST');
         } elseif ($this->mollie->test_mode == '1') {
@@ -87,7 +87,7 @@ $backgroundStyle = function (string $name): string {
         </div>
     <?php } ?>
 
-    <?php if (empty($this->events) && empty($this->upcoming) || ((($this->isadmin == '0') && (($this->mollie->test_mode == '1') || ($this->mollie->bypass_mode == '1'))) && empty($this->upcoming))) {?>
+    <?php if (empty($this->events) && empty($this->upcoming)) {?>
 
         <section class="ts-card ts-empty">
             <h2 class="ts-card__title"><?= Text::_('COM_TICKETSTATION_NO_EVENTS'); ?></h2>

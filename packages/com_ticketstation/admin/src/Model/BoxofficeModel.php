@@ -1148,21 +1148,12 @@ class BoxofficeModel extends ListModel
 
 				$db->execute();
 				
-                ## Getting the order amount. 
-                $total = (new getAmount)->_getAmount($row->ordercode, 1);
-                $price = TicketstationFunctions::showprice($config->priceformat, $total, $config->valuta);
-
-
                 require_once JPATH_ADMINISTRATOR . '/components/com_ticketstation/src/Helper/PaymentAPI.php';
                 $processor = new PaymentAPI((int) $row->ordercode);
                 $message   = new eTicketsMessage;
 
-                $variables = [
-                    'orderlist'   => $processor->getOrderList(),
-                    'ordercode'   => $row->ordercode,
-                    'price'       => $price,
-                    'paymentlink' => $processor->generatePaymentLink($row->ordercode),
-                ];
+                $variables = eTicketsMessage::orderVariables((int) $row->ordercode);
+                $variables['paymentlink'] = $processor->generatePaymentLink($row->ordercode);
 
                 $message->id(3)
                     ->user($item->userid)

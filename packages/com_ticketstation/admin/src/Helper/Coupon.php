@@ -16,186 +16,201 @@ use Joomla\CMS\Language\Text;
 
 defined('_JEXEC') or die('Restricted access');
 
+/**
+ * Discount coupons.
+ *
+ * A coupon applies to a whole order, one coupon per order. Applying it stores its code and
+ * terms (discount_type 1 = percentage, 0 = amount; discount_amount) on every row of the
+ * order, so later edits of the coupon don't change an order that already uses it. The
+ * discount itself is taken over the order total (see discountFor()): a percentage of it, or
+ * the fixed amount, but never more than the total.
+ *
+ * How often a coupon is used is not counted up anywhere: it is the number of orders that
+ * carry its code, whatever their status (see usage()). Just like a ticket, a use is given
+ * back as soon as the order is gone: cleaned up by the ticketcleaner or deleted in the Box
+ * Office.
+ */
 class Coupon
 {
     /**
-     * Checking the coupon and updating orders if required.
+     * Applies a coupon code to the order in the visitor's session.
      *
-     * @param $coupon
+     * @param   string  $code  The code as the customer typed it.
      *
-     * @return bool
-     *
-     * @since 1.0.0
+     * @return  bool
      */
-    public function check($coupon)
+    public function check($code)
     {
-        // Sanitizing the coupon.
-        $coupon = $this->sanitizeCouponCode($coupon);
+        $app       = Factory::getApplication();
+        $ordercode = (int) $app->getSession()->get('ordercode');
+        $coupon    = $this->getCouponFromDatabase($this->sanitizeCouponCode((string) $code));
 
-        // Loading the coupon data.
-        $coupon = $this->getCouponFromDatabase($coupon);
-
-        // Check there is one.
         if (empty($coupon))
         {
-            Factory::getApplication()->enqueueMessage(Text::_('COM_TICKETSTATION_INVALID_COUPON'), 'error');
-            return false;
-        }
+            $app->enqueueMessage(Text::_('COM_TICKETSTATION_INVALID_COUPON'), 'error');
 
-        // If there is a limit on this coupon.
-        if ($coupon->coupon_limit != 0)
-        {
-            if ($coupon->coupon_limit == $coupon->coupon_used)
-            {
-                Factory::getApplication()->enqueueMessage(Text::_('COM_TICKETSTATION_COUPON_WAS_LIMITED'), 'error');
-                return false;
-            }
+            return false;
         }
 
         if (!empty($coupon->coupon_valid_to) && $coupon->coupon_valid_to < Date::localNow('Y-m-d'))
         {
-            Factory::getApplication()->enqueueMessage(Text::_('COM_TICKETSTATION_COUPON_EXPIRED'), 'error');
+            $app->enqueueMessage(Text::_('COM_TICKETSTATION_COUPON_EXPIRED'), 'error');
+
             return false;
         }
 
-        if ( ! $this->resetDiscounts())
+        $db    = Factory::getContainer()->get('DatabaseDriver');
+        $query = $db->getQuery(true)
+            ->select(['COUNT(*) AS items', 'MAX(COALESCE(' . $db->quoteName('coupon') . ', ' . $db->quote('') . ')) AS coupon'])
+            ->from($db->quoteName('#__ticketstation_orders'))
+            ->where($db->quoteName('ordercode') . ' = ' . $ordercode);
+
+        $db->setQuery($query);
+        $order = $db->loadObject();
+
+        if (!$ordercode || (int) $order->items === 0)
         {
+            $app->enqueueMessage(Text::_('COM_TICKETSTATION_EMPTY_CART'), 'error');
+
             return false;
         }
 
-        if ( ! $this->updateOrdersInDatabase($coupon))
+        if ($order->coupon !== '')
         {
+            $app->enqueueMessage(Text::_('COM_TICKETSTATION_COUPON_ALREADY_APPLIED'), 'error');
+
             return false;
         }
 
-        // Setting the coupon in the session, for later use.
-        if (Factory::getApplication()->getSession()->get('coupon') == '')
+        if ($coupon->coupon_limit > 0 && self::usage($coupon->coupon_code) >= $coupon->coupon_limit)
         {
-            Factory::getApplication()->getSession()->set('coupon', $coupon);
-            return $this->updateCouponUsage($coupon->coupon_id);
+            $app->enqueueMessage(Text::_('COM_TICKETSTATION_COUPON_WAS_LIMITED'), 'error');
 
-        } else {
-
-            Factory::getApplication()->enqueueMessage(Text::_('COM_TICKETSTATION_COUPON_ALREADY_APPLIED'), 'error');
             return false;
         }
-        
-    }
 
-    /**
-     * Resets all discounts in the database.
-     *
-     * @return bool
-     *
-     * @since 1.0.0
-     */
-    private function resetDiscounts()
-    {
-        $db = Factory::getContainer()->get('DatabaseDriver');
-
-        $query = $db->getQuery(true);
-
-        $fields = [
-            $db->quoteName('coupon') . ' = ""',
-            $db->quoteName('discount_type') . ' = 0',
-            $db->quoteName('discount_amount') . ' = 0',
-            $db->quoteName('discount') . ' = 0',
-
-        ];
-
-        // Setting the conditions for updating
-        $conditions = [$db->quoteName('ordercode') . ' = ' . Factory::getApplication()->getSession()->get('ordercode')];
-
-        // Updating the table
-        $query->update($db->quoteName('#__ticketstation_orders'))
-            ->set($fields)
-            ->where($conditions);
+        $query = $db->getQuery(true)
+            ->update($db->quoteName('#__ticketstation_orders'))
+            ->set([
+                $db->quoteName('coupon') . ' = ' . $db->quote($coupon->coupon_code),
+                $db->quoteName('discount_type') . ' = ' . (int) $coupon->coupon_type,
+                $db->quoteName('discount_amount') . ' = ' . (float) $coupon->coupon_discount,
+            ])
+            ->where($db->quoteName('ordercode') . ' = ' . $ordercode);
 
         $db->setQuery($query);
 
-        if ( ! $db->execute())
+        if (!$db->execute())
         {
             return false;
         }
 
-        $query = $db->getQuery(true);
-
-        $conditions = [
-            $db->quoteName('discount') . ' >= 0',
-            $db->quoteName('ticketid') . ' = 0',
-            $db->quoteName('ordercode') . ' = ' . Factory::getApplication()->getSession()->get('ordercode'),
-        ];
-
-        $query->delete($db->quoteName('#__ticketstation_orders'));
-        $query->where($conditions);
-
-        $db->setQuery($query);
-
-        return $db->execute();
+        return self::refresh($ordercode);
     }
 
     /**
-     * Updating the coupon usage in the database.
-     *
-     * @param $id
-     *
-     * @return bool
-     *
-     * @since 1.0.0
+     * The number of orders that use a coupon code.
      */
-    private function updateCouponUsage($id)
+    public static function usage(string $code): int
     {
-        $db = Factory::getContainer()->get('DatabaseDriver');
-
-        $query = $db->getQuery(true);
-
-        $fields     = [$db->quoteName('coupon_used') . ' = coupon_used+1'];
-        $conditions = [$db->quoteName('coupon_id') . ' = ' . $id];
-        $query->update($db->quoteName('#__ticketstation_coupons'))->set($fields)->where($conditions);
+        $db    = Factory::getContainer()->get('DatabaseDriver');
+        $query = $db->getQuery(true)
+            ->select('COUNT(DISTINCT ' . $db->quoteName('ordercode') . ')')
+            ->from($db->quoteName('#__ticketstation_orders'))
+            ->where($db->quoteName('coupon') . ' = ' . $db->quote($code));
 
         $db->setQuery($query);
-        $result = $db->execute();
 
-        if ( ! $result)
+        return (int) $db->loadResult();
+    }
+
+    /**
+     * usage() as an SQL expression, for lists of coupons: pass the qualified column that holds
+     * the coupon code (e.g. "c.coupon_code").
+     */
+    public static function usageSql(string $codeColumn): string
+    {
+        return '(SELECT COUNT(DISTINCT uo.ordercode) FROM #__ticketstation_orders AS uo WHERE uo.coupon = ' . $codeColumn . ')';
+    }
+
+    /**
+     * The discount on an order total for the given coupon terms, in cents precision: a
+     * percentage of the total, or the fixed amount but never more than the total.
+     */
+    public static function discountFor(float $total, $type, $amount): float
+    {
+        if ($total <= 0 || (float) $amount <= 0)
         {
-            return false;
+            return 0.0;
         }
 
-        return true;
+        $discount = (int) $type === 1 ? $total / 100 * (float) $amount : min((float) $amount, $total);
+
+        return round($discount, 2);
     }
 
     /**
-     * Updating orders in the database with their discounts.
-     *
-     * @param $orders
-     * @param $coupon
-     *
-     * @return bool
-     *
-     * @since 1.0.0
+     * Brings the discount (and the VAT that goes with it) of every row of an order in line
+     * with the coupon it carries, for everything that adds up the rows: the invoice, the
+     * Box Office. The order's discount is spread over its rows in proportion to their price,
+     * the last row taking the rounding difference, so the rows always add up to exactly the
+     * discount the customer pays with (see getAmount::_getAmount()). Rows added after the
+     * coupon was applied get its terms too. An order without a coupon is left alone.
      */
-    private function updateOrdersInDatabase($coupon)
+    public static function refresh(int $ordercode): bool
     {
-        $amount  = new Amount;
-        $amounts = $amount->getAmount();
+        $db    = Factory::getContainer()->get('DatabaseDriver');
+        $query = $db->getQuery(true)
+            ->select(['orderid', 'price', 'vat_percentage', 'coupon', 'discount_type', 'discount_amount'])
+            ->from($db->quoteName('#__ticketstation_orders'))
+            ->where($db->quoteName('ordercode') . ' = ' . $ordercode)
+            ->order($db->quoteName('orderid') . ' ASC');
 
-        // Amount Discount
-        if ($coupon->coupon_type == 0)
+        $db->setQuery($query);
+        $rows = $db->loadObjectList();
+
+        $terms = null;
+
+        foreach ($rows as $row)
         {
-            if ( ! $this->updateAmountCoupon($coupon, $amounts))
+            if ((string) $row->coupon !== '')
             {
-                return false;
+                $terms = $row;
+                break;
             }
+        }
 
+        if (!$terms)
+        {
             return true;
         }
 
-        // Getting the orders from the database.
-        $orders = (new Order)->getOrdersByOrdercode();
+        $total    = array_sum(array_map(fn ($row) => (float) $row->price, $rows));
+        $discount = self::discountFor($total, $terms->discount_type, $terms->discount_amount);
+        $left     = $discount;
+        $last     = count($rows) - 1;
 
-        foreach ($orders as $order)
+        foreach ($rows as $i => $row)
         {
-            if ( ! $this->uddatePercentageCoupon($order, $coupon))
+            $share = $i === $last ? $left : ($total > 0 ? round($discount * (float) $row->price / $total, 2) : 0.0);
+            $share = min(max($share, 0.0), (float) $row->price);
+            $left  = round($left - $share, 2);
+            $vat   = (new Amount)->calculateVatFromPrice((float) $row->price - $share, (float) $row->vat_percentage);
+
+            $query = $db->getQuery(true)
+                ->update($db->quoteName('#__ticketstation_orders'))
+                ->set([
+                    $db->quoteName('coupon') . ' = ' . $db->quote($terms->coupon),
+                    $db->quoteName('discount_type') . ' = ' . (int) $terms->discount_type,
+                    $db->quoteName('discount_amount') . ' = ' . (float) $terms->discount_amount,
+                    $db->quoteName('discount') . ' = ' . $share,
+                    $db->quoteName('vat') . ' = ' . (float) $vat['vat_amount'],
+                ])
+                ->where($db->quoteName('orderid') . ' = ' . (int) $row->orderid);
+
+            $db->setQuery($query);
+
+            if (!$db->execute())
             {
                 return false;
             }
@@ -204,102 +219,8 @@ class Coupon
         return true;
     }
 
-    private function updateAmountCoupon($coupon, $amounts)
-    {
-        // Discount per ordered ticket.
-        $discount = $coupon->coupon_discount;
-
-        //Checks if the ticketprice is bigger than the discount.
-        if ($amounts->total < $discount)
-        {
-            $discount = $amounts->total;
-        }
-
-        /* $object                  = new \stdClass;
-        $object->ordercode       = \JFactory::getSession()->get('ordercode');
-        $object->discount_type   = 0;
-        $object->discount_amount = floatval($coupon->coupon_discount);
-        $object->discount        = floatval($discount);
-
-        return \JFactory::getDbo()->insertObject('#__ticketmaster_orders', $object); */
-
-        $db = Factory::getContainer()->get('DatabaseDriver');
-
-        $query = $db->getQuery(true);
-
-        $ordercode = Factory::getApplication()->getSession()->get('ordercode');
-
-        $fields = [
-            $db->quoteName('coupon') . ' = ' . $db->quote($coupon->coupon_code),
-            $db->quoteName('discount_type') . ' = 0',
-            $db->quoteName('discount_amount') . ' = ' . floatval($coupon->coupon_discount),
-            $db->quoteName('discount') . ' = ' . floatval($discount),
-        ];
-
-        // Setting the conditions for updating
-        $conditions = [$db->quoteName('ordercode') . ' = ' . $ordercode];
-
-        // Updating the table
-        $query->update($db->quoteName('#__ticketstation_orders'))
-            ->set($fields)
-            ->where($conditions);
-
-        $db->setQuery($query);
-
-        return $db->execute();
-
-    }
-
     /**
-     * Updating the order details when it is a precentage discount.
-     *
-     * @param $order
-     * @param $coupon
-     *
-     * @return bool
-     *
-     * @since 1.0.0
-     */
-    private function uddatePercentageCoupon($order, $coupon)
-    {
-        $db = Factory::getContainer()->get('DatabaseDriver');
-
-        $query = $db->getQuery(true);
-
-        $discount = ($order->price / 100) * $coupon->coupon_discount;
-        $price    = $order->price - $discount;
-        $amounts  = (new Amount)->calculateVatFromPrice($price, $order->vat_percentage);
-
-        $fields = [
-            $db->quoteName('coupon') . ' = ' . $db->quote($coupon->coupon_code),
-            $db->quoteName('discount_type') . ' = 1',
-            $db->quoteName('discount_amount') . ' = ' . floatval($coupon->coupon_discount),
-            $db->quoteName('discount') . ' = ' . (floatval(($order->price / 100) * $coupon->coupon_discount)),
-            $db->quoteName('vat') . ' = ' . (floatval($amounts['vat_amount'])),
-
-        ];
-
-        // Setting the conditions for updating
-        $conditions = [$db->quoteName('orderid') . ' = ' . $order->orderid];
-
-        // Updating the table
-        $query->update($db->quoteName('#__ticketstation_orders'))
-            ->set($fields)
-            ->where($conditions);
-
-        $db->setQuery($query);
-
-        return $db->execute();
-    }
-
-    /**
-     * Getting the coupon data from the database.
-     *
-     * @param $coupon
-     *
-     * @return mixed
-     *
-     * @since 1.0.0
+     * The published coupon with this code, or null.
      */
     private function getCouponFromDatabase($coupon)
     {
@@ -317,17 +238,11 @@ class Coupon
     }
 
     /**
-     * Sanitize the coupon
-     *
-     * @param $coupon
-     *
-     * @return string
-     *
-     * @since 1.0.0
+     * Codes are stored in capitals; what the customer types is compared in capitals too.
      */
     private function sanitizeCouponCode($coupon)
     {
-        $coupon = str_replace([":", "/", "\\", "@", "#", "@", "!", "$", "?"], "", $coupon);
+        $coupon = str_replace([":", "/", "\\", "@", "#", "@", "!", "$", "?"], "", trim($coupon));
 
         return strtoupper($coupon);
     }

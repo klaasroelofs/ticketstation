@@ -19,6 +19,7 @@ use Joomla\CMS\HTML\HTMLHelper;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Amount;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\getAmount;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\SeatplanSettings;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\Shop;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\TicketstationFunctions;
 use Ticketstation\Component\Ticketstation\Site\Model\OrderModel;
 use Ticketstation\Component\Ticketstation\Site\Model\SeatedeventModel;
@@ -338,6 +339,14 @@ class OrderseatedController extends BaseController {
 
         if (!$item) {
             $arr = array('error' => '1', 'msg' => Text::_( 'COM_TICKETSTATION_ORDER_FAILED' ), 'id' => $id);
+            echo json_encode($arr);
+            exit();
+        }
+
+        ## Only charts the seat-picking page shows this visitor: its ticket is published, and in
+        ## test or bypass mode only to logged-in users.
+        if (!Shop::sells((int) ($item->parent > 0 ? $item->parent : $item->ticketid))) {
+            $arr = array('error' => '1', 'msg' => Text::_( 'COM_TICKETSTATION_TICKET_NOT_AVAILABLE' ), 'id' => $id);
             echo json_encode($arr);
             exit();
         }

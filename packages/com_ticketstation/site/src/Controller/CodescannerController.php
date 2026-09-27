@@ -141,7 +141,10 @@ class CodescannerController extends BaseController
 			return $this->result(0, Text::_('COM_TICKETSTATION_TICKETSCANNING_WRONG_EVENT'), $order);
 		}
 
-		if ($ticketid > 0 && $orderTicketid !== $ticketid)
+		// Scanning for a parent ticket also accepts its child tickets.
+		$ticketGroup = Scanner::ticketGroup($ticketid);
+
+		if ($ticketid > 0 && !\in_array($orderTicketid, $ticketGroup, true))
 		{
 			return $this->result(0, Text::_('COM_TICKETSTATION_TICKETSCANNING_WRONG_TICKET'), $order);
 		}
@@ -190,7 +193,7 @@ class CodescannerController extends BaseController
 		}
 
 		$total = $ticketid > 0
-			? $orderHelper->getNumberofTicketsScanned($ticketid, 0)
+			? $orderHelper->getNumberofTicketsScanned($ticketGroup, 0)
 			: $orderHelper->getNumberofTicketsScanned(0, $eventid > 0 ? $eventid : $orderEventid);
 
 		return $this->result(1, Text::_('COM_TICKETSTATION_TICKETSCANNING_APPROVED'), $order, (int) $total);
@@ -232,9 +235,7 @@ class CodescannerController extends BaseController
 	}
 
 	/**
-	 * Answer for scanning hardware. The element layout is unchanged from earlier
-	 * versions so existing devices keep working ('FOUT' marks "no order", getscoins
-	 * is no longer used and always 'GEEN').
+	 * Answer for scanning hardware ('FOUT' marks "no order").
 	 */
 	private function outputXML(array $result)
 	{
@@ -251,7 +252,6 @@ class CodescannerController extends BaseController
 		echo '        <text>' . $esc($result['text']) . '</text>';
 		echo '        <order>' . $esc($result['order'] !== '' ? $result['order'] : 'FOUT') . '</order>';
 		echo '        <totalscanned>' . $esc($result['totalscanned']) . '</totalscanned>';
-		echo '        <getscoins>GEEN</getscoins>';
 		echo '    </message>';
 		echo '</xml>';
 
