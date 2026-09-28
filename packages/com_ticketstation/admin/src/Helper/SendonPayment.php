@@ -143,7 +143,11 @@ class SendonPayment
 
         $message->attachment($attachment);
 
-        $message->send();
+        ## A mail that didn't go out leaves the order as "tickets not sent" (Needs attention).
+        if ( ! $message->send())
+        {
+            return false;
+        }
 
         ## Mark as PDF Sent
         $query = $db->getQuery(true);

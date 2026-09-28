@@ -71,7 +71,7 @@ $bullets = function (string $prefix, int $count) {
         <details class="border rounded p-3">
             <summary class="h5 mb-0"><span class="fa fa-exclamation-circle me-2" aria-hidden="true"></span><?= Text::_('COM_TICKETSTATION_BOXOFFICE_DOCS_GOTCHAS_TITLE') ?></summary>
             <div class="mt-3">
-                <?php $bullets('COM_TICKETSTATION_BOXOFFICE_DOCS_GOTCHA_', 4); ?>
+                <?php $bullets('COM_TICKETSTATION_BOXOFFICE_DOCS_GOTCHA_', 5); ?>
             </div>
         </details>
     </div>

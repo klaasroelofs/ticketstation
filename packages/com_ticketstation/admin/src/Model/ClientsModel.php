@@ -220,8 +220,10 @@ class ClientsModel extends BaseDatabaseModel
 
             $db = Factory::getContainer()->get('DatabaseDriver');
 
-            // A customer with orders (or on the waiting list) stays: their orders, tickets and
-            // invoices refer to them.
+            // A customer with orders (or still waiting on the waiting list) stays: their orders,
+            // tickets and invoices refer to them. A signup that was already turned into an order
+            // (processed = 1) no longer counts: it isn't shown on the Waitinglist screen, so it
+            // could never be removed, and its order is checked above.
             $query = $db->getQuery(true)
                 ->select('DISTINCT ' . $db->quoteName('userid'))
                 ->from($db->quoteName('#__ticketstation_orders'))
@@ -231,6 +233,7 @@ class ClientsModel extends BaseDatabaseModel
                         ->select('DISTINCT ' . $db->quoteName('userid'))
                         ->from($db->quoteName('#__ticketstation_waitinglist'))
                         ->where($db->quoteName('userid') . ' IN (' . $cids . ')')
+                        ->where($db->quoteName('processed') . ' = 0')
                 );
 
             $db->setQuery($query);
@@ -256,6 +259,18 @@ class ClientsModel extends BaseDatabaseModel
             $db->setQuery($query);
 
             $result = $db->execute();
+
+            // Their processed signups go with them: nothing reads those any more, and they hold
+            // the customer's IP address.
+            if ($result) {
+                $query = $db->getQuery(true)
+                    ->delete($db->quoteName('#__ticketstation_waitinglist'))
+                    ->where($db->quoteName('userid') . ' IN (' . $cids . ')')
+                    ->where($db->quoteName('processed') . ' = 1');
+
+                $db->setQuery($query);
+                $db->execute();
+            }
 
             if($result){
                 return true;

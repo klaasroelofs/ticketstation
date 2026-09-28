@@ -581,11 +581,24 @@ class Invoice
             'price'      => TicketstationFunctions::showprice($config->priceformat, $invoice->netto + $invoice->fees, $config->valuta),
         ]);
 
-        $message->id(5)
+        $sent = $message->id(5)
             ->user($invoice->userid)
             ->attachment($this->getPdfPath($invoice->invoiceid))
             ->variables($variables)
             ->send();
+
+        // Matches how PaymentAPI::sendTickets() logs "Tickets sent to <email>".
+        $client = $this->getClient($invoice->userid);
+        $email  = is_object($client) ? $client->emailaddress : null;
+        $number = $this->getInvoiceNumber($invoice->invoiceid, $config->invoice_prefix);
+
+        // A mail that didn't go out leaves the invoice "Not Sent", so it can be sent again.
+        if ( ! $sent)
+        {
+            History::log($invoice->ordercode, 'invoice_send_failed', 'Sending invoice ' . $number . ' to ' . ($email ?: 'customer') . ' failed', ['email' => $email]);
+
+            return false;
+        }
 
         $db = Factory::getContainer()->get('DatabaseDriver');
 
@@ -599,16 +612,7 @@ class Invoice
         $db->setQuery($query);
         $db->execute();
 
-        // Matches how PaymentAPI::sendTickets() logs "Tickets sent to <email>".
-        $client = $this->getClient($invoice->userid);
-        $email  = is_object($client) ? $client->emailaddress : null;
-
-        History::log(
-            $invoice->ordercode,
-            'invoice_sent',
-            'Invoice ' . $this->getInvoiceNumber($invoice->invoiceid, $config->invoice_prefix) . ' sent to ' . ($email ?: 'customer'),
-            ['email' => $email]
-        );
+        History::log($invoice->ordercode, 'invoice_sent', 'Invoice ' . $number . ' sent to ' . ($email ?: 'customer'), ['email' => $email]);
 
         return true;
     }

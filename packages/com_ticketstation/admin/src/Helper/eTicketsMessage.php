@@ -375,8 +375,12 @@ class eTicketsMessage
         return $this->variables;
     }
 
-    /*
-     * Prepares and sends the final email
+    /**
+     * Prepares and sends the final email.
+     *
+     * @return  bool  Whether the mail was handed over to the mail server. Callers that record a
+     *                mail as sent (pdfsent, the invoice's sent flag, the order history) only do
+     *                so on true.
      */
     public function send()
     {
@@ -428,11 +432,24 @@ class eTicketsMessage
             }
         }
 
-        if ( ! $mailer->Send())
+        // Joomla's mailer returns false or throws (mail switched off, SMTP error); either way
+        // the mail didn't go out.
+        try
+        {
+            $sent = (bool) $mailer->Send();
+        }
+        catch (\Throwable $e)
+        {
+            $sent = false;
+        }
+
+        if ( ! $sent)
         {
             Factory::getApplication()
                 ->enqueueMessage(Text::_('COM_TICKETSTATION_SENDMAIL_FAILED_MESSAGE_CLASS'), 'error');
         }
+
+        return $sent;
     }
 
     public function showMessage()

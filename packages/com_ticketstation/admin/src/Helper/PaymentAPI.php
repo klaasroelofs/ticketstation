@@ -323,11 +323,19 @@ class PaymentAPI
 
         ## Sending the ticket immediatly to the client.
         $creator = new SendonPayment((int)$this->ordercode);
-        $creator->send();
+        $sent    = $creator->send();
 
         $client = $this->getUserInformation();
         $email  = is_object($client) ? $client->emailaddress : null;
-        History::log($this->ordercode, 'tickets_sent', 'Tickets sent to ' . ($email ?: 'customer'), ['email' => $email]);
+
+        if ($sent)
+        {
+            History::log($this->ordercode, 'tickets_sent', 'Tickets sent to ' . ($email ?: 'customer'), ['email' => $email]);
+        }
+        else
+        {
+            History::log($this->ordercode, 'tickets_send_failed', 'Sending tickets to ' . ($email ?: 'customer') . ' failed', ['email' => $email]);
+        }
 
         ## If invoicing is set to send automatically, generate and email it right alongside
         ## the tickets - this is the single shared point every payment-completion route
@@ -339,7 +347,7 @@ class PaymentAPI
             (new Invoice)->create((int) $this->ordercode);
         }
 
-        return true;
+        return $sent;
     }
 
     ## clear the session for Ticketstation

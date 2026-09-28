@@ -24,18 +24,24 @@ $document = $app->getDocument();
 $document->setTitle(Text::_('COM_TICKETSTATION_VIEW_DOCS_TITLE') . ' - ' . $app->get('sitename'));
 
 $topics = [
-    'events'        => ['icon' => 'fa-calendar-alt',   'title' => 'COM_TICKETSTATION_DOCS_NAV_EVENTS'],
-    'seating'       => ['icon' => 'fa-chair',           'title' => 'COM_TICKETSTATION_DOCS_NAV_SEATING'],
-    'ticketlayout'  => ['icon' => 'fa-ticket-alt',      'title' => 'COM_TICKETSTATION_DOCS_NAV_TICKETLAYOUT'],
-    'boxoffice'     => ['icon' => 'fa-money-bill-alt',  'title' => 'COM_TICKETSTATION_DOCS_NAV_BOXOFFICE'],
-    'reservation'   => ['icon' => 'fa-calendar-plus',   'title' => 'COM_TICKETSTATION_DOCS_NAV_RESERVATION'],
-    'configuration' => ['icon' => 'fa-cog',             'title' => 'COM_TICKETSTATION_DOCS_NAV_CONFIGURATION'],
-    'mollie'        => ['icon' => 'fa-credit-card',     'title' => 'COM_TICKETSTATION_DOCS_NAV_MOLLIE'],
-    'coupons'       => ['icon' => 'fa-percent',         'title' => 'COM_TICKETSTATION_DOCS_NAV_COUPONS'],
-    'scanning'      => ['icon' => 'fa-qrcode',          'title' => 'COM_TICKETSTATION_DOCS_NAV_SCANNING'],
-    'invoicing'     => ['icon' => 'fa-file-invoice',    'title' => 'COM_TICKETSTATION_DOCS_NAV_INVOICING'],
-    'waitinglist'   => ['icon' => 'fa-hourglass-half',  'title' => 'COM_TICKETSTATION_DOCS_NAV_WAITINGLIST'],
-    'basket'        => ['icon' => 'fa-shopping-basket', 'title' => 'COM_TICKETSTATION_DOCS_NAV_BASKET'],
+    'gettingstarted' => ['icon' => 'fa-flag-checkered',  'title' => 'COM_TICKETSTATION_DOCS_NAV_GETTINGSTARTED'],
+    'controlpanel'   => ['icon' => 'fa-home',            'title' => 'COM_TICKETSTATION_DOCS_NAV_CONTROLPANEL'],
+    'events'         => ['icon' => 'fa-calendar-alt',    'title' => 'COM_TICKETSTATION_DOCS_NAV_EVENTS'],
+    'seating'        => ['icon' => 'fa-chair',           'title' => 'COM_TICKETSTATION_DOCS_NAV_SEATING'],
+    'ticketlayout'   => ['icon' => 'fa-ticket-alt',      'title' => 'COM_TICKETSTATION_DOCS_NAV_TICKETLAYOUT'],
+    'boxoffice'      => ['icon' => 'fa-money-bill-alt',  'title' => 'COM_TICKETSTATION_DOCS_NAV_BOXOFFICE'],
+    'reservation'    => ['icon' => 'fa-calendar-plus',   'title' => 'COM_TICKETSTATION_DOCS_NAV_RESERVATION'],
+    'records'        => ['icon' => 'fa-address-book',    'title' => 'COM_TICKETSTATION_DOCS_NAV_RECORDS'],
+    'configuration'  => ['icon' => 'fa-cog',             'title' => 'COM_TICKETSTATION_DOCS_NAV_CONFIGURATION'],
+    'mollie'         => ['icon' => 'fa-credit-card',     'title' => 'COM_TICKETSTATION_DOCS_NAV_MOLLIE'],
+    'templates'      => ['icon' => 'fa-envelope',        'title' => 'COM_TICKETSTATION_DOCS_NAV_TEMPLATES'],
+    'coupons'        => ['icon' => 'fa-percent',         'title' => 'COM_TICKETSTATION_DOCS_NAV_COUPONS'],
+    'scanning'       => ['icon' => 'fa-qrcode',          'title' => 'COM_TICKETSTATION_DOCS_NAV_SCANNING'],
+    'invoicing'      => ['icon' => 'fa-file-invoice',    'title' => 'COM_TICKETSTATION_DOCS_NAV_INVOICING'],
+    'waitinglist'    => ['icon' => 'fa-hourglass-half',  'title' => 'COM_TICKETSTATION_DOCS_NAV_WAITINGLIST'],
+    'basket'         => ['icon' => 'fa-shopping-basket', 'title' => 'COM_TICKETSTATION_DOCS_NAV_BASKET'],
+    'automation'     => ['icon' => 'fa-robot',           'title' => 'COM_TICKETSTATION_DOCS_NAV_AUTOMATION'],
+    'privacy'        => ['icon' => 'fa-user-shield',     'title' => 'COM_TICKETSTATION_DOCS_NAV_PRIVACY'],
 ];
 ?>
 

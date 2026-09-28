@@ -143,7 +143,10 @@ class SendTicketCopy
 
         $message->attachment($attachment);
 
-        $message->send();
+        if ( ! $message->send())
+        {
+            return false;
+        }
 
         ## Mark as PDF Sent
         $query = $db->getQuery(true);

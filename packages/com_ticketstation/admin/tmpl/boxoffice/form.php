@@ -58,6 +58,7 @@ $history_icons = [
     'payment_refund_reported' => ['fa-reply', 'warning'],
     'tickets_generated'      => ['fa-ticket-alt', 'secondary'],
     'tickets_sent'           => ['fa-paper-plane', 'info'],
+    'tickets_send_failed'    => ['fa-exclamation-triangle', 'danger'],
     'ticket_copy_sent'       => ['fa-paper-plane', 'info'],
     'confirmation_sent'      => ['fa-envelope', 'info'],
     'payment_reminder_sent'  => ['fa-bell', 'warning'],
@@ -74,6 +75,7 @@ $history_icons = [
     'remark_removed'         => ['fa-comment-slash', 'secondary'],
     'invoice_created'        => ['fa-euro-sign', 'secondary'],
     'invoice_sent'           => ['fa-euro-sign', 'info'],
+    'invoice_send_failed'    => ['fa-exclamation-triangle', 'danger'],
 ];
 
 ?>
