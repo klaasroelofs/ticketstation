@@ -32,21 +32,21 @@ $list = function (string $tag, string $prefix, int $count) {
         <h2 class="h4"><span class="fa fa-user-shield me-2" aria-hidden="true"></span><?= Text::_('COM_TICKETSTATION_PRIVACY_DOCS_TITLE') ?></h2>
         <p><?= Text::_('COM_TICKETSTATION_PRIVACY_DOCS_INTRO') ?></p>
 
-        <details class="mb-3 border rounded p-3">
+        <details id="docs-privacy-stored" class="mb-3 border rounded p-3">
             <summary class="h5 mb-0"><span class="fa fa-database me-2" aria-hidden="true"></span><?= Text::_('COM_TICKETSTATION_PRIVACY_DOCS_STORED_TITLE') ?></summary>
             <div class="mt-3">
                 <?php $list('ul', 'COM_TICKETSTATION_PRIVACY_DOCS_STORED_', 5); ?>
             </div>
         </details>
 
-        <details class="mb-3 border rounded p-3">
+        <details id="docs-privacy-retention" class="mb-3 border rounded p-3">
             <summary class="h5 mb-0"><span class="fa fa-clock me-2" aria-hidden="true"></span><?= Text::_('COM_TICKETSTATION_PRIVACY_DOCS_RETENTION_TITLE') ?></summary>
             <div class="mt-3">
                 <?php $list('ul', 'COM_TICKETSTATION_PRIVACY_DOCS_RETENTION_', 2); ?>
             </div>
         </details>
 
-        <details class="border rounded p-3">
+        <details id="docs-privacy-remove" class="border rounded p-3">
             <summary class="h5 mb-0"><span class="fa fa-user-times me-2" aria-hidden="true"></span><?= Text::_('COM_TICKETSTATION_PRIVACY_DOCS_REMOVE_TITLE') ?></summary>
             <div class="mt-3">
                 <?php $list('ol', 'COM_TICKETSTATION_PRIVACY_DOCS_REMOVE_', 3); ?>

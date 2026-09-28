@@ -21,6 +21,7 @@ use Ticketstation\Component\Ticketstation\Administrator\Helper\Config;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\SeatplanSettings;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Ordercode;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Ticket;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\Docs;
 
 /**
  * Admin "new reservation" wizard view - one layout per step.
@@ -67,6 +68,7 @@ class HtmlView extends BaseHtmlView
         // Joomla.submitbutton() toolbar mechanism (which re-targets a single adminForm's hidden
         // task field) has no form to attach to here.
         ToolbarHelper::title(Text::_('COM_TICKETSTATION_VIEW_RESERVATION_TITLE'), 'fa fa-calendar-plus');
+        Docs::toolbarButton('reservation');
 
         $this->ordercode = $ordercode;
         $this->config    = (new Config)->get(['priceformat', 'valuta']);

@@ -39,7 +39,7 @@ $sections = [
         <p><?= Text::_('COM_TICKETSTATION_RECORDS_DOCS_INTRO') ?></p>
 
         <?php foreach ($sections as $section => $meta) { ?>
-            <details class="<?= $section === array_key_last($sections) ? '' : 'mb-3 ' ?>border rounded p-3">
+            <details id="docs-records-<?= strtolower($section) ?>" class="<?= $section === array_key_last($sections) ? '' : 'mb-3 ' ?>border rounded p-3">
                 <summary class="h5 mb-0"><span class="fa <?= $meta['icon'] ?> me-2" aria-hidden="true"></span><?= Text::_('COM_TICKETSTATION_RECORDS_DOCS_' . $section . '_TITLE') ?></summary>
                 <div class="mt-3">
                     <?php $bullets('COM_TICKETSTATION_RECORDS_DOCS_' . $section . '_', $meta['count']); ?>

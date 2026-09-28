@@ -32,14 +32,14 @@ $bullets = function (string $prefix, int $count) {
         <h2 class="h4"><span class="fa fa-robot me-2" aria-hidden="true"></span><?= Text::_('COM_TICKETSTATION_AUTOMATION_DOCS_TITLE') ?></h2>
         <p><?= Text::_('COM_TICKETSTATION_AUTOMATION_DOCS_INTRO') ?></p>
 
-        <details class="mb-3 border rounded p-3">
+        <details id="docs-automation-tasks" class="mb-3 border rounded p-3">
             <summary class="h5 mb-0"><span class="fa fa-cogs me-2" aria-hidden="true"></span><?= Text::_('COM_TICKETSTATION_AUTOMATION_DOCS_TASKS_TITLE') ?></summary>
             <div class="mt-3">
                 <?php $bullets('COM_TICKETSTATION_AUTOMATION_DOCS_TASK_', 5); ?>
             </div>
         </details>
 
-        <details class="border rounded p-3">
+        <details id="docs-automation-gotchas" class="border rounded p-3">
             <summary class="h5 mb-0"><span class="fa fa-exclamation-circle me-2" aria-hidden="true"></span><?= Text::_('COM_TICKETSTATION_AUTOMATION_DOCS_GOTCHAS_TITLE') ?></summary>
             <div class="mt-3">
                 <?php $bullets('COM_TICKETSTATION_AUTOMATION_DOCS_GOTCHA_', 4); ?>

@@ -14,6 +14,7 @@ defined('_JEXEC') or die;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\View\HtmlView as BaseHtmlView;
 use Joomla\CMS\Toolbar\ToolbarHelper;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\Docs;
 
 /**
  * Ticketstation Coupon Admin View
@@ -42,6 +43,7 @@ class HtmlView extends BaseHtmlView
             ToolbarHelper::cancel('cancel', 'JTOOLBAR_CLOSE');
         }
 
+        Docs::toolbarButton('coupons-setup');
         parent::display($tpl);
 
     }

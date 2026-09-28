@@ -17,6 +17,7 @@ use Joomla\CMS\MVC\View\HtmlView as BaseHtmlView;
 use Joomla\CMS\Toolbar\ToolbarHelper;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\MollieCurrencies;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\MolliePaymentMethods;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\Docs;
 
 /**
  * Ticketstation Mollie Admin View
@@ -61,6 +62,7 @@ class HtmlView extends BaseHtmlView {
         ToolbarHelper::apply();
         ToolbarHelper::save();
         ToolbarHelper::cancel();
+        Docs::toolbarButton('mollie-settings');
 
         $model = $this->getModel('Mollie');
         $config = $model->getData();

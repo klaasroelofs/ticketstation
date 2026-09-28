@@ -58,21 +58,21 @@ $fields = [
         <h2 class="h4"><span class="fa fa-ticket-alt me-2" aria-hidden="true"></span><?= Text::_('COM_TICKETSTATION_TICKETLAYOUT_DOCS_TITLE') ?></h2>
         <p><?= Text::_('COM_TICKETSTATION_TICKETLAYOUT_DOCS_INTRO') ?></p>
 
-        <details class="mb-3 border rounded p-3">
+        <details id="docs-ticketlayout-setup" class="mb-3 border rounded p-3">
             <summary class="h5 mb-0"><span class="fa fa-list-ol me-2" aria-hidden="true"></span><?= Text::_('COM_TICKETSTATION_TICKETLAYOUT_DOCS_SETUP_TITLE') ?></summary>
             <div class="mt-3">
                 <?php $steps('COM_TICKETSTATION_TICKETLAYOUT_DOCS_SETUP_', 5); ?>
             </div>
         </details>
 
-        <details class="mb-3 border rounded p-3">
+        <details id="docs-ticketlayout-format" class="mb-3 border rounded p-3">
             <summary class="h5 mb-0"><span class="fa fa-ruler-combined me-2" aria-hidden="true"></span><?= Text::_('COM_TICKETSTATION_TICKETLAYOUT_DOCS_FORMAT_TITLE') ?></summary>
             <div class="mt-3">
                 <?php $list('COM_TICKETSTATION_TICKETLAYOUT_DOCS_FORMAT_', 5); ?>
             </div>
         </details>
 
-        <details class="mb-3 border rounded p-3">
+        <details id="docs-ticketlayout-fields" class="mb-3 border rounded p-3">
             <summary class="h5 mb-0"><span class="fa fa-th-list me-2" aria-hidden="true"></span><?= Text::_('COM_TICKETSTATION_TICKETLAYOUT_DOCS_FIELDS_TITLE') ?></summary>
             <div class="mt-3">
                 <div class="table-responsive">
@@ -96,7 +96,7 @@ $fields = [
             </div>
         </details>
 
-        <details class="border rounded p-3">
+        <details id="docs-ticketlayout-gotchas" class="border rounded p-3">
             <summary class="h5 mb-0"><span class="fa fa-exclamation-circle me-2" aria-hidden="true"></span><?= Text::_('COM_TICKETSTATION_TICKETLAYOUT_DOCS_GOTCHAS_TITLE') ?></summary>
             <div class="mt-3">
                 <?php $list('COM_TICKETSTATION_TICKETLAYOUT_DOCS_GOTCHA_', 7); ?>

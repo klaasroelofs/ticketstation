@@ -15,6 +15,7 @@ use Joomla\CMS\Factory;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\View\HtmlView as BaseHtmlView;
 use Joomla\CMS\Toolbar\ToolbarHelper;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\Docs;
 
 /**
  * Ticketstation Transaction Admin View
@@ -43,6 +44,7 @@ class HtmlView extends BaseHtmlView
         ToolBarHelper::deleteList();
         ToolbarHelper::custom('','spacer');
         ToolbarHelper::custom('controlpanel', 'icon-home', '', 'COM_TICKETSTATION_VIEW_CPANEL_TITLE_SHORT', false);
+        Docs::toolbarButton('records-transactions');
 
         $app		= Factory::getApplication();
 
@@ -72,6 +74,7 @@ class HtmlView extends BaseHtmlView
         // Set up the toolbar
         ToolbarHelper::title(Text::_('COM_TICKETSTATION_VIEW_TRANSACTION_DETAILS'), 'fa fa-credit-card');
         ToolBarHelper::cancel('cancel', 'JTOOLBAR_CLOSE');
+        Docs::toolbarButton('records-transactions');
 
         ## Getting the items into a variable
         $data	= $this->get('data');

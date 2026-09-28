@@ -52,7 +52,7 @@ XML;
         <p><?= Text::_('COM_TICKETSTATION_SCANNING_DOCS_INTRO') ?></p>
         <p class="text-muted small"><?= Text::sprintf('COM_TICKETSTATION_DOCS_SCREEN_LINK', '<a href="index.php?option=com_ticketstation&view=scanners">' . Text::_('COM_TICKETSTATION_VIEW_SCANNERS_TITLE') . '</a>') ?></p>
 
-        <details class="mb-3 border rounded p-3">
+        <details id="docs-scanning-web" class="mb-3 border rounded p-3">
             <summary class="h5 mb-0"><span class="fa fa-mobile-alt me-2" aria-hidden="true"></span><?= Text::_('COM_TICKETSTATION_SCANNING_DOCS_WEB_TITLE') ?></summary>
 
             <h3 class="h6 mt-3"><?= Text::_('COM_TICKETSTATION_SCANNING_DOCS_SETUP') ?></h3>
@@ -62,7 +62,7 @@ XML;
             <?php $steps('COM_TICKETSTATION_SCANNING_DOCS_WEB_USE_', 5); ?>
         </details>
 
-        <details class="mb-3 border rounded p-3">
+        <details id="docs-scanning-hw" class="mb-3 border rounded p-3">
             <summary class="h5 mb-0"><span class="fa fa-barcode me-2" aria-hidden="true"></span><?= Text::_('COM_TICKETSTATION_SCANNING_DOCS_HW_TITLE') ?></summary>
 
             <p class="mt-3"><?= Text::_('COM_TICKETSTATION_SCANNING_DOCS_HW_INTRO') ?></p>
@@ -123,7 +123,7 @@ XML;
             </table>
         </details>
 
-        <details class="border rounded p-3">
+        <details id="docs-scanning-checks" class="border rounded p-3">
             <summary class="h5 mb-0"><span class="fa fa-check-double me-2" aria-hidden="true"></span><?= Text::_('COM_TICKETSTATION_SCANNING_DOCS_CHECKS_TITLE') ?></summary>
             <p class="mt-3 mb-0"><?= Text::_('COM_TICKETSTATION_SCANNING_DOCS_CHECKS') ?></p>
         </details>

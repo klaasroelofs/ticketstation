@@ -1,0 +1,220 @@
+/**
+ * @package     Ticketstation
+ * @subpackage  com_ticketstation
+ *
+ * @copyright   Copyright (C) 2026 Klaas Roelofs. All rights reserved.
+ * @license     GNU General Public License version 3; see LICENSE
+ *
+ * Documentation page (view=docs). Colours come from Atum's own custom properties,
+ * so the page follows the light and dark admin theme.
+ */
+
+.ticketstation-docs {
+    --ts-docs-offset: 0px;
+}
+
+.ticketstation-docs .ts-docs-topic,
+.ticketstation-docs .ts-docs-topic details {
+    scroll-margin-top: calc(var(--ts-docs-offset) + 1rem);
+}
+
+/* Group labels, in the sidebar and above each group of topics */
+.ticketstation-docs .ts-docs-group-label {
+    font-size: .75rem;
+    font-weight: 700;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--secondary-color, #6c757d);
+    margin: 0 0 .35rem .5rem;
+}
+
+.ticketstation-docs .ts-docs-group-heading {
+    margin: 1.5rem 0 .75rem;
+    padding-bottom: .35rem;
+    border-bottom: 1px solid var(--border-color, #dee2e6);
+}
+
+.ticketstation-docs .ts-docs-group:first-of-type .ts-docs-group-heading {
+    margin-top: 0;
+}
+
+/* Sidebar */
+.ticketstation-docs .ts-docs-sidebar {
+    position: sticky;
+    top: calc(var(--ts-docs-offset) + 1rem);
+    max-height: calc(100vh - var(--ts-docs-offset) - 2rem);
+    overflow-y: auto;
+    padding-right: .25rem;
+}
+
+.ticketstation-docs .ts-docs-navlink {
+    display: flex;
+    align-items: center;
+    gap: .25rem;
+    padding: .3rem .5rem;
+    border-radius: .35rem;
+    border-left: 3px solid transparent;
+    color: var(--body-color, inherit);
+    text-decoration: none;
+    font-size: .9rem;
+    line-height: 1.3;
+}
+
+.ticketstation-docs .ts-docs-navlink:hover,
+.ticketstation-docs .ts-docs-navlink:focus-visible {
+    background: var(--secondary-bg, #e8e8e8);
+    color: var(--body-color, inherit);
+}
+
+.ticketstation-docs .ts-docs-navlink.active {
+    border-left-color: var(--link-color, #2a69b8);
+    background: var(--tertiary-bg, #f8f9fa);
+    color: var(--link-color, #2a69b8);
+    font-weight: 600;
+}
+
+.ticketstation-docs .ts-docs-count {
+    background: var(--highlight-bg, #fff3cd);
+    color: var(--highlight-color, #212529);
+    font-weight: 600;
+}
+
+/* Search hits */
+.ticketstation-docs mark.ts-docs-hit {
+    padding: 0 .1em;
+    border-radius: .2em;
+    background: var(--highlight-bg, #fff3cd);
+    color: var(--highlight-color, inherit);
+}
+
+/* Copy-link button next to topic headings and subsection titles */
+.ticketstation-docs .ts-docs-copylink {
+    margin-left: .5rem;
+    padding: 0 .3rem;
+    border: 0;
+    background: none;
+    color: var(--secondary-color, #6c757d);
+    font-size: .8rem;
+    line-height: 1;
+    vertical-align: middle;
+    opacity: 0;
+    transition: opacity .15s;
+}
+
+.ticketstation-docs h2:hover .ts-docs-copylink,
+.ticketstation-docs summary:hover .ts-docs-copylink,
+.ticketstation-docs .ts-docs-copylink:focus-visible,
+.ticketstation-docs .ts-docs-copylink.is-copied {
+    opacity: 1;
+}
+
+.ticketstation-docs .ts-docs-copylink:hover {
+    color: var(--link-color, #2a69b8);
+}
+
+.ticketstation-docs .ts-docs-copylink.is-copied {
+    color: var(--success, #198754);
+}
+
+@media (hover: none) {
+    .ticketstation-docs .ts-docs-copylink {
+        opacity: 1;
+    }
+}
+
+.ticketstation-docs summary {
+    cursor: pointer;
+}
+
+/* Back to top */
+.ticketstation-docs .ts-docs-backtotop {
+    position: fixed;
+    right: 1.5rem;
+    bottom: 1.5rem;
+    z-index: 1030;
+    width: 2.75rem;
+    height: 2.75rem;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    box-shadow: 0 .25rem .75rem rgba(0, 0, 0, .25);
+}
+
+.ticketstation-docs .ts-docs-backtotop[hidden] {
+    display: none;
+}
+
+/* Print: only the documentation itself, every section expanded (see docs.js) */
+@media print {
+    /* Atum's header, menu sidebar and toolbar would otherwise take up page width */
+    body.view-docs #header,
+    body.view-docs #sidebar-wrapper,
+    body.view-docs .toggler-burger,
+    body.view-docs #subhead-container {
+        display: none !important;
+    }
+
+    body.view-docs #wrapper {
+        display: block !important;
+    }
+
+    body.view-docs .container-main,
+    body.view-docs #content,
+    body.view-docs #content > .row,
+    body.view-docs #content > .row > [class*="col-"] {
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        flex: none !important;
+    }
+
+    .ticketstation-docs .row {
+        display: block;
+        margin: 0;
+    }
+
+    .ticketstation-docs .col-lg-9 {
+        width: 100% !important;
+        max-width: 100% !important;
+        padding: 0 !important;
+    }
+
+    .ticketstation-docs .card {
+        border-color: #ccc;
+    }
+
+    .ticketstation-docs pre {
+        white-space: pre-wrap;
+        word-break: break-all;
+    }
+
+    .ticketstation-docs .ts-docs-toolbar,
+    .ticketstation-docs .ts-docs-sidebar,
+    .ticketstation-docs .ts-docs-copylink,
+    .ticketstation-docs .ts-docs-backtotop,
+    .ticketstation-docs #ts-docs-jump,
+    .ticketstation-docs label[for="ts-docs-jump"] {
+        display: none !important;
+    }
+
+    .ticketstation-docs .col-lg-3 {
+        display: none !important;
+    }
+
+    .ticketstation-docs .ts-docs-topic {
+        break-inside: auto;
+    }
+
+    .ticketstation-docs .ts-docs-topic h2,
+    .ticketstation-docs summary {
+        break-after: avoid;
+    }
+
+    .ticketstation-docs mark.ts-docs-hit {
+        background: none;
+        color: inherit;
+    }
+}

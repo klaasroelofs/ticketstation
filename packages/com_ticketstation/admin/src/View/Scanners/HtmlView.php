@@ -16,6 +16,7 @@ use Joomla\CMS\HTML\HTMLHelper;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\View\HtmlView as BaseHtmlView;
 use Joomla\CMS\Toolbar\ToolbarHelper;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\Docs;
 
 /**
  * Ticketstation Scanners Admin View
@@ -44,6 +45,7 @@ class HtmlView extends BaseHtmlView
         ToolBarHelper::deleteList();
         ToolbarHelper::custom('','spacer');
         ToolbarHelper::custom('controlpanel', 'icon-home', '', 'COM_TICKETSTATION_VIEW_CPANEL_TITLE_SHORT', false);
+        Docs::toolbarButton('scanning');
 
         $items = $this->get('list');
         $pagination = $this->get('pagination');
@@ -61,6 +63,7 @@ class HtmlView extends BaseHtmlView
         ToolBarHelper::apply();
         ToolBarHelper::save();
         ToolBarHelper::cancel();
+        Docs::toolbarButton('scanning');
 
         $data	    = $this->get('data');
         $config	    = $this->get('config');

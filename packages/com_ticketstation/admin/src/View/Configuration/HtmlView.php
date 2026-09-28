@@ -16,6 +16,7 @@ use Joomla\CMS\HTML\HTMLHelper;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\View\HtmlView as BaseHtmlView;
 use Joomla\CMS\Toolbar\ToolbarHelper;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\Docs;
 
 /**
  * Ticketstation Configuration Admin View
@@ -39,6 +40,7 @@ class HtmlView extends BaseHtmlView {
         ToolbarHelper::apply();
         ToolbarHelper::save();
         ToolbarHelper::cancel();
+        Docs::toolbarButton('configuration');
 
         $model = $this->getModel('Configuration', 'Administrator');
         $config = $model->getData();

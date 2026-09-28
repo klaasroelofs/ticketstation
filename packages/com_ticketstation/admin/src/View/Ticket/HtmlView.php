@@ -15,6 +15,7 @@ use Joomla\CMS\Factory;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\View\HtmlView as BaseHtmlView;
 use Joomla\CMS\Toolbar\ToolbarHelper;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\Docs;
 
 /**
  * Ticketstation Ticket Admin View
@@ -47,6 +48,7 @@ class HtmlView extends BaseHtmlView
         $app = Factory::getApplication();
         $app->getInput()->set('hidemainmenu', 1);
 
+        Docs::toolbarButton('events');
         parent::display($tpl);
     }
 }

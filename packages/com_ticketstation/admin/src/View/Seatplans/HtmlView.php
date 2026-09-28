@@ -19,6 +19,7 @@ use Joomla\CMS\Session\Session;
 use Joomla\CMS\Toolbar\ToolbarHelper;
 use Joomla\CMS\Uri\Uri;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\SeatplanLayout;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\Docs;
 
 /**
  * Ticketstation Seatplans Admin View: the list of seat charts, and the seat plan editor
@@ -46,6 +47,7 @@ class HtmlView extends BaseHtmlView
         ToolbarHelper::custom('tickets', 'icon-ticket-alt', '', 'COM_TICKETSTATION_TICKETS', false,false);
         ToolbarHelper::custom('','spacer');
         ToolbarHelper::custom('controlpanel', 'icon-home', '', 'COM_TICKETSTATION_VIEW_CPANEL_TITLE_SHORT', false);
+        Docs::toolbarButton('seating');
 
         $this->items = $this->get('list');
 
@@ -93,6 +95,7 @@ class HtmlView extends BaseHtmlView
             . ' <small>(' . htmlspecialchars($owner->ticketcode, ENT_QUOTES, 'UTF-8') . ')</small>';
         ToolbarHelper::title($title, 'fa fa-chair');
         ToolbarHelper::cancel('cancel', 'JTOOLBAR_CLOSE');
+        Docs::toolbarButton('seating-editor');
 
         parent::display($tpl);
     }

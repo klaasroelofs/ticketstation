@@ -16,6 +16,7 @@ use Joomla\CMS\HTML\HTMLHelper;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\View\HtmlView as BaseHtmlView;
 use Joomla\CMS\Toolbar\ToolbarHelper;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\Docs;
 
 /**
  * Ticketstation Mollie Admin View
@@ -40,6 +41,7 @@ class HtmlView extends BaseHtmlView {
         // Set up the toolbar
         ToolbarHelper::title(Text::_('COM_TICKETSTATION_VIEW_TEMPLATES_TITLE'), 'fa fa-envelope');
         ToolbarHelper::custom('controlpanel', 'icon-home', '', 'COM_TICKETSTATION_VIEW_CPANEL_TITLE_SHORT', false);
+        Docs::toolbarButton('templates');
 
         $model = $this->getModel('Templates');
 
@@ -55,6 +57,7 @@ class HtmlView extends BaseHtmlView {
         ToolBarHelper::apply();
         ToolBarHelper::save();
         ToolBarHelper::cancel();
+        Docs::toolbarButton('templates-edit');
 
         $model = $this->getModel('Templates');
 

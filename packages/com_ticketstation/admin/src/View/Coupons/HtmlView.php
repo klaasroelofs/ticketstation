@@ -17,6 +17,7 @@ use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\View\HtmlView as BaseHtmlView;
 use Joomla\CMS\Toolbar\Toolbar;
 use Joomla\CMS\Toolbar\ToolbarHelper;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\Docs;
 
 /**
  * Ticketstation Coupons Admin View
@@ -64,6 +65,7 @@ class HtmlView extends BaseHtmlView
 
         ToolbarHelper::custom('','spacer');
         ToolbarHelper::custom('controlpanel', 'icon-home', '', 'COM_TICKETSTATION_VIEW_CPANEL_TITLE_SHORT', false);
+        Docs::toolbarButton('coupons');
 
         $app = Factory::getApplication();
 

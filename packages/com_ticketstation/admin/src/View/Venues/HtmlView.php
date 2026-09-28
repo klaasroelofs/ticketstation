@@ -17,6 +17,7 @@ use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\View\HtmlView as BaseHtmlView;
 use Joomla\CMS\Toolbar\Toolbar;
 use Joomla\CMS\Toolbar\ToolbarHelper;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\Docs;
 
 /**
  * Ticketstation Venues Admin View
@@ -74,6 +75,7 @@ class HtmlView extends BaseHtmlView
 
         ToolbarHelper::custom('','spacer');
         ToolbarHelper::custom('controlpanel', 'icon-home', '', 'COM_TICKETSTATION_VIEW_CPANEL_TITLE_SHORT', false);
+        Docs::toolbarButton('records-venues');
 
         $items = $this->get('list');
         $pagination = $this->get('Pagination');
@@ -102,6 +104,7 @@ class HtmlView extends BaseHtmlView
         ToolBarHelper::apply();
         ToolBarHelper::save();
         ToolBarHelper::cancel();
+        Docs::toolbarButton('records-venues');
 
         $data = $this->get('data');
         $config = $this->get('config');

@@ -32,21 +32,21 @@ $bullets = function (string $prefix, int $count) {
         <h2 class="h4"><span class="fa fa-money-bill-alt me-2" aria-hidden="true"></span><?= Text::_('COM_TICKETSTATION_BOXOFFICE_DOCS_TITLE') ?></h2>
         <p><?= Text::_('COM_TICKETSTATION_BOXOFFICE_DOCS_INTRO') ?></p>
 
-        <details class="mb-3 border rounded p-3">
+        <details id="docs-boxoffice-list" class="mb-3 border rounded p-3">
             <summary class="h5 mb-0"><span class="fa fa-search me-2" aria-hidden="true"></span><?= Text::_('COM_TICKETSTATION_BOXOFFICE_DOCS_LIST_TITLE') ?></summary>
             <div class="mt-3">
                 <?php $bullets('COM_TICKETSTATION_BOXOFFICE_DOCS_LIST_', 3); ?>
             </div>
         </details>
 
-        <details class="mb-3 border rounded p-3">
+        <details id="docs-boxoffice-status" class="mb-3 border rounded p-3">
             <summary class="h5 mb-0"><span class="fa fa-tags me-2" aria-hidden="true"></span><?= Text::_('COM_TICKETSTATION_BOXOFFICE_DOCS_STATUS_TITLE') ?></summary>
             <div class="mt-3">
                 <?php $bullets('COM_TICKETSTATION_BOXOFFICE_DOCS_STATUS_', 5); ?>
             </div>
         </details>
 
-        <details class="mb-3 border rounded p-3">
+        <details id="docs-boxoffice-actions" class="mb-3 border rounded p-3">
             <summary class="h5 mb-0"><span class="fa fa-list me-2" aria-hidden="true"></span><?= Text::_('COM_TICKETSTATION_BOXOFFICE_DOCS_ACTIONS_TITLE') ?></summary>
             <div class="mt-3">
                 <p><?= Text::_('COM_TICKETSTATION_BOXOFFICE_DOCS_ACTIONS_INTRO') ?></p>
@@ -54,7 +54,7 @@ $bullets = function (string $prefix, int $count) {
             </div>
         </details>
 
-        <details class="mb-3 border rounded p-3">
+        <details id="docs-boxoffice-order" class="mb-3 border rounded p-3">
             <summary class="h5 mb-0"><span class="fa fa-receipt me-2" aria-hidden="true"></span><?= Text::_('COM_TICKETSTATION_BOXOFFICE_DOCS_ORDER_TITLE') ?></summary>
             <div class="mt-3">
                 <p><?= Text::_('COM_TICKETSTATION_BOXOFFICE_DOCS_ORDER_INTRO') ?></p>
@@ -68,7 +68,7 @@ $bullets = function (string $prefix, int $count) {
             </div>
         </details>
 
-        <details class="border rounded p-3">
+        <details id="docs-boxoffice-gotchas" class="border rounded p-3">
             <summary class="h5 mb-0"><span class="fa fa-exclamation-circle me-2" aria-hidden="true"></span><?= Text::_('COM_TICKETSTATION_BOXOFFICE_DOCS_GOTCHAS_TITLE') ?></summary>
             <div class="mt-3">
                 <?php $bullets('COM_TICKETSTATION_BOXOFFICE_DOCS_GOTCHA_', 5); ?>

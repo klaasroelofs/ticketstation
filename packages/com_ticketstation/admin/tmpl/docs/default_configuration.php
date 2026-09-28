@@ -52,7 +52,7 @@ $counts = [
         <p><?= Text::_('COM_TICKETSTATION_CONFIG_DOCS_INTRO') ?></p>
 
         <?php foreach ($tabs as $tab => $icon) { ?>
-            <details class="mb-3 border rounded p-3">
+            <details id="docs-configuration-<?= strtolower($tab) ?>" class="mb-3 border rounded p-3">
                 <summary class="h5 mb-0"><span class="fa <?= $icon ?> me-2" aria-hidden="true"></span><?= Text::_('COM_TICKETSTATION_CONFIG_DOCS_TAB_' . $tab) ?></summary>
                 <div class="mt-3">
                     <?php $list('COM_TICKETSTATION_CONFIG_DOCS_TAB_' . $tab, $counts[$tab]); ?>

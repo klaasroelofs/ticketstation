@@ -32,14 +32,14 @@ $list = function (string $tag, string $prefix, int $count) {
         <h2 class="h4"><span class="fa fa-flag-checkered me-2" aria-hidden="true"></span><?= Text::_('COM_TICKETSTATION_GETTINGSTARTED_DOCS_TITLE') ?></h2>
         <p><?= Text::_('COM_TICKETSTATION_GETTINGSTARTED_DOCS_INTRO') ?></p>
 
-        <details class="mb-3 border rounded p-3">
+        <details id="docs-gettingstarted-steps" class="mb-3 border rounded p-3">
             <summary class="h5 mb-0"><span class="fa fa-list-ol me-2" aria-hidden="true"></span><?= Text::_('COM_TICKETSTATION_GETTINGSTARTED_DOCS_STEPS_TITLE') ?></summary>
             <div class="mt-3">
                 <?php $list('ol', 'COM_TICKETSTATION_GETTINGSTARTED_DOCS_STEP_', 9); ?>
             </div>
         </details>
 
-        <details class="border rounded p-3">
+        <details id="docs-gettingstarted-gotchas" class="border rounded p-3">
             <summary class="h5 mb-0"><span class="fa fa-exclamation-circle me-2" aria-hidden="true"></span><?= Text::_('COM_TICKETSTATION_GETTINGSTARTED_DOCS_GOTCHAS_TITLE') ?></summary>
             <div class="mt-3">
                 <?php $list('ul', 'COM_TICKETSTATION_GETTINGSTARTED_DOCS_GOTCHA_', 4); ?>

@@ -20,6 +20,7 @@ use Joomla\CMS\Toolbar\ToolbarHelper;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\CustomerNote;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\OrderTotals;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\ticketcreator;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\Docs;
 
 /**
  * Ticketstation Boxoffice Admin View
@@ -77,6 +78,7 @@ class HtmlView extends BaseHtmlView
 
         ToolbarHelper::custom('','spacer');
         ToolbarHelper::custom('controlpanel', 'icon-home', '', 'COM_TICKETSTATION_VIEW_CPANEL_TITLE_SHORT', false);
+        Docs::toolbarButton('boxoffice');
 
         $app = Factory::getApplication();
         $db = Factory::getContainer()->get('DatabaseDriver');
@@ -176,6 +178,7 @@ class HtmlView extends BaseHtmlView
         {
             ToolBarHelper::title(Text::_('COM_TICKETSTATION_BOXOFFICE_VIEW_ORDER_DETAILS'), 'fa fa-money-bill-alt');
             ToolBarHelper::cancel('cancel', 'JTOOLBAR_CLOSE');
+            Docs::toolbarButton('boxoffice-order');
 
             $this->config  = $this->get('config');
             $this->history = $this->get('history');
@@ -195,6 +198,7 @@ class HtmlView extends BaseHtmlView
         ToolbarHelper::custom( 'nopayment', 'thumbs-down', '', Text::_( 'COM_TICKETSTATION_TOOLBAR_UNPAID' ), false, false);
         ToolbarHelper::custom( 'payment', 'thumbs-up', '', Text::_( 'COM_TICKETSTATION_TOOLBAR_PAID' ), false, false);
         ToolBarHelper::cancel('cancel', 'JTOOLBAR_CLOSE');
+        Docs::toolbarButton('boxoffice-order');
 
         $config = $this->get('config');
         $remark = $this->get('remark');
