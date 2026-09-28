@@ -21,8 +21,6 @@ use Joomla\CMS\MVC\Controller\BaseController;
 use Joomla\CMS\MVC\Factory\MVCFactoryInterface;
 use Joomla\Input\Input;
 
-//TODO: Save&Close doesn't function (acts as Apply). ?? Done with "return true" on line 159 ??
-
 class CouponsController extends BaseController
 {
 

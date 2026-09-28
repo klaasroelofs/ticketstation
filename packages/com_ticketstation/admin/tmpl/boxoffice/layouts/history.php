@@ -46,7 +46,6 @@ $history_icons = [
     'ticket_blacklisted'      => ['fa-ban', 'danger'],
     'ticket_unblocked'        => ['fa-check', 'success'],
     'ticket_removed'          => ['fa-trash', 'danger'],
-    'order_removed'           => ['fa-trash', 'danger'],
     'order_removed_auto'      => ['fa-broom', 'secondary'],
     'order_published'         => ['fa-eye', 'success'],
     'order_unpublished'       => ['fa-eye-slash', 'secondary'],

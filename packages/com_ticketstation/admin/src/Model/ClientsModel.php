@@ -16,6 +16,7 @@ use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\Model\BaseDatabaseModel;
 use Joomla\CMS\Pagination\Pagination;
 use Joomla\Utilities\ArrayHelper;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\OrderTotals;
 use Ticketstation\Component\Ticketstation\Administrator\Model\Mixin\ListState;
 
 /**
@@ -162,41 +163,22 @@ class ClientsModel extends BaseDatabaseModel
         return false;
     }
 
-    function store($data) //TODO: Replace deprecated setError / getError
+    function store($data)
     {
 
         $table = $this->getTable();
 
-        // Bind the data.
-        if (!$table->bind($data)) {
-            Factory::getApplication()->enqueueMessage(Text::_('COM_TICKETSTATION_ERROR_BIND_FAILED'), 'error');
-            //$this->setError($table->getError());
+        // Bind, check and store. Table methods return false or throw on a failure.
+        try
+        {
+            return $table->bind($data) && $table->check() && $table->store();
+        }
+        catch (\Exception $e)
+        {
+            Factory::getApplication()->enqueueMessage($e->getMessage(), 'error');
+
             return false;
         }
-
-        // Check the data.
-        if (!$table->check()) {
-            Factory::getApplication()->enqueueMessage(Text::_('COM_TICKETSTATION_ERROR_CHECK_FAILED'), 'error');
-            //$this->setError($table->getError());
-            return false;
-        }
-
-        // Store the data.
-        if (!$table->store()) {
-            Factory::getApplication()->enqueueMessage(Text::_('COM_TICKETSTATION_ERROR_STORE_FAILED'), 'error');
-            //$this->setError($table->getError());
-            return false;
-        }
-
-        /*// Save the data >> bind/check/store.
-        if (!$table->save($data)) {
-            Factory::getApplication()->enqueueMessage(Text::_('COM_TICKETSTATION_ERROR_STORE_FAILED'), 'error');
-            //$this->setError($table->getError());
-            return false;
-        }*/
-
-        return true;
-
     }
 
     function remove($cid){
@@ -293,7 +275,7 @@ class ClientsModel extends BaseDatabaseModel
 
         $query = $db->getQuery(true);
 
-        $query->select(array('a.*', 't.ticketname', 'e.eventcode', 'e.eventname', 'SUM(t.ticketprice) AS orderprice', 'COUNT(a.orderid) AS totaltickets', 'r.remarks', 'tt.amount AS transaction_amount'));
+        $query->select(array('a.*', 't.ticketname', 'e.eventcode', 'e.eventname', 'COUNT(a.orderid) AS totaltickets', 'r.remarks', 'tt.amount AS transaction_amount'));
         $query->from($db->quoteName('#__ticketstation_orders', 'a'));
         $query->join('LEFT', $db->quoteName('#__ticketstation_events', 'e') . ' ON (' . $db->quoteName('a.eventid') . ' = ' . $db->quoteName('e.eventid') . ')');
         $query->join('LEFT', $db->quoteName('#__ticketstation_tickets', 't') . ' ON ('.$db->quoteName('t.ticketid').' = '.$db->quoteName('a.ticketid').')');
@@ -305,6 +287,14 @@ class ClientsModel extends BaseDatabaseModel
 
         $db->setQuery($query);
         $this->data = $db->loadObjectList();
+
+        // What was paid, or else what the customer pays, as the Box Office shows it.
+        foreach ($this->data as $row)
+        {
+            $row->orderprice = (float) $row->transaction_amount > 0
+                ? (float) $row->transaction_amount
+                : OrderTotals::get($row->ordercode)->total;
+        }
 
         return $this->data;
     }

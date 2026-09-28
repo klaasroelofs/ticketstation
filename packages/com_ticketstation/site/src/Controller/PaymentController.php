@@ -12,6 +12,7 @@ namespace Ticketstation\Component\Ticketstation\Site\Controller;
 defined('_JEXEC') or die;
 
 use Joomla\CMS\Language\Text;
+use Joomla\CMS\Log\Log;
 use Joomla\CMS\MVC\Controller\BaseController;
 use Joomla\CMS\Factory;
 use Joomla\CMS\Router\Route;
@@ -452,25 +453,21 @@ class PaymentController extends BaseController
         exit();
     }
 
-    //TODO: werkend maken
+    /**
+     * Writes a line to the Mollie log, com_ticketstation_mollie.php in Joomla's log folder
+     * (administrator/logs), which can't be read from the web.
+     */
     private function log($text)
     {
+        static $registered = false;
 
-        jimport('joomla.filesystem.folder');
-        jimport('joomla.filesystem.file');
-
-        if ($text != '') {
-            $msg = date("Y-m-d H:i:s", time()) . ' - ' . $text . "\n";
-        } else {
-            $msg = "\n";
+        if ( ! $registered)
+        {
+            Log::addLogger(['text_file' => 'com_ticketstation_mollie.php'], Log::ALL, ['com_ticketstation.mollie']);
+            $registered = true;
         }
 
-        ## Open log file for writing to it:
-        $logfile = fopen(JPATH_ADMINISTRATOR . '/components/com_ticketstation/assets/log/mollie_log.txt', "a");
-        ## Add the new log:
-        fputs($logfile, $msg);
-        ## Close the log file again:
-        fclose($logfile);
+        Log::add($text, Log::INFO, 'com_ticketstation.mollie');
 
         return true;
     }

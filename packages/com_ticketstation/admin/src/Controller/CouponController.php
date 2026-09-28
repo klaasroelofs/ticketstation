@@ -93,11 +93,14 @@ class CouponController extends FormController
 
             if ($model->store($data)) {
                 $this->setRedirect(Uri::base() . 'index.php?option=com_ticketstation&view=coupon&layout=edit&cid=' . $model->getCouponID(), Text::_('COM_TICKETSTATION_COUPON_SAVED'));
-            } else {
-                $this->setRedirect(Uri::base() . 'index.php?option=com_ticketstation&view=coupon&layout=edit&cid=' . $model->getCouponID(), Text::_('COM_TICKETSTATION_COUPON_SAVED_FAILED', 'error'));
+
+                return true;
             }
 
-            return true;
+            // Stay on the edit screen, also for Save & Close.
+            $this->setRedirect(Uri::base() . 'index.php?option=com_ticketstation&view=coupon&layout=edit&cid=' . $model->getCouponID(), Text::_('COM_TICKETSTATION_COUPON_SAVED_FAILED'), 'error');
+
+            return false;
 
         }
 

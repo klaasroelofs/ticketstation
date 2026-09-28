@@ -43,9 +43,13 @@ class com_ticketstationInstallerScript extends InstallerScript
         '/components/com_ticketstation/assets/images/rotate-phone.gif',
         // Stylesheet of the old seat plan editor.
         '/administrator/components/com_ticketstation/assets/css/seatchart.css',
+        // Unused payment helper; payments go through PaymentAPI.
+        '/administrator/components/com_ticketstation/src/Helper/Payment.php',
     ];
 
     protected $deleteFolders = [
+        // Mollie log, readable from the web; now in Joomla's log folder.
+        '/administrator/components/com_ticketstation/assets/log',
         '/administrator/components/com_ticketstation/src/View/Seatplansettings',
         '/administrator/components/com_ticketstation/tmpl/seatplansettings',
         '/components/com_ticketstation/src/View/Statistics',

@@ -50,7 +50,6 @@ $list = function (string $tag, string $prefix, int $count) {
             <summary class="h5 mb-0"><span class="fa fa-user-times me-2" aria-hidden="true"></span><?= Text::_('COM_TICKETSTATION_PRIVACY_DOCS_REMOVE_TITLE') ?></summary>
             <div class="mt-3">
                 <?php $list('ol', 'COM_TICKETSTATION_PRIVACY_DOCS_REMOVE_', 3); ?>
-                <p class="mt-3 mb-0"><?= Text::_('COM_TICKETSTATION_PRIVACY_DOCS_REMOVE_4') ?></p>
             </div>
         </details>
     </div>

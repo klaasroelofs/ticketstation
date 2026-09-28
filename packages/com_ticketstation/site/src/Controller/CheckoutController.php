@@ -14,12 +14,9 @@ defined('_JEXEC') or die;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\Controller\BaseController;
 use Joomla\CMS\Factory;
-use Joomla\CMS\Plugin\PluginHelper;
 use Joomla\CMS\Router\Route;
 use Joomla\CMS\Session\Session;
-use Joomla\Event\Event;
 use Ticketstation\Component\Ticketstation\Administrator\Helper;
-use Ticketstation\Component\Ticketstation\Administrator\Helper\Amount;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Config;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Order;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Ticket;
@@ -113,27 +110,6 @@ class CheckoutController extends BaseController
 
         // We do need this again for failed registrations.
         //$app->setUserState('com_ticketmaster.registration', $requestData);
-
-        //CHECK RECAPTCHA
-        //TODO: RECAPTCHA INTEGREREN
-        /*
-        JPluginHelper::importPlugin('captcha');
-        $dispatcher = JDispatcher::getInstance();
-        $res        = $dispatcher->trigger('onCheckAnswer', $jinput->get('recaptcha_response_field', '', 'raw'));
-
-        $dispatcher = Factory::getApplication()->getDispatcher();
-        $event = new Event('onCheckAnswer', $jinput->get('recaptcha_response_field', '', 'raw'));
-        $res = $dispatcher->dispatch('onCheckAnswer', $event);
-
-        if ( ! empty($res))
-        {
-            if ( ! $res[0])
-            {
-                $app->enqueueMessage(Text::_('COM_TICKETSTATION_CAPTCHA_INCORRECT'), 'error');
-                $app->redirect(Route::_('index.php?option=com_ticketstation&view=checkout'));
-            }
-        }
-        */
 
         // Getting the configuration
         $config = (new Config)->get(['use_automatic_login', 'auto_username', 'show_birthday', 'show_phone', 'show_country', 'show_address', 'show_secondaddress', 'show_thirdaddress', 'show_zipcode', 'show_city', 'show_salutation']);

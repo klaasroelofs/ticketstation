@@ -46,62 +46,20 @@ class ConfigurationModel extends BaseDatabaseModel
         return $this->data;
     }
 
-    function store($data) //TODO: Replace deprecated setError / getError
+    function store($data)
     {
         $table = $this->getTable();
 
-        // Bind the data.
-        /*try
+        // Bind, check and store. Table methods return false or throw on a failure.
+        try
         {
-            $table->bind($data);
+            return $table->bind($data) && $table->check() && $table->store();
         }
-        catch (\InvalidArgumentException $exception)
+        catch (\Exception $e)
         {
-            $exception->getMessage();
-            Factory::getApplication()->enqueueMessage($exception->getMessage(), 'error');
-            return false;
-        }*/
+            Factory::getApplication()->enqueueMessage($e->getMessage(), 'error');
 
-        if (!$table->bind($data)) {
-            $this->setError($table->getError());
             return false;
         }
-
-        // Check the data.
-        /*try
-        {
-            $table->check($data);
-        }
-        catch (\InvalidArgumentException $exception)
-        {
-            $exception->getMessage();
-            Factory::getApplication()->enqueueMessage($exception->getMessage(), 'error');
-            return false;
-        }*/
-
-        if (!$table->check()) {
-            $this->setError($table->getError());
-            return false;
-        }
-
-        // Store the data.
-        /*try
-        {
-            $table->store($data);
-        }
-        catch (\InvalidArgumentException $exception)
-        {
-            $exception->getMessage();
-            Factory::getApplication()->enqueueMessage($exception->getMessage(), 'error');
-            return false;
-        }*/
-
-        if (!$table->store()) {
-            $this->setError($table->getError());
-            return false;
-        }
-
-
-        return true;
     }
 }

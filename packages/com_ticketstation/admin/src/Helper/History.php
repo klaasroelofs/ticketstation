@@ -56,6 +56,34 @@ class History
     }
 
     /**
+     * Deletes all history entries of an ordercode. Called when an order is deleted in the
+     * Box Office: the history holds personal data (the email address mails went to and, for
+     * an order the ticketcleaner removed, a copy of its rows with the IP address), which must
+     * not outlive the order. Also clears entries of older orders that used the same code.
+     *
+     * @param   string|int  $ordercode
+     *
+     * @return  bool
+     */
+    public static function remove($ordercode)
+    {
+        if (empty($ordercode))
+        {
+            return false;
+        }
+
+        $db = Factory::getContainer()->get('DatabaseDriver');
+
+        $query = $db->getQuery(true)
+            ->delete($db->quoteName('#__ticketstation_history'))
+            ->where($db->quoteName('ordercode') . ' = ' . $db->quote((string) $ordercode));
+
+        $db->setQuery($query);
+
+        return (bool) $db->execute();
+    }
+
+    /**
      * Returns all history entries for an order, oldest first.
      *
      * @param   string|int  $ordercode

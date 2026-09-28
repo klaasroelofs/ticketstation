@@ -50,7 +50,7 @@ if ($this->config->variable_transcosts == 0) {
     $transaction_costs = Text::sprintf('COM_TICKETSTATION_TRANSACTION_COSTS_PER_ORDER',
         (new TicketstationFunctions)->showprice($this->config->priceformat ,$this->config->transactioncosts,$this->config->valuta));
 } elseif ($show_transaction_costs) {
-    $transaction_costs = Text::sprintf('COM_TICKETSTATION_TRANSACTION_COSTS_PER_TICKET', $this->config->transcosts);
+    $transaction_costs = Text::sprintf('COM_TICKETSTATION_TRANSACTION_COSTS_PERCENTAGE', $this->config->transcosts);
 }
 
 ## Menu item for the links to the ticket views

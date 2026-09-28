@@ -63,20 +63,21 @@ class MollieController extends BaseController {
         {
             $this->setRedirect(Uri::base() . 'index.php?option=com_ticketstation&view=mollie', Text::_('COM_TICKETSTATION_MOLLIE_SAVED'));
 
-        } else {
-
-            $this->setRedirect(Uri::base() . 'index.php?option=com_ticketstation&view=mollie', Text::_('COM_TICKETSTATION_MOLLIE_NOTSAVED'));
-
+            return true;
         }
 
+        $this->setRedirect(Uri::base() . 'index.php?option=com_ticketstation&view=mollie', Text::_('COM_TICKETSTATION_MOLLIE_NOTSAVED'), 'error');
 
+        return false;
     }
     /**
      * Handle the save task which saves the configuration settings and returns to the Control Panel page
      */
     public function save($cachable = false, $urlparams = []) {
-        $this->apply();
-        $this->setRedirect(Uri::base() . 'index.php?option=com_ticketstation', Text::_('COM_TICKETSTATION_MOLLIE_SAVED'));
+        // On a failure, apply() keeps the Mollie page open with the error.
+        if ($this->apply()) {
+            $this->setRedirect(Uri::base() . 'index.php?option=com_ticketstation', Text::_('COM_TICKETSTATION_MOLLIE_SAVED'));
+        }
     }
     /**
      * Handle the cancel task which doesn't save anything and returns to the Control Panel page

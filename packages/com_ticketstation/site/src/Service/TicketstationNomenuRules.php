@@ -43,7 +43,8 @@ class TicketstationNomenuRules implements RulesInterface
     }
 
     /**
-     * Dummymethod to fullfill the interface requirements
+     * Required by RulesInterface. Nothing to prepare: build() and parse() handle the menu-less
+     * URLs, like Joomla's own NomenuRules.
      *
      * @param   array  &$query  The query array to process
      *
@@ -54,7 +55,6 @@ class TicketstationNomenuRules implements RulesInterface
      */
     public function preprocess(&$query)
     {
-        // TODO: Implement preprocess() method.
     }
 
     /**

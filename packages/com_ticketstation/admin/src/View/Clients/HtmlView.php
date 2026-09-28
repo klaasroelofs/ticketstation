@@ -12,7 +12,7 @@ namespace Ticketstation\Component\Ticketstation\Administrator\View\Clients;
 defined('_JEXEC') or die;
 
 use Joomla\CMS\Factory;
-use Joomla\CMS\HTML\HTMLHelper;
+use Joomla\CMS\Form\FormFactoryInterface;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\View\HtmlView as BaseHtmlView;
 use Joomla\CMS\Toolbar\Toolbar;
@@ -100,28 +100,16 @@ class HtmlView extends BaseHtmlView
         $items	= $this->get('orderlist');
         $config	= $this->get('config');
 
-        $is_published = array(
-            '0' => array('value' => '0', 'text' => Text::_( 'COM_TICKETSTATION_NO' )),
-            '1' => array('value' => '1', 'text' => Text::_( 'COM_TICKETSTATION_YES' )),
-        );
-
-        $lists['published'] = HTMLHelper::_('select.genericList', $is_published, 'published', ' class="form-select" '. '',
-            'value', 'text', isset($data->published)?$data->published:1 );
-
-        ## Filling the Array() for gender and make a select list for it.
-        $gender = array(
-            1 => array('value' => '1', 'text' => Text::_( 'COM_TICKETSTATION_MR' )),
-            2 => array('value' => '2', 'text' => Text::_( 'COM_TICKETSTATION_MRS' )),
-            3 => array('value' => '3', 'text' => Text::_( 'COM_TICKETSTATION_MISS' )),
-            4 => array('value' => '4', 'text' => Text::_( 'COM_TICKETSTATION_FAMILY' )),
-        );
-
-        $lists['gender'] = HTMLHelper::_('select.genericList', $gender, 'gender', ' class="inputbox" ' , 'value', 'text', isset($data->gender)?$data->gender:4 );
+        // The standard Joomla form escapes the stored values. No control, so the fields post
+        // under their own names, as ClientsModel::store() expects.
+        $form = Factory::getContainer()->get(FormFactoryInterface::class)->createForm('com_ticketstation.client');
+        $form->loadFile(JPATH_ADMINISTRATOR . '/components/com_ticketstation/forms/client.xml');
+        $form->bind($data ?: []);
 
         $this->data = $data;
+        $this->form = $form;
         $this->items = $items;
         $this->config = $config;
-        $this->lists = $lists;
 
         parent::display($tpl);
     }

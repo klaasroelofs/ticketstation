@@ -1242,6 +1242,7 @@ class BoxofficeModel extends ListModel
                 (new Transaction)->remove($affected_ordercode);
                 (new CustomerNote)->remove($affected_ordercode);
                 OrderTotals::remove($affected_ordercode);
+                History::remove($affected_ordercode);
             }
             else
             {
@@ -1810,15 +1811,15 @@ class BoxofficeModel extends ListModel
             }
 
             // A ghost (an order the ticketcleaner removed) has no order rows left, only its
-            // History snapshot. Logging the manual removal ends that lifecycle, so the ghost
-            // leaves the list too.
+            // History snapshot. Deleting that history takes the ghost out of the list too.
             $removed = array_unique(array_merge(
                 array_column($data, 'ordercode'),
                 array_keys(History::getAutoRemovedGhosts($cid))
             ));
 
             foreach ($removed as $removed_ordercode) {
-                History::log($removed_ordercode, 'order_removed', 'Order removed');
+                // The history holds email addresses and, for a ghost, the IP address.
+                History::remove($removed_ordercode);
 
                 // An invoice for a deleted order shouldn't survive it.
                 (new Invoice)->remove($removed_ordercode);

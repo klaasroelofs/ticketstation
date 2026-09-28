@@ -74,7 +74,7 @@ class ClientsController extends BaseController {
 
         } else {
 
-            $this->setRedirect(Uri::base() . 'index.php?option=com_ticketstation&controller=clients&task=edit&cid=' . $cid, Text::_('COM_TICKETSTATION_CLIENT_NOTSAVED'));
+            $this->setRedirect(Uri::base() . 'index.php?option=com_ticketstation&controller=clients&task=edit&cid=' . $cid, Text::_('COM_TICKETSTATION_CLIENT_NOTSAVED'), 'error');
 
         }
 

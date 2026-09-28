@@ -63,20 +63,21 @@ class ConfigurationController extends BaseController {
         {
             $this->setRedirect(Uri::base() . 'index.php?option=com_ticketstation&view=Configuration', Text::_('COM_TICKETSTATION_CONFIG_SAVED'));
 
-        } else {
-
-            $this->setRedirect(Uri::base() . 'index.php?option=com_ticketstation&view=Configuration', Text::_('COM_TICKETSTATION_CONFIG_NOTSAVED'));
-
+            return true;
         }
 
+        $this->setRedirect(Uri::base() . 'index.php?option=com_ticketstation&view=Configuration', Text::_('COM_TICKETSTATION_CONFIG_NOTSAVED'), 'error');
 
+        return false;
     }
     /**
      * Handle the save task which saves the configuration settings and returns to the Control Panel page
      */
     public function save($cachable = false, $urlparams = []) {
-        $this->apply();
-        $this->setRedirect(Uri::base() . 'index.php?option=com_ticketstation', Text::_('COM_TICKETSTATION_CONFIG_SAVED'));
+        // On a failure, apply() keeps the settings page open with the error.
+        if ($this->apply()) {
+            $this->setRedirect(Uri::base() . 'index.php?option=com_ticketstation', Text::_('COM_TICKETSTATION_CONFIG_SAVED'));
+        }
     }
     /**
      * Handle the cancel task which doesn't save anything and returns to the Control Panel page
