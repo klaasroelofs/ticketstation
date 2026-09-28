@@ -138,7 +138,7 @@ class CodescannerController extends BaseController
 
 		if ($eventid > 0 && $orderEventid !== $eventid)
 		{
-			return $this->result(0, Text::_('COM_TICKETSTATION_TICKETSCANNING_WRONG_EVENT'), $order);
+			return $this->result(0, $this->wrongEventText($orderTicketid), $order);
 		}
 
 		// Scanning for a parent ticket also accepts its child tickets.
@@ -146,7 +146,15 @@ class CodescannerController extends BaseController
 
 		if ($ticketid > 0 && !\in_array($orderTicketid, $ticketGroup, true))
 		{
-			return $this->result(0, Text::_('COM_TICKETSTATION_TICKETSCANNING_WRONG_TICKET'), $order);
+			// A ticket of another event is a wrong event; only within the same event is it a wrong ticket type.
+			$selected = Scanner::ticketInfo($ticketid);
+
+			if ($selected && (int) $selected->eventid !== $orderEventid)
+			{
+				return $this->result(0, $this->wrongEventText($orderTicketid), $order);
+			}
+
+			return $this->result(0, $this->wrongTicketText($orderTicketid), $order);
 		}
 
 		// Without an eventid/ticketid (hardware) the ticket itself must be within the assignment.
@@ -197,6 +205,36 @@ class CodescannerController extends BaseController
 			: $orderHelper->getNumberofTicketsScanned(0, $eventid > 0 ? $eventid : $orderEventid);
 
 		return $this->result(1, Text::_('COM_TICKETSTATION_TICKETSCANNING_APPROVED'), $order, (int) $total);
+	}
+
+	/**
+	 * "Ticket is for another event", naming the event the ticket was bought for when known.
+	 */
+	private function wrongEventText(int $orderTicketid): string
+	{
+		$bought = Scanner::ticketInfo($orderTicketid);
+
+		if ($bought && trim((string) $bought->eventname) !== '')
+		{
+			return Text::sprintf('COM_TICKETSTATION_TICKETSCANNING_WRONG_EVENT_NAME', $bought->eventname);
+		}
+
+		return Text::_('COM_TICKETSTATION_TICKETSCANNING_WRONG_EVENT');
+	}
+
+	/**
+	 * "Ticket is for another ticket type", naming the ticket that was bought when known.
+	 */
+	private function wrongTicketText(int $orderTicketid): string
+	{
+		$bought = Scanner::ticketInfo($orderTicketid);
+
+		if ($bought && trim((string) $bought->ticketname) !== '')
+		{
+			return Text::sprintf('COM_TICKETSTATION_TICKETSCANNING_WRONG_TICKET_NAME', $bought->ticketname);
+		}
+
+		return Text::_('COM_TICKETSTATION_TICKETSCANNING_WRONG_TICKET');
 	}
 
 	private function scannedBeforeText(?string $scandate): string

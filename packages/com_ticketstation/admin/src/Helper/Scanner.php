@@ -150,6 +150,29 @@ class Scanner
     }
 
     /**
+     * Ticket name, event id and event name of a ticket, or null when the ticket doesn't exist.
+     * Used to tell the door staff what a refused ticket is for.
+     */
+    public static function ticketInfo(int $ticketid): ?object
+    {
+        if ($ticketid <= 0) {
+            return null;
+        }
+
+        $db    = Factory::getContainer()->get('DatabaseDriver');
+        $query = $db->getQuery(true)
+            ->select($db->quoteName(['t.ticketid', 't.eventid', 't.ticketname', 'e.eventname']))
+            ->from($db->quoteName('#__ticketstation_tickets', 't'))
+            ->join('LEFT', $db->quoteName('#__ticketstation_events', 'e'), $db->quoteName('e.eventid') . ' = ' . $db->quoteName('t.eventid'))
+            ->where($db->quoteName('t.ticketid') . ' = :ticketid')
+            ->bind(':ticketid', $ticketid, ParameterType::INTEGER);
+
+        $db->setQuery($query);
+
+        return $db->loadObject() ?: null;
+    }
+
+    /**
      * Whether the ticket has Scanning Allowed switched on. With it off, the ticket is refused
      * at the door, also by a scanner that has the whole event.
      */
