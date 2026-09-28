@@ -43,7 +43,16 @@ class ticketcreator
         //$this->font = 'helvetica';
     }
 
-    function doPDF()
+    /**
+     * Makes the ticket PDF of one order row.
+     *
+     * @param   bool  $newCode  Give the ticket a new QR code, so a copy sent earlier no longer
+     *                          scans (for a lost or stolen ticket). Otherwise a ticket keeps the
+     *                          code it got the first time, so making the file again (after
+     *                          changing the Order Reference, removing another ticket, ...)
+     *                          leaves the tickets the customer already has valid.
+     */
+    function doPDF($newCode = false)
     {
         ## Load Mollie config to determine testmode on/off
         $db = Factory::getContainer()->get('DatabaseDriver');
@@ -406,11 +415,36 @@ class ticketcreator
         ## ordercode/orderid, otherwise a valid code for one ticket lets you guess a valid
         ## code for another. So it's a random per-ticket token, unrelated to those numbers.
         ## If Mollie Test Mode is on, use a fixed value so test tickets stay recognisable.
-        if ($mollie_test == 1) {
-            $barcode = '123456789012';
+        ## A ticket keeps the code it already has (see $newCode), except the fixed test code once
+        ## Test Mode is off.
+        $query = $db->getQuery(true)
+            ->select($db->quoteName('barcode'))
+            ->from($db->quoteName('#__ticketstation_orders'))
+            ->where($db->quoteName('orderid') . ' = ' . (int) $this->eid);
+
+        $db->setQuery($query);
+        $current = (string) $db->loadResult();
+
+        $test_code = '123456789012';
+        $keep      = !$newCode && $current !== '' && $current !== '0' && ($current !== $test_code || $mollie_test == 1);
+
+        if ($keep) {
+            $barcode = $current;
+        } elseif ($mollie_test == 1) {
+            $barcode = $test_code;
         } else {
             $barcode = bin2hex(random_bytes(16));
         }
+
+        ## The QR image the Box Office shows for a code that was replaced is of no use any more.
+        if ($barcode !== $current && $current !== '' && $current !== '0') {
+            $old_qr = JPATH_ADMINISTRATOR . '/components/com_ticketstation/tickets/qrcodes/' . basename($current) . '.png';
+
+            if (file_exists($old_qr)) {
+                File::delete($old_qr);
+            }
+        }
+
         $this->orderid = $order->orderid;
 
         ## Store the barcode with this ticket in the database

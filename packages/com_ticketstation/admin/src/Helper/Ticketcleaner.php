@@ -111,13 +111,14 @@ class Ticketcleaner
 
         ## THIS IS THE CLEAN UP OF PENDING ORDERS (STATUS UNPAID (0) OR PENDING (3))
         ## TYPICALLY, THESE ARE ORDERS THAT REACHED THE PAYMENT SCREEN OF FAILED PAYMENT (PAID = 0 / PUBLISHED = 0) OR FOR WHICH A PAYMENT LINK WAS SENT (PAID = 3 / PUBLISHED = 1), BUT THAT WERE NEVER ACTUALLY PAID
+        ## THE PERIOD STARTS AT THE ORDER DATE, OR AT THE LAST PAYMENT LINK SENT FROM THE BOX OFFICE (payment_requested).
         $cleanup_pending = date('Y-m-d H:i:s', mktime(date('H'), date('i'), date('s'), date('m'), date('d') - $config->removal_days, date('Y')));
 
         $query = $db->getQuery(true)
             ->select(array('o.*', 't.parent AS parentticket'))
             ->from($db->quoteName('#__ticketstation_orders', 'o'))
             ->join('LEFT', $db->quoteName('#__ticketstation_tickets', 't') . ' ON (' . $db->quoteName('o.ticketid') . ' = ' . $db->quoteName('t.ticketid') . ')')
-            ->where($db->quoteName('o.orderdate') . ' < ' . $db->quote($cleanup_pending))
+            ->where('COALESCE(' . $db->quoteName('o.payment_requested') . ', ' . $db->quoteName('o.orderdate') . ') < ' . $db->quote($cleanup_pending))
             ->where('(' . $db->quoteName('o.paid') . ' = ' . $db->quote(0) . ' OR ' . $db->quoteName('o.paid') . ' = ' . $db->quote(3) . ')');
             //->where($db->quoteName('o.published') . ' = 1');
 
@@ -129,7 +130,7 @@ class Ticketcleaner
             $query = $db->getQuery(true);
 
             $conditions = array(
-                $db->quoteName('orderdate') . ' < ' . $db->quote($cleanup_pending),
+                'COALESCE(' . $db->quoteName('payment_requested') . ', ' . $db->quoteName('orderdate') . ') < ' . $db->quote($cleanup_pending),
                 '(' . $db->quoteName('paid') . ' = ' . $db->quote(0) . ' OR ' . $db->quoteName('paid') . ' = ' . $db->quote(3) . ')'
                 //$db->quoteName('published') . ' = 1'
             );

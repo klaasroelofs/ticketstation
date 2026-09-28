@@ -18,6 +18,8 @@ use Joomla\CMS\MVC\View\HtmlView as BaseHtmlView;
 use Joomla\CMS\Toolbar\Toolbar;
 use Joomla\CMS\Toolbar\ToolbarHelper;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\CustomerNote;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\Invoice;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\MolliePaymentMethods;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\OrderTotals;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\ticketcreator;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Docs;
@@ -43,11 +45,81 @@ class HtmlView extends BaseHtmlView
             $this->_displayForm($tpl);
             return;
         }
-		
-        // Setup the toolbars.
+
+        $model  = $this->getModel();
+        $config = $this->get('config');
+
+        $this->addListToolbar();
+
+        $filters = [
+            'search' => (string) $model->getState('filter.search'),
+            'paid'   => (int) $model->getState('filter.paid'),
+            'event'  => (int) $model->getState('filter.event'),
+            'sent'   => (int) $model->getState('filter.sent'),
+        ];
+
+        // The events, the most recent first, with their date so events with the same name
+        // (a series) can be told apart. Event dates are stored in local time, as entered.
+        $events = [HTMLHelper::_('select.option', '0', Text::_('COM_TICKETSTATION_SELECTLIST_EVENT'))];
+
+        foreach ($model->getEventOptions() as $event)
+        {
+            $date     = $event->eventdate ? date($config->dateformat, strtotime($event->eventdate)) : '';
+            $events[] = HTMLHelper::_('select.option', $event->eventid, $event->eventname . ($date !== '' ? ' (' . $date . ')' : ''));
+        }
+
+        $lists['events'] = HTMLHelper::_('select.genericlist', $events, 'filter_ordering_event',
+            'class="form-select" onchange="this.form.submit();" aria-label="' . Text::_('COM_TICKETSTATION_SELECTLIST_EVENT') . '"',
+            'value', 'text', $filters['event']);
+
+        $paid = [
+            HTMLHelper::_('select.option', '0', Text::_('COM_TICKETSTATION_SELECTLIST_PAYMENT_STATUS')),
+            HTMLHelper::_('select.option', '1', Text::_('COM_TICKETSTATION_PAID')),
+            HTMLHelper::_('select.option', '2', Text::_('COM_TICKETSTATION_UNPAID_OVERVIEW')),
+            HTMLHelper::_('select.option', '3', Text::_('COM_TICKETSTATION_REFUNDED')),
+            HTMLHelper::_('select.option', '4', Text::_('COM_TICKETSTATION_PENDING')),
+        ];
+
+        $lists['paid'] = HTMLHelper::_('select.genericlist', $paid, 'filter_ordering_paid',
+            'class="form-select" onchange="this.form.submit();" aria-label="' . Text::_('COM_TICKETSTATION_SELECTLIST_PAYMENT_STATUS') . '"',
+            'value', 'text', $filters['paid']);
+
+        $sent = [
+            HTMLHelper::_('select.option', '0', Text::_('COM_TICKETSTATION_BOXOFFICE_SELECTLIST_SENT')),
+            HTMLHelper::_('select.option', '1', Text::_('COM_TICKETSTATION_SENT_TICKETS')),
+            HTMLHelper::_('select.option', '2', Text::_('COM_TICKETSTATION_UNSENT_TICKETS')),
+        ];
+
+        $lists['sent'] = HTMLHelper::_('select.genericlist', $sent, 'filter_ordering_sent',
+            'class="form-select" onchange="this.form.submit();" aria-label="' . Text::_('COM_TICKETSTATION_BOXOFFICE_SELECTLIST_SENT') . '"',
+            'value', 'text', $filters['sent']);
+
+        $this->items      = $this->get('list');
+        $this->pagination = $this->get('Pagination');
+        $this->summary    = $model->getSummary();
+        $this->config     = $config;
+        $this->filters    = $filters;
+        $this->lists      = $lists;
+
+        parent::display($tpl);
+
+    }
+
+    /**
+     * The toolbar of the order list. The actions on the ticked orders are grouped: the
+     * payment, the tickets, and deleting.
+     */
+    private function addListToolbar()
+    {
         ToolBarHelper::title(Text::_('COM_TICKETSTATION_VIEW_BOXOFFICE_TITLE'), 'fa fa-money-bill-alt');
 
         $toolbar = Toolbar::getInstance('toolbar');
+
+        $toolbar->linkButton('reservation', 'COM_TICKETSTATION_VIEW_RESERVATION_TITLE')
+            ->url('index.php?option=com_ticketstation&view=reservation')
+            ->icon('icon-new')
+            ->buttonClass('btn btn-success');
+
         $dropdown = $toolbar->dropdownButton('status-group')
             ->text('JTOOLBAR_CHANGE_STATUS')
             ->toggleSplit(false)
@@ -58,112 +130,43 @@ class HtmlView extends BaseHtmlView
         /** @var Toolbar $childBar */
         $childBar = $dropdown->getChildToolbar();
 
-        $childBar->standardButton('resendpayment', 'COM_TICKETSTATION_RESEND_PAYMENT', 'boxoffice.resendpayment')
-            ->icon('fa fa-share')
-            ->listCheck(true);
-
-        $childBar->standardButton('refund', 'COM_TICKETSTATION_REFUNDED', 'boxoffice.refund')
-            ->icon('fa fa-reply')
-            ->listCheck(true);
+        $childBar->divider(Text::_('COM_TICKETSTATION_BOXOFFICE_PAYMENT'));
 
         $childBar->standardButton('full_process', 'COM_TICKETSTATION_TOOLBAR_FULL_PROCESS', 'boxoffice.full_process')
             ->icon('fa fa-cube')
             ->listCheck(true);
 
+        $childBar->standardButton('allpayments', 'COM_TICKETSTATION_BOXOFFICE_MARK_PAID', 'boxoffice.allpayments')
+            ->icon('fa fa-thumbs-up')
+            ->listCheck(true);
+
+        $childBar->standardButton('resendpayment', 'COM_TICKETSTATION_RESEND_PAYMENT', 'boxoffice.resendpayment')
+            ->icon('fa fa-share')
+            ->listCheck(true);
+
+        $childBar->standardButton('refund', 'COM_TICKETSTATION_BOXOFFICE_MARK_REFUNDED', 'boxoffice.refund')
+            ->icon('fa fa-reply')
+            ->listCheck(true);
+
+        $childBar->divider(Text::_('COM_TICKETSTATION_BOXOFFICE_TICKETS'));
+
+        $childBar->standardButton('sendingticket', 'COM_TICKETSTATION_BOXOFFICE_SEND_TICKETS', 'boxoffice.sendingticket')
+            ->icon('fa fa-paper-plane')
+            ->listCheck(true);
+
+        $childBar->divider();
+
         $childBar->delete('boxoffice.remove')
             ->message('JGLOBAL_CONFIRM_DELETE')
             ->listCheck(true);
 
-        ToolbarHelper::custom('reservation', 'fa-solid fa-calendar-plus', '', 'COM_TICKETSTATION_VIEW_RESERVATION_TITLE', false,false);
+        $toolbar->standardButton('export', 'COM_TICKETSTATION_BOXOFFICE_EXPORT', 'boxoffice.export')
+            ->icon('fa fa-file-csv')
+            ->listCheck(false);
 
         ToolbarHelper::custom('','spacer');
         ToolbarHelper::custom('controlpanel', 'icon-home', '', 'COM_TICKETSTATION_VIEW_CPANEL_TITLE_SHORT', false);
         Docs::toolbarButton('boxoffice');
-
-        $app = Factory::getApplication();
-        $db = Factory::getContainer()->get('DatabaseDriver');
-
-        $config = $this->get('config');
-
-        $filter_order     = $app->getUserStateFromRequest( 'filter_ordering_e', 'filter_ordering_e','0','cmd' );
-        $filter_sent      = $app->getUserStateFromRequest( 'filter_ordering_sent', 'filter_ordering_sent','0','int' );
-        $filter_pdf       = $app->getUserStateFromRequest( 'filter_ordering_pdf', 'filter_ordering_pdf','0','cmd' );
-        $filter_paid      = $app->getUserStateFromRequest( 'filter_ordering_paid', 'filter_ordering_paid','0','cmd' );
-        $filter_event     = $app->getUserStateFromRequest( 'filter_ordering_event', 'filter_ordering_event','0','cmd' );
-
-        $search			= $app->getUserStateFromRequest( 'searchbox', 'searchbox', '', 'string' );
-        $search			= strtolower( $search );
-        $search_name	= $app->getUserStateFromRequest( 'search_name', 'search_name', '', 'cmd');
-        $search_name	= strtolower( $search_name );
-
-        $lists['search']= $search;
-        $lists['search_name']= $search_name;
-
-        $query = $db->getQuery(true);
-
-        $query->select('*');
-        $query->from($db->quoteName('#__ticketstation_tickets'));
-        $query->where($db->quoteName('published') . ' = '. $db->quote('1'));
-
-        $db->setQuery($query);
-
-        $ticketlist[]	    = HTMLHelper::_('select.option',  '0', Text::_( 'COM_TICKETSTATION_SELECTTICKET' ), 'ticketid', 'ticketname' );
-        $ticketlist	        = array_merge( $ticketlist, $db->loadObjectList() );
-        $lists['ticket']    = HTMLHelper::_('select.genericlist',  $ticketlist, 'filter_ordering_e', 'class="form-select" 
-                              onchange="this.form.submit();"', 'ticketid', 'ticketname', intval($filter_order) );
-
-        $query = $db->getQuery(true);
-
-        $query->select(array('eventid', 'eventname'));
-        $query->from($db->quoteName('#__ticketstation_events'));
-
-        $db->setQuery($query);
-
-        $events[]	        = HTMLHelper::_('select.option',  '0', Text::_( 'COM_TICKETSTATION_SELECTLIST_EVENT' ), 'eventid', 'eventname' );
-        $events	            = array_merge( $events, $db->loadObjectList() );
-        $lists['events']    = HTMLHelper::_('select.genericlist',  $events, 'filter_ordering_event', 'class="form-select js-select-submit-on-change active"  
-						      onchange="this.form.submit();"', 'eventid', 'eventname', intval($filter_event) );
-
-        ## Getting the items into a variable
-        $items		= $this->get('list');
-        $pagination = $this->get('Pagination');
-
-        ## Filling the Array() for doors and make a select list for it.
-        $sent = array(
-            '0' => array('value' => '0', 'text' => Text::_( 'COM_TICKETSTATION_PLS_SELECT' )),
-            '1' => array('value' => '1', 'text' => Text::_( 'COM_TICKETSTATION_SENT_TICKETS' )),
-            '2' => array('value' => '2', 'text' => Text::_( 'COM_TICKETSTATION_UNSENT_TICKETS' )),
-        );
-        $lists['sent'] = HTMLHelper::_('select.genericList', $sent, 'filter_ordering_sent', ' class="form-select" 
-							onchange="this.form.submit();"', 'value', 'text', (int)$filter_sent );
-
-        $pdf_created = array(
-            '0' => array('value' => '0', 'text' => Text::_( 'COM_TICKETSTATION_PLS_SELECT' )),
-            '1' => array('value' => '1', 'text' => Text::_( 'COM_TICKETSTATION_PROCESSED_PDF' )),
-            '2' => array('value' => '2', 'text' => Text::_( 'COM_TICKETSTATION_UNPROCESSED_PDF' )),
-        );
-        $lists['pdf_created'] = HTMLHelper::_('select.genericList', $pdf_created, 'filter_ordering_pdf', ' class="form-select" 
-							onchange="this.form.submit();"', 'value', 'text', (int)$filter_pdf );
-
-        ## Filling the Array() for doors and make a select list for it.
-        $paid = array(
-            '0' => array('value' => '0', 'text' => Text::_( 'COM_TICKETSTATION_SELECTLIST_PAYMENT_STATUS' )),
-            '1' => array('value' => '1', 'text' => Text::_( 'COM_TICKETSTATION_PAID' )),
-            '2' => array('value' => '2', 'text' => Text::_( 'COM_TICKETSTATION_UNPAID_OVERVIEW' )),
-            '3' => array('value' => '3', 'text' => Text::_( 'COM_TICKETSTATION_REFUNDED' )),
-            '4' => array('value' => '4', 'text' => Text::_( 'COM_TICKETSTATION_PENDING' )),
-        );
-        $lists['paid'] = HTMLHelper::_('select.genericList', $paid, 'filter_ordering_paid', 'class="form-select js-select-submit-on-change active"  
-						 onchange="this.form.submit();"', 'value', 'text', (int)$filter_paid );
-
-        $this->items        = $items;
-        $this->config       = $config;
-        $this->pagination   = $pagination;
-        $this->lists        = $lists;
-		
-		
-        parent::display($tpl);
-
     }
 
     function _displayForm($tpl = null)
@@ -190,86 +193,184 @@ class HtmlView extends BaseHtmlView
             return;
         }
 
-        ToolBarHelper::title(Text::_('COM_TICKETSTATION_BOXOFFICE_VIEW_ORDER_DETAILS'), 'fa fa-money-bill-alt');
-        ToolbarHelper::custom( 'sendticketcopy', 'mail', '', Text::_( 'COM_TICKETSTATION_TOOLBAR_RESEND_TICKETS' ), false, false);
-        ToolbarHelper::custom( 'sendinvoice', 'file-alt', '', Text::_( 'COM_TICKETSTATION_TOOLBAR_SEND_INVOICE' ), false, false);
-        ToolbarHelper::custom( 'processticket', 'file-2', '', Text::_( 'COM_TICKETSTATION_TOOLBAR_CREATE_TICKETS' ), false, false);
-        ToolbarHelper::custom( 'downloadtickets', 'download', '', Text::_( 'COM_TICKETSTATION_TOOLBAR_DOWNLOAD_TICKETS' ), false, false);
-        ToolbarHelper::custom( 'nopayment', 'thumbs-down', '', Text::_( 'COM_TICKETSTATION_TOOLBAR_UNPAID' ), false, false);
-        ToolbarHelper::custom( 'payment', 'thumbs-up', '', Text::_( 'COM_TICKETSTATION_TOOLBAR_PAID' ), false, false);
-        ToolBarHelper::cancel('cancel', 'JTOOLBAR_CLOSE');
-        Docs::toolbarButton('boxoffice-order');
+        $config      = $this->get('config');
+        $items       = $this->get('client');
+        $data        = $this->get('data');
+        $transaction = $model->getTransaction();
 
-        $config = $this->get('config');
-        $remark = $this->get('remark');
-        $items = $this->get('client');
-        $price = $this->get('price');
-        $history = $this->get('history');
+        // What the tickets of the order have been through, for the toolbar and the Overview.
+        $status = (object) [
+            'paid'     => (int) ($items->paid ?? 0),
+            'tickets'  => count($data),
+            'created'  => count(array_filter($data, static fn ($row) => (int) $row->pdfcreated === 1)),
+            'sent'     => count(array_filter($data, static fn ($row) => (int) $row->pdfsent === 1)),
+            'scanned'  => count(array_filter($data, static fn ($row) => (int) $row->scanned === 1)),
+            'blocked'  => count(array_filter($data, static fn ($row) => (int) $row->blacklisted === 1)),
+            'download' => (int) max(array_merge([0], array_map(static fn ($row) => (int) $row->downloaded, $data))),
+            'pdf'      => $this->ticketFileExists($items->ordercode ?? 0, $data),
+        ];
 
-        if ($config->pro_installed == 1) {
-            $data = $this->get('extdata');
-        } else {
-            $data = $this->get('data');
+        $this->addFormToolbar($status);
 
+        // The order date is when the order was started: its first row (the list shows the same).
+        if ($data)
+        {
+            $items->orderdate = min(array_map(static fn ($row) => (string) $row->orderdate, $data));
         }
 
-        ## Filling the Array() for doors and make a select list for it.
-        $paid = array(
-            '0' => array('value' => '0', 'text' => Text::_('COM_TICKETSTATION_UNPAID')),
-            '1' => array('value' => '1', 'text' => Text::_('COM_TICKETSTATION_PAID')),
-        );
-
-        $lists['paid'] = HTMLHelper::_('select.genericList', $paid, 'paid', ' class="inputbox" ' . '', 'value', 'text', $items->paid);
-
         ## GENERATE QR CODES IF NEEDED
-        for ($i = 0, $n = count($data); $i < $n; $i++ ) {
-
-            ## Give give $row the this->item[$i]
-            $row = $data[$i];
-
+        foreach ($data as $row)
+        {
             $qrcode = JPATH_ADMINISTRATOR . '/components/com_ticketstation/tickets/qrcodes/' . $row->barcode . '.png';
-            require_once JPATH_ADMINISTRATOR . '/components/com_ticketstation/src/Helper/ticketcreator.php';
 
             //checken of QR-code al bestaat, zo niet aanmaken
-            if ((!file_exists($qrcode)) && ($row->barcode != '0')) {
-
-                $ticketcreator = new ticketcreator($row->orderid);
-
-                $destinationpath = JPATH_ADMINISTRATOR . '/components/com_ticketstation/tickets/qrcodes/' . $row->barcode . '.png';
-
-                //$pdf->get_qr_image_('250', 'fff', $row->barcode, $destinationpath);
-                $ticketcreator->get_qr_image_with_logo($row->barcode, '250', $destinationpath);
-
+            if ((!file_exists($qrcode)) && ($row->barcode != '0'))
+            {
+                (new ticketcreator($row->orderid))->get_qr_image_with_logo($row->barcode, '250', $qrcode);
             }
         }
 
-        $this->qrcode_folder = '/administrator/components/com_ticketstation/tickets/qrcodes/';
+        // The tickets per event, in the order the events take place (see getData()).
+        $events = [];
+
+        foreach ($data as $row)
+        {
+            $eventid = (int) $row->eventid;
+
+            if (!isset($events[$eventid]))
+            {
+                $events[$eventid] = (object) [
+                    'eventname' => $row->eventname,
+                    'eventdate' => $row->eventdate,
+                    'tickets'   => [],
+                ];
+            }
+
+            $events[$eventid]->tickets[] = $row;
+        }
 
         ## Orderprice: what was paid, or else what the customer pays (tickets after the discount,
         ## plus the service fee).
         $this->totals = OrderTotals::get($items->ordercode ?? 0);
 
-        if ($data[0]->transaction_amount > 0)
+        if ($transaction && (float) $transaction->amount > 0)
         {
-            $orderprice = $data[0]->transaction_amount;
+            $orderprice = (float) $transaction->amount;
         }
         else
         {
             $orderprice = $this->totals->total;
         }
 
-        $this->data     = $data;
-        $this->remark   = $remark;
-        $this->customerNote = (new CustomerNote)->get($items->ordercode ?? 0);
-        $this->items    = $items;
-        $this->config   = $config;
-        $this->lists    = $lists;
-        $this->price    = $price;
-        $this->orderprice = $orderprice;
-        $this->history  = $history;
+        $invoice = $model->getInvoice();
+
+        $this->data          = $data;
+        $this->events        = $events;
+        $this->status        = $status;
+        $this->remark        = $this->get('remark');
+        $this->customerNote  = (new CustomerNote)->get($items->ordercode ?? 0);
+        $this->items         = $items;
+        $this->config        = $config;
+        $this->orderprice    = $orderprice;
+        $this->transaction   = $transaction;
+        $this->paymentMethod = $transaction && $transaction->type !== '' ? MolliePaymentMethods::label(strtolower($transaction->type)) : '';
+        $this->invoice       = $invoice;
+        $this->invoiceNumber = $invoice ? (new Invoice)->getInvoiceNumber($invoice->invoiceid, $config->invoice_prefix) : '';
+        $this->invoiceFile   = $invoice ? (new Invoice)->getPdfFilename($invoice->invoiceid) : '';
+        $this->history       = $this->get('history');
 
         parent::display($tpl);
-    
+
     }
-    
+
+    /**
+     * The toolbar of an order. Only the actions that apply to the order's current state are
+     * offered: a paid order can't be marked as paid again, tickets can only be downloaded or
+     * resent once they exist.
+     *
+     * @param   object  $status  See _displayForm().
+     */
+    private function addFormToolbar($status)
+    {
+        ToolBarHelper::title(Text::_('COM_TICKETSTATION_BOXOFFICE_VIEW_ORDER_DETAILS'), 'fa fa-money-bill-alt');
+
+        $toolbar = Toolbar::getInstance('toolbar');
+
+        // Payment
+        $dropdown = $toolbar->dropdownButton('payment-group')
+            ->text('COM_TICKETSTATION_BOXOFFICE_PAYMENT')
+            ->toggleSplit(false)
+            ->icon('fa fa-credit-card')
+            ->buttonClass('btn btn-action');
+
+        $childBar = $dropdown->getChildToolbar();
+
+        if ($status->paid !== 1)
+        {
+            $childBar->standardButton('completeorder', 'COM_TICKETSTATION_TOOLBAR_FULL_PROCESS', 'completeorder')
+                ->icon('fa fa-cube');
+            $childBar->standardButton('payment', 'COM_TICKETSTATION_BOXOFFICE_MARK_PAID', 'payment')
+                ->icon('fa fa-thumbs-up');
+        }
+
+        if (in_array($status->paid, [0, 3], true))
+        {
+            $childBar->standardButton('sendpaymentrequest', 'COM_TICKETSTATION_RESEND_PAYMENT', 'sendpaymentrequest')
+                ->icon('fa fa-share');
+        }
+
+        if ($status->paid !== 0)
+        {
+            $childBar->standardButton('nopayment', 'COM_TICKETSTATION_BOXOFFICE_MARK_UNPAID', 'nopayment')
+                ->icon('fa fa-thumbs-down');
+        }
+
+        if ($status->paid === 1)
+        {
+            $childBar->standardButton('refundorder', 'COM_TICKETSTATION_BOXOFFICE_MARK_REFUNDED', 'refundorder')
+                ->icon('fa fa-reply');
+        }
+
+        // Tickets
+        $dropdown = $toolbar->dropdownButton('tickets-group')
+            ->text('COM_TICKETSTATION_BOXOFFICE_TICKETS')
+            ->toggleSplit(false)
+            ->icon('fa fa-ticket-alt')
+            ->buttonClass('btn btn-action');
+
+        $childBar = $dropdown->getChildToolbar();
+
+        if ($status->pdf)
+        {
+            $childBar->standardButton('sendticketcopy', 'COM_TICKETSTATION_TOOLBAR_RESEND_TICKETS', 'sendticketcopy')
+                ->icon('fa fa-paper-plane');
+            $childBar->standardButton('downloadtickets', 'COM_TICKETSTATION_TOOLBAR_DOWNLOAD_TICKETS', 'downloadtickets')
+                ->icon('fa fa-download');
+        }
+
+        // The tickets keep their QR codes, so this is safe for tickets already sent.
+        $childBar->standardButton('processticket', 'COM_TICKETSTATION_TOOLBAR_CREATE_TICKETS', 'processticket')
+            ->icon('fa fa-file-pdf');
+
+        ToolbarHelper::custom('sendinvoice', 'file-alt', '', Text::_('COM_TICKETSTATION_TOOLBAR_SEND_INVOICE'), false, false);
+        ToolBarHelper::cancel('cancel', 'JTOOLBAR_CLOSE');
+        Docs::toolbarButton('boxoffice-order');
+    }
+
+    /**
+     * Whether the order's ticket file exists, as downloadtickets and sendticketcopy use it:
+     * the combined file of the order, or the file of its single ticket.
+     */
+    private function ticketFileExists($ordercode, array $data)
+    {
+        $folder = JPATH_ADMINISTRATOR . '/components/com_ticketstation/tickets/';
+
+        if (file_exists($folder . 'eTickets-' . (int) $ordercode . '.pdf'))
+        {
+            return true;
+        }
+
+        return isset($data[0]) && file_exists($folder . 'eTicket-' . (int) $data[0]->orderid . '.pdf');
+    }
+
 }

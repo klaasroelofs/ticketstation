@@ -458,7 +458,7 @@ class ControlpanelModel extends BaseDatabaseModel
             ->where($db->quoteName('paid') . ' = 3');
         $db->setQuery($query);
         $add('COM_TICKETSTATION_CPANEL_ATTENTION_PENDING', $db->loadResult(),
-            'index.php?option=com_ticketstation&view=boxoffice&filter_ordering_paid=4', 'fa-clock');
+            self::boxofficeLink(4), 'fa-clock');
 
         // Paid orders for upcoming tickets whose tickets were never e-mailed.
         $query = $db->getQuery(true)
@@ -470,7 +470,7 @@ class ControlpanelModel extends BaseDatabaseModel
             ->where($db->quoteName('t.startdate') . ' >= ' . $db->quote($now));
         $db->setQuery($query);
         $add('COM_TICKETSTATION_CPANEL_ATTENTION_NOT_SENT', $db->loadResult(),
-            'index.php?option=com_ticketstation&view=boxoffice&filter_ordering_paid=1', 'fa-envelope', 'danger');
+            self::boxofficeLink(1, 2), 'fa-envelope', 'danger');
 
         // Unfinished orders that will not be cleaned up automatically.
         if ($config->remove_unfinished != 1)
@@ -481,7 +481,7 @@ class ControlpanelModel extends BaseDatabaseModel
                 ->where($db->quoteName('paid') . ' = 0');
             $db->setQuery($query);
             $add('COM_TICKETSTATION_CPANEL_ATTENTION_UNFINISHED', $db->loadResult(),
-                'index.php?option=com_ticketstation&view=boxoffice', 'fa-shopping-cart', 'secondary');
+                self::boxofficeLink(2), 'fa-shopping-cart', 'secondary');
         }
 
         // Confirmed waitinglist entries that have not been processed yet.
@@ -556,5 +556,20 @@ class ControlpanelModel extends BaseDatabaseModel
 
         // Seeded email and website: info@yourdomain.com and https://www.yourdomain.com
         return stripos($config->email . ' ' . $config->website, 'yourdomain.com') !== false;
+    }
+
+    /**
+     * A link to the Box Office showing exactly the orders an attention item counts: every
+     * filter is set, so a search or event filter left from earlier doesn't hide any.
+     *
+     * @param   int  $paid  Payment status filter (1 paid, 2 not paid, 3 refunded, 4 pending)
+     * @param   int  $sent  Tickets sent filter (1 sent, 2 not sent)
+     *
+     * @return  string
+     */
+    private static function boxofficeLink(int $paid, int $sent = 0)
+    {
+        return 'index.php?option=com_ticketstation&view=boxoffice&searchbox=&filter_ordering_event=0'
+            . '&filter_ordering_paid=' . $paid . '&filter_ordering_sent=' . $sent;
     }
 }

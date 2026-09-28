@@ -248,6 +248,7 @@ CREATE TABLE IF NOT EXISTS `#__ticketstation_orders` (
   `ticketid` int(10) DEFAULT NULL,
   `paid` tinyint(1) DEFAULT '0',
   `orderdate` datetime DEFAULT NULL,
+  `payment_requested` datetime DEFAULT NULL,
   `pdfcreated` tinyint(1) DEFAULT NULL,
   `pdfsent` tinyint(1) DEFAULT NULL,
   `downloadbuttonshown` tinyint(1) DEFAULT '0',

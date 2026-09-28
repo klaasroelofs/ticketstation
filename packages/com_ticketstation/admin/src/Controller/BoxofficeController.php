@@ -22,6 +22,7 @@ use Joomla\CMS\Application\CMSApplication;
 use Joomla\CMS\MVC\Controller\BaseController;
 use Joomla\CMS\MVC\Factory\MVCFactoryInterface;
 use Joomla\Input\Input;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\Date;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Order;
 
 
@@ -47,7 +48,27 @@ class BoxofficeController extends BaseController {
 
     function display($cachable = false, $urlparams = array())
     {
-        $jinput = Factory::getApplication()->getInput();
+        $app    = Factory::getApplication();
+        $jinput = $app->getInput();
+
+        // A search that was just submitted and points at exactly one order (its ordercode, or
+        // the code of one of its tickets as a QR scanner types it) opens that order straight
+        // away. The search is cleared, so the list is complete again after closing the order.
+        $search = trim($jinput->post->getString('searchbox', ''));
+
+        if ($search !== '')
+        {
+            $ordercode = $this->getModel('boxoffice')->findExactOrder($search);
+
+            if ($ordercode !== null)
+            {
+                $app->setUserState('com_ticketstation.boxoffice.search', '');
+                $this->setRedirect('index.php?option=com_ticketstation&controller=boxoffice&task=edit&cid=' . (int) $ordercode);
+
+                return $this;
+            }
+        }
+
         $jinput->set('layout', 'default');
         $jinput->set('view', 'boxoffice');
         parent::display();
@@ -480,16 +501,192 @@ class BoxofficeController extends BaseController {
 
         $model = $this->getModel('boxoffice');
 
-        if(!$model->sendtickets($cid))
+        if(!$model->sendTicketsForOrders($cid))
         {
-            $link = 'index.php?option=com_ticketstation&controller=boxoffice';
-            $this->setRedirect($link);
+            $app->enqueueMessage(Text::_('COM_TICKETSTATION_ERROR_TICKETBOX'), 'error');
         }
         else
         {
-            $link = 'index.php?option=com_ticketstation&controller=boxoffice';
-            $this->setRedirect($link, Text::_( 'COM_TICKETSTATION_ITEMS_HAS_BEEN_SENT'));
+            if (count($model->skippedTicketMails) < count($cid))
+            {
+                $app->enqueueMessage(Text::_('COM_TICKETSTATION_ITEMS_HAS_BEEN_SENT'));
+            }
+
+            if ($model->skippedTicketMails)
+            {
+                $app->enqueueMessage(Text::sprintf('COM_TICKETSTATION_BOXOFFICE_TICKETS_NOT_SENT_SKIPPED', implode(', ', $model->skippedTicketMails)), 'warning');
+            }
         }
+
+        $this->setRedirect($link);
+    }
+
+    /**
+     * Downloads the tickets of the orders in the list (with its filters and search) as a CSV
+     * file, one line per ticket: a guest list. With the event filter on, only the tickets for
+     * that event. Orders removed by the automatic cleanup are left out.
+     */
+    function export()
+    {
+        $app  = Factory::getApplication();
+        $rows = $this->getModel('boxoffice')->getExportRows();
+
+        $status = [
+            0 => Text::_('COM_TICKETSTATION_UNPAID_OVERVIEW'),
+            1 => Text::_('COM_TICKETSTATION_PAID'),
+            2 => Text::_('COM_TICKETSTATION_REFUNDED'),
+            3 => Text::_('COM_TICKETSTATION_PENDING'),
+        ];
+
+        // A value starting with one of these would be read as a formula by a spreadsheet.
+        $cell = static function ($value) {
+            $value = (string) $value;
+
+            return $value !== '' && strpbrk($value[0], "=+-@\t\r") !== false ? "'" . $value : $value;
+        };
+
+        $out = fopen('php://temp', 'r+');
+
+        // A byte order mark, so spreadsheet programs read the file as UTF-8.
+        fwrite($out, "\xEF\xBB\xBF");
+
+        fputcsv($out, [
+            Text::_('COM_TICKETSTATION_ORDERCODE'),
+            Text::_('COM_TICKETSTATION_ORDERDATE'),
+            Text::_('COM_TICKETSTATION_BOXOFFICE_EXPORT_FIRSTNAME'),
+            Text::_('COM_TICKETSTATION_BOXOFFICE_EXPORT_LASTNAME'),
+            Text::_('COM_TICKETSTATION_EMAILADDRESS'),
+            Text::_('COM_TICKETSTATION_PHONENUMBER'),
+            Text::_('COM_TICKETSTATION_BOXOFFICE_EXPORT_EVENT'),
+            Text::_('COM_TICKETSTATION_BOXOFFICE_EXPORT_TICKET'),
+            Text::_('COM_TICKETSTATION_SEAT'),
+            Text::_('COM_TICKETSTATION_BOXOFFICE_EXPORT_PRICE'),
+            Text::_('COM_TICKETSTATION_BOXOFFICE_PAYMENT_STATUS'),
+            Text::_('COM_TICKETSTATION_BOXOFFICE_SCANNED'),
+            Text::_('COM_TICKETSTATION_BOXOFFICE_BLACKLIST'),
+            Text::_('COM_TICKETSTATION_ORDERREFERENCE'),
+        ], ';');
+
+        foreach ($rows as $row)
+        {
+            fputcsv($out, array_map($cell, [
+                $row->ordercode,
+                Date::_($row->orderdate, 'Y-m-d H:i'),
+                $row->firstname,
+                $row->name,
+                $row->emailaddress,
+                $row->phonenumber,
+                $row->eventname,
+                $row->ticketname,
+                $row->seatid ? $row->row_name . $row->seatid : '',
+                number_format((float) $row->price, 2, ',', ''),
+                $status[(int) $row->paid] ?? '',
+                $row->scanned ? substr((string) $row->scandate, 0, 16) : '',
+                $row->blacklisted ? Text::_('COM_TICKETSTATION_YES') : '',
+                $row->remarks,
+            ]), ';');
+        }
+
+        rewind($out);
+        $csv = stream_get_contents($out);
+        fclose($out);
+
+        $app->setHeader('Content-Type', 'text/csv; charset=utf-8', true);
+        $app->setHeader('Content-Disposition', 'attachment; filename="boxoffice-' . date('Y-m-d-His') . '.csv"', true);
+        $app->setHeader('Cache-Control', 'no-store', true);
+        $app->sendHeaders();
+
+        echo $csv;
+
+        $app->close();
+    }
+
+    /**
+     * Complete Order for the order that is open: marks it as paid, creates the tickets and
+     * emails them, as the Complete Order action in the list does.
+     */
+    function completeorder()
+    {
+        $app       = Factory::getApplication();
+        $ordercode = $app->getInput()->get('ordercode', 0, 'int');
+
+        if (!$this->getModel('boxoffice')->fullprocessorder([$ordercode]))
+        {
+            $app->enqueueMessage(Text::_('COM_TICKETSTATION_ERROR_TICKETBOX'), 'error');
+        }
+        else
+        {
+            $app->enqueueMessage(Text::_('COM_TICKETSTATION_COMPLETED_ORDER'));
+        }
+
+        $this->setRedirect('index.php?option=com_ticketstation&controller=boxoffice&task=edit&cid=' . $ordercode);
+    }
+
+    /**
+     * Gives the ticked tickets of the order that is open a new QR code (a lost or stolen
+     * ticket): the copies sent earlier no longer scan.
+     */
+    function renewcodes()
+    {
+        $app       = Factory::getApplication();
+        $ordercode = $app->getInput()->get('ordercode', 0, 'int');
+        $cid       = $this->input->get('cid', [], 'array');
+
+        if (!$this->getModel('boxoffice')->renewTicketCodes($ordercode, $cid))
+        {
+            $app->enqueueMessage(Text::_('COM_TICKETSTATION_PLEASE_SELECT_ORDER'), 'error');
+        }
+        else
+        {
+            $app->enqueueMessage(Text::_('COM_TICKETSTATION_BOXOFFICE_CODES_RENEWED'));
+        }
+
+        $this->setRedirect('index.php?option=com_ticketstation&controller=boxoffice&task=edit&cid=' . $ordercode);
+    }
+
+    /**
+     * Resend Payment for the order that is open.
+     */
+    function sendpaymentrequest()
+    {
+        $app       = Factory::getApplication();
+        $ordercode = $app->getInput()->get('ordercode', 0, 'int');
+        $model     = $this->getModel('boxoffice');
+
+        if (!$model->paymentResender([$ordercode]))
+        {
+            $app->enqueueMessage(Text::_('COM_TICKETSTATION_ERROR_TICKETBOX'), 'error');
+        }
+        elseif ($model->skippedPaymentRequests)
+        {
+            $app->enqueueMessage(Text::sprintf('COM_TICKETSTATION_PAYMENT_REQUESTS_SKIPPED', $ordercode), 'warning');
+        }
+        else
+        {
+            $app->enqueueMessage(Text::_('COM_TICKETSTATION_PAYMENT_REQUESTS_SENT'));
+        }
+
+        $this->setRedirect('index.php?option=com_ticketstation&controller=boxoffice&task=edit&cid=' . $ordercode);
+    }
+
+    /**
+     * Marks the order that is open as refunded.
+     */
+    function refundorder()
+    {
+        $app       = Factory::getApplication();
+        $ordercode = $app->getInput()->get('ordercode', 0, 'int');
+
+        if (!$this->getModel('boxoffice')->changePaymentState([$ordercode], 2))
+        {
+            $app->enqueueMessage(Text::_('COM_TICKETSTATION_ERROR_TICKETBOX'), 'error');
+        }
+        else
+        {
+            $app->enqueueMessage(Text::_('COM_TICKETSTATION_PAYMENTSTATUS_REFUNDED'));
+        }
+
+        $this->setRedirect('index.php?option=com_ticketstation&controller=boxoffice&task=edit&cid=' . $ordercode);
     }
 
     function sendticketcopy()
@@ -555,8 +752,8 @@ class BoxofficeController extends BaseController {
         $jinput = $app->getInput();
 
         $model 		= $this->getModel('boxoffice');
-        $ordercode 	= $jinput->get('cid', '0', 'int');
-        $newremark	= $jinput->get('newremark', null, 'RAW');
+        $ordercode 	= $jinput->get('ordercode', '0', 'int');
+        $newremark	= trim((string) $jinput->get('newremark', '', 'STRING'));
 
         if ($newremark == '')
         {
@@ -594,7 +791,7 @@ class BoxofficeController extends BaseController {
         $jinput = $app->getInput();
 
         $model 		= $this->getModel('boxoffice');
-        $ordercode 	= $jinput->get('cid', '0', 'int');
+        $ordercode 	= $jinput->get('ordercode', '0', 'int');
 
         $response = $model->deleteRemark($ordercode);
 

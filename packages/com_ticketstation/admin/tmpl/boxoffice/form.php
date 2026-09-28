@@ -10,6 +10,7 @@
 use Joomla\CMS\Factory;
 use Joomla\CMS\HTML\HTMLHelper;
 use Joomla\CMS\Language\Text;
+use Joomla\CMS\Layout\LayoutHelper;
 use Joomla\CMS\Router\Route;
 use Joomla\CMS\Uri\Uri;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Date;
@@ -22,8 +23,14 @@ $document = $app->getDocument();
 $document->setTitle(Text::_('COM_TICKETSTATION_BOXOFFICE_VIEW_ORDER_DETAILS') . ' - ' . $app->get('sitename'));
 
 $wa = $document->getWebAssetManager();
-$wa->useScript('jquery');
+$wa->useScript('joomla.dialog');
 $wa->registerAndUseStyle('ticketstation', Uri::base() . 'components/com_ticketstation/assets/css/ticketstation.css');
+
+Text::script('WARNING');
+
+$status   = $this->status;
+$valuta   = $this->escape($this->config->valuta);
+$datetime = $this->config->dateformat . ' ' . $this->config->time_format;
 
 // The coupon of the order and its discount as stored on the order rows when it was applied
 // (see Coupon::refresh()), not the coupon's current settings.
@@ -40,472 +47,366 @@ foreach ($this->data as $orderRow) {
     }
 }
 
+// Event and ticket dates are stored in local time, as entered.
+$eventDate = function ($date) {
+    return $date ? date($this->config->dateformat, strtotime($date)) : '';
+};
 
-$history = $this->history ?? [];
+// A count of the tickets of the order, e.g. "2 / 4", coloured by how far along it is.
+$progress = function (int $done) use ($status) {
+    $class = $done === 0 ? 'bg-secondary' : ($done >= $status->tickets ? 'bg-success' : 'bg-warning text-dark');
 
-$history_icons = [
-    'order_created'          => ['fa-plus-circle', 'primary'],
-    'transaction_created'    => ['fa-credit-card', 'secondary'],
-    'payment_initiated'      => ['fa-credit-card', 'info'],
-    'order_paid'             => ['fa-check-circle', 'success'],
-    'order_status_pending'   => ['fa-clock', 'warning'],
-    'order_status_refunded'  => ['fa-reply', 'info'],
-    'order_status_unpaid'    => ['fa-times-circle', 'danger'],
-    'payment_failed'         => ['fa-times-circle', 'danger'],
-    'payment_cancelled'      => ['fa-ban', 'secondary'],
-    'payment_expired'        => ['fa-hourglass-end', 'secondary'],
-    'payment_duplicate'      => ['fa-exclamation-triangle', 'danger'],
-    'payment_refund_reported' => ['fa-reply', 'warning'],
-    'tickets_generated'      => ['fa-ticket-alt', 'secondary'],
-    'tickets_sent'           => ['fa-paper-plane', 'info'],
-    'tickets_send_failed'    => ['fa-exclamation-triangle', 'danger'],
-    'ticket_copy_sent'       => ['fa-paper-plane', 'info'],
-    'confirmation_sent'      => ['fa-envelope', 'info'],
-    'payment_reminder_sent'  => ['fa-bell', 'warning'],
-    'ticket_scanned'         => ['fa-qrcode', 'success'],
-    'ticket_scan_reset'      => ['fa-qrcode', 'secondary'],
-    'ticket_blacklisted'     => ['fa-ban', 'danger'],
-    'ticket_unblocked'       => ['fa-check', 'success'],
-    'ticket_removed'         => ['fa-trash', 'danger'],
-    'order_removed'          => ['fa-trash', 'danger'],
-    'order_removed_auto'     => ['fa-broom', 'secondary'],
-    'order_published'        => ['fa-eye', 'success'],
-    'order_unpublished'      => ['fa-eye-slash', 'secondary'],
-    'remark_updated'         => ['fa-comment', 'secondary'],
-    'remark_removed'         => ['fa-comment-slash', 'secondary'],
-    'invoice_created'        => ['fa-euro-sign', 'secondary'],
-    'invoice_sent'           => ['fa-euro-sign', 'info'],
-    'invoice_send_failed'    => ['fa-exclamation-triangle', 'danger'],
-];
+    return '<span class="badge ' . $class . '">' . $done . ' / ' . $status->tickets . '</span>';
+};
 
 ?>
 
-<ul class="nav nav-tabs" role="tablist">
-    <li class="nav-item" role="presentation">
-        <a class="nav-link ts-tab-link active" href="#ts-tab-overview" id="ts-tab-overview-lbl" role="tab" aria-controls="ts-tab-overview" aria-selected="true">
-            <?= Text::_('COM_TICKETSTATION_OVERVIEW') ?>
-        </a>
-    </li>
-    <li class="nav-item" role="presentation">
-        <a class="nav-link ts-tab-link" href="#ts-tab-tickets" id="ts-tab-tickets-lbl" role="tab" aria-controls="ts-tab-tickets" aria-selected="false">
-            <?= Text::_('COM_TICKETSTATION_TICKETS_IN_ORDER') ?>
-        </a>
-    </li>
-    <li class="nav-item" role="presentation">
-        <a class="nav-link ts-tab-link" href="#ts-tab-history" id="ts-tab-history-lbl" role="tab" aria-controls="ts-tab-history" aria-selected="false">
-            <?= Text::_('COM_TICKETSTATION_HISTORY') ?>
-            <?php if (count($history)) { ?>
-                <span class="badge bg-secondary rounded-pill"><?= count($history); ?></span>
-            <?php } ?>
-        </a>
-    </li>
-</ul>
+<form action="<?= Route::_('index.php?option=com_ticketstation&view=boxoffice'); ?>" method="post" name="adminForm" id="adminForm">
 
-<div class="tab-content">
-<div class="tab-pane active" id="ts-tab-overview" role="tabpanel" aria-labelledby="ts-tab-overview-lbl">
+<?= HTMLHelper::_('uitab.startTabSet', 'boxofficeTab', ['active' => 'overview', 'recall' => true, 'breakpoint' => 768]); ?>
 
-<div class="card">
-    <div class="card-body">
-        <div class="row">
-            <div class="col-lg-6">
-                <h3 class="card-header">
-                    <?= Text::_('COM_TICKETSTATION_ORDER_INFORMATION') ?>
-                </h3>
-                <table class="table">
+<?= HTMLHelper::_('uitab.addTab', 'boxofficeTab', 'overview', Text::_('COM_TICKETSTATION_OVERVIEW')); ?>
+
+<div class="row">
+    <div class="col-lg-6">
+        <div class="card mb-3">
+            <h3 class="card-header"><?= Text::_('COM_TICKETSTATION_ORDER_INFORMATION') ?></h3>
+            <div class="card-body">
+                <table class="table mb-0">
                     <tr>
-                        <td style="width:50%"><?= Text::_('COM_TICKETSTATION_ORDERCODE') ?></td>
-                        <td>
-                            <?= $this->items->ordercode; ?>
-                        </td>
+                        <th scope="row" class="w-50 fw-normal"><?= Text::_('COM_TICKETSTATION_ORDERCODE') ?></th>
+                        <td><strong><?= $this->escape($this->items->ordercode); ?></strong></td>
                     </tr>
                     <tr>
-                        <td style="width:50%"><?= Text::_('COM_TICKETSTATION_ORDERDATE') ?></td>
-                        <td><?= Date::_($this->items->orderdate, 'd-m-Y H:i'); ?></td>
+                        <th scope="row" class="fw-normal"><?= Text::_('COM_TICKETSTATION_ORDERDATE') ?></th>
+                        <td><?= Date::_($this->items->orderdate, $datetime); ?></td>
                     </tr>
                     <tr>
-                        <td style="width:50%"><?= Text::_('COM_TICKETSTATION_BOXOFFICE_TOTAL_REGULAR_PRICE') ?></td>
+                        <th scope="row" class="fw-normal"><?= Text::_(count($this->events) > 1 ? 'COM_TICKETSTATION_BOXOFFICE_EVENTS' : 'COM_TICKETSTATION_BOXOFFICE_EVENT'); ?></th>
                         <td>
-                            <?php if ($this->data[0]->transaction_amount > 0) { ?>
-                                <a href="index.php?option=com_ticketstation&controller=transactions&task=edit&cid=<?= $this->data[0]->pid; ?>"><?= $this->config->valuta; ?> <?= number_format($this->orderprice, 2, ',', ''); ?></a>
-                            <?php } else { ?>
-                                <?= $this->config->valuta; ?> <?= number_format($this->orderprice, 2, ',', ''); ?>
+                            <?php foreach ($this->events as $event) { ?>
+                                <div>
+                                    <?= $this->escape($event->eventname); ?>
+                                    <small class="text-muted"><?= $eventDate($event->eventdate); ?> &middot; <?= Text::plural('COM_TICKETSTATION_BOXOFFICE_N_TICKETS', count($event->tickets)); ?></small>
+                                </div>
                             <?php } ?>
                         </td>
                     </tr>
                     <tr>
-                        <td style="width:50%"><?= Text::_('COM_TICKETSTATION_BOXOFFICE_PAYMENT_STATUS') ?></td>
+                        <th scope="row" class="fw-normal"><?= Text::_('COM_TICKETSTATION_BOXOFFICE_TOTAL_REGULAR_PRICE') ?></th>
                         <td>
-                            <?php if ($this->items->paid == 1){ ?>
-                                <span class="badge bg-success"><?= Text::_( 'COM_TICKETSTATION_PAID' ); ?></span>
-                            <?php } elseif ($this->data[0]->paid == 2) { ?>
-                                <span class="badge bg-info" ><?= Text::_( 'COM_TICKETSTATION_REFUNDED' ); ?></span>
-                            <?php } elseif($this->data[0]->paid == 3) { ?>
-                                <span class="badge bg-warning"><?= Text::_( 'COM_TICKETSTATION_PENDING' ); ?></span>
+                            <?php if ($this->transaction && (float) $this->transaction->amount > 0) { ?>
+                                <a href="index.php?option=com_ticketstation&controller=transactions&task=edit&cid=<?= (int) $this->transaction->pid; ?>"><?= $valuta; ?> <?= number_format($this->orderprice, 2, ',', ''); ?></a>
                             <?php } else { ?>
-                                <span class="badge bg-danger" ><?= Text::_( 'COM_TICKETSTATION_UNPAID_OVERVIEW' ); ?></span>
+                                <?= $valuta; ?> <?= number_format($this->orderprice, 2, ',', ''); ?>
+                            <?php } ?>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row" class="fw-normal"><?= Text::_('COM_TICKETSTATION_BOXOFFICE_PAYMENT_STATUS') ?></th>
+                        <td>
+                            <?php if ($status->paid === 1) { ?>
+                                <span class="badge bg-success"><?= Text::_('COM_TICKETSTATION_PAID'); ?></span>
+                            <?php } elseif ($status->paid === 2) { ?>
+                                <span class="badge bg-info"><?= Text::_('COM_TICKETSTATION_REFUNDED'); ?></span>
+                            <?php } elseif ($status->paid === 3) { ?>
+                                <span class="badge bg-warning text-dark"><?= Text::_('COM_TICKETSTATION_PENDING'); ?></span>
+                            <?php } else { ?>
+                                <span class="badge bg-danger"><?= Text::_('COM_TICKETSTATION_UNPAID_OVERVIEW'); ?></span>
+                            <?php } ?>
+                        </td>
+                    </tr>
+                    <?php if ($this->paymentMethod !== '') { ?>
+                        <tr>
+                            <th scope="row" class="fw-normal"><?= Text::_('COM_TICKETSTATION_BOXOFFICE_PAYMENT_METHOD') ?></th>
+                            <td><?= $this->escape($this->paymentMethod); ?></td>
+                        </tr>
+                    <?php } ?>
+                    <tr>
+                        <th scope="row" class="fw-normal"><?= Text::_('COM_TICKETSTATION_BOXOFFICE_INVOICE') ?></th>
+                        <td>
+                            <?php if ($this->invoice) { ?>
+                                <a href="<?= Uri::root() . 'administrator/components/com_ticketstation/invoices/' . $this->escape($this->invoiceFile); ?>" target="blank"><?= $this->escape($this->invoiceNumber); ?></a>
+                                <?php if ((int) $this->invoice->sent === 1) { ?>
+                                    <span class="badge bg-success"><?= Text::_('COM_TICKETSTATION_SENT'); ?></span>
+                                <?php } else { ?>
+                                    <span class="badge bg-warning text-dark"><?= Text::_('COM_TICKETSTATION_INVOICE_NOT_SENT'); ?></span>
+                                <?php } ?>
+                            <?php } else { ?>
+                                <span class="text-muted"><?= Text::_('COM_TICKETSTATION_NONE'); ?></span>
                             <?php } ?>
                         </td>
                     </tr>
 
                     <?php if ($coupon !== '') { ?>
                         <tr>
-                            <td><?= Text::_( 'COM_TICKETSTATION_COUPON_CODE' ); ?></td>
-                            <td>
-                                <span class="badge bg-warning" style="padding-left: 10px; padding-right: 10px;"><?= htmlspecialchars($coupon, ENT_QUOTES, 'UTF-8'); ?></span>
-                            </td>
+                            <th scope="row" class="fw-normal"><?= Text::_('COM_TICKETSTATION_COUPON_CODE'); ?></th>
+                            <td><span class="badge bg-warning text-dark px-2"><?= $this->escape($coupon); ?></span></td>
                         </tr>
                         <tr>
-                            <td><?= Text::_( 'COM_TICKETSTATION_DISCOUNT' ); ?> <?= $discount_text; ?></td>
-                            <td><div> <?= $this->config->valuta; ?> <?= number_format($discount, 2, ',', ''); ?></div>
-                            </td>
+                            <th scope="row" class="fw-normal"><?= Text::_('COM_TICKETSTATION_DISCOUNT'); ?> <?= $discount_text; ?></th>
+                            <td><?= $valuta; ?> <?= number_format($discount, 2, ',', ''); ?></td>
                         </tr>
                     <?php } ?>
 
                     <?php // The service fee with the terms kept for this order (see OrderTotals). ?>
                     <tr>
-                        <td><?= Text::_('COM_TICKETSTATION_SERVICE_FEE'); ?><?= $this->totals->fee_type == OrderTotals::FEE_VARIABLE ? ' (' . (float) $this->totals->fee_rate . '%)' : ''; ?></td>
+                        <th scope="row" class="fw-normal"><?= Text::_('COM_TICKETSTATION_SERVICE_FEE'); ?><?= $this->totals->fee_type == OrderTotals::FEE_VARIABLE ? ' (' . (float) $this->totals->fee_rate . '%)' : ''; ?></th>
                         <td>
                             <?php if ($this->totals->fee_type == OrderTotals::FEE_NONE) { ?>
                                 <?= Text::_('COM_TICKETSTATION_NONE'); ?>
                             <?php } else { ?>
-                                <?= $this->config->valuta; ?> <?= number_format($this->totals->fees, 2, ',', ''); ?>
+                                <?= $valuta; ?> <?= number_format($this->totals->fees, 2, ',', ''); ?>
                             <?php } ?>
                         </td>
                     </tr>
                     <tr>
-                        <td><?= Text::_('COM_TICKETSTATION_VAT_TOTAL'); ?></td>
-                        <td><?= $this->config->valuta; ?> <?= number_format($this->totals->vat, 2, ',', ''); ?></td>
+                        <th scope="row" class="fw-normal"><?= Text::_('COM_TICKETSTATION_VAT_TOTAL'); ?></th>
+                        <td><?= $valuta; ?> <?= number_format($this->totals->vat, 2, ',', ''); ?></td>
                     </tr>
-
+                    <tr>
+                        <th scope="row" class="fw-normal"><label for="newremark"><?= Text::_('COM_TICKETSTATION_ORDERREFERENCE') ?></label></th>
+                        <td>
+                            <div class="input-group">
+                                <input class="form-control" type="text" name="newremark" id="newremark" maxlength="35"
+                                       value="<?= $this->escape($this->remark->remarks ?? ''); ?>"
+                                       onkeydown="if (event.key === 'Enter') { event.preventDefault(); Joomla.submitbutton('updateinsertremark'); }" />
+                                <button type="button" class="btn btn-primary" onclick="Joomla.submitbutton('updateinsertremark');">
+                                    <?= Text::_('COM_TICKETSTATION_UPDATE_ORDERREFERENCE') ?>
+                                </button>
+                                <?php if (!empty($this->remark->remarks)) { ?>
+                                    <button type="button" class="btn btn-outline-danger" onclick="Joomla.submitbutton('deleteremark');" title="<?= Text::_('COM_TICKETSTATION_REMOVE_ORDERREFERENCE') ?>">
+                                        <span class="icon-times" aria-hidden="true"></span>
+                                        <span class="visually-hidden"><?= Text::_('COM_TICKETSTATION_REMOVE_ORDERREFERENCE') ?></span>
+                                    </button>
+                                <?php } ?>
+                            </div>
+                        </td>
+                    </tr>
                 </table>
             </div>
-            <div class="col-lg-6">
-                <h3 class="card-header">
-                    <?= Text::_('COM_TICKETSTATION_CLIENT_INFORMATION') ?>
-                </h3>
-                <table class="table" style="overflow:hidden;table-layout:fixed;">
+        </div>
+    </div>
+
+    <div class="col-lg-6">
+        <div class="card mb-3">
+            <h3 class="card-header"><?= Text::_('COM_TICKETSTATION_CLIENT_INFORMATION') ?></h3>
+            <div class="card-body">
+                <table class="table mb-0" style="table-layout:fixed;">
                     <tr>
-                        <td style="width:50%"><?= Text::_('COM_TICKETSTATION_NAME') ?></td>
-                        <td><a href="index.php?option=com_ticketstation&controller=clients&task=edit&cid=<?= $this->items->clientid; ?>"><?= $this->items->firstname; ?> <?= $this->items->name; ?></a></td>
+                        <th scope="row" class="w-50 fw-normal"><?= Text::_('COM_TICKETSTATION_NAME') ?></th>
+                        <td><a href="index.php?option=com_ticketstation&controller=clients&task=edit&cid=<?= (int) $this->items->clientid; ?>"><?= $this->escape(trim($this->items->firstname . ' ' . $this->items->name)); ?></a></td>
                     </tr>
                     <tr>
-                        <td><?= Text::_('COM_TICKETSTATION_PHONENUMBER') ?></td>
-                        <td><?= $this->items->phonenumber; ?></td>
+                        <th scope="row" class="fw-normal"><?= Text::_('COM_TICKETSTATION_PHONENUMBER') ?></th>
+                        <td><?= $this->escape($this->items->phonenumber); ?></td>
                     </tr>
                     <tr>
-                        <td><?= Text::_('COM_TICKETSTATION_EMAILADDRESS') ?></td>
-                        <td><small><a href="mailto:<?= $this->items->emailaddress; ?>"><?= $this->items->emailaddress; ?></a></small></td>
+                        <th scope="row" class="fw-normal"><?= Text::_('COM_TICKETSTATION_EMAILADDRESS') ?></th>
+                        <td class="text-break"><small><a href="mailto:<?= $this->escape($this->items->emailaddress); ?>"><?= $this->escape($this->items->emailaddress); ?></a></small></td>
                     </tr>
                     <?php if ($this->customerNote !== '') { ?>
                         <tr>
-                            <td><?= Text::_('COM_TICKETSTATION_CUSTOMER_NOTE') ?></td>
-                            <td style="white-space: pre-line; overflow-wrap: anywhere;"><?= htmlspecialchars($this->customerNote, ENT_QUOTES, 'UTF-8'); ?></td>
+                            <th scope="row" class="fw-normal"><?= Text::_('COM_TICKETSTATION_CUSTOMER_NOTE') ?></th>
+                            <td style="white-space: pre-line; overflow-wrap: anywhere;"><?= $this->escape($this->customerNote); ?></td>
                         </tr>
                     <?php } ?>
-                    <tr>
-                        <form action="<?= Route::_('index.php?option=com_ticketstation&view=boxoffice'); ?>" method="post" name="adminForm" id="adminForm1" enctype="multipart/form-data">
-                            <td><?= Text::_('COM_TICKETSTATION_ORDERREFERENCE') ?></td>
-                            <td>
-                                <input class="form-control" type="text" name="newremark" id="newremark" size="40" style="width: 95%;margin-bottom:0px;" maxlength="35" value="<?= isset($this->remark->remarks) ? $this->remark->remarks : ''; ?>" />
-                            </td>
-                    </tr>
                 </table>
-                <div style="float:right;margin-right: 30px;">
-                    <input name="submit" type="submit" class="btn btn-primary" value="<?= Text::_('COM_TICKETSTATION_UPDATE_ORDERREFERENCE') ?>" />
+            </div>
+        </div>
 
-                    <input name = "cid" type="hidden" style="text-align:center" value="<?= $this->items->ordercode; ?>" size="10" READONLY  class="input-medium" />
-                    <input name = "option" type="hidden" value="com_ticketstation" />
-                    <input name = "task" type="hidden" value="updateinsertremark" />
-                    <input name = "controller" type="hidden" value="boxoffice"/>
-                    <?= HTMLHelper::_( 'form.token' ); ?>
-                    </form>
-                </div>
-                <div style="float:right;margin-right: 10px;">
-                    <form action="<?= Route::_('index.php?option=com_ticketstation&view=boxoffice'); ?>" method="post" name="adminForm" id="adminForm2" enctype="multipart/form-data">
-
-                        <input name="submit" type="submit" class="btn btn-primary" value="<?= Text::_('COM_TICKETSTATION_REMOVE_ORDERREFERENCE') ?>" />
-
-                        <input name ="cid" type="hidden" style="text-align:center" value="<?= $this->items->ordercode; ?>" size="10" READONLY  class="input-medium" />
-                        <input name = "option" type="hidden" value="com_ticketstation" />
-                        <input name = "task" type="hidden" value="deleteremark" />
-                        <input name = "controller" type="hidden" value="boxoffice"/>
-                        <?= HTMLHelper::_( 'form.token' ); ?>
-                    </form>
-                </div>
+        <div class="card mb-3">
+            <h3 class="card-header"><?= Text::_('COM_TICKETSTATION_BOXOFFICE_TICKETS') ?></h3>
+            <div class="card-body">
+                <table class="table mb-0">
+                    <tr>
+                        <th scope="row" class="w-50 fw-normal"><?= Text::_('COM_TICKETSTATION_BOXOFFICE_STATUS_CREATED') ?></th>
+                        <td><?= $progress($status->created); ?></td>
+                    </tr>
+                    <tr>
+                        <th scope="row" class="fw-normal"><?= Text::_('COM_TICKETSTATION_BOXOFFICE_STATUS_SENT') ?></th>
+                        <td><?= $progress($status->sent); ?></td>
+                    </tr>
+                    <tr>
+                        <th scope="row" class="fw-normal"><?= Text::_('COM_TICKETSTATION_BOXOFFICE_DOWNLOADED') ?></th>
+                        <td><?= Text::_($status->download ? 'COM_TICKETSTATION_YES' : 'COM_TICKETSTATION_NO'); ?></td>
+                    </tr>
+                    <tr>
+                        <th scope="row" class="fw-normal"><?= Text::_('COM_TICKETSTATION_BOXOFFICE_SCANNED') ?></th>
+                        <td><?= $progress($status->scanned); ?></td>
+                    </tr>
+                    <?php if ($status->blocked > 0) { ?>
+                        <tr>
+                            <th scope="row" class="fw-normal"><?= Text::_('COM_TICKETSTATION_BOXOFFICE_BLACKLIST') ?></th>
+                            <td><span class="badge bg-danger"><?= $status->blocked; ?> / <?= $status->tickets; ?></span></td>
+                        </tr>
+                    <?php } ?>
+                </table>
             </div>
         </div>
     </div>
 </div>
 
-</div>
-<div class="tab-pane" id="ts-tab-tickets" role="tabpanel" aria-labelledby="ts-tab-tickets-lbl">
+<?= HTMLHelper::_('uitab.endTab'); ?>
+
+<?= HTMLHelper::_('uitab.addTab', 'boxofficeTab', 'tickets', Text::_('COM_TICKETSTATION_TICKETS_IN_ORDER') . ' (' . $status->tickets . ')'); ?>
 
 <div class="card">
     <div class="card-body">
-        <div class="row">
-            <div class="col-12">
-                <h3 class="card-header">
-                    <?= Text::_('COM_TICKETSTATION_TICKETS_IN_ORDER') ?>
-                </h3>
-                <form action="<?= Route::_('index.php?option=com_ticketstation&view=boxoffice'); ?>" method="post" name="adminForm" id="adminForm" enctype="multipart/form-data">
-                    <div class="subhead mb-3 shadow-sm" style="position: relative; z-index: 100; box-shadow: none !important; background-image: none;">
-                        <div class="row">
-                            <div class="col-md-12">
-                                <nav aria-label="<?= Text::_('JTOOLBAR'); ?>">
-                                    <div class="btn-toolbar d-flex" role="toolbar" id="toolbar">
-                                        <joomla-toolbar-button id="toolbar-eye-close" task="resetscanstate">
-                                            <button class="button-eye-close btn btn-primary" type="button">
-                                                <span class="icon-eye-close" aria-hidden="true"></span>
-                                                <?= Text::_('COM_TICKETSTATION_BOXOFFICE_MARK_NOT_SCANNED'); ?></button>
-                                        </joomla-toolbar-button>
 
-                                        <joomla-toolbar-button id="toolbar-eye-open" task="markasscanned">
-                                            <button class="button-eye-open btn btn-primary" type="button">
-                                                <span class="icon-eye-open" aria-hidden="true"></span>
-                                                <?= Text::_('COM_TICKETSTATION_BOXOFFICE_MARK_SCANNED'); ?></button>
-                                        </joomla-toolbar-button>
-
-                                        <joomla-toolbar-button id="toolbar-lock" task="blocked">
-                                            <button class="button-lock btn btn-primary" type="button">
-                                                <span class="icon-lock" aria-hidden="true"></span>
-                                                <?= Text::_('COM_TICKETSTATION_BOXOFFICE_BLOCK'); ?></button>
-                                        </joomla-toolbar-button>
-
-                                        <joomla-toolbar-button id="toolbar-unlock" task="unlock">
-                                            <button class="button-unlock btn btn-primary" type="button">
-                                                <span class="icon-unlock" aria-hidden="true"></span>
-                                                <?= Text::_('COM_TICKETSTATION_BOXOFFICE_UNBLOCK'); ?></button>
-                                        </joomla-toolbar-button>
-
-                                        <joomla-toolbar-button id="toolbar-trash" task="removeSingleOrder">
-                                            <button class="button-trash btn btn-primary" type="button">
-                                                <span class="icon-trash" aria-hidden="true"></span>
-                                                <?= Text::_('COM_TICKETSTATION_BOXOFFICE_REMOVE_TICKET'); ?></button>
-                                        </joomla-toolbar-button>
-                                    </div>
-                                </nav>
-
-                            </div>
-                        </div>
-                    </div>
-
-
-                    <table class="table">
-                        <thead>
-                            <tr>
-                                <td class="w-1 text-center">
-                                    <input class="form-check-input" type="checkbox" name="checkall-toggle" value="" title="<?= Text::_('JGLOBAL_CHECK_ALL'); ?>" onclick="Joomla.checkAll(this)">
-                                </td>
-                                <th scope="col" class="w-3"><?= Text::_( 'COM_TICKETSTATION_TICKET_ID' ); ?></th>
-                                <th scope="col" class="w-10"><?= Text::_( 'COM_TICKETSTATION_BOXOFFICE_EVENT_TICKET_NAME' ); ?></th>
-                                <th scope="col" class="w-3 text-center"><?= Text::_( 'COM_TICKETSTATION_SCANNED' ); ?></th>
-                                <th scope="col" class="w-3 d-none d-lg-table-cell text-center"><?= Text::_( 'COM_TICKETSTATION_BOXOFFICE_BLACKLIST' ); ?></th>
-                                <th scope="col" class="w-3 d-none d-lg-table-cell text-center"><?= Text::_( 'COM_TICKETSTATION_QRCODE' ); ?></th>
-                            </tr>
-                        </thead>
-                        <?php
-
-                        for ($i = 0, $n = count($this->data); $i < $n; $i++ ) {
-
-                            ## Give give $row the this->item[$i]
-                            $row        = $this->data[$i];
-                            $published 	= HTMLHelper::_('grid.published', $row, $i );
-                            $checked    = HTMLHelper::_('grid.id', $i, $row->orderid );
-
-                            if ($row->seat_sector == 0) {
-                                $title = $row->eventname . ' - ' . $row->ticketname;
-                            } else {
-                                $title = $row->eventname . ' - ' . $row->ticketname  . ' - ' . Text::_('COM_TICKETSTATION_SEAT') . ': ' . $row->row_name . $row->seatid;
-                            }
-                            
-                            ?>
-                            <tr>
-                                <td align="center"><?= $checked; ?></td>
-                                <td><?= $row->orderid; ?></td>
-                                <td><?= $title; ?></td>
-                                <td class="w-3 text-center">
-                                    <?php if ($row->scanned == 0) { ?>
-                                        <span class="badge bg-success"><?= Text::_( 'COM_TICKETSTATION_NO' ); ?></span>
-                                    <?php } else { ?>
-                                        <span title="<?= $row->scanner_name;?>"  class="badge bg-danger"><?= date('H:i', strtotime($row->scandate));?></span>
-                                    <?php } ?>
-                                </td>
-                                <td class="w-3 d-none d-lg-table-cell text-center">
-                                    <?php if ($row->blacklisted == 1) { ?>
-                                        <span class="badge bg-danger"><?= Text::_( 'COM_TICKETSTATION_YES' ); ?></span>
-                                    <?php } else { ?>
-                                        <span class="badge bg-success"><?= Text::_( 'COM_TICKETSTATION_NO' ); ?></span>
-                                    <?php } ?>
-                                </td>
-                                <td class="w-3 d-none d-lg-table-cell text-center">
-                                    <?php if ($row->barcode != '0') { ?>
-                                        <div class="qrcode_number">
-                                            <span id="qrcode_<?= $row->orderid; ?>" style="margin-bottom:5px;" class="badge bg-secondary"><?= $row->barcode; ?></span>
-                                        </div>
-                                        <?php if ($row->scanned == 0) { ?>
-                                            <div id="qrcode_<?= $row->orderid; ?>_image" class="qrcode_image" style="display: none; margin: 0 auto;">
-                                                <img id="qrcode_<?= $row->orderid; ?>_img" class="qrcode_img scale_down" src="/administrator/components/com_ticketstation/tickets/qrcodes/<?= $row->barcode; ?>.png" style="max-width: 100px;">
-                                            </div>
-                                        <?php } ?>
-                                    <?php } ?>
-                                </td>
-                            </tr>
-
-                        <?php } ?>
-
-
-                    </table>
-
-                    <input name = "ordercode" type="hidden" style="text-align:center" value="<?= $this->items->ordercode; ?>" size="10" READONLY  class="input-medium" />
-                    <input name = "option" type="hidden" value="com_ticketstation" />
-                    <input name = "task" type="hidden" value="" />
-                    <input name = "boxchecked" type="hidden" value="0"/>
-                    <input name = "controller" type="hidden" value="boxoffice"/>
-                    <?= HTMLHelper::_( 'form.token' ); ?>
-
-                </form>
-
-
-
+        <div class="d-flex flex-wrap gap-2 mb-3" role="toolbar" aria-label="<?= Text::_('COM_TICKETSTATION_TICKETS_IN_ORDER'); ?>">
+            <div class="btn-group" role="group">
+                <joomla-toolbar-button task="markasscanned" list-selection>
+                    <button class="btn btn-outline-primary" type="button">
+                        <span class="fa fa-qrcode" aria-hidden="true"></span>
+                        <?= Text::_('COM_TICKETSTATION_BOXOFFICE_MARK_SCANNED'); ?>
+                    </button>
+                </joomla-toolbar-button>
+                <joomla-toolbar-button task="resetscanstate" list-selection>
+                    <button class="btn btn-outline-primary" type="button">
+                        <span class="fa fa-undo" aria-hidden="true"></span>
+                        <?= Text::_('COM_TICKETSTATION_BOXOFFICE_MARK_NOT_SCANNED'); ?>
+                    </button>
+                </joomla-toolbar-button>
             </div>
+
+            <div class="btn-group" role="group">
+                <joomla-toolbar-button task="blocked" list-selection>
+                    <button class="btn btn-outline-primary" type="button">
+                        <span class="fa fa-lock" aria-hidden="true"></span>
+                        <?= Text::_('COM_TICKETSTATION_BOXOFFICE_BLOCK'); ?>
+                    </button>
+                </joomla-toolbar-button>
+                <joomla-toolbar-button task="unlock" list-selection>
+                    <button class="btn btn-outline-primary" type="button">
+                        <span class="fa fa-unlock" aria-hidden="true"></span>
+                        <?= Text::_('COM_TICKETSTATION_BOXOFFICE_UNBLOCK'); ?>
+                    </button>
+                </joomla-toolbar-button>
+            </div>
+
+            <joomla-toolbar-button task="renewcodes" list-selection
+                                   confirm-message="<?= $this->escape(Text::_('COM_TICKETSTATION_BOXOFFICE_RENEW_CODES_CONFIRM')); ?>">
+                <button class="btn btn-outline-primary" type="button">
+                    <span class="fa fa-sync" aria-hidden="true"></span>
+                    <?= Text::_('COM_TICKETSTATION_BOXOFFICE_RENEW_CODES'); ?>
+                </button>
+            </joomla-toolbar-button>
+
+            <joomla-toolbar-button task="removeSingleOrder" list-selection class="ms-auto"
+                                   confirm-message="<?= $this->escape(Text::_('COM_TICKETSTATION_BOXOFFICE_REMOVE_TICKET_CONFIRM')); ?>">
+                <button class="btn btn-danger" type="button">
+                    <span class="fa fa-trash" aria-hidden="true"></span>
+                    <?= Text::_('COM_TICKETSTATION_BOXOFFICE_REMOVE_TICKET'); ?>
+                </button>
+            </joomla-toolbar-button>
         </div>
-    </div>
-</div>
 
-</div>
-<div class="tab-pane" id="ts-tab-history" role="tabpanel" aria-labelledby="ts-tab-history-lbl">
+        <?php
+        $i = 0;
 
-<div class="card">
-    <div class="card-body">
-        <h3 class="card-header">
-            <?= Text::_('COM_TICKETSTATION_HISTORY') ?>
-        </h3>
+        foreach ($this->events as $eventid => $event) { ?>
 
-        <?php if (empty($history)) { ?>
-            <p class="text-muted"><?= Text::_('COM_TICKETSTATION_HISTORY_EMPTY') ?></p>
-        <?php } else { ?>
+            <h4 class="h5 mt-3 mb-2">
+                <?= $this->escape($event->eventname); ?>
+                <small class="text-muted fw-normal"><?= $eventDate($event->eventdate); ?> &middot; <?= Text::plural('COM_TICKETSTATION_BOXOFFICE_N_TICKETS', count($event->tickets)); ?></small>
+            </h4>
 
-            <div class="ts-history">
-                <?php
-                $current_day = null;
-
-                foreach (array_reverse($history) as $entry) {
-
-                    // $entry->created is stored in UTC (History::log()); convert to the site/user timezone for display.
-                    $day = Date::_($entry->created, 'l d F Y', true);
-
-                    if ($day !== $current_day) {
-                        $current_day = $day;
-                        ?>
-                        <div class="ts-history-day"><?= $day; ?></div>
-                        <?php
-                    }
-
-                    [$icon, $color] = $history_icons[$entry->event_type] ?? ['fa-circle', 'secondary'];
-                    ?>
-                    <div class="ts-history-row">
-                        <div class="ts-history-time"><?= Date::_($entry->created, 'H:i'); ?></div>
-                        <div class="ts-history-icon text-<?= $color; ?>"><span class="fa <?= $icon; ?>" aria-hidden="true"></span></div>
-                        <div class="ts-history-message">
-                            <?= htmlspecialchars($entry->message); ?>
-                            <?php if ($entry->actor) { ?>
-                                <span class="ts-history-actor"><?= Text::_('COM_TICKETSTATION_HISTORY_BY') ?> <?= htmlspecialchars($entry->actor); ?></span>
+            <table class="table table-sm align-middle">
+                <thead>
+                    <tr>
+                        <td class="w-1 text-center">
+                            <input class="form-check-input ts-check-event" type="checkbox" value="" title="<?= Text::_('JGLOBAL_CHECK_ALL'); ?>" aria-label="<?= Text::_('JGLOBAL_CHECK_ALL'); ?>">
+                        </td>
+                        <th scope="col" class="w-10"><?= Text::_('COM_TICKETSTATION_TICKET_ID'); ?></th>
+                        <th scope="col"><?= Text::_('COM_TICKETSTATION_BOXOFFICE_EXPORT_TICKET'); ?></th>
+                        <th scope="col" class="w-20 text-center"><?= Text::_('COM_TICKETSTATION_SCANNED'); ?></th>
+                        <th scope="col" class="w-10 text-center"><?= Text::_('COM_TICKETSTATION_BOXOFFICE_BLACKLIST'); ?></th>
+                        <th scope="col" class="w-20 d-none d-lg-table-cell text-center"><?= Text::_('COM_TICKETSTATION_QRCODE'); ?></th>
+                    </tr>
+                </thead>
+                <tbody>
+                <?php foreach ($event->tickets as $row) { ?>
+                    <tr>
+                        <td class="text-center"><?= HTMLHelper::_('grid.id', $i++, $row->orderid); ?></td>
+                        <td><?= (int) $row->orderid; ?></td>
+                        <td>
+                            <?= $this->escape($row->ticketname); ?>
+                            <?php if ($row->seat_sector != 0 && $row->seatid) { ?>
+                                <br /><small><?= Text::_('COM_TICKETSTATION_SEAT'); ?>: <?= $this->escape($row->row_name . $row->seatid); ?></small>
                             <?php } ?>
-                        </div>
-                    </div>
-                    <?php
-                }
-                ?>
-            </div>
-
+                        </td>
+                        <td class="text-center">
+                            <?php if ($row->scanned == 0) { ?>
+                                <span class="text-muted">&ndash;</span>
+                            <?php } else { ?>
+                                <span class="badge bg-success"><?= $row->scandate ? date($this->config->dateformat . ' H:i', strtotime($row->scandate)) : Text::_('COM_TICKETSTATION_YES'); ?></span>
+                                <?php if ($row->scanner_name) { ?>
+                                    <br /><small class="text-muted"><?= $this->escape($row->scanner_name); ?></small>
+                                <?php } ?>
+                            <?php } ?>
+                        </td>
+                        <td class="text-center">
+                            <?php if ($row->blacklisted == 1) { ?>
+                                <span class="badge bg-danger"><?= Text::_('COM_TICKETSTATION_YES'); ?></span>
+                            <?php } else { ?>
+                                <span class="text-muted">&ndash;</span>
+                            <?php } ?>
+                        </td>
+                        <td class="d-none d-lg-table-cell text-center">
+                            <?php if ($row->barcode != '0') { ?>
+                                <?php if ($row->scanned == 0) { ?>
+                                    <details class="ts-qrcode">
+                                        <summary class="badge bg-secondary"><?= $this->escape($row->barcode); ?></summary>
+                                        <img src="<?= Uri::root(true) . '/administrator/components/com_ticketstation/tickets/qrcodes/' . $this->escape($row->barcode) . '.png'; ?>" alt="<?= Text::_('COM_TICKETSTATION_QRCODE'); ?>" class="mt-2" style="max-width: 150px;">
+                                    </details>
+                                <?php } else { ?>
+                                    <span class="badge bg-secondary"><?= $this->escape($row->barcode); ?></span>
+                                <?php } ?>
+                            <?php } ?>
+                        </td>
+                    </tr>
+                <?php } ?>
+                </tbody>
+            </table>
         <?php } ?>
 
     </div>
 </div>
 
+<?= HTMLHelper::_('uitab.endTab'); ?>
+
+<?= HTMLHelper::_('uitab.addTab', 'boxofficeTab', 'history', Text::_('COM_TICKETSTATION_HISTORY') . ($this->history ? ' (' . count($this->history) . ')' : '')); ?>
+
+<div class="card">
+    <div class="card-body">
+        <?= LayoutHelper::render('history', ['history' => $this->history ?? []], JPATH_ADMINISTRATOR . '/components/com_ticketstation/tmpl/boxoffice/layouts'); ?>
+    </div>
 </div>
-</div>
 
-<style>
+<?= HTMLHelper::_('uitab.endTab'); ?>
 
-    .ts-history-day {
-        font-weight: 600;
-        margin: 1.25rem 0 0.5rem;
-        padding-bottom: 0.25rem;
-        border-bottom: 1px solid var(--border-color, #dee2e6);
-    }
+<?= HTMLHelper::_('uitab.endTabSet'); ?>
 
-    .ts-history-day:first-child {
-        margin-top: 0;
-    }
+<input name="ordercode" type="hidden" value="<?= (int) $this->items->ordercode; ?>" />
+<input name="option" type="hidden" value="com_ticketstation" />
+<input name="task" type="hidden" value="" />
+<input name="boxchecked" type="hidden" value="0"/>
+<input name="controller" type="hidden" value="boxoffice"/>
+<?= HTMLHelper::_('form.token'); ?>
 
-    .ts-history-row {
-        display: flex;
-        align-items: baseline;
-        gap: 0.75rem;
-        padding: 0.35rem 0;
-        border-bottom: 1px solid rgba(0,0,0,.05);
-    }
+</form>
 
-    .ts-history-time {
-        flex: 0 0 3.5rem;
-        color: #6c757d;
-        font-variant-numeric: tabular-nums;
-    }
-
-    .ts-history-icon {
-        flex: 0 0 1.25rem;
-        text-align: center;
-    }
-
-    .ts-history-message {
-        flex: 1 1 auto;
-    }
-
-    .ts-history-actor {
-        color: #6c757d;
-        font-size: 0.85em;
-        margin-left: 0.5rem;
-    }
-
-</style>
-
-<script type="text/javascript">
-
-    jQuery(window).ready(function() {
-
-        jQuery('.ts-tab-link').click(function(e) {
-
-            e.preventDefault();
-
-            var target = jQuery(this).attr('href');
-
-            jQuery('.ts-tab-link').removeClass('active').attr('aria-selected', 'false');
-            jQuery(this).addClass('active').attr('aria-selected', 'true');
-
-            jQuery('.tab-pane').removeClass('active');
-            jQuery(target).addClass('active');
-
+<script>
+    // Ticks or clears every ticket of one event, keeping the count Joomla's list buttons use.
+    document.querySelectorAll('.ts-check-event').forEach(function (toggle) {
+        toggle.addEventListener('change', function () {
+            toggle.closest('table').querySelectorAll('input[name="cid[]"]').forEach(function (box) {
+                if (box.checked !== toggle.checked) {
+                    box.checked = toggle.checked;
+                    Joomla.isChecked(box.checked);
+                }
+            });
         });
-
-        jQuery('.qrcode_number').click(function() {
-
-            jQuery('.qrcode_image').not(this).slideUp();
-
-            jQuery(this).next('.qrcode_image').stop().slideToggle();
-
-        });
-
-        jQuery('.qrcode_img').click(function() {
-
-            jQuery('.qrcode_img').not(this).toggleClass("scale_up scale_down");
-
-            jQuery(this).toggleClass("scale_up scale_down");
-
-        });
-
     });
-
 </script>
-
-

@@ -35,7 +35,7 @@ $bullets = function (string $prefix, int $count) {
         <details id="docs-boxoffice-list" class="mb-3 border rounded p-3">
             <summary class="h5 mb-0"><span class="fa fa-search me-2" aria-hidden="true"></span><?= Text::_('COM_TICKETSTATION_BOXOFFICE_DOCS_LIST_TITLE') ?></summary>
             <div class="mt-3">
-                <?php $bullets('COM_TICKETSTATION_BOXOFFICE_DOCS_LIST_', 3); ?>
+                <?php $bullets('COM_TICKETSTATION_BOXOFFICE_DOCS_LIST_', 5); ?>
             </div>
         </details>
 
@@ -50,7 +50,7 @@ $bullets = function (string $prefix, int $count) {
             <summary class="h5 mb-0"><span class="fa fa-list me-2" aria-hidden="true"></span><?= Text::_('COM_TICKETSTATION_BOXOFFICE_DOCS_ACTIONS_TITLE') ?></summary>
             <div class="mt-3">
                 <p><?= Text::_('COM_TICKETSTATION_BOXOFFICE_DOCS_ACTIONS_INTRO') ?></p>
-                <?php $bullets('COM_TICKETSTATION_BOXOFFICE_DOCS_ACTIONS_', 4); ?>
+                <?php $bullets('COM_TICKETSTATION_BOXOFFICE_DOCS_ACTIONS_', 6); ?>
             </div>
         </details>
 
