@@ -36,6 +36,10 @@ class HtmlView extends BaseHtmlView {
 
     public $attention = [];
 
+    public $dailySales = [];
+
+    public $setupSteps = [];
+
     public $update = null;
 
     function display($tpl = null) {
@@ -52,6 +56,8 @@ class HtmlView extends BaseHtmlView {
         $this->stats        = $model->getStats();
         $this->availability = $model->getAvailability();
         $this->attention    = $model->getAttention($this->config, $this->mollie);
+        $this->dailySales   = $model->getDailySales();
+        $this->setupSteps   = $model->getSetupSteps($this->config, $this->mollie);
 
 
         parent::display($tpl);

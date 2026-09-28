@@ -130,12 +130,6 @@ class Dispatcher extends ComponentDispatcher
 
         $webAssetManager
             ->addInlineStyle(Uri::base() . 'components/com_ticketstation/assets/css/ticketstation.css');
-
-        if (version_compare(JVERSION, '4.999.999', 'gt'))
-        {
-            $webAssetManager
-                ->addInlineStyle(Uri::base() . 'components/com_ticketstation/assets/css/j5dark.css');
-        }
         */
     }
 

@@ -8,8 +8,8 @@
  */
 
 /**
- * Control panel topic on the central documentation page: the sales figures, the availability
- * table and the Needs attention list (ControlpanelModel).
+ * Control panel topic on the central documentation page: the Getting started checklist, the sales
+ * figures and chart, the availability table and the Needs attention list (ControlpanelModel).
  */
 
 use Joomla\CMS\Language\Text;
@@ -32,10 +32,17 @@ $bullets = function (string $prefix, int $count) {
         <h2 class="h4"><span class="fa fa-home me-2" aria-hidden="true"></span><?= Text::_('COM_TICKETSTATION_CONTROLPANEL_DOCS_TITLE') ?></h2>
         <p><?= Text::_('COM_TICKETSTATION_CONTROLPANEL_DOCS_INTRO') ?></p>
 
+        <details id="docs-controlpanel-start" class="mb-3 border rounded p-3">
+            <summary class="h5 mb-0"><span class="fa fa-rocket me-2" aria-hidden="true"></span><?= Text::_('COM_TICKETSTATION_CONTROLPANEL_DOCS_START_TITLE') ?></summary>
+            <div class="mt-3">
+                <p class="mb-0"><?= Text::_('COM_TICKETSTATION_CONTROLPANEL_DOCS_START') ?></p>
+            </div>
+        </details>
+
         <details id="docs-controlpanel-figures" class="mb-3 border rounded p-3">
             <summary class="h5 mb-0"><span class="fa fa-chart-line me-2" aria-hidden="true"></span><?= Text::_('COM_TICKETSTATION_CONTROLPANEL_DOCS_FIGURES_TITLE') ?></summary>
             <div class="mt-3">
-                <?php $bullets('COM_TICKETSTATION_CONTROLPANEL_DOCS_FIGURES_', 4); ?>
+                <?php $bullets('COM_TICKETSTATION_CONTROLPANEL_DOCS_FIGURES_', 5); ?>
             </div>
         </details>
 

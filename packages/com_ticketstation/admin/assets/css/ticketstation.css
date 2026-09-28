@@ -119,3 +119,129 @@ a.badge:focus {
 [data-bs-theme="dark"] .ticketstation-brand-navy {
     color: #fff;
 }
+
+/* Control panel. Colours come from the theme variables, which Atum defines without the usual
+   --bs- prefix (the --bs- names are the fallback for other admin templates), so they follow
+   Atum's light/dark setting (data-bs-theme) instead of the operating system's preference. */
+.ticketstation-cpanel-tiles {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(8.5rem, 1fr));
+    gap: .75rem;
+}
+.ticketstation-cpanel-tile {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: .5rem;
+    padding: 1rem .5rem .75rem;
+    border: 1px solid var(--border-color, var(--bs-border-color, #dee2e6));
+    border-radius: .5rem;
+    background: var(--body-bg, var(--bs-body-bg, #fff));
+    color: var(--body-color, var(--bs-body-color, #212529));
+    text-align: center;
+    text-decoration: none;
+    transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease;
+}
+.ticketstation-cpanel-tile:hover,
+.ticketstation-cpanel-tile:focus-visible {
+    transform: translateY(-2px);
+    border-color: var(--primary, var(--bs-primary, #0d6efd));
+    box-shadow: 0 .25rem .75rem rgba(0, 0, 0, .1);
+    color: var(--body-color, var(--bs-body-color, #212529));
+    text-decoration: none;
+}
+.ticketstation-cpanel-tile-icon,
+.ticketstation-cpanel-kpi-icon {
+    display: inline-flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    width: 3rem;
+    height: 3rem;
+    border-radius: 50%;
+    background: var(--primary-bg-subtle, var(--bs-primary-bg-subtle, #cfe2ff));
+    background: color-mix(in srgb, var(--primary, var(--bs-primary, #0d6efd)) 15%, transparent);
+    color: var(--primary-text-emphasis, var(--bs-primary-text-emphasis, #052c65));
+    font-size: 1.25rem;
+}
+.ticketstation-cpanel-kpi-icon {
+    width: 2.5rem;
+    height: 2.5rem;
+    font-size: 1.1rem;
+}
+.ticketstation-cpanel-tile-icon img {
+    width: 1.6rem;
+    height: 1.6rem;
+}
+.ticketstation-cpanel-tile-label {
+    font-size: .9rem;
+    line-height: 1.25;
+}
+.ticketstation-cpanel-tile-badge {
+    min-width: 1.5rem;
+    padding: .3em .55em;
+    position: absolute;
+    top: .4rem;
+    right: .4rem;
+}
+@media (prefers-reduced-motion: reduce) {
+    .ticketstation-cpanel-tile {
+        transition: none;
+    }
+    .ticketstation-cpanel-tile:hover,
+    .ticketstation-cpanel-tile:focus-visible {
+        transform: none;
+    }
+}
+.ticketstation-cpanel-chart {
+    display: block;
+    width: 100%;
+    height: 80px;
+}
+.ticketstation-cpanel-chart rect.is-sale {
+    fill: var(--primary, var(--bs-primary, #0d6efd));
+}
+.ticketstation-cpanel-chart rect.is-sale:hover {
+    fill: var(--primary-text-emphasis, var(--bs-primary-text-emphasis, #052c65));
+}
+.ticketstation-cpanel-chart rect.is-empty {
+    fill: var(--border-color, var(--bs-border-color, #dee2e6));
+}
+.ticketstation-cpanel-steps {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .75rem 1.5rem;
+}
+.ticketstation-cpanel-steps li {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+}
+.ticketstation-cpanel-step-marker {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.75rem;
+    height: 1.75rem;
+    border-radius: 50%;
+    border: 2px solid var(--primary, var(--bs-primary, #0d6efd));
+    color: var(--primary-text-emphasis, var(--bs-primary-text-emphasis, #052c65));
+    font-size: .85rem;
+    font-weight: bold;
+}
+.ticketstation-cpanel-steps li.is-done {
+    color: var(--secondary-color, var(--bs-secondary-color, #6c757d));
+}
+.ticketstation-cpanel-steps li.is-done .ticketstation-cpanel-step-marker {
+    border-color: var(--success, var(--bs-success, #198754));
+    background: var(--success, var(--bs-success, #198754));
+    color: #fff;
+}
+[data-bs-theme="dark"] .ticketstation-theme-light,
+.ticketstation-theme-dark {
+    display: none;
+}
+[data-bs-theme="dark"] .ticketstation-theme-dark {
+    display: inline;
+}

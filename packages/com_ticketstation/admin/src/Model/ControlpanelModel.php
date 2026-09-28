@@ -263,6 +263,91 @@ class ControlpanelModel extends BaseDatabaseModel
     }
 
     /**
+     * Paid tickets and ticket revenue per day for the last $days days (today included), in the
+     * site/user timezone, oldest first. Days without sales are included with zeros.
+     *
+     * @return  array  objects with date (Y-m-d), tickets, revenue
+     */
+    function getDailySales($days = 28)
+    {
+        $db    = Factory::getContainer()->get('DatabaseDriver');
+        $zone  = $this->getZone();
+        $first = (new \DateTime('today', $zone))->modify('-' . ((int) $days - 1) . ' days');
+        $daily = [];
+
+        for ($day = clone $first, $i = 0; $i < $days; $i++, $day->modify('+1 day'))
+        {
+            $daily[$day->format('Y-m-d')] = (object) ['date' => $day->format('Y-m-d'), 'tickets' => 0, 'revenue' => 0.0];
+        }
+
+        // orderdate is stored in UTC and shared by all rows of one order, so group on it
+        // and assign each order to its local day here.
+        $query = $db->getQuery(true)
+            ->select([
+                $db->quoteName('orderdate'),
+                'COUNT(orderid) AS tickets',
+                'SUM(COALESCE(price, 0) - COALESCE(discount, 0)) AS revenue',
+            ])
+            ->from($db->quoteName('#__ticketstation_orders'))
+            ->where($db->quoteName('paid') . ' = 1')
+            ->where($db->quoteName('orderdate') . ' >= ' . $db->quote((clone $first)->setTimezone(new \DateTimeZone('UTC'))->format('Y-m-d H:i:s')))
+            ->group($db->quoteName('orderdate'));
+
+        $db->setQuery($query);
+
+        foreach ($db->loadObjectList() as $row)
+        {
+            $date = (new \DateTime($row->orderdate, new \DateTimeZone('UTC')))->setTimezone($zone)->format('Y-m-d');
+
+            if (isset($daily[$date]))
+            {
+                $daily[$date]->tickets += (int) $row->tickets;
+                $daily[$date]->revenue += (float) $row->revenue;
+            }
+        }
+
+        return array_values($daily);
+    }
+
+    /**
+     * The first steps a new installation needs before it can sell tickets, each with whether it
+     * is done and a link to the screen where it is done.
+     *
+     * @return  array  objects with key (language key), done, link
+     */
+    function getSetupSteps($config, $mollie)
+    {
+        $db = Factory::getContainer()->get('DatabaseDriver');
+
+        $has = static function ($table, $where = null) use ($db) {
+            $query = $db->getQuery(true)
+                ->select('COUNT(*)')
+                ->from($db->quoteName($table));
+
+            if ($where)
+            {
+                $query->where($where);
+            }
+
+            $db->setQuery($query);
+
+            return (int) $db->loadResult() > 0;
+        };
+
+        $steps = [
+            ['COM_TICKETSTATION_CPANEL_START_COMPANY', !$this->isCompanyIncomplete($config), 'index.php?option=com_ticketstation&view=configuration#company'],
+            ['COM_TICKETSTATION_CPANEL_START_MOLLIE', trim((string) $mollie->api_key) !== '', 'index.php?option=com_ticketstation&view=mollie'],
+            ['COM_TICKETSTATION_CPANEL_START_VENUE', $has('#__ticketstation_venues'), 'index.php?option=com_ticketstation&view=venues'],
+            ['COM_TICKETSTATION_CPANEL_START_EVENT', $has('#__ticketstation_events'), 'index.php?option=com_ticketstation&view=events'],
+            ['COM_TICKETSTATION_CPANEL_START_TICKET', $has('#__ticketstation_tickets', $db->quoteName('parent') . ' = 0'), 'index.php?option=com_ticketstation&view=tickets'],
+        ];
+
+        return array_map(static function ($step) {
+            return (object) ['key' => $step[0], 'done' => $step[1], 'link' => $step[2]];
+        }, $steps);
+    }
+
+    /**
      * Availability of the upcoming published tickets, computed by the Availability helper
      * exactly like the storefront does, so "left" matches the site.
      *
@@ -318,7 +403,17 @@ class ControlpanelModel extends BaseDatabaseModel
         $add = static function ($key, $count, $link, $icon, $level = 'warning') use (&$items) {
             if ((int) $count > 0)
             {
-                $items[] = (object) ['key' => $key, 'count' => (int) $count, 'link' => $link, 'icon' => $icon, 'level' => $level];
+                // The view the link opens, so the control panel can put a badge on that screen's button.
+                parse_str((string) parse_url($link, PHP_URL_QUERY), $query);
+
+                $items[] = (object) [
+                    'key'   => $key,
+                    'count' => (int) $count,
+                    'link'  => $link,
+                    'icon'  => $icon,
+                    'level' => $level,
+                    'view'  => $query['view'] ?? '',
+                ];
             }
         };
 
