@@ -186,6 +186,8 @@ class TicketstationFunctions
             ->where($db->quoteName('e.element') . ' = ' . $db->quote('com_ticketstation'))
             ->where($db->quoteName('m.published') . ' = 1')
             ->where($db->quoteName('m.client_id') . ' = 0')
+            // Prefer the shop's own list page over single-page items (Ticket, Lost tickets, scanning).
+            ->order('CASE WHEN ' . $db->quoteName('m.link') . ' LIKE ' . $db->quote('%view=upcoming%') . ' THEN 0 ELSE 1 END')
             ->order($db->quoteName('m.id') . ' ASC')
             ->setLimit(1);
 

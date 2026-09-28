@@ -91,6 +91,12 @@ class Router extends RouterView
         $ticketscanner = new RouterViewConfiguration('ticketscanner');
         $this->registerView($ticketscanner);
 
+        $ticket = new RouterViewConfiguration('ticket');
+        $this->registerView($ticket);
+
+        $losttickets = new RouterViewConfiguration('losttickets');
+        $this->registerView($losttickets);
+
         parent::__construct($app, $menu);
 
         $this->attachRule(new MenuRules($this));

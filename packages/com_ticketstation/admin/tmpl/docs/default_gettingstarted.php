@@ -42,7 +42,7 @@ $list = function (string $tag, string $prefix, int $count) {
         <details class="border rounded p-3">
             <summary class="h5 mb-0"><span class="fa fa-exclamation-circle me-2" aria-hidden="true"></span><?= Text::_('COM_TICKETSTATION_GETTINGSTARTED_DOCS_GOTCHAS_TITLE') ?></summary>
             <div class="mt-3">
-                <?php $list('ul', 'COM_TICKETSTATION_GETTINGSTARTED_DOCS_GOTCHA_', 3); ?>
+                <?php $list('ul', 'COM_TICKETSTATION_GETTINGSTARTED_DOCS_GOTCHA_', 4); ?>
             </div>
         </details>
     </div>

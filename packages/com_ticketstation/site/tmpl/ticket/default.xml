@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<metadata>
+    <layout title="COM_TICKETSTATION_MENU_TICKET_TITLE">
+        <message><![CDATA[COM_TICKETSTATION_MENU_TICKET_DESC]]></message>
+    </layout>
+    <fields name="request">
+        <fieldset name="request">
+            <field
+                    name="id"
+                    type="sql"
+                    label="COM_TICKETSTATION_MENU_TICKET_FIELD_LABEL"
+                    description="COM_TICKETSTATION_MENU_TICKET_FIELD_DESC"
+                    query="SELECT t.ticketid, CONCAT(e.eventname, ' | ', t.ticketname, ' (', DATE_FORMAT(t.startdate, '%d-%m-%Y'), ')') AS title
+                            FROM #__ticketstation_tickets AS t
+                            LEFT JOIN #__ticketstation_events AS e
+                            ON (t.eventid = e.eventid)
+                            WHERE t.parent = 0
+                            ORDER BY t.startdate DESC"
+                    key_field="ticketid"
+                    value_field="title"
+                    required="true"
+            >
+                <option value="">COM_TICKETSTATION_MENU_TICKET_SELECT</option>
+            </field>
+        </fieldset>
+    </fields>
+</metadata>

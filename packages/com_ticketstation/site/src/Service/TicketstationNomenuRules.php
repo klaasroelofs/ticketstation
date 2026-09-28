@@ -100,6 +100,20 @@ class TicketstationNomenuRules implements RulesInterface
 
                 break;
 
+            case $segments[0] === 'ticket':
+                $vars['view'] = 'ticket';
+
+                if (!empty($segments[1])) {
+                    $vars['id'] = (int) $segments[1];
+                }
+
+                break;
+
+            case $segments[0] === 'losttickets':
+                $vars['view'] = 'losttickets';
+
+                break;
+
             case $segments[0] === 'cart':
                 $vars['view'] = 'cart';
 
