@@ -3,6 +3,8 @@
 
         dist\pkg_ticketstation_<version>.zip
             pkg_ticketstation.xml
+            pkg_script.php
+            release-notes.md            (release-notes\<version>.md, when it exists)
             packages\com_ticketstation.zip
             packages\mod_ticketstation_basket.zip
         dist\pkg_ticketstation_update.xml
@@ -108,9 +110,15 @@ try {
     New-Zip $modStage (Join-Path $pkgRoot 'packages\mod_ticketstation_basket.zip')
 
     # Package
-    Copy-Item (Join-Path $RepoRoot 'pkg_ticketstation.xml') $pkgRoot
+    Copy-Item (Join-Path $RepoRoot 'pkg_ticketstation.xml'), (Join-Path $RepoRoot 'pkg_script.php') $pkgRoot
     $pkgManifest = Get-Manifest (Join-Path $pkgRoot 'pkg_ticketstation.xml')
     $pkgVersion  = $pkgManifest.SelectSingleNode('/extension/version').InnerText
+
+    # Release notes, shown by pkg_script.php after a successful install or update.
+    $notes = Join-Path $RepoRoot "release-notes\$pkgVersion.md"
+    if (Test-Path -LiteralPath $notes) {
+        Copy-Item -LiteralPath $notes (Join-Path $pkgRoot 'release-notes.md')
+    }
 
     New-Item -ItemType Directory -Path $DistDir -Force | Out-Null
     $zipName = "pkg_ticketstation_$pkgVersion.zip"
@@ -163,6 +171,7 @@ try {
     Write-Host "  module    $modVersion"
     Write-Host "  stability $stability"
     Write-Host "  sha256    $sha256"
+    if (Test-Path -LiteralPath $notes) { Write-Host "  notes     release-notes\$pkgVersion.md" } else { Write-Host "  notes     none (release-notes\$pkgVersion.md not found)" }
 } finally {
     Remove-Item $staging -Recurse -Force -ErrorAction SilentlyContinue
 }

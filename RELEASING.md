@@ -2,15 +2,16 @@
 
 These steps are for the maintainer. Users install and update through Joomla, see the [README](README.md).
 
-1. Raise `<version>` (and `<creationDate>`) to the same new version in all three manifests: `pkg_ticketstation.xml`, `packages/com_ticketstation/ticketstation.xml` and `packages/mod_ticketstation_basket/mod_ticketstation_basket.xml`, also when only one extension changed. The build refuses to run when they differ. Commit and push.
-2. Tag the commit with that version and push the tag:
+1. Raise `<version>` (and `<creationDate>`) to the same new version in all three manifests: `pkg_ticketstation.xml`, `packages/com_ticketstation/ticketstation.xml` and `packages/mod_ticketstation_basket/mod_ticketstation_basket.xml`, also when only one extension changed. The build refuses to run when they differ.
+2. Write the release notes in `release-notes/<version>.md`, for the people who use Ticketstation: start with `## What's new in <version>`, use `###` subheadings and `- ` list items, and add a `## Check before you update` section when admins need to check something. Leave out the install line; the workflow adds it to the GitHub release. The file ends up in the package, and after a successful install or update Joomla shows it on the installer result page (`pkg_script.php`). Only headings, list items, paragraphs, `**bold**`, `*italic*`, `` `code` `` and `[links](https://...)` are converted there. Commit it together with the version bump and push.
+3. Tag the commit with that version and push the tag:
 
    ```
    git tag v<version>
    git push origin v<version>
    ```
 
-The [release workflow](.github/workflows/release.yml) then builds the package and publishes a GitHub release with the zip and the update feed. Joomla sites read the feed from the latest release.
+The [release workflow](.github/workflows/release.yml) then builds the package and publishes a GitHub release with the zip and the update feed, using `release-notes/<version>.md` as its text. Without that file the release lists the commits since the previous release instead, and Joomla shows no notes after the install. Joomla sites read the feed from the latest release.
 
 ## Release candidates
 

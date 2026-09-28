@@ -46,12 +46,16 @@ jobs:
       - name: Write release notes
         shell: bash
         run: |
-          # A stable release lists everything since the previous stable one, skipping its RCs.
+          # The reviewed notes in release-notes/<version>.md when they exist (the same text that
+          # pkg_script.php shows in Joomla after the install). Otherwise a stable release lists
+          # every commit since the previous stable one, skipping its RCs.
           exclude=()
           case "$GITHUB_REF_NAME" in *-*) ;; *) exclude=(--exclude '*-*') ;; esac
           prev=$(git describe --tags --abbrev=0 "${exclude[@]}" "${GITHUB_REF_NAME}^" 2>/dev/null || true)
           {
-            if [ -n "$prev" ]; then
+            if [ -f "release-notes/${VERSION}.md" ]; then
+              cat "release-notes/${VERSION}.md"
+            elif [ -n "$prev" ]; then
               echo "## Changes since $prev"
               echo
               git log --no-merges --pretty='- %s' "$prev..$GITHUB_REF_NAME"

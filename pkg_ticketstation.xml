@@ -12,6 +12,8 @@
 	<version>2.5.3</version>
 	<description>Ticketstation for Joomla: the Ticketstation component and the Ticketstation Basket module in one package.</description>
 
+	<scriptfile>pkg_script.php</scriptfile>
+
 	<files folder="packages">
 		<file type="component" id="com_ticketstation">com_ticketstation.zip</file>
 		<file type="module" client="site" id="mod_ticketstation_basket">mod_ticketstation_basket.zip</file>
