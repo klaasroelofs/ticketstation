@@ -547,6 +547,18 @@ class Invoice
         $pdf->Write(0, PdfEncoding::toLatin1(Text::_('COM_TICKETSTATION_GRAND_TOTAL')));
         $amountCell(174, 26, $height, $price($total));
 
+        // How the order was paid, from the transaction the payment provider recorded (stored
+        // as e.g. "Ideal", Mollie's method id). Orders without one, such as box office sales,
+        // get no line.
+        if ( ! empty($invoice->payment_provider))
+        {
+            $height += 10;
+            $pdf->SetFont($font_name, '', $font_size);
+            $pdf->SetXY(120, $height);
+            $pdf->Write(0, PdfEncoding::toLatin1(Text::sprintf('COM_TICKETSTATION_INVOICE_PAID_VIA',
+                MolliePaymentMethods::label(strtolower($invoice->payment_provider)))));
+        }
+
         $dir = JPATH_ADMINISTRATOR . '/components/com_ticketstation/invoices';
 
         if ( ! is_dir($dir))
