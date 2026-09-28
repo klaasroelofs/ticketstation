@@ -22,16 +22,20 @@ use Joomla\Database\DatabaseInterface;
  * The seat plan editor's data: the whole chart of one owner (a parent ticket) as one layout,
  * saved back in one go, plus the seat plan templates of a venue.
  *
- * A seat is "locked" once it is sold or lies in a shopping basket: orderid > 0, or claimed
- * (booked = 1) without being blocked. A locked seat may be moved and resized, but keeps its
+ * A seat is "locked" once it belongs to an order (orderid > 0): sold, or lying in a shopping
+ * basket, which also has an order row. A locked seat may be moved and resized, but keeps its
  * section, row, number and status, and cannot be deleted (Klaas's rule). Every write that
  * changes more than the position checks this in its own WHERE clause, so a seat sold while the
  * editor was open is never changed.
+ *
+ * booked = 1 without an order is not a sale: it is a blocked seat from before 2.5.0 (converted
+ * by 2.5.0.1.sql and again by 2.6.1.sql) or a claim whose order was never written. Such seats
+ * stay editable; saving their status sets booked = blocked again.
  */
 class SeatplanLayout
 {
-    /** SQL condition for a seat that is neither sold nor in a basket. */
-    private const UNLOCKED = 'orderid = 0 AND booked = blocked';
+    /** SQL condition for a seat that doesn't belong to an order. */
+    private const UNLOCKED = 'orderid = 0';
 
     private static function db(): DatabaseInterface
     {
@@ -132,7 +136,7 @@ class SeatplanLayout
         $seats = [];
 
         foreach ($db->setQuery($query)->loadObjectList() as $row) {
-            $locked = (int) $row->orderid > 0 || (int) $row->booked !== (int) $row->blocked;
+            $locked = (int) $row->orderid > 0;
 
             $seats[] = [
                 'id'        => (int) $row->id,
@@ -143,7 +147,8 @@ class SeatplanLayout
                 'row'       => (string) $row->row_name,
                 'num'       => (int) $row->seatid,
                 'ticketid'  => (int) $row->ticketid,
-                'blocked'   => (int) $row->blocked === 1 && (int) $row->orderid === 0,
+                ## Taken without an order counts as blocked, as on the site (see the class comment).
+                'blocked'   => (int) $row->orderid === 0 && ((int) $row->blocked === 1 || (int) $row->booked === 1),
                 'type'      => (int) $row->type,
                 'locked'    => $locked,
                 'ordercode' => $locked ? (string) $row->ordercode : '',
