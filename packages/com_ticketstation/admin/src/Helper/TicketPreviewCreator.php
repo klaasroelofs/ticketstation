@@ -54,6 +54,21 @@ class TicketPreviewCreator
         $creator = new ticketcreator($ticketid);
         $dummy   = $this->getDummyContent();
 
+        ## The venue chosen on the form, so the preview shows its real length; sample text otherwise.
+        if (!empty($data['venue'])) {
+            $query = $db->getQuery(true)
+                ->select($db->quoteName(['venue', 'city']))
+                ->from($db->quoteName('#__ticketstation_venues'))
+                ->where($db->quoteName('id') . ' = ' . (int) $data['venue']);
+
+            $db->setQuery($query);
+            $venue = $db->loadObject();
+
+            if ($venue) {
+                $dummy['venue'] = $creator->venueText($venue->venue, $venue->city);
+            }
+        }
+
         ## Ticket size, same rules as ticketcreator::doPDF()
         if (!empty($data['override_ticketsize'])) {
             $ticket_size = explode(",", $data['override_ticketsize']);
@@ -113,6 +128,9 @@ class TicketPreviewCreator
 
             $pdf->Write(0, TicketLanguage::_('COM_TICKETSTATION_PDF_DATE') . ' ' . date("d-m-Y", strtotime($dummy['startdate'])) . ' || ' . TicketLanguage::_('COM_TICKETSTATION_PDF_START') . ' ' . TicketLanguage::sprintf('COM_TICKETSTATION_PDF_TIME', date("H:i", strtotime($dummy['startdate']))));
         }
+
+        ## VENUE
+        $this->writeField($pdf, $creator, $data, 'venue', $dummy['venue']);
 
         ## PRICE
         if ($this->hasPosition($data, 'ticketprice_position')) {
@@ -240,6 +258,7 @@ class TicketPreviewCreator
             'ticketname'        => Text::_('COM_TICKETSTATION_PREVIEW_SAMPLE_TICKET'),
             'freetext_1'        => Text::_('COM_TICKETSTATION_PREVIEW_SAMPLE_FREETEXT'),
             'startdate'         => date('Y-m-d H:i:s'),
+            'venue'             => Text::_('COM_TICKETSTATION_PREVIEW_SAMPLE_VENUE'),
             'ticketprice'       => 25,
             'orderdate'         => date('Y-m-d H:i:s'),
             'firstname'         => 'Jan',

@@ -104,7 +104,7 @@ class ticketcreator
         $query->where($db->quoteName('id') . ' = ' . $db->quote((int)$order->venue));
 
         $db->setQuery($query);
-        $locations = $db->loadObject();
+        $venue = $db->loadObject();
 
         ##Ticketnummering
         ## Let op: deze volgorde moet gelijk zijn aan de sortering die wordt gebruikt bij het samenvoegen
@@ -283,6 +283,18 @@ class ticketcreator
             $pdf->SetXY($position[0], $position[1]);
 
             $pdf->Write(0, TicketLanguage::_('COM_TICKETSTATION_PDF_DATE') . ' ' . date("d-m-Y", strtotime($order->startdate)) . ' || ' . TicketLanguage::_('COM_TICKETSTATION_PDF_START') . ' ' . TicketLanguage::sprintf('COM_TICKETSTATION_PDF_TIME', date("H:i", strtotime($order->startdate))));
+        }
+
+        ## VENUE
+        if(strpos((string) $order->venue_position, '-') !== false && $venue)
+        {
+            $position = explode("-", $order->venue_position);
+            $pdf->SetFont($this->font, 'B', $order->venue_fontsize);
+            $rgb = $this->hexToRgb($order->venue_fontcolor);
+            $pdf->SetTextColor($rgb['r'], $rgb['g'], $rgb['b']);
+            $pdf->SetXY($position[0], $position[1]);
+
+            $pdf->Write(0, PdfEncoding::toLatin1($this->venueText($venue->venue, $venue->city)));
         }
 
         ## PRICE
@@ -509,6 +521,14 @@ class ticketcreator
 
         return true;
 
+    }
+
+    /**
+     * The text of the "Venue" field: the venue name and city, e.g. "De Oosterpoort, Groningen".
+     */
+    function venueText($name, $city)
+    {
+        return implode(', ', array_filter([trim((string) $name), trim((string) $city)], 'strlen'));
     }
 
     function hexToRgb($hex, $alpha = false) {

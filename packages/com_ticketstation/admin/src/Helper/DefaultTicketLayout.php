@@ -36,7 +36,7 @@ class DefaultTicketLayout
      * of these filled in gets the default set from defaultFields().
      */
     const POSITION_FIELDS = [
-        'eventname', 'ticketname', 'freetext_1', 'ticketdate', 'ticketprice', 'orderdate',
+        'eventname', 'ticketname', 'freetext_1', 'ticketdate', 'venue', 'ticketprice', 'orderdate',
         'client', 'orderticketindex', 'ordernumber', 'seatnumber', 'orderreference', 'qrcode',
     ];
 
@@ -127,19 +127,20 @@ class DefaultTicketLayout
             $qrX    = $stub + 9 * $s;
             $qrY    = 20 * $s;
             $indexY = $qrY + $qrSize + 10 * $s;
-            $y      = ['eventname' => 35, 'ticketname' => 46, 'ticketdate' => 56, 'seatnumber' => 65, 'client' => 79, 'ticketprice' => 94, 'orderreference' => 103];
+            $y      = ['eventname' => 35, 'ticketname' => 46, 'ticketdate' => 56, 'venue' => 64, 'seatnumber' => 72, 'client' => 84, 'ticketprice' => 98, 'orderreference' => 107];
         } else {
             $qrSize = 62 * $s;
             $qrX    = ($w - $qrSize) / 2;
             $qrY    = 114 * $s;
             $indexY = $qrY + $qrSize + 8 * $s;
-            $y      = ['eventname' => 33, 'ticketname' => 43, 'ticketdate' => 52, 'seatnumber' => 60, 'client' => 72, 'ticketprice' => 86, 'orderreference' => 94];
+            $y      = ['eventname' => 33, 'ticketname' => 42, 'ticketdate' => 50, 'venue' => 57, 'seatnumber' => 64, 'client' => 75, 'ticketprice' => 88, 'orderreference' => 96];
         }
 
         $fields = [
             'eventname'      => [16, self::NAVY],
             'ticketname'     => [12, self::BLUE],
             'ticketdate'     => [10, self::NAVY],
+            'venue'          => [10, self::NAVY],
             'seatnumber'     => [10, self::NAVY],
             'client'         => [10, self::GREY],
             'ticketprice'    => [10, self::NAVY],

@@ -320,6 +320,26 @@
                 label="COM_TICKETSTATION_POSITION"
         />
     </fieldset>
+    <fieldset name="ticket_layout_venue">
+        <field
+                name="venue_fontcolor"
+                type="text"
+                maxlength="6"
+                label="COM_TICKETSTATION_FONTCOLOR"
+                addonBefore="#"
+        />
+        <field
+                name="venue_fontsize"
+                type="text"
+                label="COM_TICKETSTATION_FONTSIZE"
+                addonAfter="px"
+        />
+        <field
+                name="venue_position"
+                type="text"
+                label="COM_TICKETSTATION_POSITION"
+        />
+    </fieldset>
     <fieldset name="ticket_layout_ticketprice">
         <field
                 name="ticketprice_fontcolor"

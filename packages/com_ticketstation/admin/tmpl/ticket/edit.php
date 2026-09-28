@@ -242,6 +242,12 @@ if(isset($this->item->ticketid))
                     <?= $this->form->renderFieldset('ticket_layout_ticketdate'); ?>
 
                     <h3>
+                        <?= Text::_('COM_TICKETSTATION_VENUE'); ?>
+                    </h3>
+                    <hr />
+                    <?= $this->form->renderFieldset('ticket_layout_venue'); ?>
+
+                    <h3>
                         <?= Text::_('COM_TICKETSTATION_TICKETPRICE'); ?>
                     </h3>
                     <hr />
@@ -474,6 +480,10 @@ if(isset($this->item->ticketid))
                 jQuery("#jform_ticketdate_fontcolor").val(dataparsed.ticketdate_fontcolor);
                 jQuery("#jform_ticketdate_fontsize").val(dataparsed.ticketdate_fontsize);
                 jQuery("#jform_ticketdate_position").val(dataparsed.ticketdate_position);
+
+                jQuery("#jform_venue_fontcolor").val(dataparsed.venue_fontcolor);
+                jQuery("#jform_venue_fontsize").val(dataparsed.venue_fontsize);
+                jQuery("#jform_venue_position").val(dataparsed.venue_position);
 
                 jQuery("#jform_ticketprice_fontcolor").val(dataparsed.ticketprice_fontcolor);
                 jQuery("#jform_ticketprice_fontsize").val(dataparsed.ticketprice_fontsize);
