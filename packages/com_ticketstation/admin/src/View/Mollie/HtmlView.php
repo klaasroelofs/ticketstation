@@ -15,6 +15,7 @@ use Joomla\CMS\HTML\HTMLHelper;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\View\HtmlView as BaseHtmlView;
 use Joomla\CMS\Toolbar\ToolbarHelper;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\MollieCurrencies;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\MolliePaymentMethods;
 
 /**
@@ -44,6 +45,13 @@ class HtmlView extends BaseHtmlView {
      * @var array|null
      */
     public $activeMethods = null;
+
+    /**
+     * The ISO code of the currency payments are made in.
+     *
+     * @var string
+     */
+    public $currency = MollieCurrencies::DEFAULT;
 
     function display($tpl = null) {
 
@@ -80,7 +88,18 @@ class HtmlView extends BaseHtmlView {
         $lists['mollie_language'] = HTMLHelper::_('select.genericList', $language, 'mollie_language', ' class="form-select" ' . '',
             'value', 'text', $config->mollie_language);
 
-        $lists['send_tickets_directly'] = HTMLHelper::_('select.genericList', $yesno, 'send_tickets_directly', ' class="form-select" ' . '',
+        $this->currency = MollieCurrencies::fromConfig($config->currency ?? '');
+
+        $currencies = [];
+
+        foreach (MollieCurrencies::CURRENCIES as $code => $name) {
+            $currencies[$code] = ['value' => $code, 'text' => $code . ' - ' . $name];
+        }
+
+        $lists['currency'] = HTMLHelper::_('select.genericList', $currencies, 'currency', ' class="form-select" ' . '',
+            'value', 'text', $this->currency);
+
+        $lists['send_tickets_directly'] =HTMLHelper::_('select.genericList', $yesno, 'send_tickets_directly', ' class="form-select" ' . '',
             'value', 'text', $config->send_tickets_directly);
 
 

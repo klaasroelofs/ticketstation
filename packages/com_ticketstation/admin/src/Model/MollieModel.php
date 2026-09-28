@@ -14,6 +14,7 @@ defined('_JEXEC') or die;
 use Joomla\CMS\Factory;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\Model\BaseDatabaseModel;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\MollieCurrencies;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\MolliePaymentMethods;
 
 /**
@@ -62,15 +63,37 @@ class MollieModel extends BaseDatabaseModel
             }
         }
 
-        // The payment methods arrive as a checkbox list. A list that would leave some
-        // customers without a way to pay keeps the stored methods instead.
-        $methods = MolliePaymentMethods::filter((array) ($data['payment_methods'] ?? []));
+        $app = Factory::getApplication();
+
+        $currency = strtoupper((string) ($data['currency'] ?? ''));
+
+        if (!isset(MollieCurrencies::CURRENCIES[$currency])) {
+            $currency = MollieCurrencies::fromConfig($existing->currency ?? '');
+        }
+
+        $data['currency'] = $currency;
+
+        // The payment methods arrive as a checkbox list. Methods Mollie doesn't offer in the
+        // chosen currency are switched off. A list that would leave some customers without
+        // a way to pay keeps the stored methods (and currency) instead.
+        $chosen  = MolliePaymentMethods::filter((array) ($data['payment_methods'] ?? []));
+        $methods = MollieCurrencies::filterMethods($currency, $chosen);
 
         if (MolliePaymentMethods::isUsable($methods)) {
             $data['payment_methods'] = implode(',', $methods);
+
+            $dropped = array_diff($chosen, $methods);
+
+            if ($dropped) {
+                $app->enqueueMessage(Text::sprintf('COM_TICKETSTATION_MOLLIE_METHODS_EURO_ONLY_DROPPED',
+                    implode(', ', array_map([MolliePaymentMethods::class, 'label'], $dropped))), 'warning');
+            }
+        } elseif (MolliePaymentMethods::isUsable($chosen)) {
+            unset($data['payment_methods'], $data['currency']);
+            $app->enqueueMessage(Text::sprintf('COM_TICKETSTATION_MOLLIE_CURRENCY_NO_METHODS', $currency), 'warning');
         } else {
             unset($data['payment_methods']);
-            Factory::getApplication()->enqueueMessage(Text::_('COM_TICKETSTATION_MOLLIE_PAYMENT_METHODS_INVALID'), 'warning');
+            $app->enqueueMessage(Text::_('COM_TICKETSTATION_MOLLIE_PAYMENT_METHODS_INVALID'), 'warning');
         }
 
         // Bind the data.

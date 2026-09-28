@@ -26,6 +26,7 @@ CREATE TABLE IF NOT EXISTS `#__ticketstation_mollie` (
   `send_tickets_directly` tinyint(1) DEFAULT '1',
   `send_mail_after_return` tinyint(1) DEFAULT '0',
   `payment_methods` varchar(255) NOT NULL DEFAULT 'ideal',
+  `currency` varchar(3) NOT NULL DEFAULT 'EUR',
   PRIMARY KEY (`configid`)
 )  ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 DEFAULT COLLATE=utf8mb4_unicode_ci;
 
@@ -57,7 +58,6 @@ CREATE TABLE IF NOT EXISTS `#__ticketstation_config` (
   `valuta` varchar(8) NOT NULL,
   `currencytype` int(5) NOT NULL,
   `payments_on` tinyint(1) NOT NULL,
-  `paypal_valuta` varchar(4) NOT NULL,
   `transactioncosts` float NOT NULL,
   `priceformat` tinyint(2) NOT NULL,
   `persending` int(11) NOT NULL,
@@ -777,7 +777,8 @@ INSERT IGNORE INTO `#__ticketstation_mollie` VALUES(
 "1",
 "1",
 "0",
-"ideal");
+"ideal",
+"EUR");
 
 INSERT IGNORE INTO `#__ticketstation_config` VALUES(
 "1",
@@ -786,7 +787,6 @@ INSERT IGNORE INTO `#__ticketstation_config` VALUES(
 "€",
 "0",
 "0",
-"EUR",
 "0",
 "3",
 "25",

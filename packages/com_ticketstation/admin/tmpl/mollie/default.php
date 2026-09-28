@@ -12,6 +12,7 @@ use \Joomla\CMS\HTML\HTMLHelper;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\Router\Route;
 use Joomla\CMS\Uri\Uri;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\MollieCurrencies;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\MolliePaymentMethods;
 
 // No direct access to this file
@@ -98,6 +99,20 @@ $wa->registerAndUseScript('passwordview', Uri::root() . 'media/system/js/fields/
                 </div>
             </div>
 
+            <div class="row mb-3">
+                <label for="currency" class="col-sm-3 col-form-label"
+                       rel="popover"
+                       title="<?= Text::_('COM_TICKETSTATION_MOLLIE_CURRENCY') ?>">
+                    <?= Text::_('COM_TICKETSTATION_MOLLIE_CURRENCY') ?>
+                </label>
+                <div class="col-sm-9">
+                    <?= $this->lists['currency']; ?>
+                    <small class="form-text">
+                        <?= Text::_('COM_TICKETSTATION_MOLLIE_CURRENCY_DESC') ?>
+                    </small>
+                </div>
+            </div>
+
             <fieldset class="row mb-3">
                 <legend class="col-sm-3 col-form-label pt-0">
                     <?= Text::_('COM_TICKETSTATION_MOLLIE_PAYMENT_METHODS') ?>
@@ -114,6 +129,11 @@ $wa->registerAndUseScript('passwordview', Uri::root() . 'media/system/js/fields/
                             <?php if ($this->activeMethods !== null && !in_array($method, $this->activeMethods, true)) : ?>
                                 <span class="badge <?= in_array($method, $this->paymentMethods, true) ? 'bg-danger' : 'bg-secondary' ?> ms-1">
                                     <?= Text::_('COM_TICKETSTATION_MOLLIE_METHOD_NOT_ACTIVE') ?>
+                                </span>
+                            <?php endif; ?>
+                            <?php if (!MollieCurrencies::supportsMethod($this->currency, $method)) : ?>
+                                <span class="badge bg-secondary ms-1">
+                                    <?= Text::_('COM_TICKETSTATION_MOLLIE_METHOD_EURO_ONLY') ?>
                                 </span>
                             <?php endif; ?>
                         </div>

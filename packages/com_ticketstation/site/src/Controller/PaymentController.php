@@ -18,6 +18,7 @@ use Joomla\CMS\Router\Route;
 use Joomla\CMS\Uri\Uri;
 use Mollie\Api\MollieApiClient;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\History;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\MollieCurrencies;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\MolliePaymentMethods;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\OrderTotals;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\PaymentAPI;
@@ -94,6 +95,7 @@ class PaymentController extends BaseController
 
             ## Force total of the order in this format:
             $ordertotal = number_format($orderamount, 2, '.', '');
+            $currency   = MollieCurrencies::fromConfig($this->mollieconfig->currency ?? '');
 
             ## Start the API to process everything.
             $newPayment = new PaymentAPI((int)$this->ordercode);
@@ -144,9 +146,9 @@ class PaymentController extends BaseController
                 $payment = $mollie->payments->create(array(
                     "amount" => array(
                         "value"     => $ordertotal,
-                        "currency"  => "EUR",
+                        "currency"  => $currency,
                     ),
-                    "method"        => MolliePaymentMethods::fromConfig($this->mollieconfig->payment_methods ?? ''),
+                    "method"        => MollieCurrencies::filterMethods($currency, MolliePaymentMethods::fromConfig($this->mollieconfig->payment_methods ?? '')),
                     "description"   => $this->mollieconfig->description . ' ' . $this->ordercode,
                     "redirectUrl"   => $return_url . '&order=' . $return_token,
                     "webhookUrl"    => $notify_url,
