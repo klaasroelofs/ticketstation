@@ -465,6 +465,10 @@ if(isset($this->item->ticketid))
 
                 var dataparsed = JSON.parse(ticketdata)
 
+                if (dataparsed.ticket_font) {
+                    jQuery("#jform_ticket_font").val(dataparsed.ticket_font);
+                }
+
                 jQuery("#jform_eventname_fontcolor").val(dataparsed.eventname_fontcolor);
                 jQuery("#jform_eventname_fontsize").val(dataparsed.eventname_fontsize);
                 jQuery("#jform_eventname_position").val(dataparsed.eventname_position);

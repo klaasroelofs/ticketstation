@@ -39,8 +39,6 @@ class ticketcreator
     function __construct($eid)
     {
         $this->eid = $eid;
-        $this->font = 'Raleway';
-        //$this->font = 'helvetica';
     }
 
     /**
@@ -105,6 +103,9 @@ class ticketcreator
 
         $db->setQuery($query);
         $order = $db->loadObject();
+
+        ## The font chosen on the ticket's Ticket Layout tab
+        $this->font = TicketFont::family($order->ticket_font ?? null);
 
         $query = $db->getQuery(true);
 

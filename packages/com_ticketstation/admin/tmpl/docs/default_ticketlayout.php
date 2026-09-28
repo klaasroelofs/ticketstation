@@ -68,7 +68,7 @@ $fields = [
         <details id="docs-ticketlayout-format" class="mb-3 border rounded p-3">
             <summary class="h5 mb-0"><span class="fa fa-ruler-combined me-2" aria-hidden="true"></span><?= Text::_('COM_TICKETSTATION_TICKETLAYOUT_DOCS_FORMAT_TITLE') ?></summary>
             <div class="mt-3">
-                <?php $list('COM_TICKETSTATION_TICKETLAYOUT_DOCS_FORMAT_', 5); ?>
+                <?php $list('COM_TICKETSTATION_TICKETLAYOUT_DOCS_FORMAT_', 6); ?>
             </div>
         </details>
 

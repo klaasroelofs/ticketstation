@@ -218,6 +218,20 @@
             <option value="P">COM_TICKETSTATION_TICKET_ORIENTATION_PORTRAIT</option>
             <option value="L">COM_TICKETSTATION_TICKET_ORIENTATION_LANDSCAPE</option>
         </field>
+        <field
+                name="ticket_font"
+                type="list"
+                label="COM_TICKETSTATION_TICKET_FONT"
+                description="COM_TICKETSTATION_TICKET_FONT_DESC"
+                default="raleway"
+                validate="options"
+        >
+            <option value="raleway">Raleway</option>
+            <option value="opensans">Open Sans</option>
+            <option value="helvetica">Helvetica</option>
+            <option value="times">Times</option>
+            <option value="courier">Courier</option>
+        </field>
     </fieldset>
 
     <fieldset name="ticket_layout_2">

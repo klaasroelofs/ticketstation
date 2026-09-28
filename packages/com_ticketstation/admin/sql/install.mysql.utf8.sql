@@ -322,6 +322,7 @@ CREATE TABLE IF NOT EXISTS `#__ticketstation_tickets` (
   `ticket_size` varchar(2) NOT NULL,
   `override_ticketsize` varchar(50) NOT NULL,
   `ticket_orientation` varchar(1) NOT NULL,
+  `ticket_font` varchar(20) NOT NULL DEFAULT 'raleway',
   `eventname_fontcolor` varchar(6) NOT NULL,
   `eventname_fontsize` varchar(3) NOT NULL,
   `eventname_position` varchar(10) NOT NULL,

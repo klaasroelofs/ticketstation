@@ -109,7 +109,7 @@ function __construct($orientation='P', $unit='mm', $size='A4')
 	else
 		$this->fontpath = dirname(__FILE__).'/font/';
 	// Core fonts
-	$this->CoreFonts = array('helvetica', 'raleway');
+	$this->CoreFonts = array('helvetica', 'times', 'courier', 'raleway', 'opensans');
 	// Scale factor
 	if($unit=='pt')
 		$this->k = 1;

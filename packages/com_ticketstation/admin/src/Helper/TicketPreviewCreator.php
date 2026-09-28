@@ -31,7 +31,7 @@ require_once (JPATH_COMPONENT . '/autoloader.php');
  */
 class TicketPreviewCreator
 {
-    private $font = 'Raleway';
+    private $font = 'raleway';
 
     /**
      * @param   int    $ticketid  The ticket being edited (used to find its uploaded background).
@@ -79,6 +79,7 @@ class TicketPreviewCreator
         }
 
         $orientation = ($data['ticket_orientation'] ?? '') ?: 'P';
+        $this->font  = TicketFont::family($data['ticket_font'] ?? null);
 
         require_once __DIR__ . '/PDF/FPDI_EAN13.php';
 
