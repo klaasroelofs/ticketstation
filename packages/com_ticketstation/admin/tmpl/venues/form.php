@@ -141,6 +141,58 @@ $editor = Editor::getInstance()
         </div>
     </div>
 
+    <div class="card mt-3 rounded-to">
+        <h3 class="card-header">
+            <?= Text::_('COM_TICKETSTATION_VENUE_SEATPLAN_TEMPLATES') ?>
+        </h3>
+        <div class="card-body">
+            <p class="form-text"><?= Text::_('COM_TICKETSTATION_VENUE_SEATPLAN_TEMPLATES_DESC') ?></p>
+
+            <?php if (!empty($this->seatplanTemplates)) : ?>
+                <table class="table table-sm align-middle">
+                    <thead>
+                        <tr>
+                            <th scope="col"><?= Text::_('COM_TICKETSTATION_VENUE_SEATPLAN_TEMPLATE') ?></th>
+                            <th scope="col"><?= Text::_('COM_TICKETSTATION_SEATCHARTS') ?></th>
+                            <th scope="col"><?= Text::_('COM_TICKETSTATION_VENUE_SEATPLAN_MODIFIED') ?></th>
+                            <th scope="col"></th>
+                            <th scope="col" class="text-center"><?= Text::_('COM_TICKETSTATION_VENUE_SEATPLAN_DELETE') ?></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($this->seatplanTemplates as $template) : ?>
+                            <tr>
+                                <td><?= htmlspecialchars($template['name'], ENT_QUOTES, 'UTF-8') ?></td>
+                                <td><?= (int) $template['seats'] ?></td>
+                                <td><?= htmlspecialchars(substr((string) $template['modified'], 0, 16), ENT_QUOTES, 'UTF-8') ?></td>
+                                <td>
+                                    <a class="btn btn-sm btn-outline-secondary" download
+                                       href="<?= Route::_('index.php?option=com_ticketstation&controller=venues&task=exportTemplate&template=' . (int) $template['id']) ?>">
+                                        <?= Text::_('COM_TICKETSTATION_SE_TPL_EXPORT') ?>
+                                    </a>
+                                </td>
+                                <td class="text-center">
+                                    <input class="form-check-input" type="checkbox" name="delete_seatplan_templates[]" value="<?= (int) $template['id'] ?>"
+                                           aria-label="<?= Text::_('COM_TICKETSTATION_VENUE_SEATPLAN_DELETE') ?>">
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            <?php else : ?>
+                <p><?= Text::_('COM_TICKETSTATION_SE_TPL_NONE') ?></p>
+            <?php endif; ?>
+
+            <div class="row mb-3">
+                <label for="seatplan_import" class="col-sm-3 col-form-label"><?= Text::_('COM_TICKETSTATION_SE_TPL_IMPORT') ?></label>
+                <div class="col-sm-9">
+                    <input type="file" name="seatplan_import" id="seatplan_import" class="form-control" accept="application/json,.json">
+                    <div class="form-text"><?= Text::_('COM_TICKETSTATION_VENUE_SEATPLAN_IMPORT_DESC') ?></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <input type="hidden" name="option" value="com_ticketstation" />
     <input type="hidden" name="controller" value="venues" />
     <input type="hidden" name="task" value="" />

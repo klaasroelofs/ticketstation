@@ -42,8 +42,9 @@ $wa->registerAndUseStyle('ticketstation', Uri::base() . 'components\com_ticketst
                             <input class="form-check-input" type="checkbox" name="checkall-toggle" value="" title="<?= Text::_('JGLOBAL_CHECK_ALL'); ?>" onclick="Joomla.checkAll(this)">
                         </td>
                         <th scope="col" class="w-1 text-center"><?php echo Text::_( 'COM_TICKETSTATION_PUBLISHING_STATE' ); ?></th>
-                        <th scope="col" class="w-15"><?php echo Text::_( 'COM_TICKETSTATION_TICKETNAME' ); ?></th>
-                        <th scope="col" class="w-10"></th>
+                        <th scope="col"><?php echo Text::_( 'COM_TICKETSTATION_TICKETNAME' ); ?></th>
+                        <th scope="col"><?php echo Text::_( 'COM_TICKETSTATION_VENUE' ); ?></th>
+                        <th scope="col" class="text-center"><?php echo Text::_( 'COM_TICKETSTATION_SEATCHARTS' ); ?></th>
                         <th scope="col" class="w-10"></th>
                     </tr>
                     </thead>
@@ -55,7 +56,6 @@ $wa->registerAndUseStyle('ticketstation', Uri::base() . 'components\com_ticketst
                         $row        = $this->items[$i];
                         $published 	= HTMLHelper::_('grid.published', $row, $i );
                         $checked    = HTMLHelper::_('grid.id', $i, $row->ticketid );
-                        $link_settings = 'index.php?option=com_ticketstation&controller=seatplans&task=editsettings&cid=' . $row->ticketid;
                         $link_seatchart = 'index.php?option=com_ticketstation&controller=seatplans&task=displaychart&cid=' . $row->ticketid;
 
                         ?>
@@ -73,14 +73,14 @@ $wa->registerAndUseStyle('ticketstation', Uri::base() . 'components\com_ticketst
                                 <strong><?= $row->eventname; ?></strong><br />
                                 <?= $row->ticketname; ?> <small>(<?= $row->ticketcode; ?>)</small>
                             </td>
+                            <td><?= htmlspecialchars((string) $row->venuename, ENT_QUOTES, 'UTF-8'); ?></td>
                             <td class="text-center">
-                                <a href="<?= $link_settings; ?>" class="btn btn-primary">
-                                    <?= Text::_( 'COM_TICKETSTATION_SEATPLAN_SETTINGS' ); ?>
-                                </a>
+                                <?= (int) $row->seats; ?>
+                                <?php if ($row->sold > 0) { ?><br><small class="text-muted"><?= Text::sprintf('COM_TICKETSTATION_SEATPLANS_SOLD', (int) $row->sold); ?></small><?php } ?>
                             </td>
                             <td class="text-center">
                                 <a href="<?= $link_seatchart; ?>" class="btn btn-primary">
-                                    <?= Text::_( 'COM_TICKETSTATION_SEATPLAN_CHART' ); ?>
+                                    <?= Text::_( 'COM_TICKETSTATION_SEATPLAN_EDIT' ); ?>
                                 </a>
                             </td>
                         </tr>

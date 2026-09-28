@@ -1,0 +1,2 @@
+-- No schema changes in 2.6.0 itself: the seat plan changes shipped in 2.6.0-rc1.sql. This file
+-- makes 2.6.0 the latest update file, so Joomla's database check matches the manifest version.

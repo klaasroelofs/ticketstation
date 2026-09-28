@@ -11,7 +11,8 @@
  * Seated tickets topic on the central documentation page: seat plan settings,
  * free seats, section seats and price categories (see SeatplanSettings,
  * SeatplansController and site OrderseatedController::makeReservation()), the
- * seat chart editor and the customer's seat-picking flow.
+ * seat plan editor (SeatplanLayout, assets/js/seateditor.js), templates and the customer's
+ * seat-picking flow.
  */
 
 use Joomla\CMS\Language\Text;
@@ -87,7 +88,7 @@ $modes = ['SINGLE', 'TIERS', 'SECTIONS'];
             <summary class="h5 mb-0"><span class="fa fa-pencil-ruler me-2" aria-hidden="true"></span><?= Text::_('COM_TICKETSTATION_SEATING_DOCS_EDITOR_TITLE') ?></summary>
             <div class="mt-3">
                 <p><?= Text::_('COM_TICKETSTATION_SEATING_DOCS_EDITOR_INTRO') ?></p>
-                <?php $bullets('COM_TICKETSTATION_SEATING_DOCS_EDITOR_', 6); ?>
+                <?php $bullets('COM_TICKETSTATION_SEATING_DOCS_EDITOR_', 8); ?>
 
                 <h3 class="h6 mt-3"><?= Text::_('COM_TICKETSTATION_SEATING_DOCS_MONITOR_TITLE') ?></h3>
                 <p class="mb-0"><?= Text::_('COM_TICKETSTATION_SEATING_DOCS_MONITOR') ?></p>

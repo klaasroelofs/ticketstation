@@ -16,6 +16,7 @@ use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\Model\BaseDatabaseModel;
 use Joomla\CMS\Pagination\Pagination;
 use Joomla\Utilities\ArrayHelper;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\SeatplanLayout;
 
 /**
  * Ticketstation Venues Model
@@ -256,6 +257,9 @@ class VenuesModel extends BaseDatabaseModel
             {
                 return false;
             }
+
+            ## Their seat plan templates go too.
+            SeatplanLayout::deleteVenueTemplates($cid);
 
             return true;
 

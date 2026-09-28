@@ -118,6 +118,9 @@ class HtmlView extends BaseHtmlView
         $this->config = $config;
         $this->lists = $lists;
 
+        ## Seat plan templates of this venue (made in the seat plan editor of its tickets).
+        $this->seatplanTemplates = \Ticketstation\Component\Ticketstation\Administrator\Helper\SeatplanLayout::templates((int) ($data->id ?? 0));
+
         $text = empty($this->data->id) ? Text::_('COM_TICKETSTATION_ADD') : Text::_('COM_TICKETSTATION_EDIT');
         ToolBarHelper::title($text . ' ' . Text::_('COM_TICKETSTATION_VIEW_VENUE_TITLE'), 'fa fa-hotel');
 

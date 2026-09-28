@@ -18,6 +18,7 @@ use Joomla\CMS\Factory;
 use Joomla\CMS\HTML\HTMLHelper;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\Router\Route;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\SeatChart;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\TicketstationFunctions;
 
 // No direct access to this file
@@ -25,10 +26,8 @@ defined('_JEXEC') or die('Restricted Access');
 
 HTMLHelper::_('jquery.framework');
 
-// Load the exact same .seat-element styling used by both the frontend seat picker
-// (site/assets/css/component.css) and the admin seatplan editor (this file) - font-size,
-// centering, colors and border-radius all come from here so the three stay visually identical.
-Factory::getApplication()->getDocument()->addStyleSheet('components/com_ticketstation/assets/css/seatchart.css');
+// The same scalable chart as the frontend seat picker (site assets/css/seatmap.css).
+SeatChart::loadAssets();
 
 // Which seat_sector ids are already part of THIS reservation (so they render as "mine" /
 // removable, rather than as booked-by-someone-else).
@@ -42,31 +41,11 @@ foreach ($this->summary as $row)
     }
 }
 
-$seatchart_png = 'components/com_ticketstation/assets/seatcharts/seatchart' . (int) $this->ticket->ticketid . '.png';
-$seatchart_jpg = 'components/com_ticketstation/assets/seatcharts/seatchart' . (int) $this->ticket->ticketid . '.jpg';
-$image_png     = JPATH_ADMINISTRATOR . '/components/com_ticketstation/assets/seatcharts/seatchart' . (int) $this->ticket->ticketid . '.png';
-$image_jpg     = JPATH_ADMINISTRATOR . '/components/com_ticketstation/assets/seatcharts/seatchart' . (int) $this->ticket->ticketid . '.jpg';
-
-if (file_exists($image_png))
-{
-    $seatchart = $seatchart_png;
-    $image     = $image_png;
-}
-else
-{
-    $seatchart = $seatchart_jpg;
-    $image     = $image_jpg;
-}
-
-if (file_exists($image))
-{
-    [$width, $height] = getimagesize($image);
-}
-else
-{
-    $width  = 750;
-    $height = 850;
-}
+$chartOwner      = (int) $this->ticket->ticketid;
+$chartSettings   = SeatChart::settings($chartOwner);
+$chartBackground = SeatChart::background($chartSettings, $chartOwner);
+$chartShapes     = SeatChart::shapes($chartSettings);
+$chartCanvas     = SeatChart::canvas($chartSettings, $this->seats, $chartBackground, $chartShapes);
 ?>
 
 <div class="btn-toolbar mb-3" role="toolbar">
@@ -82,14 +61,6 @@ else
 </div>
 
 <style>
-    #glassbox {
-        height: <?= (int) $height + 20 ?>px;
-        width: <?= (int) $width ?>px;
-        background-repeat: no-repeat;
-        background-position: 0 30px;
-        position: relative;
-        border-radius: 5px;
-    }
     .seat-element {
         cursor: pointer;
     }
@@ -134,11 +105,11 @@ else
                     </div>
                 <?php endif; ?>
 
-                <div style="width: <?= (int) $width + 12 ?>px; max-width: 100%; overflow-x: auto;">
-                    <div id="glassbox" <?php if (file_exists($image)) : ?>style="background-image:url(<?= htmlspecialchars($seatchart, ENT_QUOTES, 'UTF-8') ?>);"<?php endif; ?>>
+                <div>
+                    <?= SeatChart::open($chartCanvas, $chartBackground, $chartSettings, $chartShapes, $this->seats) ?>
                         <?php foreach ($this->seats as $row) :
                             $mine       = isset($mySeats[(int) $row->id]);
-                            $lineHeight = 'line-height:' . (int) $row->height . 'px;';
+                            $lineHeight = '';
 
                             // A blocked seat can still be booked here (after a confirmation); it
                             // shows grey, and goes back to grey when it is removed again.
@@ -173,8 +144,7 @@ else
                             ?>
                             <div id="seat-<?= (int) $row->id ?>" class="<?= $seatClass ?>"
                                  data-mine="<?= $mine ? '1' : '0' ?>" data-taken="<?= $taken ? '1' : '0' ?>" data-blocked="<?= $blocked ? '1' : '0' ?>"
-                                 style="position:absolute; left:<?= (int) $row->x_pos ?>px; top:<?= (int) $row->y_pos ?>px;
-                                        width:<?= (int) $row->width ?>px; height:<?= (int) $row->height ?>px; <?= $background . $style ?>">
+                                 style="<?= SeatChart::seatStyle($row, $chartCanvas) . $background . $style ?>">
                                 <?php if ((int) $row->type === 1) : ?>
                                     <?= htmlspecialchars($row->row_name . $row->seatid, ENT_QUOTES, 'UTF-8') ?>
                                 <?php else : ?>
@@ -182,7 +152,7 @@ else
                                 <?php endif; ?>
                             </div>
                         <?php endforeach; ?>
-                    </div>
+                    <?= SeatChart::close() ?>
                 </div>
 
             </div>

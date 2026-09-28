@@ -14,6 +14,7 @@ use Joomla\CMS\Layout\LayoutHelper;
 use Joomla\CMS\Router\Route;
 use Joomla\CMS\Uri\Uri;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Ordercode;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\SeatChart;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\TicketstationFunctions;
 
 // No direct access to this file
@@ -30,32 +31,13 @@ $session = Factory::getApplication()->getSession();
 ## Gettig the orderid if there is one.
 $ordercode = $session->get('ordercode');
 
-## The image of the seat chart
-$seatchart_png = Uri::root(true) . '/administrator/components/com_ticketstation/assets/seatcharts/seatchart'.$this->ticketdetails->ticketid.'.png';
-$image_png = JPATH_ADMINISTRATOR.DIRECTORY_SEPARATOR.'components'.DIRECTORY_SEPARATOR.'com_ticketstation'.DIRECTORY_SEPARATOR.'assets'.DIRECTORY_SEPARATOR.'seatcharts'.DIRECTORY_SEPARATOR.'seatchart'.$this->ticketdetails->ticketid.'.png';
-$seatchart_jpg = Uri::root(true) . '/administrator/components/com_ticketstation/assets/seatcharts/seatchart'.$this->ticketdetails->ticketid.'.jpg';
-$image_jpg = JPATH_ADMINISTRATOR.DIRECTORY_SEPARATOR.'components'.DIRECTORY_SEPARATOR.'com_ticketstation'.DIRECTORY_SEPARATOR.'assets'.DIRECTORY_SEPARATOR.'seatcharts'.DIRECTORY_SEPARATOR.'seatchart'.$this->ticketdetails->ticketid.'.jpg';
-
-if (file_exists($image_png)) {
-    $seatchart = $seatchart_png;
-    $image = $image_png;
-} else {
-    $seatchart = $seatchart_jpg;
-    $image = $image_jpg;
-}
-
-## Get the image size
-if (file_exists($image)) {
-    ## Get the image size
-    list($width, $height, $type, $attr) = getimagesize($image);
-} else {
-    $width = 750;
-    $height = 850;
-}
-
-## Size of the chart (seat positions are relative to it) and its background image
-$glassbox_style = 'width:' . (int) $width . 'px; height:' . ((int) $height + 20) . 'px;'
-    . (file_exists($image) ? ' background-image: url(' . $seatchart . ');' : '');
+## The chart: canvas, background image and shapes; it scales with the screen (SeatChart).
+SeatChart::loadAssets();
+$chartOwner      = (int) $this->ticketdetails->ticketid;
+$chartSettings   = SeatChart::settings($chartOwner);
+$chartBackground = SeatChart::background($chartSettings, $chartOwner);
+$chartShapes     = SeatChart::shapes($chartSettings);
+$chartCanvas     = SeatChart::canvas($chartSettings, $this->items, $chartBackground, $chartShapes);
 
 
 ## Redirection link in JRoute:
@@ -152,70 +134,40 @@ $venue_website_url = preg_match('#^https?://#i', $this->ticketdetails->website) 
     <section class="ts-seatmap-section">
         <h2 class="ts-section-title"><?php echo Text::_('COM_TICKETSTATION_SEATING_PLAN'); ?></h2>
 
-        <div class="ts-rotate-hint">
-            <img src="<?php echo Uri::root(true); ?>/components/com_ticketstation/assets/images/rotate-phone.gif" alt="">
-            <p><?php echo Text::_('COM_TICKETSTATION_ROTATE_PHONE'); ?></p>
-        </div>
-
         <div class="ts-seatmap">
-            <div class="ts-seatmap__canvas glassbox" id="glassbox" style="<?php echo $glassbox_style; ?>">
+            <?php echo SeatChart::open($chartCanvas, $chartBackground, $chartSettings, $chartShapes, $this->items); ?>
 
                 <?php
 
                 ## The seats in this customer's own order.
                 $mine = array_map('intval', array_column($this->ordered, 'seat_sector'));
+                $hex  = fn ($value, $fallback) => '#' . SeatChart::hex($value, $fallback);
 
-                for ($i = 0, $n = count($this->items); $i < $n; $i++ ){
-
-                    ## Give give $row the this->item[$i]
-                    $row        = &$this->items[$i];
-
-                    $x 			 = $row->x_pos;
-                    $y 			 = $row->y_pos;
-                    $line_height = 'line-height:'. $row->height .'px;';
+                foreach ($this->items as $row) {
 
                     if ($row->booked > 0 && in_array((int) $row->id, $mine, true)){
 
                         ## Chosen by this customer: orange, as right after picking it.
-                        $style = 'color:#fff; border-color:#'.$row->border_color.'; cursor:no-drop; '.$line_height;
-                        $background = 'orange';
+                        $style = 'color:#fff; border-color:' . $hex($row->border_color, '000000') . '; cursor:no-drop; background-color:orange;';
 
                     }elseif ($row->booked > 0){
 
-                        $style = 'color:#fff; border-color:#000; cursor:no-drop; '.$line_height;
-                        $background = '#FF0000';
+                        $style = 'color:#fff; border-color:#000; cursor:no-drop; background-color:#FF0000;';
 
                     }else{
 
-                        $style = 'color:#'.$row->font_color.'; border-color:#'.$row->border_color.'; '.$line_height;
-
-                        if ($row->background_color != ''){
-                            $background = '#'. $row->background_color;
-                        }else{
-                            $background = '#e1fdda';
-                        }
-
+                        $style = 'color:' . $hex($row->font_color, '000000') . '; border-color:' . $hex($row->border_color, '198d02') . '; background-color:' . $hex($row->background_color, 'e1fdda') . ';';
                     }
 
-                    ## This is a seat --> Load seat data.
-                    if ($row->type == 1){
-                        echo '<div id="seat-'.$row->id.'" class="seat-element"
-                                    style="left:'.$x.'px; top:'.$y.'px; background-color:'.$background.';
-                                           width:'.$row->width.'px; height:'.$row->height.'px;
-                                           position:absolute; '.$style.'">'.htmlspecialchars($row->row_name . $row->seatid, ENT_QUOTES, 'UTF-8').'</div>';
-                    }else{
+                    $label = (int) $row->type === 1 ? $row->row_name . $row->seatid : $row->ticketname;
 
-                        echo '<div id="seat-'.$row->id.'" class="seat-element"
-                                    style="left:'.$x.'px; top:'.$y.'px;  background-color:'.$background.';
-                                           width:'.$row->width.'px; height:'.$row->height.'px;
-                                           position:absolute; '.$style.'">
-                                                <div style = "line-height:'.$row->height.'px;"><strong>'.$row->ticketname.'</strong></div>
-                                           </div>';
-                    }
+                    echo '<div id="seat-' . (int) $row->id . '" class="seat-element" style="' . SeatChart::seatStyle($row, $chartCanvas) . $style . '">'
+                        . ((int) $row->type === 1 ? '' : '<strong>') . htmlspecialchars($label, ENT_QUOTES, 'UTF-8') . ((int) $row->type === 1 ? '' : '</strong>')
+                        . '</div>';
                 }
                 ?>
 
-            </div>
+            <?php echo SeatChart::close(); ?>
         </div>
     </section>
 

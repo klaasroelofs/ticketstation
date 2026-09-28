@@ -394,11 +394,30 @@ CREATE TABLE IF NOT EXISTS `#__ticketstation_seatplansettings` (
   `border_color` varchar(6) NOT NULL DEFAULT '000000',
   `font_color` varchar(6) NOT NULL DEFAULT '000000',
   `multi_seat` tinyint(1) NOT NULL DEFAULT '1',
-  `seat_width` varchar(2) DEFAULT NULL,
-  `seat_height` varchar(2) DEFAULT NULL,
+  `seat_width` varchar(3) DEFAULT NULL,
+  `seat_height` varchar(3) DEFAULT NULL,
   `type` tinyint(1) NOT NULL DEFAULT '1',
+  `background_image` varchar(255) NOT NULL DEFAULT '',
+  `bg_offset_x` int(11) NOT NULL DEFAULT '0',
+  `bg_offset_y` int(11) NOT NULL DEFAULT '0',
+  `canvas_width` int(11) NOT NULL DEFAULT '0',
+  `canvas_height` int(11) NOT NULL DEFAULT '0',
+  `grid_size` int(11) NOT NULL DEFAULT '10',
+  `shapes` mediumtext NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `idx_ticketid` (`ticketid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 DEFAULT COLLATE=utf8mb4_unicode_ci;
+
+DROP TABLE IF EXISTS `#__ticketstation_seatplantemplates`;
+CREATE TABLE IF NOT EXISTS `#__ticketstation_seatplantemplates` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `venue_id` int(11) NOT NULL,
+  `name` varchar(100) NOT NULL DEFAULT '',
+  `layout` mediumtext NOT NULL,
+  `created` datetime NOT NULL,
+  `modified` datetime NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_venue_id` (`venue_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 DEFAULT COLLATE=utf8mb4_unicode_ci;
 
 DROP TABLE IF EXISTS `#__ticketstation_seatplancoords`;

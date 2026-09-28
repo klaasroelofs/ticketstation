@@ -1,0 +1,95 @@
+/*
+ * Seat charts on the site (seat selection, scan chart) and in the backend reservation tool.
+ * Seats, shapes and the background image are placed in percentages of the canvas
+ * (see SeatChart.php); font sizes are canvas pixels scaled with container units, so the whole
+ * chart scales with the width it gets. Colours come from the seat plan settings, inline.
+ */
+
+.ts-chart-frame {
+    --ts-zoom: 1;
+    position: relative;
+    max-width: 100%;
+}
+
+.ts-chart-zoom {
+    display: flex;
+    justify-content: flex-end;
+    gap: .25rem;
+    margin: 0 0 .5rem;
+}
+
+.ts-chart-zoom__btn {
+    min-width: 2.25rem;
+    height: 2.25rem;
+    padding: 0 .5rem;
+    font: inherit;
+    font-size: 1.125rem;
+    line-height: 1;
+    color: inherit;
+    background: transparent;
+    border: 1px solid currentColor;
+    border-radius: .375rem;
+    opacity: .75;
+    cursor: pointer;
+}
+
+.ts-chart-zoom__btn:hover,
+.ts-chart-zoom__btn:focus-visible {
+    opacity: 1;
+}
+
+.ts-chart-scroll {
+    max-width: 100%;
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: .5rem;
+}
+
+.ts-chart {
+    position: relative;
+    box-sizing: border-box;
+    container-type: inline-size;
+    /* Fills the available width up to the design size; never narrower than what keeps the
+       smallest seat clickable. The zoom buttons multiply both. */
+    width: calc(min(100%, var(--ts-chart-w) * 1px) * var(--ts-zoom));
+    min-width: calc(var(--ts-chart-min) * 1px * var(--ts-zoom));
+    aspect-ratio: var(--ts-chart-w) / var(--ts-chart-h);
+    margin: 0 auto;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+.ts-chart__bg {
+    position: absolute;
+    max-width: none;
+    pointer-events: none;
+}
+
+.ts-chart__shape,
+.ts-chart .seat-element {
+    position: absolute;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    text-align: center;
+    white-space: nowrap;
+    line-height: 1;
+    font-size: calc(100cqw * var(--ts-fs, 9) / var(--ts-chart-w));
+}
+
+.ts-chart__shape {
+    pointer-events: none;
+    font-family: inherit;
+    font-weight: 600;
+    border-radius: 3px;
+}
+
+.ts-chart .seat-element {
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    color: #000;
+    background-color: #e1fdda;
+    border: 1px solid #198d02;
+    border-radius: 2px;
+}

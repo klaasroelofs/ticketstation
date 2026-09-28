@@ -14,6 +14,7 @@ DROP TABLE IF EXISTS `#__ticketstation_remarks`;
 DROP TABLE IF EXISTS `#__ticketstation_scannermap`;
 DROP TABLE IF EXISTS `#__ticketstation_seatplancoords`;
 DROP TABLE IF EXISTS `#__ticketstation_seatplansettings`;
+DROP TABLE IF EXISTS `#__ticketstation_seatplantemplates`;
 DROP TABLE IF EXISTS `#__ticketstation_templates`;
 DROP TABLE IF EXISTS `#__ticketstation_tickets`;
 DROP TABLE IF EXISTS `#__ticketstation_transactions`;

@@ -15,6 +15,7 @@ use Joomla\CMS\Router\Route;
 use Joomla\CMS\Uri\Uri;
 use Joomla\Registry\Registry;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Ticket;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\SeatChart;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\TicketstationFunctions;
 
 // No direct access to this file
@@ -25,69 +26,20 @@ $document   = $app->getDocument();
 $document->setTitle( Text::_('COM_TICKETSTATION_SCANCHART_TITLE') . ' - ' . $app->get('sitename'));
 
 $document->addStyleSheet( 'components/com_ticketstation/assets/css/scanner.css' );
-$document->addScript('https://code.jquery.com/jquery-3.7.1.js');
-$document->addScript('https://code.jquery.com/ui/1.13.2/jquery-ui.js');
+HTMLHelper::_('jquery.framework');
 
-## The image of the seat chart
-$seatchart_png = Uri::root(true) . '/administrator/components/com_ticketstation/assets/seatcharts/seatchart'.$this->items[0]->chart_ticketid.'.png';
-$image_png = JPATH_ADMINISTRATOR.DIRECTORY_SEPARATOR.'components'.DIRECTORY_SEPARATOR.'com_ticketstation'.DIRECTORY_SEPARATOR.'assets'.DIRECTORY_SEPARATOR.'seatcharts'.DIRECTORY_SEPARATOR.'seatchart'.$this->items[0]->chart_ticketid.'.png';
-$seatchart_jpg = Uri::root(true) . '/administrator/components/com_ticketstation/assets/seatcharts/seatchart'.$this->items[0]->chart_ticketid.'.jpg';
-$image_jpg = JPATH_ADMINISTRATOR.DIRECTORY_SEPARATOR.'components'.DIRECTORY_SEPARATOR.'com_ticketstation'.DIRECTORY_SEPARATOR.'assets'.DIRECTORY_SEPARATOR.'seatcharts'.DIRECTORY_SEPARATOR.'seatchart'.$this->items[0]->chart_ticketid.'.jpg';
-
-if (file_exists($image_png)) {
-    $seatchart = $seatchart_png;
-    $image = $image_png;
-} else {
-    $seatchart = $seatchart_jpg;
-    $image = $image_jpg;
-}
-
-if (file_exists($image)) {
-    ## Get the image size
-    list($width, $height, $type, $attr) = getimagesize($image);
-
-    $container_width = $width+250;
-} else {
-    $container_width = 750;
-    $height = 750;
-}
+## The chart: canvas, background image and shapes; it scales with the screen (SeatChart).
+SeatChart::loadAssets();
+$chartOwner      = (int) ($this->items[0]->chart_ticketid ?? 0);
+$chartSettings   = SeatChart::settings($chartOwner);
+$chartBackground = SeatChart::background($chartSettings, $chartOwner);
+$chartShapes     = SeatChart::shapes($chartSettings);
+$chartCanvas     = SeatChart::canvas($chartSettings, $this->items, $chartBackground, $chartShapes);
 
 $itemid = TicketstationFunctions::getSiteItemid();
 $linkback = Route::_('index.php?option=com_ticketstation&view=ticketscanning' . ($itemid ? '&Itemid=' . $itemid : ''));
 
 ?>
-
-<style>
-
-    #container_seatchart {
-        height:<?php echo $height+20; ?>px;
-        background-repeat:no-repeat;
-        background-position: 0px 30px;
-        margin:5px auto auto auto;
-        position:relative;
-        /*width:<?php echo $container_width; ?>px;*/
-        width:100%;
-        -moz-border-radius: 5px;
-        -webkit-border-radius: 5px;
-    }
-
-    #glassbox {
-        float:right;
-        height:<?php echo $height+20; ?>px;
-        background-repeat:no-repeat;
-        background-position: 0px 30px;
-    <?php if (file_exists($image)) { ?>
-        background-image: url(<?= $seatchart;?>);
-    <?php } ?>
-        margin:5px auto auto auto;
-        position:relative;
-        /*width:<?php echo $width; ?>px;*/
-        width:100%;
-        /*border-left:1px solid #CCC;
-        border-top:1px solid #CCC;*/
-    }
-
-</style>
 
 <div class="row ticketstation">
 
@@ -108,66 +60,30 @@ $linkback = Route::_('index.php?option=com_ticketstation&view=ticketscanning' . 
 
     <div class="row">
         <div class="col-12">
-            <div id="container_seatchart">
-                <div class="plattegrond" id="glassbox">
+            <?php echo SeatChart::open($chartCanvas, $chartBackground, $chartSettings, $chartShapes, $this->items); ?>
 
-                    <?php
+                <?php
+                foreach ($this->items as $row) {
 
-                    $k = 0;
-                    for ($i = 0, $n = count($this->items); $i < $n; $i++ ){
-
-                        ## Give give $row the this->item[$i]
-                        $row        = &$this->items[$i];
-
-                        $x = $row->x_pos;
-                        $y = $row->y_pos;
-
-                        if ($row->blocked > 0 && $row->orderid == 0){
-                            ## stoel geblokkeerd, maak GRIJS
-                            $style = 'color:#FFF; border-color:#000;';
-                            $background = '888888';
-                        }elseif ($row->booked > 0){
-                            ## stoel verkocht, maak ROOD
-                            $style = 'color:#FFF; border-color:#000;';
-                            $background = 'ff0000';
-                            if ($row->scanned > 0){
-                                ## stoel verkocht en gescand, maak GROEN
-                                $style = 'color:#FFF; border-color:#000;';
-                                $background = '198d02';
-                            }
-                        }else{
-                            ## stoel vrij
-                            $style = 'color:#000; border-color:#000;';
-                            if ($row->background_color != ''){
-                                $background = $row->background_color;
-                            }else{
-                                $background = 'e1fdda';
-                            }
-                        }
-
-                        ## This is a seat --> Load seat data.
-                        if ($row->type == 1){
-
-                            echo '<div id="'.$row->id.'" class="seat-element"
-                                    style="cursor: default; border: 1px black solid !important;left:'.$x.'px; top:'.$y.'px; background-color:#'.$background.';
-                                           width:'.$row->width.'px; height:'.$row->height.'px; line-height:'.$row->height.'px;
-                                           position:absolute; '.$style.'")">'.$row->row_name.$row->seatid.'</div>';
-
-                        }else{
-                            echo '<div id="'.$row->id.'" class="seat-element" 
-                                style="cursor: default; border: 1px black solid !important;left:'.$x.'px; top:'.$y.'px;  background-color:#'.$background.'; 
-                                       width:'.$row->width.'px; height:'.$row->height.'px; line-height:'.$row->height.'px; 
-                                       position:absolute; '.$style.'")">
-                                            <div style = "line-height:'.$row->height.'px;"><strong>'.$row->ticketname.'</strong></div>
-                                       </div>';
-                        }
-
-                        $k=1 - $k;
+                    if ($row->blocked > 0 && $row->orderid == 0){
+                        ## Blocked seat: grey
+                        $style = 'color:#fff; background-color:#888888;';
+                    }elseif ($row->booked > 0){
+                        ## Sold seat: red, green once scanned
+                        $style = 'color:#fff; background-color:#' . ($row->scanned > 0 ? '198d02' : 'ff0000') . ';';
+                    }else{
+                        ## Free seat
+                        $style = 'color:#000; background-color:#' . SeatChart::hex($row->background_color, 'e1fdda') . ';';
                     }
-                    ?>
 
-                </div>
-            </div>
+                    $label = (int) $row->type === 1 ? $row->row_name . $row->seatid : $row->ticketname;
+
+                    echo '<div id="seat-' . (int) $row->id . '" class="seat-element" style="cursor:default; border-color:#000; ' . SeatChart::seatStyle($row, $chartCanvas) . $style . '">'
+                        . htmlspecialchars($label, ENT_QUOTES, 'UTF-8') . '</div>';
+                }
+                ?>
+
+            <?php echo SeatChart::close(); ?>
         </div>
     </div>
 
@@ -249,7 +165,7 @@ $linkback = Route::_('index.php?option=com_ticketstation&view=ticketscanning' . 
 
 <script>
 
-    $(document).ready(function () {
+    jQuery(function ($) {
 
         // Auto refresh scan statistics
         var glassbox = false;
@@ -271,7 +187,7 @@ $linkback = Route::_('index.php?option=com_ticketstation&view=ticketscanning' . 
             setTimeout(changeGreen, 2000);
             if (glassbox === false) {
                 glassbox = setInterval(function(){
-                    $('#glassbox').load(document.URL + ' #glassbox *')
+                    $('#glassbox').load(document.URL + ' #glassbox > *')
                 }, 3000);
             }
             if (totals === false) {

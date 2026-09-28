@@ -1059,54 +1059,12 @@
 }
 
 .ticketstation .ts-seatmap {
-    overflow-x: auto;
     padding: 0 0 1rem;
 }
 
-.ticketstation .ts-seatmap__canvas {
-    position: relative;
-    margin: 0 auto;
-    background-repeat: no-repeat;
-    background-position: 0 30px;
-}
-
-.ticketstation .ts-rotate-hint {
-    display: none;
-    flex-direction: column;
-    align-items: center;
-    gap: 1rem;
-    text-align: center;
-    font-weight: 600;
-}
-
-.ticketstation .ts-rotate-hint img {
-    width: 50%;
-    max-width: 200px;
-    height: auto;
-    transform: scaleX(-1);
-}
-
-@media (max-width: 700px) {
-    /* Too narrow for a seat chart: ask to turn the phone */
-    .ticketstation .ts-seatmap {
-        display: none;
-    }
-
-    .ticketstation .ts-rotate-hint {
-        display: flex;
-    }
-}
-
-/* Seats on the chart: sizes, positions and colours come from the seat plan settings */
+/* Seats on the chart: positions, sizes and scaling in seatmap.css, colours from the seat plan settings */
 .ticketstation .seat-element {
-    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-    font-size: 9px;
-    color: #000;
-    text-align: center;
     cursor: pointer;
-    background-color: #e1fdda;
-    border: 1px solid #198d02;
-    border-radius: 2px;
 }
 
 .ticketstation .seat-element:hover {

@@ -15,6 +15,7 @@ use Joomla\CMS\Factory;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\Uri\Uri;
 use Joomla\Utilities\ArrayHelper;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\SeatplanLayout;
 use Ticketstation\Component\Ticketstation\Administrator\Controller\Mixin\RegisterControllerTasks;
 use Joomla\CMS\Application\CMSApplication;
 use Joomla\CMS\MVC\Controller\BaseController;
@@ -130,6 +131,8 @@ class VenuesController extends BaseController
 
         if ($model->store($data))
         {
+            $this->saveSeatplanTemplates((int) $model->getVenueID());
+
             $this->setRedirect(Uri::base() . 'index.php?option=com_ticketstation&controller=venues&task=edit&cid=' . $model->getVenueID(), Text::_('COM_TICKETSTATION_VENUE_SAVED'));
         } else {
             $this->setRedirect(Uri::base() . 'index.php?option=com_ticketstation&controller=venues', Text::_('COM_TICKETSTATION_VENUE_SAVED_FAILED'));
@@ -146,6 +149,48 @@ class VenuesController extends BaseController
     public function cancel($cachable = false, $urlparams = [])
     {
         $this->setRedirect(Uri::base() . 'index.php?option=com_ticketstation&view=Venues');
+    }
+
+    ## Downloads a seat plan template of a venue, for importing on another site.
+    public function exportTemplate()
+    {
+        if (!SeatplanLayout::download($this->input->getInt('template', 0))) {
+            $this->setRedirect(Uri::base() . 'index.php?option=com_ticketstation&controller=venues', Text::_('COM_TICKETSTATION_SEATEDITOR_TEMPLATE_NOT_FOUND'), 'error');
+        }
+    }
+
+    ## The seat plan templates part of the venue form: templates ticked for deletion, and an
+    ## exported template file to import.
+    private function saveSeatplanTemplates(int $venueId): void
+    {
+        $app = Factory::getApplication();
+
+        if ($venueId <= 0) {
+            return;
+        }
+
+        foreach ((array) $this->input->post->get('delete_seatplan_templates', [], 'array') as $templateId) {
+            if (SeatplanLayout::template((int) $templateId, $venueId)) {
+                SeatplanLayout::deleteTemplate((int) $templateId);
+            }
+        }
+
+        $file = (array) $this->input->files->get('seatplan_import', [], 'raw');
+
+        if (empty($file['tmp_name'])) {
+            return;
+        }
+
+        try {
+            if (!is_uploaded_file($file['tmp_name']) || (int) $file['size'] > 25 * 1024 * 1024) {
+                throw new \RuntimeException(Text::_('COM_TICKETSTATION_SEATEDITOR_IMPORT_INVALID'));
+            }
+
+            SeatplanLayout::importTemplate($venueId, (string) file_get_contents($file['tmp_name']));
+            $app->enqueueMessage(Text::_('COM_TICKETSTATION_SEATEDITOR_TEMPLATE_IMPORTED'));
+        } catch (\RuntimeException $e) {
+            $app->enqueueMessage($e->getMessage(), 'error');
+        }
     }
 
     public function controlpanel($cachable = false, $urlparams = [])

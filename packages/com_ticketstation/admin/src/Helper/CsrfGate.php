@@ -49,15 +49,14 @@ class CsrfGate
         'events'           => ['display', 'edit', 'controlpanel'],
         'tickets'          => ['display', 'seatplans', 'edit', 'controlpanel'],
         'coupons'          => ['display', 'edit', 'controlpanel'],
-        'venues'           => ['display', 'edit', 'cancel', 'controlpanel'],
+        'venues'           => ['display', 'edit', 'cancel', 'controlpanel', 'exporttemplate'],
         'waitinglist'      => ['display', 'controlpanel'],
         'docs'             => ['main', 'controlpanel'],
         'transactions'     => ['display', 'edit', 'cancel', 'controlpanel'],
         'reservation'      => ['start', 'finishseats'],
         'ticket'           => ['display', 'cancel', 'ticketlayout', 'previewticket'],
         'event'            => ['display', 'cancel'],
-        'seatplansettings' => ['display', 'cancel'],
-        'seatplans'        => ['display', 'displaychart', 'editsettings', 'controlpanel', 'tickets', 'loadseat'],
+        'seatplans'        => ['display', 'displaychart', 'editsettings', 'cancel', 'controlpanel', 'tickets', 'exporttemplate', 'token'],
     ];
 
     /**
