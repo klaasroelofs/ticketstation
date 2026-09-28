@@ -14,6 +14,7 @@ defined('_JEXEC') or die;
 use Joomla\CMS\Factory;
 use Joomla\CMS\MVC\Model\BaseDatabaseModel;
 use Joomla\CMS\Pagination\Pagination;
+use Ticketstation\Component\Ticketstation\Administrator\Model\Mixin\ListState;
 use Joomla\Utilities\ArrayHelper;
 
 /**
@@ -22,6 +23,8 @@ use Joomla\Utilities\ArrayHelper;
  */
 class ScannersModel extends BaseDatabaseModel
 {
+    use ListState;
+
     private $id;
     private $_pagination;
     private $scanner;
@@ -32,15 +35,7 @@ class ScannersModel extends BaseDatabaseModel
 
         $app    = Factory::getApplication();
 
-        ## Get the pagination request variables
-        $limit         = $app->getUserStateFromRequest( 'global.list.limit', 'limit', $app->getCfg('list_limit'), 'int' );
-        $limitstart    = $app->getInput()->get('limitstart', 0, 'int');
-
-        ## In case limit has been changed, adjust limitstart accordingly
-        $limitstart = ($limit != 0 ? (floor($limitstart / $limit) * $limit) : 0);
-
-        $this->setState('limit', $limit);
-        $this->setState('limitstart', $limitstart);
+        $this->populateListState('scanners');
 
         $array = $app->getInput()->get('cid', array(0), 'array');
         $this->id = (int)$array[0];

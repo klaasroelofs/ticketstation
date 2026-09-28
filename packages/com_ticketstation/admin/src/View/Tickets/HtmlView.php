@@ -82,10 +82,10 @@ class HtmlView extends BaseHtmlView
         $app = Factory::getApplication();
         $db = Factory::getContainer()->get('DatabaseDriver');
 
-        $filter_order     = $app->getUserStateFromRequest( 'filter_ordering_t', 'filter_ordering_t','a.fueltype','cmd' );
+        $filter_order     = (int) $this->getModel()->getState('filter.event');
         $filter_order_Dir = $app->getUserStateFromRequest( 'filter_order_Dir', 'filter_order_Dir', 'asc', 'word' );
-        $filter_state	  = $app->getUserStateFromRequest( 'filter_state', 'filter_state', '3', 'int' );
-        $filter_venue	  = $app->getUserStateFromRequest( 'filter_ordering_venue', 'filter_ordering_venue', '0', 'int' );
+        $filter_state	  = (int) $this->getModel()->getState('filter.state');
+        $filter_venue	  = (int) $this->getModel()->getState('filter.venue');
 
         ## table ordering
         $lists['order_Dir']  = $filter_order_Dir;

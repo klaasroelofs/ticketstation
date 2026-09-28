@@ -16,6 +16,7 @@ use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\Model\BaseDatabaseModel;
 use Joomla\CMS\Pagination\Pagination;
 use Joomla\Utilities\ArrayHelper;
+use Ticketstation\Component\Ticketstation\Administrator\Model\Mixin\ListState;
 
 /**
  * Ticketstation Clients Model
@@ -23,6 +24,8 @@ use Joomla\Utilities\ArrayHelper;
  */
 class ClientsModel extends BaseDatabaseModel
 {
+    use ListState;
+
     private $id;
 
     /**
@@ -38,15 +41,9 @@ class ClientsModel extends BaseDatabaseModel
 
         $app 	= Factory::getApplication();
 
-        ## Get the pagination request variables
-        $limit      = $app->getUserStateFromRequest( 'global.list.limit', 'limit', $app->get('list_limit'), 'int' );
-        $limitstart = $app->getUserStateFromRequest( 'products.limitstart', 'limitstart', 0, 'int' );
-
-        ## In case limit has been changed, adjust limitstart accordingly
-        $limitstart = ($limit != 0 ? (floor($limitstart / $limit) * $limit) : 0);
-
-        $this->setState('limit', $limit);
-        $this->setState('limitstart', $limitstart);
+        $this->populateListState('clients', [
+            'search' => ['searchbox', '', 'string'],
+        ]);
 
         $array = $app->getInput()->get('cid', array(0), 'array');
         $this->id = (int)$array[0];
@@ -71,12 +68,7 @@ class ClientsModel extends BaseDatabaseModel
 
     private function getQuery(){
 
-        $app = Factory::getApplication();
-
-        //$filter_order		= $app->getUserStateFromRequest( 'filter_ordering', 'filter_ordering', 'name', 'cmd' ); //TODO: change name > a.name?
-        //$filter_order_Dir	= $app->getUserStateFromRequest( 'filter_order_Dir', 'filter_order_Dir', '', 'word' );
-        $search     = $app->getUserStateFromRequest('searchbox', 'searchbox', '', 'string');
-        $search     = strtolower($search);
+        $search     = strtolower((string) $this->getState('filter.search'));
 
         $db = Factory::getContainer()->get('DatabaseDriver');
 
@@ -90,8 +82,8 @@ class ClientsModel extends BaseDatabaseModel
             $like_filter = ' LIKE ' . $db->quote('%' . str_replace(' ', '%', $search) . '%');
 
             $where = [
-                $db->quoteName('name') . $like_filter,
-                $db->quoteName('firstname') . $like_filter,
+                // First and last name together, so "Jan Jansen" is found.
+                'CONCAT_WS(' . $db->quote(' ') . ', ' . $db->quoteName('firstname') . ', ' . $db->quoteName('name') . ')' . $like_filter,
                 $db->quoteName('emailaddress') . $like_filter,
             ];
 

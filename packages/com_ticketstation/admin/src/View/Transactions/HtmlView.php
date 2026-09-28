@@ -46,16 +46,7 @@ class HtmlView extends BaseHtmlView
         ToolbarHelper::custom('controlpanel', 'icon-home', '', 'COM_TICKETSTATION_VIEW_CPANEL_TITLE_SHORT', false);
         Docs::toolbarButton('records-transactions');
 
-        $app		= Factory::getApplication();
-
-        $trix 		= $app->getUserStateFromRequest( 'trix', 'trix', '', 'cmd' );
-        $ordercode 	= $app->getUserStateFromRequest( 'ordercode', 'ordercode', '', 'cmd' );
-        $search			    = $app->getUserStateFromRequest( 'searchbox', 'searchbox', '', 'string' );
-        $search			    = strtolower( $search );
-
-        $lists['search']	= $search;
-        $lists['ordercode']	= $ordercode;
-        $lists['trix']		= $trix;
+        $lists['search'] = $this->escape($this->getModel()->getState('filter.search'));
 
         $items		= $this->get('list');
         $pagination	= $this->get('pagination');

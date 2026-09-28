@@ -14,6 +14,7 @@ defined('_JEXEC') or die;
 use Joomla\CMS\Factory;
 use Joomla\CMS\MVC\Model\BaseDatabaseModel;
 use Joomla\CMS\Pagination\Pagination;
+use Ticketstation\Component\Ticketstation\Administrator\Model\Mixin\ListState;
 
 /**
  * The list of seat charts: parent tickets with a seat chart. The editor itself works through
@@ -22,21 +23,15 @@ use Joomla\CMS\Pagination\Pagination;
  */
 class SeatplansModel extends BaseDatabaseModel
 {
+    use ListState;
+
     function __construct(){
 
         parent::__construct();
 
         $app 	= Factory::getApplication();
 
-        // Get the pagination request variables
-        $limit        = $app->getUserStateFromRequest( 'global.list.limit', 'limit', $app->getCfg('list_limit'), 'int' );
-        $limitstart = $app->getUserStateFromRequest('limitstart', 'limitstart', 0, 'int');
-
-        // In case limit has been changed, adjust limitstart accordingly
-        $limitstart = ($limit != 0 ? (floor($limitstart / $limit) * $limit) : 0);
-
-        $this->setState('limit', $limit);
-        $this->setState('limitstart', $limitstart);
+        $this->populateListState('seatplans');
     }
 
     function getPagination()
@@ -67,22 +62,14 @@ class SeatplansModel extends BaseDatabaseModel
 
     function _buildContentWhere() {
 
-        $app 	= Factory::getApplication();
-
-        $filter_order = $app->getUserStateFromRequest( 'filter_ordering_t','filter_ordering_t','a.eventid','cmd' );
-
+        // Every seat plan: this list has no event filter of its own. (It used to follow the
+        // event filter of the Tickets list without showing it.)
         $where = array();
 
         $where[] = 'a.eventid = b.eventid';
         $where[] = 'a.parent = 0';
         $where[] = 'a.show_seatplans = 1';
-
-
-        if($filter_order == 0) {
-            $where[] = 'a.eventid > 0';
-        }else{
-            $where[] = 'a.eventid = '.$filter_order;
-        }
+        $where[] = 'a.eventid > 0';
 
 
         $where 		= ( count( $where ) ? ' WHERE '. implode( ' AND ', $where ) : '' );

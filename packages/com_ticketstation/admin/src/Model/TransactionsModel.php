@@ -15,6 +15,7 @@ use Joomla\CMS\Factory;
 use Joomla\CMS\MVC\Model\BaseDatabaseModel;
 use Joomla\CMS\Pagination\Pagination;
 use Joomla\Utilities\ArrayHelper;
+use Ticketstation\Component\Ticketstation\Administrator\Model\Mixin\ListState;
 
 /**
  * Ticketstation Transactions Model
@@ -22,6 +23,8 @@ use Joomla\Utilities\ArrayHelper;
  */
 class TransactionsModel extends BaseDatabaseModel
 {
+    use ListState;
+
     ## Empty data variabele
     var $_data  = null;
     var $_id = null;
@@ -34,15 +37,9 @@ class TransactionsModel extends BaseDatabaseModel
 
         $app 	= Factory::getApplication();
 
-        ## Get the pagination request variables
-        $limit      = $app->getUserStateFromRequest( 'global.list.limit', 'limit', $app->get('list_limit'), 'int' );
-        $limitstart = $app->getUserStateFromRequest( 'products.limitstart', 'limitstart', 0, 'int' );
-
-        ## In case limit has been changed, adjust limitstart accordingly
-        $limitstart = ($limit != 0 ? (floor($limitstart / $limit) * $limit) : 0);
-
-        $this->setState('limit', $limit);
-        $this->setState('limitstart', $limitstart);
+        $this->populateListState('transactions', [
+            'search' => ['searchbox', '', 'string'],
+        ]);
 
         $array = $app->getInput()->get('cid', array(0), 'array');
         $this->id = (int)$array[0];
@@ -71,10 +68,7 @@ class TransactionsModel extends BaseDatabaseModel
 
     private function getQuery(){
 
-        $app = Factory::getApplication();
-
-        $search     = $app->getUserStateFromRequest('searchbox', 'searchbox', '', 'string');
-        $search     = strtolower($search);
+        $search     = strtolower((string) $this->getState('filter.search'));
 
         $db = Factory::getContainer()->get('DatabaseDriver');
 
@@ -89,8 +83,8 @@ class TransactionsModel extends BaseDatabaseModel
             $like_filter = ' LIKE ' . $db->quote('%' . str_replace(' ', '%', $search) . '%');
 
             $where = [
-                $db->quoteName('c.name') . $like_filter,
-                $db->quoteName('c.firstname') . $like_filter,
+                // First and last name together, so "Jan Jansen" is found.
+                'CONCAT_WS(' . $db->quote(' ') . ', ' . $db->quoteName('c.firstname') . ', ' . $db->quoteName('c.name') . ')' . $like_filter,
                 $db->quoteName('t.orderid') . $like_filter,
             ];
 

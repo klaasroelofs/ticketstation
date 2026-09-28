@@ -15,6 +15,7 @@ use Joomla\CMS\Factory;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\Model\ListModel;
 use Joomla\CMS\Pagination\Pagination;
+use Ticketstation\Component\Ticketstation\Administrator\Model\Mixin\ListState;
 use Joomla\CMS\Uri\Uri;
 use Joomla\Utilities\ArrayHelper;
 use Joomla\CMS\Client\ClientHelper;
@@ -27,21 +28,19 @@ use Ticketstation\Component\Ticketstation\Administrator\Helper\Ticketcleaner;
  */
 class TicketsModel extends ListModel
 {
+    use ListState;
+
     function __construct()
     {
         parent::__construct();
 
         $app    	= Factory::getApplication();
 
-        ## Get the pagination request variables
-        $limit      = $app->getUserStateFromRequest( 'global.list.limit', 'limit', $app->get('list_limit'), 'int' );
-        $limitstart = $app->getUserStateFromRequest( 'products.limitstart', 'limitstart', 0, 'int' );
-
-        ## In case limit has been changed, adjust limitstart accordingly
-        $limitstart = ($limit != 0 ? (floor($limitstart / $limit) * $limit) : 0);
-
-        $this->setState('limit', $limit);
-        $this->setState('limitstart', $limitstart);
+        $this->populateListState('tickets', [
+            'event' => ['filter_ordering_t', 0, 'int'],
+            'state' => ['filter_state', 3, 'int'],
+            'venue' => ['filter_ordering_venue', 0, 'int'],
+        ]);
 
         $array = $app->getInput()->get('cid', array(0), 'array');
         $this->id = (int)$array[0];
@@ -68,9 +67,9 @@ class TicketsModel extends ListModel
         $db = Factory::getContainer()->get('DatabaseDriver');
         $app    	= Factory::getApplication();
 
-        $eventid 		  = $app->getUserStateFromRequest( 'filter_ordering_t','filter_ordering_t','0','cmd' );
-        $filter_state	  = $app->getUserStateFromRequest( 'filter_state', 'filter_state', '3', 'int' );
-        $filter_venue	  = $app->getUserStateFromRequest( 'filter_ordering_venue', 'filter_ordering_venue', '0', 'int' );
+        $eventid 		  = (int) $this->getState('filter.event');
+        $filter_state	  = (int) $this->getState('filter.state');
+        $filter_venue	  = (int) $this->getState('filter.venue');
 
         $query = $db->getQuery(true);
 

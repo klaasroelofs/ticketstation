@@ -72,30 +72,11 @@ class HtmlView extends BaseHtmlView
         ToolbarHelper::custom('controlpanel', 'icon-home', '', 'COM_TICKETSTATION_VIEW_CPANEL_TITLE_SHORT', false);
         Docs::toolbarButton('records-customers');
 
-        $app		= Factory::getApplication();
-
         ## Getting the items into a variable
         $items	= $this->get('list');
         $pagination = $this->get( 'Pagination' );
 
-        $filter_order       = $app->getUserStateFromRequest( 'filter_ordering', 'filter_ordering', 'name', 'cmd' );
-        $search			    = $app->getUserStateFromRequest( 'searchbox', 'searchbox', '', 'string' );
-        $search			    = strtolower( $search );
-
-        $lists['search']= $search;
-
-        ## Filling the Array() for doors and make a select list for it.
-        $ordering = array(
-            'name' => array('value' => 'name', 'text' => Text::_( 'COM_TICKETSTATION_SEARCH_NAME' )),
-            'address' => array('value' => 'address', 'text' => Text::_( 'COM_TICKETSTATION_SEARCH_ADDRESS' )),
-            'zipcode' => array('value' => 'zipcode', 'text' => Text::_( 'COM_TICKETSTATION_SEARCH_ZIPCODE' )),
-            'city' => array('value' => 'city', 'text' => Text::_( 'COM_TICKETSTATION_SEARCH_CITY' )),
-            'emailaddress' => array('value' => 'emailaddress', 'text' => Text::_( 'COM_TICKETSTATION_SEARCH_EMAIL' )),
-
-        );
-
-        $lists['ordering'] = HTMLHelper::_('select.genericList', $ordering, 'filter_ordering', ' class="form-select"',
-            'value', 'text', $filter_order );
+        $lists['search'] = $this->escape($this->getModel()->getState('filter.search'));
 
         $this->pagination = $pagination;
         $this->items = $items;

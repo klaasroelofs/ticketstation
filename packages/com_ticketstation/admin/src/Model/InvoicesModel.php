@@ -14,6 +14,7 @@ defined('_JEXEC') or die;
 use Joomla\CMS\Factory;
 use Joomla\CMS\MVC\Model\BaseDatabaseModel;
 use Joomla\CMS\Pagination\Pagination;
+use Ticketstation\Component\Ticketstation\Administrator\Model\Mixin\ListState;
 
 /**
  * Ticketstation Invoices Model
@@ -21,19 +22,15 @@ use Joomla\CMS\Pagination\Pagination;
  */
 class InvoicesModel extends BaseDatabaseModel
 {
+    use ListState;
+
     function __construct()
     {
         parent::__construct();
 
         $app = Factory::getApplication();
 
-        $limit      = $app->getUserStateFromRequest('global.list.limit', 'limit', $app->getCfg('list_limit'), 'int');
-        $limitstart = $app->getUserStateFromRequest('invoices.limitstart', 'limitstart', 0, 'int');
-
-        $limitstart = ($limit != 0 ? (floor($limitstart / $limit) * $limit) : 0);
-
-        $this->setState('limit', $limit);
-        $this->setState('limitstart', $limitstart);
+        $this->populateListState('invoices');
     }
 
     function getPagination()

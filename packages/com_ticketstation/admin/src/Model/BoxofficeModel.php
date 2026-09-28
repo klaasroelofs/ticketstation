@@ -21,6 +21,7 @@ use Joomla\Database\DatabaseQuery;
 use Joomla\Database\ParameterType;
 use Joomla\Utilities\ArrayHelper;
 use stdClass;
+use Ticketstation\Component\Ticketstation\Administrator\Model\Mixin\ListState;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\CustomerNote;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\eTicketsMessage;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\History;
@@ -41,9 +42,11 @@ use Ticketstation\Component\Ticketstation\Administrator\Helper\WaitingList;
  */
 class BoxofficeModel extends ListModel
 {
+    use ListState;
+
     /**
-     * Prefix of the user state of the order list: its filters, search and page. Other lists
-     * of the component keep their own, so a search in one doesn't filter another.
+     * Prefix of the user state of the order list: its filters, search and page (see
+     * ListState).
      */
     private const CONTEXT = 'com_ticketstation.boxoffice.';
 
@@ -108,50 +111,12 @@ class BoxofficeModel extends ListModel
 
         $app = Factory::getApplication();
 
-        // The filters and the search. A changed filter or search starts again at the first
-        // page: the page the list was on could hold nothing of the new selection.
-        $filters = [
+        $this->populateListState('boxoffice', [
             'search' => ['searchbox', '', 'string'],
             'paid'   => ['filter_ordering_paid', 0, 'int'],
             'event'  => ['filter_ordering_event', 0, 'int'],
             'sent'   => ['filter_ordering_sent', 0, 'int'],
-        ];
-
-        $changed = false;
-
-        foreach ($filters as $name => [$request, $default, $type])
-        {
-            $previous = $app->getUserState(self::CONTEXT . $name, $default);
-            $value    = $app->getUserStateFromRequest(self::CONTEXT . $name, $request, $default, $type);
-
-            if ($name === 'search')
-            {
-                $value = trim((string) $value);
-            }
-
-            $changed = $changed || (string) $previous !== (string) $value;
-
-            $this->setState('filter.' . $name, $value);
-        }
-
-        // Get the pagination request variables
-        $limit      = (int) $app->getUserStateFromRequest('global.list.limit', 'limit', $app->get('list_limit'), 'uint');
-        $limitstart = (int) $app->getUserStateFromRequest(self::CONTEXT . 'limitstart', 'limitstart', 0, 'uint');
-
-        if ($changed)
-        {
-            $limitstart = 0;
-            $app->setUserState(self::CONTEXT . 'limitstart', 0);
-        }
-
-        // In case limit has been changed, adjust limitstart accordingly
-        $limitstart = ($limit != 0 ? (int) (floor($limitstart / $limit) * $limit) : 0);
-
-        $this->setState('limit', $limit);
-        $this->setState('limitstart', $limitstart);
-
-        // The state is complete: ListModel::populateState() must not run over it.
-        $this->__state_set = true;
+        ]);
 
         $array    = $app->getInput()->get('cid', [0], 'array');
         $this->id = (int) $array[0];

@@ -67,13 +67,6 @@ class HtmlView extends BaseHtmlView
         ToolbarHelper::custom('controlpanel', 'icon-home', '', 'COM_TICKETSTATION_VIEW_CPANEL_TITLE_SHORT', false);
         Docs::toolbarButton('coupons');
 
-        $app = Factory::getApplication();
-
-        $search = $app->getUserStateFromRequest('searchbox', 'searchbox', '', 'string');
-        $search = strtolower($search);
-
-        $lists['search'] = $search;
-
         $items = $this->get('list');
         $config = $this->get('config');
         $pagination = $this->get('Pagination');

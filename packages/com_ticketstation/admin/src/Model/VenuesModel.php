@@ -15,6 +15,7 @@ use Joomla\CMS\Factory;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\Model\BaseDatabaseModel;
 use Joomla\CMS\Pagination\Pagination;
+use Ticketstation\Component\Ticketstation\Administrator\Model\Mixin\ListState;
 use Joomla\Utilities\ArrayHelper;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\SeatplanLayout;
 
@@ -24,21 +25,15 @@ use Ticketstation\Component\Ticketstation\Administrator\Helper\SeatplanLayout;
  */
 class VenuesModel extends BaseDatabaseModel
 {
+    use ListState;
+
     function __construct()
     {
         parent::__construct();
 
         $app    	= Factory::getApplication();
 
-        ## Get the pagination request variables
-        $limit      = $app->getUserStateFromRequest( 'global.list.limit', 'limit', $app->getCfg('list_limit'), 'int' );
-        $limitstart = $app->getUserStateFromRequest( 'products.limitstart', 'limitstart', 0, 'int' );
-
-        ## In case limit has been changed, adjust limitstart accordingly
-        $limitstart = ($limit != 0 ? (floor($limitstart / $limit) * $limit) : 0);
-
-        $this->setState('limit', $limit);
-        $this->setState('limitstart', $limitstart);
+        $this->populateListState('venues');
 
         $array = $app->getInput()->get('cid', array(0), 'array');
         $this->id = (int)$array[0];
