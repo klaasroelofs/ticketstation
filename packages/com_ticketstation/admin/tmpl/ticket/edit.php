@@ -179,40 +179,43 @@ if(isset($this->item->ticketid))
 
             <hr />
 
+            <h2>
+                <?= Text::_('COM_TICKETSTATION_TICKET_DESIGN_SETTINGS'); ?>
+            </h2>
+            <div class="form-text mb-3">
+                <?= Text::_('COM_TICKETSTATION_TLE_INTRO'); ?>
+            </div>
+
+            <?php // The layout editor (assets/js/ticketlayouteditor.js); it reads and writes the fields below. ?>
+            <div id="ts-tle" class="ts-tle mb-4">
+                <noscript><div class="alert alert-warning"><?= Text::_('COM_TICKETSTATION_TLE_NEEDS_JS'); ?></div></noscript>
+            </div>
+
             <div class="row">
-
                 <div class="col-md-6">
-                    <h2>
-                        <?= Text::_('COM_TICKETSTATION_TICKET_DESIGN_SETTINGS'); ?>
-                    </h2>
-                    <div class="form-text" style="margin-bottom: 20px;">
-                        <?= Text::_('COM_TICKETSTATION_TICKET_DESIGN_SETTINGS_DESC'); ?>
-                    </div>
-
-                    <button type="button" class="btn btn-primary" onclick="openTicketPreview()">
-                        <i class="icon-search"></i> <?= Text::_('COM_TICKETSTATION_TICKET_PREVIEW'); ?>
-                    </button>
-
-                    <hr/>
-
                     <h3>
                         <?= Text::_('COM_TICKETSTATION_COPY_VALUES_FROM_OTHER'); ?>
                     </h3>
-                    <div class="form-text" style="margin-bottom: 20px;">
+                    <div class="form-text mb-3">
                         <?= Text::_('COM_TICKETSTATION_COPY_VALUES_FROM_OTHER_DESC'); ?>
                     </div>
                     <div>
                         <?= $this->form->renderField('fieldcopyticket'); ?>
                     </div>
-                    <a onclick="loadticketvalues()" class="btn btn-secondary">
+                    <button type="button" onclick="loadticketvalues()" class="btn btn-secondary">
                         <i class="icon-download"></i>
                         <?= Text::_( 'COM_TICKETSTATION_COPY_VALUES_FROM_OTHER_LOAD' ); ?>
-                    </a>
-
-                    <hr/>
-
+                    </button>
                 </div>
             </div>
+
+            <hr />
+
+            <details class="ts-tle-advanced">
+                <summary><?= Text::_('COM_TICKETSTATION_TLE_ADVANCED'); ?></summary>
+                <div class="form-text my-3">
+                    <?= Text::_('COM_TICKETSTATION_TICKET_DESIGN_SETTINGS_DESC'); ?>
+                </div>
 
             <div class="row">
 
@@ -301,6 +304,7 @@ if(isset($this->item->ticketid))
                 </div>
 
             </div>
+            </details>
             <?= HTMLHelper::_('uitab.endTab'); ?>
 
             <?= HTMLHelper::_('uitab.endTabSet'); ?>
@@ -340,8 +344,25 @@ if(isset($this->item->ticketid))
     </div>
 </div>
 
-<script src="https://code.jquery.com/jquery-latest.min.js"></script>
-<script type="text/javascript">
+<script>
+    // The form's values for a raw request (preview, layout editor, copy): without the form's own
+    // option/controller/task fields, which would override the task in the request URL (Joomla
+    // merges GET and POST, with POST winning), and without the file inputs.
+    function ticketFormBody() {
+        var body = new URLSearchParams();
+        var form = document.getElementById('adminForm');
+        var ticketid = document.getElementById('jform_ticketid');
+
+        new FormData(form).forEach(function (value, name) {
+            if (name !== 'task' && name !== 'option' && name !== 'controller' && typeof value === 'string') {
+                body.append(name, value);
+            }
+        });
+
+        body.append('ticketid', ticketid ? ticketid.value : 0);
+
+        return body;
+    }
 
     // Explicitly drive the modal through the Bootstrap JS API instead of relying on
     // data-bs-toggle/data-bs-dismiss (the automatic attribute-driven behaviour did not
@@ -374,36 +395,18 @@ if(isset($this->item->ticketid))
         }
     }
 
+    function showPreviewState(state) {
+        document.getElementById('ticketPreviewLoading').classList.toggle('d-none', state !== 'loading');
+        document.getElementById('ticketPreviewError').classList.toggle('d-none', state !== 'error');
+        document.getElementById('ticketPreviewFrame').classList.toggle('d-none', state !== 'ready');
+    }
+
     function loadTicketPreview() {
+        showPreviewState('loading');
 
-        var ticketid = jQuery("#jform_ticketid").length ? jQuery("#jform_ticketid").val() : 0;
-
-        // Leave out the form's own option/controller/task hidden fields: since those
-        // share their name with our target URL's query parameters, Joomla merges GET
-        // and POST into $_REQUEST with POST winning, so posting the form's own
-        // (empty) task field would silently override task=PreviewTicket and route
-        // the request to the normal "display" task instead.
-        var params = jQuery("#adminForm").serializeArray().filter(function (field) {
-            return field.name !== 'task' && field.name !== 'option' && field.name !== 'controller';
-        });
-
-        var body = new URLSearchParams();
-        params.forEach(function (field) {
-            body.append(field.name, field.value);
-        });
-        body.append('ticketid', ticketid);
-
-        jQuery("#ticketPreviewError").addClass('d-none');
-        jQuery("#ticketPreviewFrame").addClass('d-none');
-        jQuery("#ticketPreviewLoading").removeClass('d-none');
-
-        // Plain fetch() instead of jQuery.ajax(): jQuery throws an uncaught
-        // InvalidStateError when it tries to read xhr.responseText internally on a
-        // request configured with xhrFields.responseType = 'blob', which breaks the
-        // callback chain before our own success/error handling ever runs.
-        fetch("index.php?option=com_ticketstation&controller=ticket&task=PreviewTicket&format=raw", {
+        fetch('index.php?option=com_ticketstation&controller=ticket&task=PreviewTicket&format=raw', {
             method: 'POST',
-            body: body,
+            body: ticketFormBody(),
             cache: 'no-store'
         })
             .then(function (response) {
@@ -419,7 +422,7 @@ if(isset($this->item->ticketid))
                     throw new Error('Unexpected response type: ' + blob.type);
                 }
 
-                var frame = document.getElementById("ticketPreviewFrame");
+                var frame = document.getElementById('ticketPreviewFrame');
 
                 if (frame.dataset.blobUrl) {
                     URL.revokeObjectURL(frame.dataset.blobUrl);
@@ -429,8 +432,7 @@ if(isset($this->item->ticketid))
                 frame.src = url;
                 frame.dataset.blobUrl = url;
 
-                jQuery("#ticketPreviewLoading").addClass('d-none');
-                jQuery("#ticketPreviewFrame").removeClass('d-none');
+                showPreviewState('ready');
 
                 // If the modal never actually became visible (eg. the Bootstrap JS
                 // bundle isn't available on this page), fall back to opening the
@@ -441,102 +443,59 @@ if(isset($this->item->ticketid))
                 }
             })
             .catch(function () {
-                jQuery("#ticketPreviewLoading").addClass('d-none');
-                jQuery("#ticketPreviewError").removeClass('d-none');
+                showPreviewState('error');
             });
     }
 
-    function loadticketvalues(){
+    // Copies the layout fields of the ticket chosen under "Load fields from other Ticket". Every
+    // changed field fires a change event, so the layout editor follows.
+    function loadticketvalues() {
+        var body = new URLSearchParams();
+        body.append('ticketid', document.getElementById('jform_fieldcopyticket').value);
 
-        var ticket = document.getElementById("jform_fieldcopyticket").value;
-        var data = 'ticketid=' + ticket;
-
-        jQuery.ajax({
-            //this is the php file that processes the data and send mail
-            url: "index.php?option=com_ticketstation&controller=ticket&task=TicketLayout&format=raw",
-            //POST method is used
-            type: "POST",
-            //pass the data
-            data: data,
-            //Do not cache the page
-            cache: false,
-            //success
-            success: function (ticketdata) {
-
-                var dataparsed = JSON.parse(ticketdata)
-
-                if (dataparsed.ticket_font) {
-                    jQuery("#jform_ticket_font").val(dataparsed.ticket_font);
+        fetch('index.php?option=com_ticketstation&controller=ticket&task=TicketLayout&format=raw', {
+            method: 'POST',
+            body: body,
+            cache: 'no-store'
+        })
+            .then(function (response) {
+                return response.json();
+            })
+            .then(function (data) {
+                if (!data) {
+                    return;
                 }
 
-                jQuery("#jform_eventname_fontcolor").val(dataparsed.eventname_fontcolor);
-                jQuery("#jform_eventname_fontsize").val(dataparsed.eventname_fontsize);
-                jQuery("#jform_eventname_position").val(dataparsed.eventname_position);
+                var fields = ['eventname', 'ticketname', 'freetext_1', 'ticketdate', 'venue', 'ticketprice', 'orderdate',
+                    'client', 'orderticketindex', 'ordernumber', 'seatnumber', 'orderreference'];
+                var names = [];
 
-                jQuery("#jform_ticketname_fontcolor").val(dataparsed.ticketname_fontcolor);
-                jQuery("#jform_ticketname_fontsize").val(dataparsed.ticketname_fontsize);
-                jQuery("#jform_ticketname_position").val(dataparsed.ticketname_position);
+                fields.forEach(function (field) {
+                    names.push(field + '_fontcolor', field + '_fontsize', field + '_position');
+                });
+                names.push('orderticketindex_prependtext', 'qrcode_position', 'qrcode_width');
 
-                jQuery("#jform_freetext_1_fontcolor").val(dataparsed.freetext_1_fontcolor);
-                jQuery("#jform_freetext_1_fontsize").val(dataparsed.freetext_1_fontsize);
-                jQuery("#jform_freetext_1_position").val(dataparsed.freetext_1_position);
-
-                jQuery("#jform_ticketdate_fontcolor").val(dataparsed.ticketdate_fontcolor);
-                jQuery("#jform_ticketdate_fontsize").val(dataparsed.ticketdate_fontsize);
-                jQuery("#jform_ticketdate_position").val(dataparsed.ticketdate_position);
-
-                jQuery("#jform_venue_fontcolor").val(dataparsed.venue_fontcolor);
-                jQuery("#jform_venue_fontsize").val(dataparsed.venue_fontsize);
-                jQuery("#jform_venue_position").val(dataparsed.venue_position);
-
-                jQuery("#jform_ticketprice_fontcolor").val(dataparsed.ticketprice_fontcolor);
-                jQuery("#jform_ticketprice_fontsize").val(dataparsed.ticketprice_fontsize);
-                jQuery("#jform_ticketprice_position").val(dataparsed.ticketprice_position);
-
-                jQuery("#jform_orderdate_fontcolor").val(dataparsed.orderdate_fontcolor);
-                jQuery("#jform_orderdate_fontsize").val(dataparsed.orderdate_fontsize);
-                jQuery("#jform_orderdate_position").val(dataparsed.orderdate_position);
-
-                jQuery("#jform_client_fontcolor").val(dataparsed.client_fontcolor);
-                jQuery("#jform_client_fontsize").val(dataparsed.client_fontsize);
-                jQuery("#jform_client_position").val(dataparsed.client_position);
-
-                jQuery("#jform_orderticketindex_fontcolor").val(dataparsed.orderticketindex_fontcolor);
-                jQuery("#jform_orderticketindex_fontsize").val(dataparsed.orderticketindex_fontsize);
-                jQuery("#jform_orderticketindex_position").val(dataparsed.orderticketindex_position);
-                if (dataparsed.orderticketindex_prependtext_print === 0) {
-                    jQuery("#jform_orderticketindex_prependtext_print0").prop('checked', true).toggleClass("active");
-                    jQuery("#jform_orderticketindex_prependtext_print1").prop('checked', false).toggleClass("active");
-                } else {
-                     jQuery("#jform_orderticketindex_prependtext_print0").prop('checked', false).toggleClass("active");
-                     jQuery("#jform_orderticketindex_prependtext_print1").prop('checked', true).toggleClass("active");
-                }
-                jQuery("#jform_orderticketindex_prependtext").val(dataparsed.orderticketindex_prependtext);
-
-                jQuery("#jform_ordernumber_fontcolor").val(dataparsed.ordernumber_fontcolor);
-                jQuery("#jform_ordernumber_fontsize").val(dataparsed.ordernumber_fontsize);
-                jQuery("#jform_ordernumber_position").val(dataparsed.ordernumber_position);
-
-                jQuery("#jform_seatnumber_fontcolor").val(dataparsed.seatnumber_fontcolor);
-                jQuery("#jform_seatnumber_fontsize").val(dataparsed.seatnumber_fontsize);
-                jQuery("#jform_seatnumber_position").val(dataparsed.seatnumber_position);
-
-                jQuery("#jform_orderreference_fontcolor").val(dataparsed.orderreference_fontcolor);
-                jQuery("#jform_orderreference_fontsize").val(dataparsed.orderreference_fontsize);
-                jQuery("#jform_orderreference_position").val(dataparsed.orderreference_position);
-                if (dataparsed.orderreference_centered === 0) {
-                    jQuery("#jform_orderreference_centered0").prop('checked', true).toggleClass("active");
-                    jQuery("#jform_orderreference_centered1").prop('checked', false).toggleClass("active");
-                } else {
-                     jQuery("#jform_orderreference_centered0").prop('checked', false).toggleClass("active");
-                     jQuery("#jform_orderreference_centered1").prop('checked', true).toggleClass("active");
+                if (data.ticket_font) {
+                    names.push('ticket_font');
                 }
 
-                jQuery("#jform_qrcode_position").val(dataparsed.qrcode_position);
-                jQuery("#jform_qrcode_width").val(dataparsed.qrcode_width);
+                names.forEach(function (name) {
+                    var input = document.getElementById('jform_' + name);
 
-            }
-        });
+                    if (input) {
+                        input.value = data[name] === null || data[name] === undefined ? '' : data[name];
+                        input.dispatchEvent(new Event('change', {bubbles: true}));
+                    }
+                });
+
+                ['orderticketindex_prependtext_print', 'orderreference_centered'].forEach(function (name) {
+                    var radio = document.getElementById('jform_' + name + (String(data[name]) === '1' ? '1' : '0'));
+
+                    if (radio) {
+                        radio.checked = true;
+                        radio.dispatchEvent(new Event('change', {bubbles: true}));
+                    }
+                });
+            });
     }
-
 </script>

@@ -1,0 +1,262 @@
+/**
+ * @package     Ticketstation
+ * @subpackage  com_ticketstation
+ *
+ * @copyright   Copyright (C) 2026 Klaas Roelofs. All rights reserved.
+ * @license     GNU General Public License version 3; see LICENSE
+ *
+ * The layout editor on the "Ticket Layout" tab (assets/js/ticketlayouteditor.js).
+ */
+
+/* The ticket fonts Raleway and Open Sans (SIL OFL, see assets/fonts). */
+@font-face {
+    font-family: "TS Raleway";
+    font-weight: 400;
+    font-display: swap;
+    src: url("../fonts/raleway-latin-400-normal.woff2") format("woff2");
+}
+
+@font-face {
+    font-family: "TS Raleway";
+    font-weight: 700;
+    font-display: swap;
+    src: url("../fonts/raleway-latin-700-normal.woff2") format("woff2");
+}
+
+@font-face {
+    font-family: "TS Open Sans";
+    font-weight: 400;
+    font-display: swap;
+    src: url("../fonts/open-sans-latin-400-normal.woff2") format("woff2");
+}
+
+@font-face {
+    font-family: "TS Open Sans";
+    font-weight: 700;
+    font-display: swap;
+    src: url("../fonts/open-sans-latin-700-normal.woff2") format("woff2");
+}
+
+.ts-tle {
+    --ts-tle-border: var(--template-bg-dark-10, #d8dde6);
+    --ts-tle-accent: var(--template-link-color, #2a69b8);
+    --ts-tle-warning: #c52827;
+    --ts-tle-stage: var(--template-bg-light, #f0f4fb);
+    border: 1px solid var(--ts-tle-border);
+    border-radius: .375rem;
+}
+
+.ts-tle__toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .75rem;
+    padding: .5rem .75rem;
+    border-bottom: 1px solid var(--ts-tle-border);
+}
+
+.ts-tle__tool {
+    display: inline-flex;
+    align-items: center;
+    gap: .5rem;
+    margin: 0;
+}
+
+.ts-tle__tool .form-select {
+    width: auto;
+}
+
+.ts-tle__status {
+    margin-left: auto;
+    font-size: .875rem;
+    color: var(--template-text-light, #6c757d);
+}
+
+.ts-tle__status.is-error {
+    color: var(--ts-tle-warning);
+}
+
+.ts-tle__notes:not(:empty) {
+    padding: .75rem .75rem 0;
+}
+
+.ts-tle__notes .alert {
+    margin-bottom: 0;
+}
+
+.ts-tle__body {
+    display: flex;
+    align-items: flex-start;
+}
+
+.ts-tle__stage {
+    flex: 1 1 auto;
+    min-width: 0;
+    padding: 1rem;
+    background: var(--ts-tle-stage);
+}
+
+.ts-tle__paper {
+    position: relative;
+    margin: 0 auto;
+    background: #fff;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, .25);
+    outline: none;
+}
+
+.ts-tle__paper:focus-visible {
+    box-shadow: 0 0 0 3px var(--ts-tle-accent);
+}
+
+.ts-tle__bg,
+.ts-tle__layer {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.ts-tle__layer {
+    overflow: visible;
+    touch-action: none;
+    user-select: none;
+}
+
+.ts-tle__field {
+    cursor: move;
+}
+
+.ts-tle__frame {
+    fill: transparent;
+    stroke: var(--ts-tle-accent);
+    stroke-width: 1;
+    stroke-opacity: 0;
+    vector-effect: non-scaling-stroke;
+}
+
+.ts-tle__field:hover .ts-tle__frame {
+    stroke-opacity: .6;
+}
+
+.ts-tle__field.is-conditional .ts-tle__frame {
+    stroke-dasharray: 4 3;
+    stroke-opacity: .5;
+}
+
+.ts-tle__field.is-selected .ts-tle__frame {
+    fill: rgba(42, 105, 184, .08);
+    stroke-opacity: 1;
+    stroke-width: 1.5;
+}
+
+.ts-tle__field.is-overflow .ts-tle__frame {
+    stroke: var(--ts-tle-warning);
+    stroke-opacity: 1;
+}
+
+.ts-tle__side {
+    flex: 0 0 17rem;
+    padding: .75rem;
+    border-left: 1px solid var(--ts-tle-border);
+}
+
+.ts-tle__heading {
+    margin: 0 0 .5rem;
+    font-size: 1rem;
+}
+
+.ts-tle__list {
+    margin: 0 0 1rem;
+    padding: 0;
+    list-style: none;
+}
+
+.ts-tle__item {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0 .5rem;
+    padding: .125rem .25rem;
+    border-radius: .25rem;
+}
+
+.ts-tle__item.is-selected {
+    background: rgba(42, 105, 184, .1);
+}
+
+.ts-tle__item .form-check-input {
+    margin: 0;
+}
+
+.ts-tle__pick {
+    padding: 0;
+    border: 0;
+    background: none;
+    color: inherit;
+    text-align: left;
+}
+
+.ts-tle__pick:disabled {
+    opacity: .55;
+}
+
+.ts-tle__cond {
+    flex-basis: 100%;
+    padding-left: 1.5rem;
+    color: var(--template-text-light, #6c757d);
+    font-size: .75rem;
+}
+
+.ts-tle__props {
+    padding-top: .75rem;
+    border-top: 1px solid var(--ts-tle-border);
+}
+
+.ts-tle__grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: .5rem;
+    margin-bottom: .5rem;
+}
+
+.ts-tle__prop {
+    display: flex;
+    flex-direction: column;
+    gap: .125rem;
+    margin: 0;
+    font-size: .875rem;
+}
+
+.ts-tle__prop .form-control-color {
+    width: 100%;
+    height: calc(1.5em + .5rem + 2px);
+    padding: .125rem;
+}
+
+.ts-tle__hint {
+    margin: .5rem 0 0;
+    font-size: .8125rem;
+    color: var(--template-text-light, #6c757d);
+}
+
+.ts-tle__hint.is-warning {
+    color: var(--ts-tle-warning);
+}
+
+.ts-tle-advanced > summary {
+    font-weight: 600;
+    cursor: pointer;
+}
+
+@media (max-width: 991.98px) {
+    .ts-tle__body {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .ts-tle__side {
+        flex-basis: auto;
+        border-left: 0;
+        border-top: 1px solid var(--ts-tle-border);
+    }
+}

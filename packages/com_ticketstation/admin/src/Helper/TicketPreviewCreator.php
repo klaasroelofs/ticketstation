@@ -41,33 +41,8 @@ class TicketPreviewCreator
      */
     function generate($ticketid, array $data)
     {
-        $db = Factory::getContainer()->get('DatabaseDriver');
-
-        $query = $db->getQuery(true);
-        $query->select('*');
-        $query->from($db->quoteName('#__ticketstation_config'));
-        $query->where($db->quoteName('configid') . ' = ' . $db->quote(1));
-
-        $db->setQuery($query);
-        $config = $db->loadObject();
-
         $creator = new ticketcreator($ticketid);
-        $dummy   = $this->getDummyContent();
-
-        ## The venue chosen on the form, so the preview shows its real length; sample text otherwise.
-        if (!empty($data['venue'])) {
-            $query = $db->getQuery(true)
-                ->select($db->quoteName(['venue', 'city']))
-                ->from($db->quoteName('#__ticketstation_venues'))
-                ->where($db->quoteName('id') . ' = ' . (int) $data['venue']);
-
-            $db->setQuery($query);
-            $venue = $db->loadObject();
-
-            if ($venue) {
-                $dummy['venue'] = $creator->venueText($venue->venue, $venue->city);
-            }
-        }
+        $texts   = $this->sampleTexts($data);
 
         ## Ticket size, same rules as ticketcreator::doPDF()
         if (!empty($data['override_ticketsize'])) {
@@ -98,9 +73,9 @@ class TicketPreviewCreator
         }
 
         ## EVENTNAME / TICKETNAME / FREE TEXT 1 all share the same drawing rules.
-        $this->writeField($pdf, $creator, $data, 'eventname', $dummy['eventname']);
-        $this->writeField($pdf, $creator, $data, 'ticketname', $dummy['ticketname']);
-        $this->writeField($pdf, $creator, $data, 'freetext_1', $dummy['freetext_1']);
+        $this->writeField($pdf, $creator, $data, 'eventname', $texts['eventname']);
+        $this->writeField($pdf, $creator, $data, 'ticketname', $texts['ticketname']);
+        $this->writeField($pdf, $creator, $data, 'freetext_1', $texts['freetext_1']);
 
         ## ORDERREFERENCE
         if ($this->hasPosition($data, 'orderreference_position')) {
@@ -111,12 +86,12 @@ class TicketPreviewCreator
 
             if (($data['orderreference_centered'] ?? '0') == 1) {
                 $mid_x = ($pdf->GetPageWidth() / 2) - ($pdf->GetPageWidth() * 0.04);
-                $pdf->SetXY($mid_x - ($pdf->GetStringWidth($dummy['remarks']) / 2), $position[1]);
+                $pdf->SetXY($mid_x - ($pdf->GetStringWidth($texts['orderreference']) / 2), $position[1]);
             } else {
                 $pdf->SetXY($position[0], $position[1]);
             }
 
-            $pdf->Write(0, PdfEncoding::toLatin1($dummy['remarks']));
+            $pdf->Write(0, PdfEncoding::toLatin1($texts['orderreference']));
         }
 
         ## STARTDATE
@@ -127,11 +102,11 @@ class TicketPreviewCreator
             $pdf->SetTextColor($rgb['r'], $rgb['g'], $rgb['b']);
             $pdf->SetXY($position[0], $position[1]);
 
-            $pdf->Write(0, TicketLanguage::_('COM_TICKETSTATION_PDF_DATE') . ' ' . date("d-m-Y", strtotime($dummy['startdate'])) . ' || ' . TicketLanguage::_('COM_TICKETSTATION_PDF_START') . ' ' . TicketLanguage::sprintf('COM_TICKETSTATION_PDF_TIME', date("H:i", strtotime($dummy['startdate']))));
+            $pdf->Write(0, $texts['ticketdate']);
         }
 
         ## VENUE
-        $this->writeField($pdf, $creator, $data, 'venue', $dummy['venue']);
+        $this->writeField($pdf, $creator, $data, 'venue', $texts['venue']);
 
         ## PRICE
         if ($this->hasPosition($data, 'ticketprice_position')) {
@@ -141,10 +116,7 @@ class TicketPreviewCreator
             $pdf->SetTextColor($rgb['r'], $rgb['g'], $rgb['b']);
             $pdf->SetXY($position[0], $position[1]);
 
-            // Currency and price format from the Configuration, as on the invoice.
-            $price = trim(TicketstationFunctions::showprice($config->priceformat, $dummy['ticketprice'], $config->valuta));
-
-            $pdf->Write(0, PdfEncoding::toLatin1(TicketLanguage::_('COM_TICKETSTATION_PDF_PRICE') . ' ' . $price));
+            $pdf->Write(0, PdfEncoding::toLatin1($texts['ticketprice']));
         }
 
         ## ORDERDATE
@@ -155,9 +127,7 @@ class TicketPreviewCreator
             $pdf->SetTextColor($rgb['r'], $rgb['g'], $rgb['b']);
             $pdf->SetXY($position[0], $position[1]);
 
-            $orderdate = Date::_($dummy['orderdate'], $config->dateformat ?: 'd-m-Y');
-
-            $pdf->Write(0, PdfEncoding::toLatin1($orderdate));
+            $pdf->Write(0, PdfEncoding::toLatin1($texts['orderdate']));
         }
 
         ## CLIENTNAME
@@ -171,12 +141,12 @@ class TicketPreviewCreator
 
             if (($data['ticket_size'] ?? '') == 'A5') {
                 $pdf->SetFont($this->font, 'B', $fontsize + 1);
-                $pdf->Write(0, PdfEncoding::toLatin1(TicketLanguage::_('COM_TICKETSTATION_PDF_ORDERED_BY')));
+                $pdf->Write(0, PdfEncoding::toLatin1($texts['client_orderedby']));
                 $pdf->SetFont($this->font, '', $fontsize);
                 $pdf->SetXY($position[0], $position[1] + 5);
-                $pdf->Write(0, substr(PdfEncoding::toLatin1($dummy['firstname'] . ' ' . $dummy['name']), 0, 35));
+                $pdf->Write(0, substr(PdfEncoding::toLatin1($texts['client_name']), 0, 35));
             } else {
-                $pdf->Write(0, PdfEncoding::toLatin1(TicketLanguage::_('COM_TICKETSTATION_PDF_ORDERED_BY') . ' ' . $dummy['firstname'] . ' ' . $dummy['name']));
+                $pdf->Write(0, PdfEncoding::toLatin1($texts['client_orderedby'] . ' ' . $texts['client_name']));
             }
         }
 
@@ -189,10 +159,10 @@ class TicketPreviewCreator
 
             if (($data['orderticketindex_prependtext_print'] ?? '0') == '1') {
                 $pdf->SetFont($this->font, 'B', ($data['orderticketindex_fontsize'] ?? '') ?: 10);
-                $pdf->Write(0, ($data['orderticketindex_prependtext'] ?? '') . ' ' . $dummy['ticket_volgnummer'] . '/' . $dummy['tickets_in_order']);
+                $pdf->Write(0, ($data['orderticketindex_prependtext'] ?? '') . ' ' . $texts['orderticketindex']);
             } else {
                 $pdf->SetFont($this->font, '', ($data['orderticketindex_fontsize'] ?? '') ?: 10);
-                $pdf->Write(0, $dummy['ticket_volgnummer'] . '/' . $dummy['tickets_in_order']);
+                $pdf->Write(0, $texts['orderticketindex']);
             }
         }
 
@@ -202,7 +172,7 @@ class TicketPreviewCreator
             $pdf->SetFont($this->font, '', ($data['ordernumber_fontsize'] ?? '') ?: 10);
             $rgb = $creator->hexToRgb(($data['ordernumber_fontcolor'] ?? '') ?: '000000');
             $pdf->SetTextColor($rgb['r'], $rgb['g'], $rgb['b']);
-            $pdf->TextWithDirection($position[0], $position[1], $dummy['eventcode'] . '-' . $dummy['ticketcode'] . '  |  ' . $dummy['ordercode'] . '-' . $dummy['orderid'], 'U');
+            $pdf->TextWithDirection($position[0], $position[1], $texts['ordernumber'], 'U');
         }
 
         ## SEATNUMBER
@@ -212,7 +182,7 @@ class TicketPreviewCreator
             $rgb = $creator->hexToRgb(($data['seatnumber_fontcolor'] ?? '') ?: '000000');
             $pdf->SetTextColor($rgb['r'], $rgb['g'], $rgb['b']);
             $pdf->SetXY($position[0], $position[1]);
-            $pdf->Write(0, TicketLanguage::_('COM_TICKETSTATION_PDF_SEAT_NUMBER') . ' ' . $dummy['seat_row'] . $dummy['seat_id']);
+            $pdf->Write(0, $texts['seatnumber']);
         }
 
         ## QR CODE - a fixed dummy payload, never a real barcode, and never stored on an order.
@@ -250,6 +220,62 @@ class TicketPreviewCreator
         $pdf->SetXY($position[0], $position[1]);
 
         $pdf->Write(0, PdfEncoding::toLatin1($value));
+    }
+
+    /**
+     * The sample text of every printable field, in UTF-8, exactly as the preview prints it. The
+     * layout editor on the "Ticket Layout" tab shows the same texts (TicketController::
+     * TicketLayoutEditor()), so the editor and the preview always agree.
+     *
+     * "client_orderedby" and "client_name" are printed on one line, or on two lines on A5
+     * (see generate()); "orderticketindex" is printed after the optional prepend text.
+     */
+    public function sampleTexts(array $data): array
+    {
+        $db    = Factory::getContainer()->get('DatabaseDriver');
+        $dummy = $this->getDummyContent();
+
+        $query = $db->getQuery(true)
+            ->select('*')
+            ->from($db->quoteName('#__ticketstation_config'))
+            ->where($db->quoteName('configid') . ' = 1');
+
+        $config = $db->setQuery($query)->loadObject();
+
+        ## The venue chosen on the form, so the preview shows its real length; sample text otherwise.
+        $venueText = $dummy['venue'];
+
+        if (!empty($data['venue'])) {
+            $query = $db->getQuery(true)
+                ->select($db->quoteName(['venue', 'city']))
+                ->from($db->quoteName('#__ticketstation_venues'))
+                ->where($db->quoteName('id') . ' = ' . (int) $data['venue']);
+
+            $venue = $db->setQuery($query)->loadObject();
+
+            if ($venue) {
+                $venueText = (new ticketcreator(0))->venueText($venue->venue, $venue->city);
+            }
+        }
+
+        // Currency and price format from the Configuration, as on the invoice.
+        $price = trim(TicketstationFunctions::showprice($config->priceformat, $dummy['ticketprice'], $config->valuta));
+
+        return [
+            'eventname'        => $dummy['eventname'],
+            'ticketname'       => $dummy['ticketname'],
+            'freetext_1'       => $dummy['freetext_1'],
+            'orderreference'   => $dummy['remarks'],
+            'ticketdate'       => TicketLanguage::_('COM_TICKETSTATION_PDF_DATE') . ' ' . date("d-m-Y", strtotime($dummy['startdate'])) . ' || ' . TicketLanguage::_('COM_TICKETSTATION_PDF_START') . ' ' . TicketLanguage::sprintf('COM_TICKETSTATION_PDF_TIME', date("H:i", strtotime($dummy['startdate']))),
+            'venue'            => $venueText,
+            'ticketprice'      => TicketLanguage::_('COM_TICKETSTATION_PDF_PRICE') . ' ' . $price,
+            'orderdate'        => Date::_($dummy['orderdate'], $config->dateformat ?: 'd-m-Y'),
+            'client_orderedby' => TicketLanguage::_('COM_TICKETSTATION_PDF_ORDERED_BY'),
+            'client_name'      => $dummy['firstname'] . ' ' . $dummy['name'],
+            'orderticketindex' => $dummy['ticket_volgnummer'] . '/' . $dummy['tickets_in_order'],
+            'ordernumber'      => $dummy['eventcode'] . '-' . $dummy['ticketcode'] . '  |  ' . $dummy['ordercode'] . '-' . $dummy['orderid'],
+            'seatnumber'       => TicketLanguage::_('COM_TICKETSTATION_PDF_SEAT_NUMBER') . ' ' . $dummy['seat_row'] . $dummy['seat_id'],
+        ];
     }
 
     private function getDummyContent()

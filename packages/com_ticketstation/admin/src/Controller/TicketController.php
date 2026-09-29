@@ -17,6 +17,8 @@ use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\Controller\FormController;
 use Joomla\CMS\Uri\Uri;
 use Ticketstation\Component\Ticketstation\Administrator\Controller\Mixin\RegisterControllerTasks;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\DefaultTicketLayout;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\TicketDesign;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\TicketPreviewCreator;
 use Joomla\CMS\Application\CMSApplication;
 use Joomla\CMS\MVC\Factory\MVCFactoryInterface;
@@ -238,6 +240,70 @@ class TicketController extends FormController
         header('Cache-Control: private, max-age=0, must-revalidate');
         header('Pragma: public');
         echo $pdf;
+        exit();
+    }
+
+    /**
+     * Everything the layout editor on the "Ticket Layout" tab needs for the size, orientation
+     * and venue currently entered in the form (saved or not), as JSON:
+     *
+     * - background: a PDF (base64) with only the ticket's background: its uploaded design or the
+     *   built-in layout, drawn by the same code as the real tickets
+     * - width/height: the page size in mm
+     * - defaults: the built-in field set DefaultTicketLayout prints when the ticket has no design
+     *   and no positions of its own (null when it has a design)
+     * - texts: the sample texts of the preview (TicketPreviewCreator::sampleTexts())
+     */
+    function TicketLayoutEditor()
+    {
+        $app      = Factory::getApplication();
+        $jinput   = $app->getInput();
+        $ticketid = $jinput->get('ticketid', 0, 'INT');
+        $data     = $jinput->post->get('jform', [], 'array');
+
+        ## Ticket size, same rules as ticketcreator::doPDF(). An override that is not two
+        ## positive numbers would break the PDF, so the editor falls back to A5 and says so.
+        $size    = ($data['ticket_size'] ?? '') == 'A4' ? [210, 297] : [148, 210];
+        $invalid = false;
+
+        if (trim((string) ($data['override_ticketsize'] ?? '')) !== '') {
+            $parts = array_map('trim', explode(',', $data['override_ticketsize']));
+
+            if (count($parts) === 2 && is_numeric($parts[0]) && is_numeric($parts[1]) && $parts[0] > 0 && $parts[1] > 0) {
+                $size = [(float) $parts[0], (float) $parts[1]];
+            } else {
+                $invalid = true;
+            }
+        }
+
+        $orientation = ($data['ticket_orientation'] ?? '') === 'L' ? 'L' : 'P';
+
+        require_once JPATH_ADMINISTRATOR . '/components/com_ticketstation/src/Helper/PDF/FPDI_EAN13.php';
+
+        $pdf = new \setasign\Fpdi\FPDI_EAN13();
+        $pdf->AddPage($orientation, $size);
+
+        $defaults = null;
+
+        if (DefaultTicketLayout::applies($ticketid)) {
+            DefaultTicketLayout::drawBackground($pdf);
+            $defaults = DefaultTicketLayout::defaultFields($pdf);
+        } else {
+            TicketDesign::draw($pdf, $ticketid);
+        }
+
+        $response = [
+            'background'  => base64_encode($pdf->Output('S')),
+            'width'       => round($pdf->GetPageWidth(), 2),
+            'height'      => round($pdf->GetPageHeight(), 2),
+            'defaults'    => $defaults,
+            'texts'       => (new TicketPreviewCreator())->sampleTexts($data),
+            'invalidSize' => $invalid,
+        ];
+
+        header('Content-Type: application/json; charset=utf-8');
+        header('Cache-Control: private, max-age=0, must-revalidate');
+        echo json_encode($response);
         exit();
     }
 

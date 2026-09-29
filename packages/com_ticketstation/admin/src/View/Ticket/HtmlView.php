@@ -15,7 +15,9 @@ use Joomla\CMS\Factory;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\View\HtmlView as BaseHtmlView;
 use Joomla\CMS\Toolbar\ToolbarHelper;
+use Joomla\CMS\Uri\Uri;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Docs;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\TicketLayoutFields;
 
 /**
  * Ticketstation Ticket Admin View
@@ -54,6 +56,49 @@ class HtmlView extends BaseHtmlView
         $app->getInput()->set('hidemainmenu', 1);
 
         Docs::toolbarButton('events');
+        $this->loadLayoutEditor();
         parent::display($tpl);
+    }
+
+    /**
+     * The layout editor on the "Ticket Layout" tab (assets/js/ticketlayouteditor.js): its
+     * assets, and what it needs to place the fields exactly like the PDF (TicketLayoutFields).
+     */
+    private function loadLayoutEditor(): void
+    {
+        $assets = Uri::base() . 'components/com_ticketstation/assets/';
+        $fields = [];
+
+        foreach (TicketLayoutFields::FIELDS as $key => $field) {
+            $fields[] = [
+                'key'       => $key,
+                'label'     => Text::_($field['label']),
+                'bold'      => $field['bold'],
+                'kind'      => $field['kind'],
+                'condition' => isset($field['condition']) ? Text::_($field['condition']) : '',
+            ];
+        }
+
+        $document = Factory::getApplication()->getDocument();
+        $document->addScriptOptions('com_ticketstation.ticketlayouteditor', [
+            'url'     => Uri::base(true) . '/index.php?option=com_ticketstation&controller=ticket&task=TicketLayoutEditor&format=raw',
+            'pdfjs'   => $assets . 'pdfjs/pdf.min.js',
+            'worker'  => $assets . 'pdfjs/pdf.worker.min.js',
+            'fields'  => $fields,
+            'metrics' => TicketLayoutFields::metrics(),
+        ]);
+
+        ## Every string the editor script uses: the keys it passes to T() (prefix COM_TICKETSTATION_TLE_).
+        $script = JPATH_ADMINISTRATOR . '/components/com_ticketstation/assets/js/ticketlayouteditor.js';
+
+        if (is_file($script) && preg_match_all("/\\bT\\('([A-Z0-9_]+)'/", file_get_contents($script), $keys)) {
+            foreach (array_unique($keys[1]) as $key) {
+                Text::script('COM_TICKETSTATION_TLE_' . $key);
+            }
+        }
+
+        $wa = $document->getWebAssetManager();
+        $wa->registerAndUseStyle('com_ticketstation.ticketlayouteditor', $assets . 'css/ticketlayouteditor.css');
+        $wa->registerAndUseScript('com_ticketstation.ticketlayouteditor', $assets . 'js/ticketlayouteditor.js', [], ['defer' => true], ['core']);
     }
 }
