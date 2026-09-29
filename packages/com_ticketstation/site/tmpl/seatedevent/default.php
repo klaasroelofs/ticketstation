@@ -16,6 +16,7 @@ use Joomla\CMS\Uri\Uri;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Date;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Ordercode;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\SeatChart;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\SeatplanSettings;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\TicketstationFunctions;
 
 // No direct access to this file
@@ -189,7 +190,7 @@ $bannerStyle = TicketstationFunctions::backgroundImageStyle('ticket' . (int) $th
     <section class="ts-seatmap-section">
         <h2 class="ts-section-title"><?php echo Text::_('COM_TICKETSTATION_SEATING_PLAN'); ?></h2>
 
-        <div class="ts-seatmap">
+        <div class="ts-seatmap" data-ts-tip-taken="<?php echo Text::_('COM_TICKETSTATION_SEAT_TAKEN'); ?>" data-ts-tip-mine="<?php echo Text::_('COM_TICKETSTATION_SEAT_MINE'); ?>">
             <?php echo SeatChart::open($chartCanvas, $chartBackground, $chartSettings, $chartShapes, $this->items); ?>
 
                 <?php
@@ -197,6 +198,12 @@ $bannerStyle = TicketstationFunctions::backgroundImageStyle('ticket' . (int) $th
                 ## The seats in this customer's own order.
                 $mine = array_map('intval', array_column($this->ordered, 'seat_sector'));
                 $hex  = fn ($value, $fallback) => '#' . SeatChart::hex($value, $fallback);
+
+                ## Tooltip per seat (seatmap.js): row and seat number, then what it costs. A free seat
+                ## on a chart with price categories sells in each of them, so it lists them all. The
+                ## currency is free text in the configuration and may be an entity such as &euro;.
+                $price      = fn ($amount) => html_entity_decode(TicketstationFunctions::showprice($this->config->priceformat, $amount, $this->config->valuta), ENT_QUOTES, 'UTF-8');
+                $categories = array_map(fn ($category) => $category->ticketname . ': ' . $price($category->ticketprice), SeatplanSettings::priceCategories($chartOwner));
 
                 foreach ($this->items as $row) {
 
@@ -220,7 +227,17 @@ $bannerStyle = TicketstationFunctions::backgroundImageStyle('ticket' . (int) $th
 
                     $label = (int) $row->type === 1 ? $row->row_name . $row->seatid : $row->ticketname;
 
-                    echo '<div id="seat-' . (int) $row->id . '" class="seat-element' . $state . '" data-border="' . $hex($row->border_color, '198d02') . '" style="' . SeatChart::seatStyle($row, $chartCanvas) . $style . '">'
+                    if ((int) $row->type === 1) {
+                        $tip = [(string) $row->row_name !== ''
+                            ? Text::sprintf('COM_TICKETSTATION_SEATMAP_TIP_ROW_SEAT', $row->row_name, $row->seatid)
+                            : Text::sprintf('COM_TICKETSTATION_SEATMAP_TIP_SEAT', $row->seatid)];
+                        $tip = array_merge($tip, (int) $row->parent === 0 && $categories ? $categories : [$row->ticketname . ': ' . $price($row->ticketprice)]);
+                    } else {
+                        $tip = [$row->ticketname, $price($row->ticketprice)];
+                    }
+
+                    echo '<div id="seat-' . (int) $row->id . '" class="seat-element' . $state . '" data-border="' . $hex($row->border_color, '198d02') . '"'
+                        . ' data-ts-tip="' . htmlspecialchars(implode("\n", $tip), ENT_QUOTES, 'UTF-8') . '" style="' . SeatChart::seatStyle($row, $chartCanvas) . $style . '">'
                         . ((int) $row->type === 1 ? '' : '<strong>') . htmlspecialchars($label, ENT_QUOTES, 'UTF-8') . ((int) $row->type === 1 ? '' : '</strong>')
                         . '</div>';
                 }

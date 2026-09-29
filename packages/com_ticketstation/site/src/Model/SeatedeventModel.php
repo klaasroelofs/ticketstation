@@ -101,9 +101,9 @@ class SeatedeventModel extends BaseDatabaseModel {
             $db = Factory::getContainer()->get('DatabaseDriver');
 
             ## All seats of this chart: free seats (ticketid = this ticket) and section seats
-            ## (parent = this ticket). The chart settings come from this ticket; a section's
+            ## (parent = this ticket), with the name and price of the ticket they sell. The chart settings come from this ticket; a section's
             ## own settings row only overrides the colours.
-            $sql = 'SELECT c.*, t.ticketname, ' . SeatplanSettings::COLUMNS . '
+            $sql = 'SELECT c.*, t.ticketname, t.ticketprice, ' . SeatplanSettings::COLUMNS . '
 					FROM #__ticketstation_seatplancoords AS c
 					INNER JOIN #__ticketstation_tickets AS t ON t.ticketid = c.ticketid'
                 . SeatplanSettings::JOINS . '
