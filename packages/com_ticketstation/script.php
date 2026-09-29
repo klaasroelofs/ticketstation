@@ -64,7 +64,80 @@ class com_ticketstationInstallerScript extends InstallerScript
             $this->removeFiles();
         }
 
+        if ($type === 'install' || $type === 'update')
+        {
+            $this->setDefaultPermissions();
+        }
+
         return true;
+    }
+
+    /**
+     * Default permissions (see admin/access.xml), set when the component has no rules of its own
+     * yet: on a new install and on the first update to a version with permissions (2.8.0).
+     * Rules an admin has set are never touched. Without them the Ticketstation actions would be
+     * denied to everyone but Super Users, so Administrators would lose what they could do before.
+     *
+     * Manager: open the component, Box Office, reservations and scanners (the core create, edit,
+     * publish and delete rights come from the Global Configuration). Administrator: everything,
+     * including permissions, configuration, payments, finance and deleting orders.
+     */
+    private function setDefaultPermissions(): void
+    {
+        try
+        {
+            $db    = \Joomla\CMS\Factory::getContainer()->get('DatabaseDriver');
+            $query = $db->getQuery(true)
+                ->select([$db->quoteName('id'), $db->quoteName('rules')])
+                ->from($db->quoteName('#__assets'))
+                ->where($db->quoteName('name') . ' = ' . $db->quote('com_ticketstation'));
+
+            $asset = $db->setQuery($query)->loadObject();
+
+            if (!$asset || !in_array(trim((string) $asset->rules), ['', '{}', '[]'], true))
+            {
+                return;
+            }
+
+            // Joomla's standard groups, found by title in case a site's ids differ.
+            $query = $db->getQuery(true)
+                ->select([$db->quoteName('title'), $db->quoteName('id')])
+                ->from($db->quoteName('#__usergroups'))
+                ->whereIn($db->quoteName('title'), ['Manager', 'Administrator'], \Joomla\Database\ParameterType::STRING);
+
+            $groups        = $db->setQuery($query)->loadAssocList('title', 'id');
+            $manager       = (string) ($groups['Manager'] ?? '');
+            $administrator = (string) ($groups['Administrator'] ?? '');
+
+            $defaults = [
+                'core.admin'                 => [$administrator],
+                'core.options'               => [$administrator],
+                'core.manage'                => [$manager, $administrator],
+                'ticketstation.boxoffice'    => [$manager, $administrator],
+                'ticketstation.reserve'      => [$manager, $administrator],
+                'ticketstation.scanners'     => [$manager, $administrator],
+                'ticketstation.payment'      => [$administrator],
+                'ticketstation.finance'      => [$administrator],
+                'ticketstation.order.delete' => [$administrator],
+            ];
+
+            $rules = [];
+
+            foreach ($defaults as $action => $groupIds)
+            {
+                foreach (array_filter($groupIds) as $groupId)
+                {
+                    $rules[$action][$groupId] = 1;
+                }
+            }
+
+            $update = (object) ['id' => (int) $asset->id, 'rules' => json_encode($rules)];
+            $db->updateObject('#__assets', $update, 'id');
+        }
+        catch (\Throwable $e)
+        {
+            // Not fatal: the permissions can still be set by hand under Options.
+        }
     }
 
     /**

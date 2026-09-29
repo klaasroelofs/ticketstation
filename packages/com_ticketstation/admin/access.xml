@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<access component="com_ticketstation">
+    <section name="component">
+        <action name="core.admin" title="JACTION_ADMIN" />
+        <action name="core.options" title="COM_TICKETSTATION_ACTION_OPTIONS" description="COM_TICKETSTATION_ACTION_OPTIONS_DESC" />
+        <action name="core.manage" title="JACTION_MANAGE" />
+        <action name="core.create" title="JACTION_CREATE" />
+        <action name="core.delete" title="JACTION_DELETE" />
+        <action name="core.edit" title="JACTION_EDIT" />
+        <action name="core.edit.state" title="JACTION_EDITSTATE" />
+        <action name="ticketstation.boxoffice" title="COM_TICKETSTATION_ACTION_BOXOFFICE" description="COM_TICKETSTATION_ACTION_BOXOFFICE_DESC" />
+        <action name="ticketstation.reserve" title="COM_TICKETSTATION_ACTION_RESERVE" description="COM_TICKETSTATION_ACTION_RESERVE_DESC" />
+        <action name="ticketstation.payment" title="COM_TICKETSTATION_ACTION_PAYMENT" description="COM_TICKETSTATION_ACTION_PAYMENT_DESC" />
+        <action name="ticketstation.order.delete" title="COM_TICKETSTATION_ACTION_ORDER_DELETE" description="COM_TICKETSTATION_ACTION_ORDER_DELETE_DESC" />
+        <action name="ticketstation.finance" title="COM_TICKETSTATION_ACTION_FINANCE" description="COM_TICKETSTATION_ACTION_FINANCE_DESC" />
+        <action name="ticketstation.scanners" title="COM_TICKETSTATION_ACTION_SCANNERS" description="COM_TICKETSTATION_ACTION_SCANNERS_DESC" />
+    </section>
+</access>

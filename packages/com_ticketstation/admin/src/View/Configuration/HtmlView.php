@@ -16,6 +16,7 @@ use Joomla\CMS\HTML\HTMLHelper;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\View\HtmlView as BaseHtmlView;
 use Joomla\CMS\Toolbar\ToolbarHelper;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\AclGate;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Docs;
 
 /**
@@ -40,6 +41,11 @@ class HtmlView extends BaseHtmlView {
         ToolbarHelper::apply();
         ToolbarHelper::save();
         ToolbarHelper::cancel();
+
+        if (AclGate::can('core.admin')) {
+            ToolbarHelper::preferences('com_ticketstation', 500, 900, 'COM_TICKETSTATION_TOOLBAR_PERMISSIONS');
+        }
+
         Docs::toolbarButton('configuration');
 
         $model = $this->getModel('Configuration', 'Administrator');

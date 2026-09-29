@@ -11,6 +11,7 @@ use Joomla\CMS\Factory;
 use Joomla\CMS\Language\Text;
 use \Joomla\CMS\HTML\HTMLHelper;
 use Joomla\CMS\Router\Route;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\AclGate;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\TicketstationFunctions;
 
 // No direct access to this file
@@ -94,6 +95,11 @@ foreach ($this->summary as $row)
             <div class="row mb-3">
                 <label class="col-sm-3 col-form-label"><?= Text::_('COM_TICKETSTATION_RESERVATION_PAYMENT_STATUS') ?></label>
                 <div class="col-sm-9">
+                    <?php if (!AclGate::can('ticketstation.payment')) : ?>
+                    <input type="hidden" name="paid" value="0" />
+                    <p class="form-control-plaintext"><?= Text::_('COM_TICKETSTATION_RESERVATION_NOT_YET_PAID') ?></p>
+                    <small class="form-text"><?= Text::_('COM_TICKETSTATION_RESERVATION_PAID_NOT_ALLOWED') ?></small>
+                    <?php else : ?>
                     <div class="form-check">
                         <input class="form-check-input" type="radio" name="paid" id="paid1" value="1" checked>
                         <label class="form-check-label" for="paid1"><?= Text::_('COM_TICKETSTATION_RESERVATION_ALREADY_PAID') ?></label>
@@ -103,6 +109,7 @@ foreach ($this->summary as $row)
                         <label class="form-check-label" for="paid0"><?= Text::_('COM_TICKETSTATION_RESERVATION_NOT_YET_PAID') ?></label>
                     </div>
                     <small class="form-text"><?= Text::_('COM_TICKETSTATION_RESERVATION_ALREADY_PAID_DESC') ?></small>
+                    <?php endif; ?>
                 </div>
             </div>
 

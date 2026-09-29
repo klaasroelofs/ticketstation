@@ -11,6 +11,7 @@ use Joomla\CMS\Factory;
 use Joomla\CMS\HTML\HTMLHelper;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\Uri\Uri;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\AclGate;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Price;
 
 // No direct access to this file
@@ -64,6 +65,12 @@ $tileGroups = [
 if ($this->config->show_waitinglist == 1) {
     $tileGroups['COM_TICKETSTATION_CPANEL_HEADER_TRANSACTIONMANAGEMENT'][] = ['waitinglist', 'fa-hourglass-half', 'COM_TICKETSTATION_WAITINGLIST'];
 }
+
+// Only the screens this user may open (see AclGate).
+foreach ($tileGroups as $groupKey => $tiles) {
+    $tileGroups[$groupKey] = array_filter($tiles, static fn($tile) => AclGate::canOpen($tile[0]));
+}
+$tileGroups = array_filter($tileGroups);
 
 $stats     = $this->stats;
 $weekDiff  = $stats['week']->tickets - $stats['prev_week']->tickets;

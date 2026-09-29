@@ -17,6 +17,7 @@ use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\View\HtmlView as BaseHtmlView;
 use Joomla\CMS\Toolbar\Toolbar;
 use Joomla\CMS\Toolbar\ToolbarHelper;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\AclGate;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Docs;
 
 /**
@@ -64,9 +65,11 @@ class HtmlView extends BaseHtmlView
             ->text('JTOOLBAR_UNPUBLISH')
             ->listCheck(true);
 
-        $childBar->delete('clients.remove')
-            ->message('JGLOBAL_CONFIRM_DELETE')
-            ->listCheck(true);
+        if (AclGate::can('ticketstation.order.delete')) {
+            $childBar->delete('clients.remove')
+                ->message('JGLOBAL_CONFIRM_DELETE')
+                ->listCheck(true);
+        }
 
         ToolbarHelper::custom('','spacer');
         ToolbarHelper::custom('controlpanel', 'icon-home', '', 'COM_TICKETSTATION_VIEW_CPANEL_TITLE_SHORT', false);

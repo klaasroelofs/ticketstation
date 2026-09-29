@@ -17,6 +17,7 @@ use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\View\HtmlView as BaseHtmlView;
 use Joomla\CMS\Toolbar\Toolbar;
 use Joomla\CMS\Toolbar\ToolbarHelper;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\AclGate;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Docs;
 
 /**
@@ -36,7 +37,9 @@ class HtmlView extends BaseHtmlView
     {
         // Setup the toolbars.
         ToolBarHelper::title(Text::_('COM_TICKETSTATION_COUPONS'), 'fa fa-percent');
-        ToolBarHelper::addNew();
+        if (AclGate::can('core.create')) {
+            ToolBarHelper::addNew();
+        }
 
         $toolbar = Toolbar::getInstance('toolbar');
         $dropdown = $toolbar->dropdownButton('status-group')
@@ -49,19 +52,25 @@ class HtmlView extends BaseHtmlView
         /** @var Toolbar $childBar */
         $childBar = $dropdown->getChildToolbar();
 
-        $childBar->publish('coupons.publish')
-            ->icon('fa fa-check-circle')
-            ->text('JTOOLBAR_PUBLISH')
-            ->listCheck(true);
+        if (AclGate::can('core.edit.state')) {
+            $childBar->publish('coupons.publish')
+                ->icon('fa fa-check-circle')
+                ->text('JTOOLBAR_PUBLISH')
+                ->listCheck(true);
+        }
 
-        $childBar->unpublish('coupons.unpublish')
-            ->icon('fa fa-times-circle')
-            ->text('JTOOLBAR_UNPUBLISH')
-            ->listCheck(true);
+        if (AclGate::can('core.edit.state')) {
+            $childBar->unpublish('coupons.unpublish')
+                ->icon('fa fa-times-circle')
+                ->text('JTOOLBAR_UNPUBLISH')
+                ->listCheck(true);
+        }
 
-        $childBar->delete('coupons.remove')
-            ->message('JGLOBAL_CONFIRM_DELETE')
-            ->listCheck(true);
+        if (AclGate::can('core.delete')) {
+            $childBar->delete('coupons.remove')
+                ->message('JGLOBAL_CONFIRM_DELETE')
+                ->listCheck(true);
+        }
 
         ToolbarHelper::custom('','spacer');
         ToolbarHelper::custom('controlpanel', 'icon-home', '', 'COM_TICKETSTATION_VIEW_CPANEL_TITLE_SHORT', false);

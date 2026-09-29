@@ -105,7 +105,7 @@ class EventController extends FormController
         if($eventid == 0)
         {
             $app->enqueueMessage(Text::_('COM_TICKETSTATION_NO_ID_GIVEN'), 'error');
-            $this->setRedirect(Uri::base() . 'index.php?option=com_ticketstation&controller=event&task=edit');
+            $this->setRedirect(Uri::base() . 'index.php?option=com_ticketstation&view=events');
         }
 
 

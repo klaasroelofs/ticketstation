@@ -17,6 +17,7 @@ use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\View\HtmlView as BaseHtmlView;
 use Joomla\CMS\Toolbar\Toolbar;
 use Joomla\CMS\Toolbar\ToolbarHelper;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\AclGate;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Docs;
 
 /**
@@ -36,7 +37,9 @@ class HtmlView extends BaseHtmlView
     {
         // Setup the toolbar
         ToolBarHelper::title(Text::_('COM_TICKETSTATION_VIEW_TICKETS_TITLE'), 'fa fa-ticket-alt');
-        ToolBarHelper::addNew();
+        if (AclGate::can('core.create')) {
+            ToolBarHelper::addNew();
+        }
 
         $toolbar = Toolbar::getInstance('toolbar');
         $dropdown = $toolbar->dropdownButton('status-group')
@@ -49,28 +52,38 @@ class HtmlView extends BaseHtmlView
         /** @var Toolbar $childBar */
         $childBar = $dropdown->getChildToolbar();
 
-        $childBar->publish('tickets.publish')
-            ->icon('fa fa-check-circle')
-            ->text('JTOOLBAR_PUBLISH')
-            ->listCheck(true);
+        if (AclGate::can('core.edit.state')) {
+            $childBar->publish('tickets.publish')
+                ->icon('fa fa-check-circle')
+                ->text('JTOOLBAR_PUBLISH')
+                ->listCheck(true);
+        }
 
-        $childBar->unpublish('tickets.unpublish')
-            ->icon('fa fa-times-circle')
-            ->text('JTOOLBAR_UNPUBLISH')
-            ->listCheck(true);
+        if (AclGate::can('core.edit.state')) {
+            $childBar->unpublish('tickets.unpublish')
+                ->icon('fa fa-times-circle')
+                ->text('JTOOLBAR_UNPUBLISH')
+                ->listCheck(true);
+        }
 
-        $childBar->standardButton('duplicate', 'COM_TICKETSTATION_COPY', 'tickets.duplicate')
-            ->icon('fa fa-copy')
-            ->listCheck(true);
+        if (AclGate::can('core.create')) {
+            $childBar->standardButton('duplicate', 'COM_TICKETSTATION_COPY', 'tickets.duplicate')
+                ->icon('fa fa-copy')
+                ->listCheck(true);
+        }
 
-        $childBar->delete('tickets.resetscanstate', 'COM_TICKETSTATION_TOOLBAR_RESET_SCANS')
-            ->icon('fa fa-eye-slash')
-            ->message('COM_TICKETSTATION_CONFIRM_RESET_SCANS')
-            ->listCheck(true);
+        if (AclGate::can('ticketstation.boxoffice')) {
+            $childBar->delete('tickets.resetscanstate', 'COM_TICKETSTATION_TOOLBAR_RESET_SCANS')
+                ->icon('fa fa-eye-slash')
+                ->message('COM_TICKETSTATION_CONFIRM_RESET_SCANS')
+                ->listCheck(true);
+        }
 
-        $childBar->delete('tickets.remove')
-            ->message('JGLOBAL_CONFIRM_DELETE')
-            ->listCheck(true);
+        if (AclGate::can('core.delete')) {
+            $childBar->delete('tickets.remove')
+                ->message('JGLOBAL_CONFIRM_DELETE')
+                ->listCheck(true);
+        }
 
         ToolbarHelper::custom('seatplans', 'fa-solid fa-chair', '', 'COM_TICKETSTATION_SEATPLANS', false,false);
         ToolbarHelper::custom('events', 'fa fa-calendar-alt', '', 'COM_TICKETSTATION_EVENTS', false);

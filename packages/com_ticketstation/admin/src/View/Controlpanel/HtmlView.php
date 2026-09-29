@@ -14,6 +14,7 @@ defined('_JEXEC') or die;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\View\HtmlView as BaseHtmlView;
 use Joomla\CMS\Toolbar\ToolbarHelper;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\AclGate;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Docs;
 
 /**
@@ -45,6 +46,10 @@ class HtmlView extends BaseHtmlView {
     function display($tpl = null) {
 
         ToolbarHelper::title(Text::_('COM_TICKETSTATION_VIEW_CPANEL_TITLE'), 'icon-home');
+        if (AclGate::can('core.admin')) {
+            ToolbarHelper::preferences('com_ticketstation', 500, 900, 'COM_TICKETSTATION_TOOLBAR_PERMISSIONS');
+        }
+
         Docs::toolbarButton('controlpanel');
 
         $model = $this->getModel('Controlpanel', 'Administrator');

@@ -17,6 +17,7 @@ use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\View\HtmlView as BaseHtmlView;
 use Joomla\CMS\Toolbar\Toolbar;
 use Joomla\CMS\Toolbar\ToolbarHelper;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\AclGate;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\CustomerNote;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Invoice;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\MolliePaymentMethods;
@@ -115,10 +116,13 @@ class HtmlView extends BaseHtmlView
 
         $toolbar = Toolbar::getInstance('toolbar');
 
-        $toolbar->linkButton('reservation', 'COM_TICKETSTATION_VIEW_RESERVATION_TITLE')
-            ->url('index.php?option=com_ticketstation&view=reservation')
-            ->icon('icon-new')
-            ->buttonClass('btn btn-success');
+        if (AclGate::can('ticketstation.reserve'))
+        {
+            $toolbar->linkButton('reservation', 'COM_TICKETSTATION_VIEW_RESERVATION_TITLE')
+                ->url('index.php?option=com_ticketstation&view=reservation')
+                ->icon('icon-new')
+                ->buttonClass('btn btn-success');
+        }
 
         $dropdown = $toolbar->dropdownButton('status-group')
             ->text('JTOOLBAR_CHANGE_STATUS')
@@ -132,21 +136,29 @@ class HtmlView extends BaseHtmlView
 
         $childBar->divider(Text::_('COM_TICKETSTATION_BOXOFFICE_PAYMENT'));
 
-        $childBar->standardButton('full_process', 'COM_TICKETSTATION_TOOLBAR_FULL_PROCESS', 'boxoffice.full_process')
-            ->icon('fa fa-cube')
-            ->listCheck(true);
+        $payment = AclGate::can('ticketstation.payment');
 
-        $childBar->standardButton('allpayments', 'COM_TICKETSTATION_BOXOFFICE_MARK_PAID', 'boxoffice.allpayments')
-            ->icon('fa fa-thumbs-up')
-            ->listCheck(true);
+        if ($payment)
+        {
+            $childBar->standardButton('full_process', 'COM_TICKETSTATION_TOOLBAR_FULL_PROCESS', 'boxoffice.full_process')
+                ->icon('fa fa-cube')
+                ->listCheck(true);
+
+            $childBar->standardButton('allpayments', 'COM_TICKETSTATION_BOXOFFICE_MARK_PAID', 'boxoffice.allpayments')
+                ->icon('fa fa-thumbs-up')
+                ->listCheck(true);
+        }
 
         $childBar->standardButton('resendpayment', 'COM_TICKETSTATION_RESEND_PAYMENT', 'boxoffice.resendpayment')
             ->icon('fa fa-share')
             ->listCheck(true);
 
-        $childBar->standardButton('refund', 'COM_TICKETSTATION_BOXOFFICE_MARK_REFUNDED', 'boxoffice.refund')
-            ->icon('fa fa-reply')
-            ->listCheck(true);
+        if ($payment)
+        {
+            $childBar->standardButton('refund', 'COM_TICKETSTATION_BOXOFFICE_MARK_REFUNDED', 'boxoffice.refund')
+                ->icon('fa fa-reply')
+                ->listCheck(true);
+        }
 
         $childBar->divider(Text::_('COM_TICKETSTATION_BOXOFFICE_TICKETS'));
 
@@ -154,11 +166,14 @@ class HtmlView extends BaseHtmlView
             ->icon('fa fa-paper-plane')
             ->listCheck(true);
 
-        $childBar->divider();
+        if (AclGate::can('ticketstation.order.delete'))
+        {
+            $childBar->divider();
 
-        $childBar->delete('boxoffice.remove')
-            ->message('JGLOBAL_CONFIRM_DELETE')
-            ->listCheck(true);
+            $childBar->delete('boxoffice.remove')
+                ->message('JGLOBAL_CONFIRM_DELETE')
+                ->listCheck(true);
+        }
 
         $toolbar->standardButton('export', 'COM_TICKETSTATION_BOXOFFICE_EXPORT', 'boxoffice.export')
             ->icon('fa fa-file-csv')
@@ -296,39 +311,46 @@ class HtmlView extends BaseHtmlView
 
         $toolbar = Toolbar::getInstance('toolbar');
 
-        // Payment
-        $dropdown = $toolbar->dropdownButton('payment-group')
-            ->text('COM_TICKETSTATION_BOXOFFICE_PAYMENT')
-            ->toggleSplit(false)
-            ->icon('fa fa-credit-card')
-            ->buttonClass('btn btn-action');
+        // Payment. Without the right to register payments only a payment request remains, and
+        // only for an order that isn't paid.
+        $payment = AclGate::can('ticketstation.payment');
+        $request = in_array($status->paid, [0, 3], true);
 
-        $childBar = $dropdown->getChildToolbar();
-
-        if ($status->paid !== 1)
+        if ($payment || $request)
         {
-            $childBar->standardButton('completeorder', 'COM_TICKETSTATION_TOOLBAR_FULL_PROCESS', 'completeorder')
-                ->icon('fa fa-cube');
-            $childBar->standardButton('payment', 'COM_TICKETSTATION_BOXOFFICE_MARK_PAID', 'payment')
-                ->icon('fa fa-thumbs-up');
-        }
+            $dropdown = $toolbar->dropdownButton('payment-group')
+                ->text('COM_TICKETSTATION_BOXOFFICE_PAYMENT')
+                ->toggleSplit(false)
+                ->icon('fa fa-credit-card')
+                ->buttonClass('btn btn-action');
 
-        if (in_array($status->paid, [0, 3], true))
-        {
-            $childBar->standardButton('sendpaymentrequest', 'COM_TICKETSTATION_RESEND_PAYMENT', 'sendpaymentrequest')
-                ->icon('fa fa-share');
-        }
+            $childBar = $dropdown->getChildToolbar();
 
-        if ($status->paid !== 0)
-        {
-            $childBar->standardButton('nopayment', 'COM_TICKETSTATION_BOXOFFICE_MARK_UNPAID', 'nopayment')
-                ->icon('fa fa-thumbs-down');
-        }
+            if ($payment && $status->paid !== 1)
+            {
+                $childBar->standardButton('completeorder', 'COM_TICKETSTATION_TOOLBAR_FULL_PROCESS', 'completeorder')
+                    ->icon('fa fa-cube');
+                $childBar->standardButton('payment', 'COM_TICKETSTATION_BOXOFFICE_MARK_PAID', 'payment')
+                    ->icon('fa fa-thumbs-up');
+            }
 
-        if ($status->paid === 1)
-        {
-            $childBar->standardButton('refundorder', 'COM_TICKETSTATION_BOXOFFICE_MARK_REFUNDED', 'refundorder')
-                ->icon('fa fa-reply');
+            if ($request)
+            {
+                $childBar->standardButton('sendpaymentrequest', 'COM_TICKETSTATION_RESEND_PAYMENT', 'sendpaymentrequest')
+                    ->icon('fa fa-share');
+            }
+
+            if ($payment && $status->paid !== 0)
+            {
+                $childBar->standardButton('nopayment', 'COM_TICKETSTATION_BOXOFFICE_MARK_UNPAID', 'nopayment')
+                    ->icon('fa fa-thumbs-down');
+            }
+
+            if ($payment && $status->paid === 1)
+            {
+                $childBar->standardButton('refundorder', 'COM_TICKETSTATION_BOXOFFICE_MARK_REFUNDED', 'refundorder')
+                    ->icon('fa fa-reply');
+            }
         }
 
         // Tickets

@@ -13,6 +13,7 @@ use Joomla\CMS\Language\Text;
 use Joomla\CMS\Layout\LayoutHelper;
 use Joomla\CMS\Router\Route;
 use Joomla\CMS\Uri\Uri;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\AclGate;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Date;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\OrderTotals;
 
@@ -95,7 +96,7 @@ $progress = function (int $done) use ($status) {
                     <tr>
                         <th scope="row" class="fw-normal"><?= Text::_('COM_TICKETSTATION_BOXOFFICE_TOTAL_REGULAR_PRICE') ?></th>
                         <td>
-                            <?php if ($this->transaction && (float) $this->transaction->amount > 0) { ?>
+                            <?php if ($this->transaction && (float) $this->transaction->amount > 0 && AclGate::can('ticketstation.finance')) { ?>
                                 <a href="index.php?option=com_ticketstation&controller=transactions&task=edit&cid=<?= (int) $this->transaction->pid; ?>"><?= $valuta; ?> <?= number_format($this->orderprice, 2, ',', ''); ?></a>
                             <?php } else { ?>
                                 <?= $valuta; ?> <?= number_format($this->orderprice, 2, ',', ''); ?>
@@ -293,6 +294,7 @@ $progress = function (int $done) use ($status) {
                 </button>
             </joomla-toolbar-button>
 
+            <?php if (AclGate::can('ticketstation.order.delete')) { ?>
             <joomla-toolbar-button task="removeSingleOrder" list-selection class="ms-auto"
                                    confirm-message="<?= $this->escape(Text::_('COM_TICKETSTATION_BOXOFFICE_REMOVE_TICKET_CONFIRM')); ?>">
                 <button class="btn btn-danger" type="button">
@@ -300,6 +302,7 @@ $progress = function (int $done) use ($status) {
                     <?= Text::_('COM_TICKETSTATION_BOXOFFICE_REMOVE_TICKET'); ?>
                 </button>
             </joomla-toolbar-button>
+            <?php } ?>
         </div>
 
         <?php

@@ -41,6 +41,7 @@ $groups = [
         'gettingstarted' => 'fa-flag-checkered',
         'controlpanel'   => 'fa-home',
         'configuration'  => 'fa-cog',
+        'permissions'    => 'fa-user-lock',
     ],
     'SALES' => [
         'events'       => 'fa-calendar-alt',

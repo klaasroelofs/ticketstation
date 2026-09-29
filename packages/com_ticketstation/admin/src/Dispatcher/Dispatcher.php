@@ -13,11 +13,13 @@ defined('_JEXEC') || die;
 
 use Joomla\CMS\Application\CMSApplication;
 use Joomla\CMS\Dispatcher\ComponentDispatcher;
+use Joomla\CMS\Access\Exception\NotAllowed;
 use Joomla\CMS\Document\HtmlDocument;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\Session\Session;
 use Joomla\CMS\Uri\Uri;
 use Joomla\Database\DatabaseAwareTrait;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\AclGate;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\CsrfGate;
 
 
@@ -71,7 +73,46 @@ class Dispatcher extends ComponentDispatcher
         // Apply the view and controller from the request, falling back to the default view/controller if necessary
         $this->applyViewAndController();
 
+        $this->checkPermission();
+
         $this->loadCommonStaticMedia();
+    }
+
+    /**
+     * Central ACL check, run once per request after the controller and task are resolved.
+     * See AclGate for the permission each task needs.
+     */
+    private function checkPermission(): void
+    {
+        $controller = $this->input->getCmd('controller', '');
+        $task       = $this->input->getCmd('task', '');
+
+        if (AclGate::allows($controller, $task, $this->input)) {
+            return;
+        }
+
+        // Without access to the component there is nowhere to send the user back to.
+        if (!AclGate::can('core.manage')) {
+            throw new NotAllowed(Text::_('JERROR_ALERTNOAUTHOR'), 403);
+        }
+
+        $ajax = strtolower($this->input->server->getString('HTTP_X_REQUESTED_WITH', '')) === 'xmlhttprequest'
+            || \in_array($this->input->getCmd('format', 'html'), ['json', 'raw'], true);
+
+        if ($ajax) {
+            while (ob_get_level() > 0) {
+                ob_end_clean();
+            }
+
+            $this->app->setHeader('status', 403, true);
+            $this->app->setHeader('Content-Type', 'application/json; charset=utf-8', true);
+            $this->app->sendHeaders();
+            echo json_encode(['success' => false, 'message' => Text::_('JERROR_ALERTNOAUTHOR')]);
+            $this->app->close();
+        }
+
+        $this->app->enqueueMessage(Text::_('JERROR_ALERTNOAUTHOR'), 'error');
+        $this->app->redirect(Uri::base() . 'index.php?option=com_ticketstation&view=controlpanel');
     }
 
     /**

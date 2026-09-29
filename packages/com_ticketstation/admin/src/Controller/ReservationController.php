@@ -15,6 +15,7 @@ use Joomla\CMS\Factory;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\Controller\BaseController;
 use Joomla\CMS\Uri\Uri;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\AclGate;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Amount;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Availability;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Order;
@@ -422,6 +423,15 @@ class ReservationController extends BaseController
         {
             $app->enqueueMessage(Text::_('COM_TICKETSTATION_RESERVATION_SAVE_FAILED'), 'error');
             $this->setRedirect(Uri::base() . 'index.php?option=com_ticketstation&view=reservation');
+
+            return;
+        }
+
+        // Saving as paid sends the tickets, which needs the right to register payments.
+        if ($paid == 1 && ! AclGate::can('ticketstation.payment'))
+        {
+            $app->enqueueMessage(Text::_('COM_TICKETSTATION_RESERVATION_PAID_NOT_ALLOWED'), 'error');
+            $this->setRedirect(Uri::base() . 'index.php?option=com_ticketstation&view=reservation&layout=confirm');
 
             return;
         }
