@@ -21,7 +21,7 @@ defined('_JEXEC') or die('Restricted Access');
 ## Get document type and add it.
 $app        = Factory::getApplication();
 $document   = $app->getDocument();
-$document->addStyleSheet( 'components/com_ticketstation/assets/css/component.css' );
+TicketstationFunctions::addSiteStylesheet();
 
 if (!$this->authorized) {
     $document->setTitle( Text::_('COM_TICKETSTATION_PAYMENTRESULT_ORDER') . ' - ' . $app->get('sitename') );

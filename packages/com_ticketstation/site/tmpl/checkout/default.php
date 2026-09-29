@@ -26,7 +26,7 @@ $ordercode = $session->get('ordercode');
 $app        = Factory::getApplication();
 $document   = $app->getDocument();
 $document->setTitle( Text::_('COM_TICKETSTATION_ORDER_DETAILS') . ' - ' . $app->get('sitename') );
-$document->addStyleSheet( 'components/com_ticketstation/assets/css/component.css' );
+TicketstationFunctions::addSiteStylesheet();
 
 ## Redirection link in JRoute:
 $itemid = TicketstationFunctions::getSiteItemid();

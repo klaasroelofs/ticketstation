@@ -55,6 +55,59 @@ class Order
     }
 
     /**
+     * The order rows of a cart as display lines, for the cart and payment pages: one line per
+     * ticket type with its quantity, and one line per seat.
+     *
+     * @param   array  $rows    order rows (getOrdersInCart())
+     * @param   array  $coords  seat rows with orderid, row_name and seatid
+     *
+     * @return  array  objects with seated, seat (label), rows, quantity and total
+     */
+    public static function cartLines(array $rows, array $coords = []): array
+    {
+        // Seat label per order row, e.g. "B13" or "501"
+        $labels = [];
+
+        foreach ($coords as $coord) {
+            if (!empty($coord->orderid)) {
+                $labels[(int) $coord->orderid] = $coord->row_name . $coord->seatid;
+            }
+        }
+
+        $lines       = [];
+        $eventOrder  = [];
+
+        foreach ($rows as $row) {
+            $seated = (int) $row->seat_sector !== 0;
+            $key    = $seated ? 'seat' . $row->orderid : 'ticket' . $row->ticketid;
+
+            $eventOrder[$row->eventid] ??= count($eventOrder);
+
+            $lines[$key] ??= (object) [
+                'seated'   => $seated,
+                'seat'     => $seated ? ($labels[(int) $row->orderid] ?? '') : '',
+                'rows'     => [],
+                'position' => count($lines),
+                'event'    => $eventOrder[$row->eventid],
+            ];
+            $lines[$key]->rows[] = $row;
+        }
+
+        foreach ($lines as $line) {
+            $line->quantity = count($line->rows);
+            $line->total    = array_sum(array_column($line->rows, 'price'));
+        }
+
+        // Per event: first the ticket types in the order they were added, then the seats by
+        // seat number ("A2" before "A10" before "B1").
+        usort($lines, fn ($a, $b) => [$a->event, $a->seated, $a->seated ? 0 : $a->position]
+            <=> [$b->event, $b->seated, $b->seated ? 0 : $b->position]
+            ?: strnatcasecmp($a->seat, $b->seat));
+
+        return $lines;
+    }
+
+    /**
      * Getting current orders in the cart. A child ticket's name includes its parent's:
      * "Parent - Child".
      *

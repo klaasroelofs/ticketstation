@@ -315,8 +315,11 @@ class SeatChart
         $base = Uri::root() . 'components/com_ticketstation/assets/';
 
         if (!$wa->assetExists('style', 'com_ticketstation.seatmap')) {
-            $wa->registerStyle('com_ticketstation.seatmap', $base . 'css/seatmap.css');
-            $wa->registerScript('com_ticketstation.seatmap', $base . 'javascripts/seatmap.js', [], ['defer' => true]);
+            // The file's modification time as version, so an update reaches browsers right away.
+            $version = fn ($file) => (string) (@filemtime(JPATH_SITE . '/components/com_ticketstation/assets/' . $file) ?: '');
+
+            $wa->registerStyle('com_ticketstation.seatmap', $base . 'css/seatmap.css', ['version' => $version('css/seatmap.css')]);
+            $wa->registerScript('com_ticketstation.seatmap', $base . 'javascripts/seatmap.js', ['version' => $version('javascripts/seatmap.js')], ['defer' => true]);
         }
 
         $wa->useStyle('com_ticketstation.seatmap')->useScript('com_ticketstation.seatmap');

@@ -15,6 +15,7 @@ use Joomla\CMS\Plugin\PluginHelper;
 use Joomla\CMS\Router\Route;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Config;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Date;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\Order;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\OrderTotals;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\TicketstationFunctions;
 
@@ -30,7 +31,7 @@ $ordercode = $session->get('ordercode');
 $app        = Factory::getApplication();
 $document   = $app->getDocument();
 $document->setTitle( Text::_('COM_TICKETSTATION_STEP_PAYMENT') . ' - ' . $app->get('sitename') );
-$document->addStyleSheet( 'components/com_ticketstation/assets/css/component.css' );
+TicketstationFunctions::addSiteStylesheet();
 
 $itemid = TicketstationFunctions::getSiteItemid();
 $shop_on = Route::_('index.php?option=com_ticketstation&view=upcoming' . ($itemid ? '&Itemid=' . $itemid : ''));
@@ -163,29 +164,27 @@ foreach (['terms_url' => 'COM_TICKETSTATION_TERMS_AND_CONDITIONS', 'privacy_url'
             </thead>
 
             <tbody>
-                <?php foreach ($this->items as $row) { ?>
+                <?php ## As in the cart: one line per ticket type with its quantity, seats by seat number
+                foreach (Order::cartLines($this->items, $this->coords ?? []) as $line) {
+                    $row = $line->rows[0]; ?>
 
-                    <tr id="row-<?= $row->orderid; ?>" class="ts-summary__item">
+                    <tr class="ts-summary__item">
                         <td>
                             <span class="ts-summary__name">
-                                <?= $row->eventname; ?> - <?= $row->ticketname; ?>
+                                <?= htmlspecialchars($row->eventname . ' - ' . $row->ticketname, ENT_QUOTES, 'UTF-8'); ?>
 
-                                <?php if ($row->requires_seat == '1') { ?>
-
-                                    <?php $checkrefresh = checkSeat($row->orderid, $this->coords); ?>
-
-                                    <?php if (strpos($checkrefresh, 'Array') !== false) { ?>
-                                        <?= '<script>parent.window.location.reload(true);</script>'; ?>
-                                    <?php } ?>
-
-                                    <?= ' - '.Text::_( 'COM_TICKETSTATION_SEATNUMBER' ).': '.checkSeat($row->orderid, $this->coords);?>
-
+                                <?php if ($line->seated) { ?>
+                                    <?= ' - ' . Text::_('COM_TICKETSTATION_SEATNUMBER') . ': ' . htmlspecialchars($line->seat, ENT_QUOTES, 'UTF-8'); ?>
                                 <?php } ?>
                             </span>
 
-                            <span class="ts-summary__date"><?= Text::_( 'COM_TICKETSTATION_DATE' ); ?>: <?= Date::long($row->startdate, true); ?></span>
+                            <span class="ts-summary__date"><?= Date::long($row->startdate, true); ?></span>
+
+                            <?php if (!$line->seated) { ?>
+                                <span class="ts-summary__qty"><?= $line->quantity; ?> &times; <?= (new TicketstationFunctions)->showprice($this->config->priceformat, $row->price, $this->config->valuta); ?></span>
+                            <?php } ?>
                         </td>
-                        <td class="ts-price"><?= (new TicketstationFunctions)->showprice($this->config->priceformat, $row->price, $this->config->valuta); ?></td>
+                        <td class="ts-price"><?= (new TicketstationFunctions)->showprice($this->config->priceformat, $line->total, $this->config->valuta); ?></td>
                     </tr>
 
                 <?php } ?>
@@ -251,28 +250,3 @@ foreach (['terms_url' => 'COM_TICKETSTATION_TERMS_AND_CONDITIONS', 'privacy_url'
     <?php } ?>
 
 </div>
-
-
-<?php function checkSeat($value, $seat)
-{
-
-    for ($i = 0, $n = count($seat); $i < $n; $i++)
-    {
-
-        if ($value == $seat[$i]->orderid)
-        {
-            if ($seat[$i]->row_name != '')
-            {
-                $seat_number = $seat[$i]->row_name . $seat[$i]->seatid;
-            }
-            else
-            {
-                $seat_number = $seat[$i]->seatid;
-            }
-        }
-    }
-
-    return $seat_number;
-}
-
-?>

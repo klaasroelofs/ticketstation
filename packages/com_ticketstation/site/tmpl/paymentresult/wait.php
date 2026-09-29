@@ -17,7 +17,7 @@ use Ticketstation\Component\Ticketstation\Administrator\Helper\TicketstationFunc
 
 $app      = Factory::getApplication();
 $document = $app->getDocument();
-$document->addStyleSheet('components/com_ticketstation/assets/css/component.css');
+TicketstationFunctions::addSiteStylesheet();
 $document->setTitle(Text::_('COM_TICKETSTATION_PAYMENTRESULT_CHECKING_PAGE_TITLE') . ' - ' . $app->get('sitename'));
 
 $orderCode = (int) $this->orderCode;

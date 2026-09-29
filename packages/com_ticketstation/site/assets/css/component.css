@@ -60,11 +60,8 @@
     --ts-ticket-image-text: #111827;
 
     /* Chosen seats that have just been added (the seat chart itself marks them orange) */
-    --ts-seat-selected-bg: #f59e0b;
+    --ts-seat-selected-bg: #ffa500;
     --ts-seat-selected-text: #fff;
-
-    /* Seats that are sold or blocked on the seat chart */
-    --ts-seat-taken-bg: #dc2626;
 
     color: var(--ts-text);
 }
@@ -850,6 +847,13 @@
     gap: .75rem;
 }
 
+/* Quantity on the payment page: "3 × € 15,00" */
+.ticketstation .ts-summary__qty {
+    display: block;
+    font-size: .875rem;
+    color: var(--ts-muted);
+}
+
 /* Quantity per cart line: − 3 + × price */
 .ticketstation .ts-qty {
     display: inline-flex;
@@ -1054,38 +1058,23 @@
    Seat selection (view=seatedevent)
    ========================================================================== */
 
-.ticketstation .ts-instruction-image {
-    display: block;
-    width: 100%;
-    max-width: 300px;
-    height: auto;
-    margin: .75rem 0;
-}
-
 .ticketstation .ts-legend {
     margin: 0;
     padding-left: 1.25rem;
     font-size: .9375rem;
 }
 
-/* Seat states on the chart and in the legend. Taken seats are striped and chosen ones get a dark
-   inner edge, so the states can be told apart without relying on red, orange and green.
-   !important because a free seat carries its colours from the seat plan settings inline. */
+/* Seat states on the chart and in the legend. The colours are inline (red = taken, orange = your
+   choice); on top of that taken seats are striped and chosen ones get a dark inner edge, so the
+   states can be told apart without relying on colour alone. */
 .ticketstation .seat-element--taken {
-    color: #fff !important;
-    background-color: var(--ts-seat-taken-bg) !important;
-    background-image: repeating-linear-gradient(45deg, rgba(0, 0, 0, .3) 0 2px, transparent 2px 6px) !important;
-    border-color: #000 !important;
-    cursor: not-allowed !important;
+    background-image: repeating-linear-gradient(45deg, rgba(0, 0, 0, .3) 0 2px, transparent 2px 6px);
+    cursor: not-allowed;
 }
 
 .ticketstation .seat-element--mine {
-    color: var(--ts-seat-selected-text) !important;
-    background-color: var(--ts-seat-selected-bg) !important;
-    border-color: #000 !important;
     box-shadow: inset 0 0 0 2px #000;
     font-weight: 700;
-    cursor: pointer !important;
 }
 
 .ticketstation .ts-seat-legend {
@@ -1103,6 +1092,51 @@
     align-items: center;
     gap: .5rem;
     margin: 0;
+}
+
+/* Instruction: two example rows, wrong (a single seat left over) and right (adjoining) */
+.ticketstation .ts-seat-examples {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem 1.5rem;
+    margin: .75rem 0;
+}
+
+.ticketstation .ts-seat-example {
+    margin: 0;
+}
+
+.ticketstation .ts-seat-example__row {
+    display: flex;
+    gap: 2px;
+}
+
+.ticketstation .ts-seat-example .ts-seat-swatch {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 1.75rem;
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-size: .6875rem;
+    line-height: 1;
+}
+
+.ticketstation .ts-seat-example figcaption {
+    display: flex;
+    align-items: center;
+    gap: .375rem;
+    margin-top: .375rem;
+    font-size: .875rem;
+    font-weight: 600;
+}
+
+.ticketstation .ts-seat-example--wrong figcaption .ts-icon {
+    color: var(--ts-danger);
+}
+
+.ticketstation .ts-seat-example--right figcaption .ts-icon {
+    color: var(--ts-success);
 }
 
 .ticketstation .ts-seat-swatch {

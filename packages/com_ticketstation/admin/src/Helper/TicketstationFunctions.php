@@ -21,6 +21,21 @@ defined('_JEXEC') or die('Restricted access');
 class TicketstationFunctions
 {
     /**
+     * Adds the site stylesheet (component.css) to the page. The URL carries the file's
+     * modification time, so browsers fetch the new version right after an update instead of
+     * keeping a cached one that doesn't match the new markup.
+     *
+     * @return void
+     */
+    public static function addSiteStylesheet()
+    {
+        $file    = 'components/com_ticketstation/assets/css/component.css';
+        $version = @filemtime(JPATH_SITE . '/' . $file) ?: '';
+
+        Factory::getApplication()->getDocument()->addStyleSheet($file . ($version ? '?v=' . $version : ''));
+    }
+
+    /**
      * Returns the price formatted as chosen in configuration of Ticketstation
      *
      * @param $holder

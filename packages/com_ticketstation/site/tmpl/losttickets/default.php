@@ -11,6 +11,7 @@ use Joomla\CMS\Factory;
 use Joomla\CMS\HTML\HTMLHelper;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\Router\Route;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\TicketstationFunctions;
 
 // No direct access to this file
 defined('_JEXEC') or die('Restricted Access');
@@ -19,7 +20,7 @@ defined('_JEXEC') or die('Restricted Access');
 $app        = Factory::getApplication();
 $document   = $app->getDocument();
 $document->setTitle( Text::_('COM_TICKETSTATION_LOSTTICKETS_TITLE') . ' - ' . $app->get('sitename') );
-$document->addStyleSheet( 'components/com_ticketstation/assets/css/component.css' );
+TicketstationFunctions::addSiteStylesheet();
 
 $action = Route::_('index.php?option=com_ticketstation&task=losttickets.send' . ($this->itemid ? '&Itemid=' . $this->itemid : ''));
 

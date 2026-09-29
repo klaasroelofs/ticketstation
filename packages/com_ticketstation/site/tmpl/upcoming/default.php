@@ -25,7 +25,7 @@ $document   = $app->getDocument();
 $document->setTitle( Text::_('COM_TICKETSTATION_PAGE_HEADING_TICKETS') . ' - ' . $app->get('sitename') );
 
 
-$document->addStyleSheet( 'components/com_ticketstation/assets/css/component.css' );
+TicketstationFunctions::addSiteStylesheet();
 $document->addScript('components/com_ticketstation/assets/javascripts/countdown.js');
 
 ## Texts used by countdown.js (read there through Joomla.Text, which needs core.js)

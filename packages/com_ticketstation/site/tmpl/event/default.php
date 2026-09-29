@@ -24,7 +24,7 @@ defined('_JEXEC') or die('Restricted Access');
 $app        = Factory::getApplication();
 $document   = $app->getDocument();
 $document->setTitle( Text::_('COM_TICKETSTATION_STEP_CHOOSE_TICKETS') . ' - ' . $app->get('sitename') );
-$document->addStyleSheet( 'components/com_ticketstation/assets/css/component.css' );
+TicketstationFunctions::addSiteStylesheet();
 HTMLHelper::_('jquery.framework');
 
 ## Getting the global DB session

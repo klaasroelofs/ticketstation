@@ -15,6 +15,7 @@ use Joomla\CMS\Router\Route;
 use Joomla\CMS\Session\Session;
 use Joomla\CMS\Uri\Uri;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Date;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\Order;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\OrderTotals;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Ticketcleaner;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\TicketstationFunctions;
@@ -28,7 +29,7 @@ $session  = Factory::getApplication()->getSession();
 $app        = Factory::getApplication();
 $document   = $app->getDocument();
 $document->setTitle( Text::_('COM_TICKETSTATION_CART') . ' - ' . $app->get('sitename') );
-$document->addStyleSheet( 'components/com_ticketstation/assets/css/component.css' );
+TicketstationFunctions::addSiteStylesheet();
 HTMLHelper::_('jquery.framework');
 
 $ordercode = (int) $session->get('ordercode');
@@ -52,16 +53,8 @@ $token = Session::getFormToken();
 ## drop it. The tasks find the menu item for their redirect themselves.
 $task  = fn ($query) => htmlspecialchars(Uri::root(true) . '/index.php?option=com_ticketstation&controller=order&' . $query . '&' . $token . '=1', ENT_QUOTES, 'UTF-8');
 
-## One cart line per ticket type, with its quantity; a seat is a line of its own.
-$lines = [];
-
-foreach ($this->items as $row) {
-    $seated = (int) $row->seat_sector !== 0;
-    $key    = $seated ? 'seat' . $row->orderid : 'ticket' . $row->ticketid;
-
-    $lines[$key] ??= (object) ['seated' => $seated, 'rows' => []];
-    $lines[$key]->rows[] = $row;
-}
+## One cart line per ticket type, with its quantity; a seat is a line of its own, by seat number.
+$lines = Order::cartLines($this->items, $this->coords ?? []);
 
 ## Until when the tickets stay reserved (only while the cart has rows the Ticketcleaner removes)
 $reservedUntil = Ticketcleaner::reservedUntil($ordercode);
@@ -124,8 +117,8 @@ if ($items == 0 && $waiters == 0) {
                 <?php foreach ($lines as $line) {
 
                     $row       = $line->rows[0];
-                    $quantity  = count($line->rows);
-                    $lineTotal = array_sum(array_column($line->rows, 'price'));
+                    $quantity  = $line->quantity;
+                    $lineTotal = $line->total;
                     $name      = htmlspecialchars($row->eventname . ' - ' . $row->ticketname, ENT_QUOTES, 'UTF-8');
 
                     ## Within the ticket's minimum and maximum per order
@@ -139,7 +132,7 @@ if ($items == 0 && $waiters == 0) {
                                 <?php echo $name; ?>
 
                                 <?php if ($line->seated) { ?>
-                                    <?php echo ' - ' . Text::_('COM_TICKETSTATION_SEATNUMBER') . ': ' . checkSeat($row->orderid, $this->coords); ?>
+                                    <?php echo ' - ' . Text::_('COM_TICKETSTATION_SEATNUMBER') . ': ' . htmlspecialchars($line->seat, ENT_QUOTES, 'UTF-8'); ?>
                                 <?php } ?>
                             </span>
 
@@ -445,28 +438,3 @@ if ($items == 0 && $waiters == 0) {
 
     })(jQuery);
 </script>
-
-<?php function checkSeat($value, $seat)
-{
-    $seat_number = '';
-
-    for ($i = 0, $n = count($seat); $i < $n; $i++)
-    {
-
-        if ($value == $seat[$i]->orderid)
-        {
-            if ($seat[$i]->row_name != '')
-            {
-                $seat_number = $seat[$i]->row_name . $seat[$i]->seatid;
-            }
-            else
-            {
-                $seat_number = $seat[$i]->seatid;
-            }
-        }
-    }
-
-    return $seat_number;
-}
-
-?>
