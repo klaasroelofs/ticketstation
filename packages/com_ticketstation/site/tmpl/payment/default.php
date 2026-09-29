@@ -14,6 +14,7 @@ use Joomla\CMS\Layout\LayoutHelper;
 use Joomla\CMS\Plugin\PluginHelper;
 use Joomla\CMS\Router\Route;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Config;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\Date;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\OrderTotals;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\TicketstationFunctions;
 
@@ -182,7 +183,7 @@ foreach (['terms_url' => 'COM_TICKETSTATION_TERMS_AND_CONDITIONS', 'privacy_url'
                                 <?php } ?>
                             </span>
 
-                            <span class="ts-summary__date"><?= Text::_( 'COM_TICKETSTATION_DATE' ); ?>: <?= date ($this->config->dateformat, strtotime($row->startdate)); ?></span>
+                            <span class="ts-summary__date"><?= Text::_( 'COM_TICKETSTATION_DATE' ); ?>: <?= Date::long($row->startdate, true); ?></span>
                         </td>
                         <td class="ts-price"><?= (new TicketstationFunctions)->showprice($this->config->priceformat, $row->price, $this->config->valuta); ?></td>
                     </tr>

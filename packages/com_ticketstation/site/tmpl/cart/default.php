@@ -13,6 +13,7 @@ use Joomla\CMS\Language\Text;
 use Joomla\CMS\Layout\LayoutHelper;
 use Joomla\CMS\Router\Route;
 use Joomla\CMS\Uri\Uri;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\Date;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Ordercode;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\OrderTotals;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\TicketstationFunctions;
@@ -160,10 +161,10 @@ $trashIcon = '<svg class="ts-icon" viewBox="0 0 16 16" aria-hidden="true"><path 
                         </span>
 
                         <span class="ts-summary__date">
-                            <?php echo Text::_('COM_TICKETSTATION_DATE'); ?>: <?php echo date($this->config->dateformat, strtotime($row->startdate)); ?>
+                            <?php echo Text::_('COM_TICKETSTATION_DATE'); ?>: <?php echo Date::long($row->startdate, true); ?>
 
                             <?php if (isset($row->show_end_date) ? $row->show_end_date : 0 == 1): ?>
-                                - <?php echo date($this->config->dateformat, strtotime($row->end_date)); ?>
+                                - <?php echo Date::long($row->end_date, true); ?>
                             <?php endif; ?>
                         </span>
                     </td>
@@ -203,9 +204,9 @@ $trashIcon = '<svg class="ts-icon" viewBox="0 0 16 16" aria-hidden="true"><path 
                         </span>
 
                         <span class="ts-summary__date">
-                            <?php echo Text::_('COM_TICKETSTATION_DATE'); ?>: <?php echo date($this->config->dateformat, strtotime($row->startdate)); ?>
+                            <?php echo Text::_('COM_TICKETSTATION_DATE'); ?>: <?php echo Date::long($row->startdate, true); ?>
                             <?php if (isset($row->show_end_date) ? $row->show_end_date : 0 == 1): ?>
-                                - <?php echo date($this->config->dateformat, strtotime($row->end_date)); ?>
+                                - <?php echo Date::long($row->end_date, true); ?>
                             <?php endif; ?>
                         </span>
                     </td>

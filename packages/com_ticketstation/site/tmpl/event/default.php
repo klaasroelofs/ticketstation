@@ -14,6 +14,7 @@ use Joomla\CMS\Layout\LayoutHelper;
 use Joomla\CMS\Router\Route;
 use Joomla\CMS\Uri\Uri;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Availability;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\Date;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Ordercode;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\TicketstationFunctions;
 
@@ -62,7 +63,7 @@ $venue_website_url = preg_match('#^https?://#i', $this->items->website) ? $this-
 
 ## One table row per ticket: the child tickets (variants) of this ticket, or else the ticket itself.
 ## Every sold-out row offers the waiting list; only a ticket without variants gets the
-## "few tickets left" notice.
+## "few tickets left" notice, from the same point as the red "critical" bar (10% or less left).
 $ticketRows = [];
 
 if (count($this->childs) != 0) {
@@ -80,7 +81,7 @@ if (count($this->childs) != 0) {
         'ticket'      => $this->items,
         'available'   => $available_tickets,
         'waitinglist' => $this->config->show_waitinglist == 1,
-        'fewLeft'     => ($percentage_available < 0.5) && ($available_tickets > 0),
+        'fewLeft'     => $availability_class === 'ts-availability--critical',
     ];
 }
 
@@ -102,7 +103,7 @@ if (count($this->childs) != 0) {
             <dd><?php echo htmlspecialchars($this->items->eventname, ENT_QUOTES, 'UTF-8'); ?></dd>
 
             <dt><?php echo Text::_('COM_TICKETSTATION_DATE'); ?></dt>
-            <dd><?php echo date('d-m-Y H:i', strtotime($this->items->startdate)); ?></dd>
+            <dd><?php echo Date::long($this->items->startdate, true); ?></dd>
 
             <?php if ($this->config->show_venue == 1) { ?>
                 <dt><?php echo Text::_('COM_TICKETSTATION_VENUE'); ?></dt>
@@ -250,6 +251,14 @@ if (count($this->childs) != 0) {
 
 <script type="text/javascript">
 
+    // A call that failed (no connection, or an expired session that the server refuses with 403):
+    // tell the customer instead of silently doing nothing.
+    function requestFailed(){
+        jQuery( "#message" ).stop(true, true)
+            .html(<?php echo json_encode('<div class="ts-alert ts-alert--danger">' . Text::_('COM_TICKETSTATION_REQUEST_FAILED') . '</div>'); ?>)
+            .show();
+    }
+
     function updateCart(){
 
         var order = 'ordercode=' + <?php echo $ordercode; ?> ;
@@ -345,14 +354,13 @@ if (count($this->childs) != 0) {
             cache: false,
             //success
             success: function (html) {
-                // We're done, show data
+                // We're done, show data; an error stays a little longer
                 jQuery( "#message" ).stop(true, true).html(html.msg).show();
                 updateCart();
                 updateAvailable();
-                jQuery( "#message" ).delay(3000).fadeOut(500);
+                jQuery( "#message" ).delay(html.msg.indexOf('ts-alert--danger') !== -1 ? 6000 : 3000).fadeOut(500);
             },
-            error:function (xhr, ajaxOptions, thrownError){
-            }
+            error: requestFailed
         });
 
 
@@ -389,8 +397,7 @@ if (count($this->childs) != 0) {
                 updateCart();
 
             },
-            error:function (xhr, ajaxOptions, thrownError){
-            }
+            error: requestFailed
         });
 
 

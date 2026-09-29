@@ -30,6 +30,15 @@ use Ticketstation\Component\Ticketstation\Site\Model\CheckoutModel;
  */
 class CheckoutController extends BaseController
 {
+    /** User state with what the customer typed, when the form comes back with errors */
+    public const STATE_DATA = 'com_ticketstation.checkout.data';
+
+    /** User state with the errors per field (field name => message) */
+    public const STATE_ERRORS = 'com_ticketstation.checkout.errors';
+
+    /** The fields of the details form */
+    public const FORM_FIELDS = ['gender', 'firstname', 'lastname', 'address', 'address2', 'address3', 'zipcode', 'city', 'country_id', 'phonenumber', 'emailaddress', 'email2'];
+
     private $username;
     private $password;
     private $ordercode;
@@ -105,23 +114,29 @@ class CheckoutController extends BaseController
         $app    = Factory::getApplication();
         $jinput = Factory::getApplication()->getInput();
 
-        // Register submitted data.
-        $requestData = Factory::getApplication()->getInput()->post->getArray();
-
-        // We do need this again for failed registrations.
-        //$app->setUserState('com_ticketmaster.registration', $requestData);
-
         // Getting the configuration
         $config = (new Config)->get(['use_automatic_login', 'auto_username', 'show_birthday', 'show_phone', 'show_country', 'show_address', 'show_secondaddress', 'show_thirdaddress', 'show_zipcode', 'show_city', 'show_salutation']);
 
-        // Validating the form
-        if ( ! $this->validateForm($config))
+        // Validating the form: on errors back to the form, which shows them next to the fields
+        // and keeps what the customer typed.
+        $errors = $this->validateForm($config);
+
+        if ($errors)
         {
+            $app->setUserState(self::STATE_DATA, array_map(
+                fn ($field) => $jinput->get($field, '', 'string'),
+                array_combine(self::FORM_FIELDS, self::FORM_FIELDS)
+            ));
+            $app->setUserState(self::STATE_ERRORS, $errors);
+
             $itemid = TicketstationFunctions::getSiteItemid();
-            $app->redirect(Route::_('index.php?option=com_ticketstation&view=checkout' . ($itemid ? '&Itemid=' . $itemid : '')));
+            $app->redirect(Route::_('index.php?option=com_ticketstation&view=checkout' . ($itemid ? '&Itemid=' . $itemid : ''), false));
 
             return false;
         }
+
+        $app->setUserState(self::STATE_DATA, null);
+        $app->setUserState(self::STATE_ERRORS, null);
 
 
         $post   = $jinput->post->getArray();
@@ -251,115 +266,56 @@ class CheckoutController extends BaseController
     }
 
     /**
-     * Validating the form values.
+     * Validating the form values. Every field is checked, so the form can show all problems at
+     * once, each next to its own field.
      *
-     * @param $config
+     * @param   object  $config  the show_* settings of the Configuration
      *
-     * @return bool
-     *
-     * @since 1.0.0
+     * @return  array  field name => error message; empty when the form is fine
      */
     private function validateForm($config)
     {
-        $app    = Factory::getApplication();
-        $jinput = $app->getInput();
+        $jinput = Factory::getApplication()->getInput();
+        $value  = fn ($field) => trim($jinput->get($field, '', 'string'));
+        $errors = [];
 
-        // Check if the email address is not empty.
-        if ($jinput->get('emailaddress', '', 'string') == '')
+        // Required text fields: field => [shown, message when empty]
+        $required = [
+            'firstname'   => [true, 'COM_TICKETSTATION_CHECKOUT_FIRSTNAME_NOT_FILLED'],
+            'lastname'    => [true, 'COM_TICKETSTATION_CHECKOUT_LASTNAME_NOT_FILLED'],
+            'address'     => [$config->show_address == 1, 'COM_TICKETSTATION_CHECKOUT_ADDRESS_NOT_FILLED'],
+            'address2'    => [$config->show_secondaddress == 1, 'COM_TICKETSTATION_CHECKOUT_ADDRESS2_NOT_FILLED'],
+            'zipcode'     => [$config->show_zipcode == 1, 'COM_TICKETSTATION_CHECKOUT_ZIPCODE_NOT_FILLED'],
+            'city'        => [$config->show_city == 1, 'COM_TICKETSTATION_CHECKOUT_CITY_NOT_FILLED'],
+            'phonenumber' => [$config->show_phone == 1, 'COM_TICKETSTATION_CHECKOUT_PHONE_NOT_FILLED'],
+        ];
+
+        foreach ($required as $field => [$shown, $message])
         {
-            Factory::getApplication()->enqueueMessage(Text::_('COM_TICKETSTATION_USER_EMAIL_INCORRECT'), 'error');
-
-            return false;
-        }
-
-        // Check if email is valid, else redirect back
-        if ( ! filter_var($jinput->getString('emailaddress'), FILTER_VALIDATE_EMAIL))
-        {
-            Factory::getApplication()->enqueueMessage(Text::_('COM_TICKETSTATION_USER_EMAIL_INCORRECT'), 'error');
-
-            return false;
-        }
-
-        // If country enabled, check it
-        if ($config->show_country == 1)
-        {
-            if ($jinput->get('country_id', '0', 'int') == 0)
+            if ($shown && $value($field) === '')
             {
-                $app->enqueueMessage(Text::_('COM_TICKETSTATION_NO_COUNTRY_ID_FILLED'), 'error');
-
-                return false;
+                $errors[$field] = Text::_($message);
             }
         }
 
-        // Check if the name has been set.
-        if ($jinput->get('lastname', '', 'string') == '')
+        if ($config->show_country == 1 && $jinput->get('country_id', 0, 'int') == 0)
         {
-            $app->enqueueMessage(Text::_('COM_TICKETSTATION_CHECKOUT_NAME_NOT_FILLED'), 'error');
-
-            return false;
+            $errors['country_id'] = Text::_('COM_TICKETSTATION_NO_COUNTRY_ID_FILLED');
         }
 
-        // Check if the firstname has been set.
-        if ($jinput->get('firstname', '', 'string') == '')
-        {
-            $app->enqueueMessage(Text::_('COM_TICKETSTATION_CHECKOUT_NAME_NOT_FILLED'), 'error');
+        // Not trimmed: the address is saved exactly as sent.
+        $email = $jinput->get('emailaddress', '', 'string');
 
-            return false;
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL))
+        {
+            $errors['emailaddress'] = Text::_('COM_TICKETSTATION_USER_EMAIL_INCORRECT');
+        }
+        elseif ($email !== $jinput->get('email2', '', 'string'))
+        {
+            $errors['email2'] = Text::_('COM_TICKETSTATION_EMAILADDRESSES_DO_NOT_COMPARE');
         }
 
-        // If enabled, check the phone number.
-        if ($config->show_phone == 1)
-        {
-            if ($jinput->get('phonenumber', '', 'string') == '')
-            {
-                $app->enqueueMessage(Text::_('COM_TICKETSTATION_CHECKOUT_PHONE_NOT_FILLED'), 'error');
-
-                return false;
-            }
-        }
-
-        // If enabled the address, check it.
-        if ($config->show_address == 1)
-        {
-            if ($jinput->get('address', '', 'string') == '')
-            {
-                $app->enqueueMessage(Text::_('COM_TICKETSTATION_CHECKOUT_ADDRESS_NOT_FILLED'), 'error');
-
-                return false;
-            }
-        }
-
-        // If enabled the address, check it.
-        if ($config->show_secondaddress == 1)
-        {
-            if ($jinput->get('address2', '', 'string') == '')
-            {
-                $app->enqueueMessage(Text::_('COM_TICKETSTATION_CHECKOUT_ADDRESS2_NOT_FILLED'), 'error');
-
-                return false;
-            }
-        }
-
-        // If enabled the city, check it.
-        if ($config->show_city == 1)
-        {
-            if ($jinput->get('city', '', 'string') == '')
-            {
-                $app->enqueueMessage(Text::_('COM_TICKETSTATION_CHECKOUT_CITY_NOT_FILLED'), 'error');
-
-                return false;
-            }
-        }
-
-        if ($jinput->get('emailaddress', '', 'string') != $jinput->get('email2', '', 'string'))
-        {
-            $app->enqueueMessage(Text::_('COM_TICKETSTATION_EMAILADDRESSES_DO_NOT_COMPARE'), 'error');
-
-            return false;
-        }
-
-        return true;
-
+        return $errors;
     }
 
 

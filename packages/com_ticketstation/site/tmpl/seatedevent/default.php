@@ -13,6 +13,7 @@ use Joomla\CMS\Language\Text;
 use Joomla\CMS\Layout\LayoutHelper;
 use Joomla\CMS\Router\Route;
 use Joomla\CMS\Uri\Uri;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\Date;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Ordercode;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\SeatChart;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\TicketstationFunctions;
@@ -68,7 +69,7 @@ $venue_website_url = preg_match('#^https?://#i', $this->ticketdetails->website) 
             <dd><?php echo $this->ticketdetails->eventname; ?> - <?php echo $this->ticketdetails->ticketname; ?></dd>
 
             <dt><?php echo Text::_('COM_TICKETSTATION_DATE'); ?></dt>
-            <dd><?php echo date('d-m-Y H:i', strtotime($this->ticketdetails->startdate)); ?></dd>
+            <dd><?php echo Date::long($this->ticketdetails->startdate, true); ?></dd>
 
             <?php if ($this->config->show_venue == 1) { ?>
                 <dt><?php echo Text::_('COM_TICKETSTATION_VENUE'); ?></dt>
@@ -199,6 +200,11 @@ $venue_website_url = preg_match('#^https?://#i', $this->ticketdetails->website) 
             .delay(type === 'danger' ? 5000 : 3000).fadeOut(500);
     }
 
+    // A call that failed (no connection, or an expired session that the server refuses with 403).
+    function requestFailed() {
+        showMessage('danger', <?php echo json_encode(Text::_('COM_TICKETSTATION_REQUEST_FAILED')); ?>);
+    }
+
     $('#ticket-options').on('change', '.ticketid', function (event) {
 
         var currentId = $(this).attr('id');
@@ -224,9 +230,7 @@ $venue_website_url = preg_match('#^https?://#i', $this->ticketdetails->website) 
                 updateCart();
 
             },
-            error:function (xhr, ajaxOptions, thrownError){
-                alert(xhr.status);
-            }
+            error: requestFailed
         });
 
     });
@@ -272,9 +276,7 @@ $venue_website_url = preg_match('#^https?://#i', $this->ticketdetails->website) 
 
 
             },
-            error:function (xhr, ajaxOptions, thrownError){
-                alert(xhr.status);
-            }
+            error: requestFailed
         });
 
     });
@@ -305,9 +307,7 @@ $venue_website_url = preg_match('#^https?://#i', $this->ticketdetails->website) 
                 $( "#ticket-options" ).html(data);
 
             },
-            error:function (xhr, ajaxOptions, thrownError){
-                alert(xhr.status);
-            }
+            error: requestFailed
         });
 
 
@@ -368,9 +368,7 @@ $venue_website_url = preg_match('#^https?://#i', $this->ticketdetails->website) 
                     }
 
                 },
-                error:function (xhr, ajaxOptions, thrownError){
-                    alert(xhr.status);
-                }
+                error: requestFailed
             });
 
 

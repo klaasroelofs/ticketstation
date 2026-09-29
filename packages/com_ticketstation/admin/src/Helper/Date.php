@@ -12,6 +12,7 @@ namespace Ticketstation\Component\Ticketstation\Administrator\Helper;
 
 ## no direct access
 use Joomla\CMS\Factory;
+use Joomla\CMS\Language\Text;
 
 
 defined('_JEXEC') or die('Restricted access');
@@ -70,6 +71,38 @@ class Date
         }
 
         return $now->format($format);
+    }
+
+    /**
+     * A ticket or event date (stored in site-local time) written out in the active site
+     * language, e.g. "zaterdag 3 oktober 2026" / "Saturday 3 October 2026", optionally
+     * followed by the time ("zaterdag 3 oktober 2026, 20:00 uur").
+     *
+     * @param   string   $localDate  date as stored, e.g. '2026-10-03 20:00:00'
+     * @param   boolean  $withTime   append the time
+     *
+     * @return  string
+     */
+    public static function long($localDate, $withTime = false)
+    {
+        if (!$localDate || str_starts_with((string) $localDate, '0000-00-00')) {
+            return '';
+        }
+
+        // Stored and formatted in the same (PHP) timezone, so the date is never shifted.
+        $timestamp = strtotime($localDate);
+        $formatter = datefmt_create(
+            str_replace('-', '_', Factory::getApplication()->getLanguage()->getTag()),
+            \IntlDateFormatter::NONE,
+            \IntlDateFormatter::NONE,
+            date_default_timezone_get(),
+            \IntlDateFormatter::GREGORIAN,
+            'EEEE d MMMM yyyy'
+        );
+
+        $day = datefmt_format($formatter, $timestamp);
+
+        return $withTime ? Text::sprintf('COM_TICKETSTATION_DATE_AT_TIME', $day, date('H:i', $timestamp)) : $day;
     }
 
     public static function getDateFormat()

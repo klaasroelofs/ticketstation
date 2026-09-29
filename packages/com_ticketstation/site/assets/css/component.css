@@ -964,6 +964,17 @@
     box-shadow: var(--ts-focus-ring);
 }
 
+.ticketstation .ts-field--invalid .ts-input,
+.ticketstation .ts-field--invalid .ts-select {
+    border-color: var(--ts-danger);
+}
+
+.ticketstation .ts-field__error {
+    margin: .375rem 0 0;
+    font-size: .875rem;
+    color: var(--ts-danger);
+}
+
 .ticketstation .ts-inline-form {
     display: flex;
     flex-wrap: wrap;

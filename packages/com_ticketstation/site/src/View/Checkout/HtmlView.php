@@ -18,6 +18,8 @@ use Joomla\CMS\MVC\View\HtmlView as BaseHtmlView;
 use Joomla\CMS\Router\Route;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Config;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\TicketstationFunctions;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\User;
+use Ticketstation\Component\Ticketstation\Site\Controller\CheckoutController;
 
 
 class HtmlView extends BaseHtmlView {
@@ -62,8 +64,6 @@ class HtmlView extends BaseHtmlView {
             //3 => array('value' => '3', 'text' => JText::_( 'COM_TICKETSTATION_MISS' )),
             //4 => array('value' => '4', 'text' => JText::_( 'COM_TICKETSTATION_FAMILY' )),
         );
-
-        $lists['gender'] = HTMLHelper::_('select.genericList', $gender, 'gender', 'class="ts-select"', 'value', 'text', 1 );
 
         if($config->show_birthday != 0 )
         {
@@ -119,8 +119,34 @@ class HtmlView extends BaseHtmlView {
 
         $countrylist[]	  = HTMLHelper::_('select.option',  '0', Text::_( 'COM_TICKETSTATION_PLS_SELECT' ), 'id', 'name' );
         $countrylist	      = array_merge( $countrylist, $db->loadObjectList() );
-        $lists['country'] = HTMLHelper::_('select.genericlist',  $countrylist, 'country_id', 'class="ts-select"', 'id',
-            'name', '' );
+        ## The form's values: what the customer typed when the form came back with errors, or
+        ## else the details already stored for this order. The errors are shown once.
+        $client = (new User)->getClientByOrdercode((int) $app->getSession()->get('ordercode'));
+        $typed  = $app->getUserState(CheckoutController::STATE_DATA);
+
+        $this->values = is_array($typed) ? $typed : [
+            'gender'       => $client->gender ?? '',
+            'firstname'    => $client->firstname ?? '',
+            'lastname'     => $client->name ?? '',
+            'address'      => $client->address ?? '',
+            'address2'     => $client->address2 ?? '',
+            'address3'     => $client->address3 ?? '',
+            'zipcode'      => $client->zipcode ?? '',
+            'city'         => $client->city ?? '',
+            'country_id'   => $client->country_id ?? '',
+            'phonenumber'  => $client->phonenumber ?? '',
+            'emailaddress' => $client->emailaddress ?? '',
+            'email2'       => $client->emailaddress ?? '',
+        ];
+        $this->errors = (array) $app->getUserState(CheckoutController::STATE_ERRORS, []);
+
+        $app->setUserState(CheckoutController::STATE_DATA, null);
+        $app->setUserState(CheckoutController::STATE_ERRORS, null);
+
+        $lists['gender']  = HTMLHelper::_('select.genericList', $gender, 'gender', 'class="ts-select"', 'value', 'text', $this->values['gender'] ?: 1);
+        $lists['country'] = HTMLHelper::_('select.genericlist',  $countrylist, 'country_id',
+            'class="ts-select" required' . (isset($this->errors['country_id']) ? ' aria-invalid="true" aria-describedby="country_id-error"' : ''),
+            'id', 'name', (int) $this->values['country_id']);
 
         $this->lists    = $lists;
         $this->data     = $data;

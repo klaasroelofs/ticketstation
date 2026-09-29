@@ -70,6 +70,9 @@ class Dispatcher extends ComponentDispatcher
         }
 
         if (!Session::checkToken('request')) {
+            // A real error status, so the AJAX calls of the ticket and seat pages show their
+            // "reload the page" message instead of treating this text as a normal answer.
+            http_response_code(403);
             jexit(Text::_('JINVALID_TOKEN'));
         }
     }
