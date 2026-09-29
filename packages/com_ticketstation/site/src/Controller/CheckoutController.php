@@ -18,6 +18,7 @@ use Joomla\CMS\Router\Route;
 use Joomla\CMS\Session\Session;
 use Ticketstation\Component\Ticketstation\Administrator\Helper;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Config;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\CustomerNote;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Order;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Ticket;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\TicketstationFunctions;
@@ -71,6 +72,13 @@ class CheckoutController extends BaseController
         $app    = Factory::getApplication();
         $jinput = $app->getInput();
         $couponcode = $jinput->get('couponcode', 'NONE', 'STRING');
+
+        // The cart's note field travels along with the coupon form: the page reloads after a
+        // coupon, and a note typed before it would otherwise be lost.
+        if ($jinput->post->exists('remarks'))
+        {
+            (new CustomerNote)->save($this->ordercode, $jinput->post->get('remarks', '', 'raw'));
+        }
 
         $itemid = TicketstationFunctions::getSiteItemid();
         $cartUrl = 'index.php?option=com_ticketstation&view=cart' . ($itemid ? '&Itemid=' . $itemid : '');

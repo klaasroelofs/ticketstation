@@ -237,7 +237,9 @@ if ($items == 0 && $waiters == 0) {
 
         <div class="ts-field ts-remarks">
             <label class="ts-label" for="remarks"><?php echo Text::_('COM_TICKETSTATION_ENTER_REMARKS'); ?></label>
-            <textarea class="ts-textarea" rows="3" id="remarks" name="remarks" maxlength="255"><?php echo htmlspecialchars($this->customerNote, ENT_QUOTES, 'UTF-8'); ?></textarea>
+            <?php ## form="adminForm": the note is sent along with the coupon form and saved there, so
+            ## it survives the page reload after redeeming a coupon. ?>
+            <textarea class="ts-textarea" rows="3" id="remarks" name="remarks" maxlength="255"<?php echo $this->config->use_coupons ? ' form="adminForm"' : ''; ?>><?php echo htmlspecialchars($this->customerNote, ENT_QUOTES, 'UTF-8'); ?></textarea>
             <p id="chars-remaining" class="ts-field__hint ts-chars-remaining" aria-live="polite"><?php echo Text::_('COM_TICKETSTATION_REMAINING'); ?> <?php echo 255 - mb_strlen($this->customerNote); ?></p>
         </div>
 
