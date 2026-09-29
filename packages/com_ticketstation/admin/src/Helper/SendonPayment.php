@@ -50,7 +50,7 @@ class SendonPayment
             $tplIdx = $pdf->importPage(1);
             $size   = $pdf->getTemplateSize($tplIdx);
             $pdf->addPage();
-            $pdf->useTemplate($tplIdx, 0, 0, $size['w'], null, true);
+            $pdf->useTemplate($tplIdx, 0, 0, $size['width'], null, true);
 
         }
 
@@ -101,7 +101,7 @@ class SendonPayment
         $query->join('LEFT', $db->quoteName('#__ticketstation_tickets', 't') . ' ON (' .$db->quoteName('t.ticketid'). ' = ' .$db->quoteName('a.ticketid'). ')');
         $query->join('LEFT OUTER', $db->quoteName('#__ticketstation_seatplancoords', 'ext') . ' ON (' . $db->quoteName('ext.orderid') . ' = ' . $db->quoteName('a.orderid') . ')');
         $query->where($db->quoteName('a.ordercode') . ' = '. $db->quote((int)$this->eid));
-        $query->order($db->quoteName('ext.seatid') . ' ASC');
+        $query->order(Tickets::pdfOrder('a'));
 
         $db->setQuery($query);
         $info = $db->loadObjectList();

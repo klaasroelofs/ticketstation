@@ -23,6 +23,30 @@ defined('_JEXEC') or die('Restricted access');
 class Tickets
 {
     /**
+     * The order of the tickets of one order: per event, tickets without a seat first, then the
+     * seats by row and seat number, and otherwise in the order they were added. The number
+     * printed on a ticket ("3/33") and the page order of the combined PDF both use it, so they
+     * always match. Without the order id at the end, tickets without a seat came out in an
+     * arbitrary order.
+     *
+     * @param   string  $orderAlias  alias of #__ticketstation_orders in the query
+     * @param   string  $seatAlias   alias of the joined #__ticketstation_seatplancoords
+     *
+     * @return  string[]  for $query->order()
+     */
+    public static function pdfOrder(string $orderAlias = 'a', string $seatAlias = 'ext'): array
+    {
+        $db = Factory::getContainer()->get('DatabaseDriver');
+
+        return [
+            $db->quoteName($orderAlias . '.eventid') . ' ASC',
+            $db->quoteName($seatAlias . '.row_name') . ' ASC',
+            $db->quoteName($seatAlias . '.seatid') . ' ASC',
+            $db->quoteName($orderAlias . '.orderid') . ' ASC',
+        ];
+    }
+
+    /**
      * @param $ordercode
      *
      * @since 1.0.0
