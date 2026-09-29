@@ -364,11 +364,16 @@ class PaymentAPI
 
 
     ## Creating an order list which can be used in emails.
-    public function getWaitingList()
+    /**
+     * The waiting-list rows of this ordercode as an HTML list for the confirmation mail.
+     *
+     * @param   int[]  $ids  Only these rows; all rows of the ordercode when empty.
+     */
+    public function getWaitingList(array $ids = [])
     {
         $config = $this->getConfig();
 
-        $select = array('o.*', 't.*', 'e.eventname', 'c.*', 't.startdate', 'e.eventcode', 't.ticketprice AS price');
+        $select = array('o.*', 't.*', 'e.eventname', 'c.*', 't.startdate', 'e.eventcode', 't.ticketprice AS price', 'p.ticketname AS parent_ticketname');
 
         $db = Factory::getContainer()->get('DatabaseDriver');
 
@@ -382,7 +387,13 @@ class PaymentAPI
         $query->join('LEFT', $db->quoteName('#__ticketstation_clients', 'c') . ' ON (' . $db->quoteName('c.clientid') . ' = ' . $db->quoteName('o.userid') . ')');
         $query->join('LEFT', $db->quoteName('#__ticketstation_events', 'e') . ' ON (' . $db->quoteName('e.eventid') . ' = ' . $db->quoteName('o.eventid') . ')');
         $query->join('LEFT', $db->quoteName('#__ticketstation_tickets', 't') . ' ON (' . $db->quoteName('t.ticketid') . ' = ' . $db->quoteName('o.ticketid') . ')');
+        $query->join('LEFT', $db->quoteName('#__ticketstation_tickets', 'p') . ' ON (' . $db->quoteName('p.ticketid') . ' = ' . $db->quoteName('t.parent') . ' AND ' . $db->quoteName('t.parent') . ' > 0)');
         $query->where($db->quoteName('o.ordercode') . ' = ' . $db->quote((int)$this->ordercode));
+
+        if ($ids) {
+            $query->whereIn($db->quoteName('o.id'), array_map('intval', $ids));
+        }
+
         $query->group('o.id');
 
         $db->setQuery($query);
@@ -395,10 +406,7 @@ class PaymentAPI
 
             $row = $this->orderData[$i];
 
-            $price = (new TicketstationFunctions)->showprice($config->priceformat, $row->ticketprice, $config->valuta);
-            $ticketdate = date($config->dateformat, strtotime($row->startdate));
-
-            $orders .= '<li>[ ' . $row->id . ' ] - [ ' . $ticketdate . ' ] - <strong>' . $row->ticketname . '</strong> [ ' . $price . ' ]</li>';
+            $orders .= $this->orderListItem($row, $row->ticketprice, $config);
         }
 
         $orders .= '</ul>';
@@ -415,10 +423,10 @@ class PaymentAPI
         if ($config->pro_installed == 1) {
             $select = array('o.*', 't.*', 'e.eventname', 'c.*', 't.startdate',
                 'o.paid', 'e.eventcode', 't.ticketcode',
-                'o.price AS price', 'ext.seatid', 'ext.row_name');
+                'o.price AS price', 'ext.seatid', 'ext.row_name', 'p.ticketname AS parent_ticketname');
         }
         else {
-            $select = array('o.*', 't.*', 'e.eventname', 'c.*', 't.startdate', 'o.paid', 'e.eventcode', 't.ticketcode', 'o.price AS price');
+            $select = array('o.*', 't.*', 'e.eventname', 'c.*', 't.startdate', 'o.paid', 'e.eventcode', 't.ticketcode', 'o.price AS price', 'p.ticketname AS parent_ticketname');
         }
 
         $db = Factory::getContainer()->get('DatabaseDriver');
@@ -433,6 +441,7 @@ class PaymentAPI
         $query->join('LEFT', $db->quoteName('#__ticketstation_clients', 'c') . ' ON (' . $db->quoteName('c.clientid') . ' = ' . $db->quoteName('o.userid') . ')');
         $query->join('LEFT', $db->quoteName('#__ticketstation_events', 'e') . ' ON (' . $db->quoteName('e.eventid') . ' = ' . $db->quoteName('o.eventid') . ')');
         $query->join('LEFT', $db->quoteName('#__ticketstation_tickets', 't') . ' ON (' . $db->quoteName('t.ticketid') . ' = ' . $db->quoteName('o.ticketid') . ')');
+        $query->join('LEFT', $db->quoteName('#__ticketstation_tickets', 'p') . ' ON (' . $db->quoteName('p.ticketid') . ' = ' . $db->quoteName('t.parent') . ' AND ' . $db->quoteName('t.parent') . ' > 0)');
 
         $query->join('LEFT OUTER', $db->quoteName('#__ticketstation_seatplancoords', 'ext') . ' ON (' . $db->quoteName('ext.orderid') . ' = ' . $db->quoteName('o.orderid') . ')');
 
@@ -449,21 +458,32 @@ class PaymentAPI
         for ($i = 0, $n = count($this->orderData); $i < $n; $i++) {
             $row = $this->orderData[$i];
 
-            $price = TicketstationFunctions::showprice($config->priceformat, $row->price, $config->valuta);
-            $ticketdate = date($config->dateformat, strtotime($row->startdate));
-
-            if ($row->seatid == '') {
-                $orders .= '<li>[ ' . $row->orderid . ' ] - [ ' . $ticketdate . ' ] - <strong>' . $row->ticketname . '</strong> [ ' . $price . ' ]</li>';
-            }
-            else {
-                $orders .= '<li>[ ' . $row->orderid . ' ] - [ ' . $ticketdate . ' ] - <strong>' . $row->ticketname . '</strong> [ ' . $price . ' ]
-					 [ ' . Text::_('COM_TICKETSTATION_SEAT_NR') . ' ' . $row->row_name . $row->seatid . ' ]</li>';
-            }
+            $orders .= $this->orderListItem($row, $row->price, $config);
         }
 
         $orders .= '</ul>';
 
         return $orders;
+    }
+
+    /**
+     * One line of {orderlist}: "Event - Ticket (date) - price", with the seat added for a
+     * seated ticket. A child ticket is named with its parent, as elsewhere in the component.
+     */
+    private function orderListItem(object $row, $price, object $config): string
+    {
+        $ticketname = empty($row->parent_ticketname) ? $row->ticketname : $row->parent_ticketname . ' - ' . $row->ticketname;
+        $ticketdate = date($config->dateformat, strtotime($row->startdate));
+
+        $line = htmlspecialchars($row->eventname . ' - ' . $ticketname, ENT_QUOTES, 'UTF-8')
+            . ' (' . $ticketdate . ') - '
+            . TicketstationFunctions::showprice($config->priceformat, $price, $config->valuta);
+
+        if (!empty($row->seatid)) {
+            $line .= ' - ' . Text::_('COM_TICKETSTATION_SEAT_NR') . ' ' . htmlspecialchars($row->row_name . $row->seatid, ENT_QUOTES, 'UTF-8');
+        }
+
+        return '<li>' . $line . '</li>';
     }
 
     public function getPaymentStateForEmails()

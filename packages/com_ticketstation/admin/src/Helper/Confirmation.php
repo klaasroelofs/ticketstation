@@ -41,14 +41,20 @@ class Confirmation
 
         $payment_helper = new PaymentAPI((int) $this->eid);
         $db             = Factory::getContainer()->get('DatabaseDriver');
-        $query          = $db->getQuery(true);
-        $query->select(['COUNT(id) AS total']);
-        $query->from($db->quoteName('#__ticketstation_waitinglist'));
-        $query->where($db->quoteName('ordercode') . ' = ' . (int) $this->eid);
-        $db->setQuery($query);
-        $result = $db->loadObject();
 
-        if ($result->total == 0)
+        ## Only rows that haven't had this mail yet. A promoted customer who follows the payment
+        ## link goes through checkout again, which calls this method; their rows were mailed
+        ## (and promoted) before, so they must not get a second confirmation link.
+        $query = $db->getQuery(true)
+            ->select($db->quoteName('id'))
+            ->from($db->quoteName('#__ticketstation_waitinglist'))
+            ->where($db->quoteName('ordercode') . ' = ' . (int) $this->eid)
+            ->where($db->quoteName('sent') . ' = 0')
+            ->where($db->quoteName('processed') . ' = 0');
+        $db->setQuery($query);
+        $ids = array_map('intval', $db->loadColumn());
+
+        if (!$ids)
         {
             return true;
         }
@@ -57,7 +63,7 @@ class Confirmation
         $query->select(['c.clientid AS userid', 'w.id AS waitinglist_id']);
         $query->from($db->quoteName('#__ticketstation_waitinglist', 'w'));
         $query->join('LEFT', $db->quoteName('#__ticketstation_clients', 'c') . ' ON (' . $db->quoteName('c.clientid') . ' = ' . $db->quoteName('w.userid') . ')');
-        $query->where($db->quoteName('w.ordercode') . ' = ' . (int) $this->eid);
+        $query->whereIn($db->quoteName('w.id'), $ids);
         $query->group('w.ordercode');
         $db->setQuery($query);
         $user = $db->loadObject();
@@ -70,7 +76,7 @@ class Confirmation
 
         ## getOrderCount() only reflects the previous getWaitingList()/getOrderList() call,
         ## so it must run after getWaitingList() below, not before it.
-        $orderlist     = $payment_helper->getWaitingList();
+        $orderlist     = $payment_helper->getWaitingList($ids);
         $total_tickets = $payment_helper->getOrderCount();
         $message       = new eTicketsMessage;
 
@@ -106,11 +112,9 @@ class Confirmation
             $db->quoteName('sent') . ' = ' . $db->quote('1'),
             $db->quoteName('date_sent') . ' = ' . $db->quote(date('Y-m-d H:i:s')),
         ];
-        $conditions = [$db->quoteName('ordercode') . ' = ' . $db->quote((int) $this->eid)];
-
         $query->update($db->quoteName('#__ticketstation_waitinglist'))
             ->set($fields)
-            ->where($conditions);
+            ->whereIn($db->quoteName('id'), $ids);
         $db->setQuery($query);
 
         if ($db->execute() == true)
