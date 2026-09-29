@@ -118,7 +118,7 @@ class ticketcreator
 
         ##Ticketnummering
         ## Let op: deze volgorde moet gelijk zijn aan de sortering die wordt gebruikt bij het samenvoegen
-        ## van de losse ticket-PDF's (Tickets::pdfOrder()), anders klopt het opgedrukte paginanummer niet
+        ## van de losse ticket-PDF's (Tickets::orderForPdf()), anders klopt het opgedrukte paginanummer niet
         ## meer met de positie van het ticket in het gecombineerde PDF-bestand.
         $query = $db->getQuery(true);
 
@@ -126,7 +126,7 @@ class ticketcreator
         $query->from($db->quoteName('#__ticketstation_orders', 'o'));
         $query->join('LEFT OUTER', $db->quoteName('#__ticketstation_seatplancoords', 'ext') . ' ON (' . $db->quoteName('ext.orderid') . ' = ' . $db->quoteName('o.orderid') . ')');
         $query->where($db->quoteName('o.ordercode') . ' = ' . $db->quote((int)$order->ordercode));
-        $query->order(Tickets::pdfOrder('o'));
+        Tickets::orderForPdf($query, 'o');
 
         $db->setQuery($query);
         $ticket_ids_in_order = $db->loadObjectList();

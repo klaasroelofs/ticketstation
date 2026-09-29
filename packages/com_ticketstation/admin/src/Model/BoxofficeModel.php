@@ -1961,7 +1961,7 @@ class BoxofficeModel extends ListModel
         $query->join('LEFT', $db->quoteName('#__ticketstation_tickets', 't') . ' ON (' .$db->quoteName('t.ticketid'). ' = ' .$db->quoteName('a.ticketid'). ')');
         $query->join('LEFT OUTER', $db->quoteName('#__ticketstation_seatplancoords', 'ext') . ' ON (' . $db->quoteName('ext.orderid') . ' = ' . $db->quoteName('a.orderid') . ')');
         $query->where($db->quoteName('a.ordercode') . ' = '. $db->quote($ordercode));
-        $query->order($db->quoteName('ext.seatid') . ' ASC');
+        Tickets::orderForPdf($query, 'a');
 
         $db->setQuery($query);
         $info = $db->loadObjectList();

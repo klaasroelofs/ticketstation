@@ -89,6 +89,10 @@ class Order
                 'rows'     => [],
                 'position' => count($lines),
                 'event'    => $eventOrder[$row->eventid],
+                'date'     => (string) ($row->owner_startdate ?? ''),
+                'owner'    => (int) ($row->owner_ticketid ?? $row->ticketid),
+                'ticket'   => (int) $row->ticketid,
+                'price'    => (float) ($row->ticketprice ?? 0),
             ];
             $lines[$key]->rows[] = $row;
         }
@@ -98,11 +102,14 @@ class Order
             $line->total    = array_sum(array_column($line->rows, 'price'));
         }
 
-        // Per event: first the ticket types in the order they were added, then the seats by
-        // seat number ("A2" before "A10" before "B1").
-        usort($lines, fn ($a, $b) => [$a->event, $a->seated, $a->seated ? 0 : $a->position]
-            <=> [$b->event, $b->seated, $b->seated ? 0 : $b->position]
-            ?: strnatcasecmp($a->seat, $b->seat));
+        // Per event, per parent ticket (child tickets with their parent, earliest ticket date
+        // first): first the ticket types without a seat in the order they were added, then the
+        // seats per ticket type, most expensive first as in the seat map legend, and within a
+        // type by seat number ("A2" before "A10" before "B1").
+        $key = fn ($line) => [$line->event, $line->date, $line->owner, $line->seated,
+            $line->seated ? -$line->price : $line->position, $line->seated ? $line->ticket : 0];
+
+        usort($lines, fn ($a, $b) => $key($a) <=> $key($b) ?: strnatcasecmp($a->seat, $b->seat));
 
         return $lines;
     }
@@ -120,7 +127,7 @@ class Order
         $db = Factory::getContainer()->get('DatabaseDriver');
 
         $query = $db->getQuery(true)
-            ->select(['a.*', 'c.*', "IF(p.ticketid IS NULL, t.ticketname, CONCAT(p.ticketname, ' - ', t.ticketname)) AS ticketname", 't.ticketprice', 't.startdate', 'e.eventname', 't.enddate', 't.min_qty', 't.max_qty', 'b.country'])
+            ->select(['a.*', 'c.*', "IF(p.ticketid IS NULL, t.ticketname, CONCAT(p.ticketname, ' - ', t.ticketname)) AS ticketname", 't.ticketprice', 't.startdate', 'e.eventname', 't.enddate', 'IFNULL(p.ticketid, t.ticketid) AS owner_ticketid', 'IFNULL(p.startdate, t.startdate) AS owner_startdate', 't.min_qty', 't.max_qty', 'b.country'])
             ->from($db->quoteName('#__ticketstation_orders', 'a'))
             ->join('LEFT', $db->quoteName('#__ticketstation_events', 'e') . ' ON ' . $db->quoteName('a.eventid') . ' = ' . $db->quoteName('e.eventid'))
             ->join('LEFT', $db->quoteName('#__ticketstation_tickets', 't') . ' ON ' . $db->quoteName('a.ticketid') . ' = ' . $db->quoteName('t.ticketid'))

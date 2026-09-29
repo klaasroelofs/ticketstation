@@ -13,6 +13,7 @@ use Joomla\CMS\Client\ClientHelper;
 use Joomla\CMS\Factory;
 use Joomla\Filesystem\File;
 use Joomla\CMS\Uri\Uri;
+use Joomla\Database\QueryInterface;
 
 defined('_JEXEC') or die;
 
@@ -23,27 +24,32 @@ defined('_JEXEC') or die('Restricted access');
 class Tickets
 {
     /**
-     * The order of the tickets of one order: per event, tickets without a seat first, then the
-     * seats by row and seat number, and otherwise in the order they were added. The number
-     * printed on a ticket ("3/33") and the page order of the combined PDF both use it, so they
-     * always match. Without the order id at the end, tickets without a seat came out in an
-     * arbitrary order.
+     * Sorts the tickets of one order: per event, per parent ticket (a child ticket goes with its
+     * parent; the parent with the earliest ticket date first), and within that tickets without
+     * a seat first, then the seats by row and seat number, and otherwise in the order they were
+     * added. The number printed on a ticket ("3/33") and the page order of the combined PDF both
+     * use it, so they always match. Without the order id at the end, tickets without a seat came
+     * out in an arbitrary order.
      *
-     * @param   string  $orderAlias  alias of #__ticketstation_orders in the query
-     * @param   string  $seatAlias   alias of the joined #__ticketstation_seatplancoords
-     *
-     * @return  string[]  for $query->order()
+     * @param   QueryInterface  $query       query on #__ticketstation_orders; gets two joins
+     *                                       (pdf_t, pdf_p) and its order
+     * @param   string          $orderAlias  alias of #__ticketstation_orders in the query
+     * @param   string          $seatAlias   alias of the joined #__ticketstation_seatplancoords
      */
-    public static function pdfOrder(string $orderAlias = 'a', string $seatAlias = 'ext'): array
+    public static function orderForPdf(QueryInterface $query, string $orderAlias = 'a', string $seatAlias = 'ext'): void
     {
         $db = Factory::getContainer()->get('DatabaseDriver');
 
-        return [
-            $db->quoteName($orderAlias . '.eventid') . ' ASC',
-            $db->quoteName($seatAlias . '.row_name') . ' ASC',
-            $db->quoteName($seatAlias . '.seatid') . ' ASC',
-            $db->quoteName($orderAlias . '.orderid') . ' ASC',
-        ];
+        $query->join('LEFT', $db->quoteName('#__ticketstation_tickets', 'pdf_t') . ' ON ' . $db->quoteName('pdf_t.ticketid') . ' = ' . $db->quoteName($orderAlias . '.ticketid'))
+            ->join('LEFT', $db->quoteName('#__ticketstation_tickets', 'pdf_p') . ' ON ' . $db->quoteName('pdf_p.ticketid') . ' = ' . $db->quoteName('pdf_t.parent') . ' AND ' . $db->quoteName('pdf_t.parent') . ' > 0')
+            ->order([
+                $db->quoteName($orderAlias . '.eventid') . ' ASC',
+                'IFNULL(' . $db->quoteName('pdf_p.startdate') . ', ' . $db->quoteName('pdf_t.startdate') . ') ASC',
+                'IFNULL(' . $db->quoteName('pdf_p.ticketid') . ', ' . $db->quoteName('pdf_t.ticketid') . ') ASC',
+                $db->quoteName($seatAlias . '.row_name') . ' ASC',
+                $db->quoteName($seatAlias . '.seatid') . ' ASC',
+                $db->quoteName($orderAlias . '.orderid') . ' ASC',
+            ]);
     }
 
     /**
