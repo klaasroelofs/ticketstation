@@ -946,8 +946,8 @@
         }
     });
 
-    // The form fields are the source: redraw when they change, and fetch a new background
-    // when the paper size, orientation or venue changes.
+    // The form fields are the source: redraw when they change, and fetch a new background and
+    // texts when the paper size, orientation or a value printed on the ticket changes.
     function onFormChange(event) {
         if (writing || !event.target || !event.target.name) {
             return;
@@ -955,7 +955,8 @@
 
         var name = event.target.name.replace(/^jform\[|\]$/g, '');
 
-        if (['ticket_size', 'ticket_orientation', 'override_ticketsize', 'venue'].indexOf(name) !== -1) {
+        if (['ticket_size', 'ticket_orientation', 'override_ticketsize', 'venue', 'eventid', 'ticketname',
+            'ticketcode', 'freetext_1', 'startdate', 'ticketprice'].indexOf(name) !== -1) {
             scheduleLoad();
         }
 

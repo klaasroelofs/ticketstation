@@ -252,7 +252,8 @@ class TicketController extends FormController
      * - width/height: the page size in mm
      * - defaults: the built-in field set DefaultTicketLayout prints when the ticket has no design
      *   and no positions of its own (null when it has a design)
-     * - texts: the sample texts of the preview (TicketPreviewCreator::sampleTexts())
+     * - texts: the texts of the preview: the ticket's own where filled in, sample text for the
+     *   order data (TicketPreviewCreator::sampleTexts())
      */
     function TicketLayoutEditor()
     {

@@ -21,9 +21,10 @@ require_once (JPATH_COMPONENT . '/autoloader.php');
 /**
  * Renders an in-memory preview PDF for the "Ticket Layout" tab.
  *
- * Mirrors the field-drawing logic of ticketcreator::doPDF(), but uses dummy
- * content for every printable field and the font colour/size/position/ticket
- * size values currently entered (but not necessarily saved yet) in the form.
+ * Mirrors the field-drawing logic of ticketcreator::doPDF(), with the ticket's
+ * own content where the form has it and sample content for the rest (see
+ * sampleTexts()), and the font colour/size/position/ticket size values
+ * currently entered (but not necessarily saved yet) in the form.
  * Unlike doPDF(), this never touches the orders table and never writes the
  * resulting PDF to disk - it simply returns the PDF as a string.
  *
@@ -225,9 +226,15 @@ class TicketPreviewCreator
     }
 
     /**
-     * The sample text of every printable field, in UTF-8, exactly as the preview prints it. The
-     * layout editor on the "Ticket Layout" tab shows the same texts (TicketController::
+     * The text of every printable field, in UTF-8, exactly as the preview prints it. The layout
+     * editor on the "Ticket Layout" tab shows the same texts (TicketController::
      * TicketLayoutEditor()), so the editor and the preview always agree.
+     *
+     * What belongs to the ticket and its event comes from the form as it is now (saved or not),
+     * so the editor shows the real lengths: event name and code, ticket name and code, free text,
+     * start date, price and venue. A field that is still empty falls back to sample text. What
+     * belongs to an order (client, order date, reference, ticket index, order number, seat) only
+     * exists once someone orders, so that stays sample text.
      *
      * "client_orderedby" and "client_name" are printed on one line, or on two lines on A5
      * (see generate()); "orderticketindex" is printed after the optional prepend text.
@@ -243,6 +250,38 @@ class TicketPreviewCreator
             ->where($db->quoteName('configid') . ' = 1');
 
         $config = $db->setQuery($query)->loadObject();
+
+        ## The ticket's own values from the form, where filled in.
+        foreach (['ticketname', 'freetext_1', 'ticketcode'] as $key) {
+            if (trim((string) ($data[$key] ?? '')) !== '') {
+                $dummy[$key] = trim((string) $data[$key]);
+            }
+        }
+
+        if (trim((string) ($data['startdate'] ?? '')) !== '' && strtotime($data['startdate']) !== false) {
+            $dummy['startdate'] = $data['startdate'];
+        }
+
+        $price = str_replace(',', '.', trim((string) ($data['ticketprice'] ?? '')));
+
+        if (is_numeric($price)) {
+            $dummy['ticketprice'] = (float) $price;
+        }
+
+        ## The event chosen on the form: its name and code.
+        if (!empty($data['eventid'])) {
+            $query = $db->getQuery(true)
+                ->select($db->quoteName(['eventname', 'eventcode']))
+                ->from($db->quoteName('#__ticketstation_events'))
+                ->where($db->quoteName('eventid') . ' = ' . (int) $data['eventid']);
+
+            $event = $db->setQuery($query)->loadObject();
+
+            if ($event) {
+                $dummy['eventname'] = (string) $event->eventname;
+                $dummy['eventcode'] = (string) $event->eventcode;
+            }
+        }
 
         ## The venue chosen on the form, so the preview shows its real length; sample text otherwise.
         $venueText = $dummy['venue'];
@@ -263,6 +302,9 @@ class TicketPreviewCreator
         // Currency and price format from the Configuration, as on the invoice.
         $price = trim(TicketstationFunctions::showprice($config->priceformat, $dummy['ticketprice'], $config->valuta));
 
+        ## Same rule as ticketcreator::doPDF(): the event code only when it differs from the ticket code.
+        $codes = $dummy['ticketcode'] != $dummy['eventcode'] ? $dummy['eventcode'] . '-' . $dummy['ticketcode'] : $dummy['ticketcode'];
+
         return [
             'eventname'        => $dummy['eventname'],
             'ticketname'       => $dummy['ticketname'],
@@ -275,7 +317,7 @@ class TicketPreviewCreator
             'client_orderedby' => TicketLanguage::_('COM_TICKETSTATION_PDF_ORDERED_BY'),
             'client_name'      => $dummy['firstname'] . ' ' . $dummy['name'],
             'orderticketindex' => $dummy['ticket_volgnummer'] . '/' . $dummy['tickets_in_order'],
-            'ordernumber'      => $dummy['eventcode'] . '-' . $dummy['ticketcode'] . '  |  ' . $dummy['ordercode'] . '-' . $dummy['orderid'],
+            'ordernumber'      => $codes . '  |  ' . $dummy['ordercode'] . '-' . $dummy['orderid'],
             'seatnumber'       => TicketLanguage::_('COM_TICKETSTATION_PDF_SEAT_NUMBER') . ' ' . $dummy['seat_row'] . $dummy['seat_id'],
         ];
     }
