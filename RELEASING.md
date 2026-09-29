@@ -15,4 +15,6 @@ The [release workflow](.github/workflows/release.yml) then builds the package an
 
 ## Release candidates
 
-Give the version a suffix, such as `2.4.5-rc1` (also `-beta1`, `-alpha1` or `-dev`), in all three manifests and tag it `v2.4.5-rc1`. The workflow publishes it as a GitHub pre-release and adds it, tagged with its stability, to the update feed of the latest stable release. Joomla only offers it to sites whose Minimum Extension Stability (Extensions: Update → Options) is set to that level or lower, so production on Stable does not see it. A newer pre-release replaces the previous one in that feed, and the next stable release starts with a clean feed.
+Release candidates are not published. Give the version a suffix, such as `2.4.5-rc1` (also `-beta1`, `-alpha1` or `-dev`), in all three manifests, commit it, build the package locally and install `dist/pkg_ticketstation_<version>.zip` on a test site through Joomla's Extension Manager. Don't tag it and don't push it on its own: the candidate's commits reach GitHub together with the stable release that follows. A release-notes file is optional for a candidate; without one, Joomla shows no notes after the install.
+
+The release workflow can still publish a suffixed tag (`v2.4.5-rc1`) as a GitHub pre-release and add it, tagged with its stability, to the update feed of the latest stable release, where Joomla offers it only to sites whose Minimum Extension Stability allows it. That route is no longer used.
