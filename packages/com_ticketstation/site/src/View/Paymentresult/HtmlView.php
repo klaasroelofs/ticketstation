@@ -14,6 +14,7 @@ defined('_JEXEC') or die;
 use Joomla\CMS\Factory;
 use Joomla\CMS\MVC\View\HtmlView as BaseHtmlView;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Config;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\PaymentAPI;
 
 
 
@@ -41,9 +42,19 @@ class HtmlView extends BaseHtmlView {
         $this->mollieconfig     = $this->get('mollie');
         $this->contactEmail     = (new Config)->getContactEmail();
 
+        $this->canRetry = false;
+
         if ($authorized) {
             $this->data   = $this->get('data');
             $this->unpaid = $this->get('unpaid');
+
+            // "Pay again" only after an attempt that Mollie reported as failed, cancelled or
+            // expired (5): an attempt that is still open could otherwise be paid twice.
+            $attempt = (new PaymentAPI($ordercode))->getTempTransactionByOrdercode($ordercode);
+
+            $this->canRetry = $this->unpaid->total > 0
+                && $this->mollieconfig->bypass_mode == 0
+                && $attempt && (int) $attempt->processed === 5;
         } else {
             $this->data   = [];
             $this->unpaid = null;

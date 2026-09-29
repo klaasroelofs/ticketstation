@@ -70,6 +70,21 @@ class PaymentController extends BaseController
 
         $this->ordercode = $jinput->get('ordercode', '0', 'int');
 
+        ## Something left to pay? A retry after a failed payment may come after the Ticketcleaner
+        ## removed the order, and an empty order must not go through as a free one.
+        $query = $db->getQuery(true)
+            ->select('COUNT(*)')
+            ->from($db->quoteName('#__ticketstation_orders'))
+            ->where($db->quoteName('ordercode') . ' = ' . (int) $this->ordercode)
+            ->where($db->quoteName('paid') . ' != 1');
+        $db->setQuery($query);
+
+        if ((int) $db->loadResult() === 0) {
+            $itemid = TicketstationFunctions::getSiteItemid();
+            Factory::getApplication()->enqueueMessage(Text::_('COM_TICKETSTATION_ORDER_NO_LONGER_AVAILABLE'), 'error');
+            Factory::getApplication()->redirect(Route::_('index.php?option=com_ticketstation&view=upcoming' . ($itemid ? '&Itemid=' . $itemid : ''), false));
+        }
+
         $orderamount = OrderTotals::get($this->ordercode, true)->total;
         //$return_url = URI::root() . 'index.php?option=com_ticketstation&controller=payment&task=mollie';
         $return_url = URI::root() . 'index.php?option=com_ticketstation&controller=payment&task=mollie';
@@ -130,6 +145,13 @@ class PaymentController extends BaseController
             } else {
                 ## An open attempt for this order exists: reuse its token.
                 $return_token = $existing->return_token;
+
+                ## A new try after a failed one ("Pay again" on the result page): back to "no
+                ## state yet", or the wait page would report the old failure before Mollie's
+                ## webhook reports this attempt.
+                if ($return_token && (int) $existing->processed === 5) {
+                    $newPayment->updateTempTransaction($return_token, 0, '');
+                }
 
                 ## Existing rows created before the return_token column existed (or otherwise
                 ## missing a token) would otherwise send the customer to Mollie with an empty

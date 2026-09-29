@@ -63,6 +63,9 @@
     --ts-seat-selected-bg: #f59e0b;
     --ts-seat-selected-text: #fff;
 
+    /* Seats that are sold or blocked on the seat chart */
+    --ts-seat-taken-bg: #dc2626;
+
     color: var(--ts-text);
 }
 
@@ -847,6 +850,48 @@
     gap: .75rem;
 }
 
+/* Quantity per cart line: − 3 + × price */
+.ticketstation .ts-qty {
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .5rem;
+    margin-top: .5rem;
+}
+
+.ticketstation .ts-qty__btn {
+    font-size: 1.125rem;
+    line-height: 1;
+}
+
+.ticketstation .ts-qty__value {
+    min-width: 1.5rem;
+    font-weight: 600;
+    text-align: center;
+}
+
+.ticketstation .ts-qty__unit {
+    font-size: .875rem;
+    color: var(--ts-muted);
+}
+
+.ticketstation #ts-cart-lines[aria-busy="true"] {
+    opacity: .6;
+    transition: opacity .15s ease;
+}
+
+.ticketstation .ts-reserved-until {
+    display: flex;
+    align-items: flex-start;
+    gap: .5rem;
+    margin-bottom: 1rem;
+}
+
+.ticketstation .ts-reserved-until .ts-icon {
+    flex: none;
+    margin-top: .2em;
+}
+
 /* Same width for every amount, so the remove buttons line up */
 .ticketstation .ts-summary__amount {
     min-width: 5.5rem;
@@ -1021,6 +1066,52 @@
     margin: 0;
     padding-left: 1.25rem;
     font-size: .9375rem;
+}
+
+/* Seat states on the chart and in the legend. Taken seats are striped and chosen ones get a dark
+   inner edge, so the states can be told apart without relying on red, orange and green.
+   !important because a free seat carries its colours from the seat plan settings inline. */
+.ticketstation .seat-element--taken {
+    color: #fff !important;
+    background-color: var(--ts-seat-taken-bg) !important;
+    background-image: repeating-linear-gradient(45deg, rgba(0, 0, 0, .3) 0 2px, transparent 2px 6px) !important;
+    border-color: #000 !important;
+    cursor: not-allowed !important;
+}
+
+.ticketstation .seat-element--mine {
+    color: var(--ts-seat-selected-text) !important;
+    background-color: var(--ts-seat-selected-bg) !important;
+    border-color: #000 !important;
+    box-shadow: inset 0 0 0 2px #000;
+    font-weight: 700;
+    cursor: pointer !important;
+}
+
+.ticketstation .ts-seat-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .5rem 1.25rem;
+    margin: .75rem 0 0;
+    padding: 0;
+    list-style: none;
+    font-size: .9375rem;
+}
+
+.ticketstation .ts-seat-legend li {
+    display: inline-flex;
+    align-items: center;
+    gap: .5rem;
+    margin: 0;
+}
+
+.ticketstation .ts-seat-swatch {
+    display: inline-block;
+    width: 1.5rem;
+    height: 1.5rem;
+    background-color: #e1fdda;
+    border: 1px solid #198d02;
+    border-radius: 2px;
 }
 
 .ticketstation .ts-chosen-seats {

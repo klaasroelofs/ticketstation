@@ -12,10 +12,11 @@ use Joomla\CMS\HTML\HTMLHelper;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\Layout\LayoutHelper;
 use Joomla\CMS\Router\Route;
+use Joomla\CMS\Session\Session;
 use Joomla\CMS\Uri\Uri;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Date;
-use Ticketstation\Component\Ticketstation\Administrator\Helper\Ordercode;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\OrderTotals;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\Ticketcleaner;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\TicketstationFunctions;
 
 // No direct access to this file
@@ -30,8 +31,10 @@ $document->setTitle( Text::_('COM_TICKETSTATION_CART') . ' - ' . $app->get('site
 $document->addStyleSheet( 'components/com_ticketstation/assets/css/component.css' );
 HTMLHelper::_('jquery.framework');
 
+$ordercode = (int) $session->get('ordercode');
+
 ## Total for this order:
-$totals     = OrderTotals::get($session->get('ordercode'), true);
+$totals     = OrderTotals::get($ordercode, true);
 $fees       = $totals->fees;
 $discount   = $totals->discount;
 $ordertotal = $totals->total;
@@ -43,86 +46,43 @@ $shop_on = Route::_('index.php?option=com_ticketstation&view=upcoming' . ($itemi
 $items   = count($this->items);
 $waiters = count($this->waiters);
 
+$price = fn ($amount) => (new TicketstationFunctions)->showprice($this->config->priceformat, $amount, $this->config->valuta);
+$token = Session::getFormToken();
+## Task links are not routed: the SEF router would turn a ticketid into a path segment and
+## drop it. The tasks find the menu item for their redirect themselves.
+$task  = fn ($query) => htmlspecialchars(Uri::root(true) . '/index.php?option=com_ticketstation&controller=order&' . $query . '&' . $token . '=1', ENT_QUOTES, 'UTF-8');
+
+## One cart line per ticket type, with its quantity; a seat is a line of its own.
+$lines = [];
+
+foreach ($this->items as $row) {
+    $seated = (int) $row->seat_sector !== 0;
+    $key    = $seated ? 'seat' . $row->orderid : 'ticket' . $row->ticketid;
+
+    $lines[$key] ??= (object) ['seated' => $seated, 'rows' => []];
+    $lines[$key]->rows[] = $row;
+}
+
+## Until when the tickets stay reserved (only while the cart has rows the Ticketcleaner removes)
+$reservedUntil = Ticketcleaner::reservedUntil($ordercode);
+
+if ($reservedUntil) {
+    $local = Factory::getDate('@' . $reservedUntil)->setTimezone(new DateTimeZone($app->get('offset') ?: 'UTC'));
+    $today = Factory::getDate('now')->setTimezone(new DateTimeZone($app->get('offset') ?: 'UTC'))->format('Y-m-d', true);
+
+    $reservedUntilText = $local->format('Y-m-d', true) === $today
+        ? Text::sprintf('COM_TICKETSTATION_TIME_OCLOCK', $local->format('H:i', true))
+        : Date::long($local->format('Y-m-d H:i:s', true), true);
+}
+
 $trashIcon = '<svg class="ts-icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M6.5 1h3a1 1 0 0 1 1 1v1H14a.5.5 0 0 1 0 1h-.54l-.8 9.6A1.5 1.5 0 0 1 11.17 15H4.83a1.5 1.5 0 0 1-1.5-1.4L2.54 4H2a.5.5 0 0 1 0-1h3.5V2a1 1 0 0 1 1-1zm0 2h3V2h-3v1zM6 6.5a.5.5 0 0 0-1 .03l.3 5.5a.5.5 0 0 0 1-.06L6 6.5zm4.97.03a.5.5 0 0 0-1-.06l-.3 5.5a.5.5 0 1 0 1 .06l.3-5.5zM8 6a.5.5 0 0 0-.5.5v5.5a.5.5 0 0 0 1 0V6.5A.5.5 0 0 0 8 6z"/></svg>';
 
-?>
-
-    <script language="javascript">
-
-        var max = 255;
-        jQuery(document).ready(function() {
-            jQuery('#remarks').keyup(function() {
-                if (jQuery(this).val().length > max) {
-                    jQuery(this).val(jQuery(this).val().substr(0, max));
-                }
-
-                jQuery('#chars-remaining').html('<?php echo Text::_('COM_TICKETSTATION_REMAINING'); ?> ' + (max - jQuery(this).val().length));
-            });
-        });
-
-        jQuery(document).ready(function() {
-
-            jQuery('#checkout').click(function(e) {
-                e.preventDefault();
-
-                var required = jQuery("#required").val();
-
-                if (required > 0) {
-                    jQuery('#additional_required').show();
-                    return false;
-                }
-
-                // No note field (switched off in the Configuration): straight on to checkout.
-                if (!jQuery('textarea#remarks').length) {
-                    document.location.href = '<?php echo $link; ?>';
-                    return;
-                }
-
-                // Save the customer note (an empty note removes an earlier one), then continue.
-                var data = {
-                    content: jQuery('#remarks').val(),
-                    ordercode: <?php echo (int) $session->get('ordercode'); ?>
-                };
-                data['<?php echo \Joomla\CMS\Session\Session::getFormToken(); ?>'] = 1;
-
-                jQuery.ajax({
-                    url      : "<?php echo Uri::root(true); ?>/index.php?option=com_ticketstation&controller=cart&task=saveRemark&format=raw",
-                    type     : "POST",
-                    data     : data,
-                    dataType : 'json',
-                    cache    : false
-                }).done(function(response) {
-                    if (response.status == 200) {
-                        jQuery("#chars-remaining").html(response.msg).addClass('is-saved');
-                        setTimeout(function() {
-                            document.location.href = '<?php echo $link; ?>';
-                        }, 1000);
-                    } else {
-                        noteFailed(response.msg);
-                    }
-                }).fail(function() {
-                    noteFailed(<?php echo json_encode('<span class="ts-text-danger">' . Text::_('COM_TICKETSTATION_SAVING_CONTENT_FAILED') . '</span>'); ?>);
-                });
-
-                // The order matters more than the note: say it wasn't saved, but never block checkout.
-                function noteFailed(msg) {
-                    jQuery("#chars-remaining").html(msg);
-                    setTimeout(function() {
-                        document.location.href = '<?php echo $link; ?>';
-                    }, 2500);
-                }
-
-            });
-
-        });
-
-    </script>
-
-<?php if ($items == 0 && $waiters == 0) {
+if ($items == 0 && $waiters == 0) {
     ## Nothing in the cart: back to the event list
-    header('Location: '.$shop_on);
-    die();
-} ?>
+    $app->redirect(Route::_('index.php?option=com_ticketstation&view=upcoming' . ($itemid ? '&Itemid=' . $itemid : ''), false));
+}
+
+?>
 
 <div class="ticketstation ticketstation--cart">
 
@@ -136,117 +96,149 @@ $trashIcon = '<svg class="ts-icon" viewBox="0 0 16 16" aria-hidden="true"><path 
 
     <p class="ts-intro"><?php echo Text::_('COM_TICKETSTATION_YOUR_CART_TEXT'); ?></p>
 
-    <table class="ts-table ts-summary ts-cart" id="cart">
+    <!-- Messages from the quantity buttons; don't remove -->
+    <div id="cart-message" class="ts-message" role="status" aria-live="polite" style="display: none;"></div>
 
-        <?php if ($items != 0) { ?>
-            <thead>
-                <tr>
-                    <th scope="col"><?php echo Text::_('COM_TICKETSTATION_EVENT_INFORMATION'); ?></th>
-                    <th scope="col" class="ts-price"><?php echo Text::_('COM_TICKETSTATION_PRICE'); ?></th>
-                </tr>
-            </thead>
+    <!-- Replaced as a whole after a quantity change (see the script below) -->
+    <div id="ts-cart-lines">
+
+        <?php if ($reservedUntil) { ?>
+            <div class="ts-alert ts-reserved-until">
+                <svg class="ts-icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1a7 7 0 1 0 0 14A7 7 0 0 0 8 1zm0 1.5a5.5 5.5 0 1 1 0 11 5.5 5.5 0 0 1 0-11zM7.75 4a.75.75 0 0 0-.75.75V8.3l2.47 2.47a.75.75 0 0 0 1.06-1.06L8.5 7.68V4.75A.75.75 0 0 0 7.75 4z"/></svg>
+                <span><?php echo Text::sprintf('COM_TICKETSTATION_RESERVED_UNTIL', '<strong>' . $reservedUntilText . '</strong>'); ?></span>
+            </div>
         <?php } ?>
 
-        <tbody>
-            <?php foreach ($this->items as $row): ?>
+        <table class="ts-table ts-summary ts-cart" id="cart">
 
-                <tr id="row-<?php echo $row->orderid; ?>" class="ts-summary__item">
-                    <td>
-                        <span class="ts-summary__name">
-                            <?php echo htmlspecialchars($row->eventname, ENT_QUOTES, 'UTF-8'); ?> - <?php echo htmlspecialchars($row->ticketname, ENT_QUOTES, 'UTF-8'); ?>
+            <?php if ($items != 0) { ?>
+                <thead>
+                    <tr>
+                        <th scope="col"><?php echo Text::_('COM_TICKETSTATION_EVENT_INFORMATION'); ?></th>
+                        <th scope="col" class="ts-price"><?php echo Text::_('COM_TICKETSTATION_PRICE'); ?></th>
+                    </tr>
+                </thead>
+            <?php } ?>
 
-                            <?php if (isset($row->seat_sector) ? $row->seat_sector : 0 != 0): ?>
-                                <?php echo ' - ' . Text::_('COM_TICKETSTATION_SEATNUMBER') . ': ' . checkSeat($row->orderid, $this->coords); ?>
-                            <?php endif; ?>
-                        </span>
+            <tbody>
+                <?php foreach ($lines as $line) {
 
-                        <span class="ts-summary__date">
-                            <?php echo Text::_('COM_TICKETSTATION_DATE'); ?>: <?php echo Date::long($row->startdate, true); ?>
+                    $row       = $line->rows[0];
+                    $quantity  = count($line->rows);
+                    $lineTotal = array_sum(array_column($line->rows, 'price'));
+                    $name      = htmlspecialchars($row->eventname . ' - ' . $row->ticketname, ENT_QUOTES, 'UTF-8');
 
-                            <?php if (isset($row->show_end_date) ? $row->show_end_date : 0 == 1): ?>
-                                - <?php echo Date::long($row->end_date, true); ?>
-                            <?php endif; ?>
-                        </span>
-                    </td>
-                    <td class="ts-price">
-                        <span class="ts-summary__price-cell">
-                            <a class="ts-btn ts-btn--danger ts-btn--icon ts-btn--remove" title="<?php echo Text::_('COM_TICKETSTATION_REMOVE'); ?>" href="<?php echo Route::_('index.php?option=com_ticketstation&controller=order&task=remove&orderid=' . $row->orderid . '&' . \Joomla\CMS\Session\Session::getFormToken() . '=1' . ($itemid ? '&Itemid=' . $itemid : '')); ?>">
+                    ## Within the ticket's minimum and maximum per order
+                    $canDecrease = $quantity > max(1, (int) $row->min_qty);
+                    $canIncrease = $row->max_qty == 0 || $quantity < (int) $row->max_qty;
+                    ?>
+
+                    <tr class="ts-summary__item">
+                        <td>
+                            <span class="ts-summary__name">
+                                <?php echo $name; ?>
+
+                                <?php if ($line->seated) { ?>
+                                    <?php echo ' - ' . Text::_('COM_TICKETSTATION_SEATNUMBER') . ': ' . checkSeat($row->orderid, $this->coords); ?>
+                                <?php } ?>
+                            </span>
+
+                            <span class="ts-summary__date"><?php echo Date::long($row->startdate, true); ?></span>
+
+                            <?php if (!$line->seated) { ?>
+                                <span class="ts-qty" role="group" aria-label="<?php echo Text::_('COM_TICKETSTATION_QUANTITY'); ?>">
+                                    <?php if ($canDecrease) { ?>
+                                        <a class="ts-btn ts-btn--secondary ts-btn--icon ts-qty__btn" data-cart-remove
+                                           href="<?php echo $task('task=remove&orderid=' . (int) end($line->rows)->orderid); ?>"
+                                           aria-label="<?php echo Text::sprintf('COM_TICKETSTATION_QTY_DECREASE', $name); ?>">&minus;</a>
+                                    <?php } else { ?>
+                                        <span class="ts-btn ts-btn--secondary ts-btn--icon ts-qty__btn is-disabled" aria-hidden="true">&minus;</span>
+                                    <?php } ?>
+
+                                    <span class="ts-qty__value"><?php echo $quantity; ?></span>
+
+                                    <button type="button" class="ts-btn ts-btn--secondary ts-btn--icon ts-qty__btn" data-cart-add
+                                            data-ticketid="<?php echo (int) $row->ticketid; ?>" data-eventid="<?php echo (int) $row->eventid; ?>"
+                                            aria-label="<?php echo Text::sprintf('COM_TICKETSTATION_QTY_INCREASE', $name); ?>"<?php echo $canIncrease ? '' : ' disabled'; ?>>+</button>
+
+                                    <span class="ts-qty__unit">&times; <?php echo $price($row->price); ?></span>
+                                </span>
+                            <?php } ?>
+                        </td>
+                        <td class="ts-price">
+                            <span class="ts-summary__price-cell">
+                                <?php $removeUrl = $line->seated ? $task('task=remove&orderid=' . (int) $row->orderid) : $task('task=removeTicket&ticketid=' . (int) $row->ticketid); ?>
+                                <a class="ts-btn ts-btn--danger ts-btn--icon ts-btn--remove" data-cart-remove href="<?php echo $removeUrl; ?>"
+                                   title="<?php echo Text::_('COM_TICKETSTATION_REMOVE'); ?>">
+                                    <?php echo $trashIcon; ?>
+                                    <span class="ts-visually-hidden"><?php echo $line->seated ? Text::_('COM_TICKETSTATION_REMOVE') : Text::sprintf('COM_TICKETSTATION_REMOVE_LINE', $name); ?></span>
+                                </a>
+                                <span class="ts-summary__amount"><?php echo $price($lineTotal); ?></span>
+                            </span>
+                        </td>
+                    </tr>
+
+                <?php } ?>
+
+                <?php if (count($this->waiters) != 0) { ?>
+                    <tr class="ts-summary__waiting">
+                        <td colspan="2">
+                            <div class="ts-alert ts-waitinglist-note">
+                                <?php echo Text::_('COM_TICKETSTATION_ITEMS_ON_WAITINGLIST'); ?><br />
+                                <?php echo Text::_('COM_TICKETSTATION_A_PAYMENT_REQUEST_WILL_BE_SENT'); ?>
+                            </div>
+                        </td>
+                    </tr>
+                <?php } ?>
+
+                <?php foreach ($this->waiters as $row): ?>
+                    <tr id="wait-<?php echo $row->id; ?>" class="ts-summary__item ts-summary__item--waiting">
+                        <td>
+                            <span class="ts-summary__name">
+                                <?php echo htmlspecialchars($row->eventname, ENT_QUOTES, 'UTF-8'); ?> - <?php echo htmlspecialchars($row->ticketname, ENT_QUOTES, 'UTF-8'); ?>
+                            </span>
+
+                            <span class="ts-summary__date"><?php echo Date::long($row->startdate, true); ?></span>
+                        </td>
+                        <td class="ts-price">
+                            <a class="ts-btn ts-btn--danger ts-btn--icon ts-btn--remove" data-cart-remove title="<?php echo Text::_('COM_TICKETSTATION_REMOVE'); ?>" href="<?php echo $task('task=removeWaiting&id=' . (int) $row->id); ?>">
                                 <?php echo $trashIcon; ?>
                                 <span class="ts-visually-hidden"><?php echo Text::_('COM_TICKETSTATION_REMOVE'); ?></span>
                             </a>
-                            <span class="ts-summary__amount"><?php echo (new TicketstationFunctions)->showprice($this->config->priceformat, $row->price, $this->config->valuta); ?></span>
-                        </span>
-                    </td>
+                        </td>
+                    </tr>
+
+                <?php endforeach; ?>
+            </tbody>
+
+            <tfoot>
+                <tr class="ts-summary__subtotal">
+                    <th scope="row"><?php echo Text::_('COM_TICKETSTATION_SUBTOTAL'); ?></th>
+                    <td class="ts-price"><?php echo $price($totals->tickets); ?></td>
                 </tr>
 
-            <?php endforeach; ?>
+                <?php if ($discount > 0): ?>
+                    <tr class="ts-summary__discount">
+                        <th scope="row"><?php echo Text::_('COM_TICKETSTATION_DISCOUNT'); ?><?php if ($totals->discount_type == 1):?> (<?php echo (float) $totals->discount_amount;?>%)<?php endif; ?></th>
+                        <td class="ts-price">- <?php echo $price($discount); ?></td>
+                    </tr>
+                <?php endif; ?>
 
-            <?php if (count($this->waiters) != 0) { ?>
-                <tr class="ts-summary__waiting">
-                    <td colspan="2">
-                        <div class="ts-alert ts-waitinglist-note">
-                            <?php echo Text::_('COM_TICKETSTATION_ITEMS_ON_WAITINGLIST'); ?><br />
-                            <?php echo Text::_('COM_TICKETSTATION_A_PAYMENT_REQUEST_WILL_BE_SENT'); ?>
-                        </div>
-                    </td>
+                <?php if ($fees > 0 && $totals->fee_type != OrderTotals::FEE_NONE): ?>
+                    <tr class="ts-summary__fees">
+                        <th scope="row"><?php echo Text::_('COM_TICKETSTATION_FEES'); ?><?php if ($totals->fee_type == OrderTotals::FEE_VARIABLE) { ?> (<?php echo (float) $totals->fee_rate ?>%)<?php } ?></th>
+                        <td class="ts-price"><?php echo $price($fees); ?></td>
+                    </tr>
+                <?php endif; ?>
+
+                <tr class="ts-summary__total">
+                    <th scope="row"><?php echo Text::_('COM_TICKETSTATION_CART_TOTAL'); ?></th>
+                    <td class="ts-price"><?php echo $price($ordertotal); ?></td>
                 </tr>
-            <?php } ?>
+            </tfoot>
+        </table>
 
-            <?php foreach ($this->waiters as $row): ?>
-                <tr id="wait-<?php echo $row->id; ?>" class="ts-summary__item ts-summary__item--waiting">
-                    <td>
-                        <span class="ts-summary__name">
-                            <?php echo htmlspecialchars($row->eventname, ENT_QUOTES, 'UTF-8'); ?> - <?php echo htmlspecialchars($row->ticketname, ENT_QUOTES, 'UTF-8'); ?>
-
-                            <?php if (isset($row->seat_sector) ? $row->seat_sector : 0 != 0): ?>
-                                <?php echo ' - ' . Text::_('COM_TICKETSTATION_SEATNUMBER') . ': ' . checkSeat($row->orderid, $this->coords); ?>
-                            <?php endif; ?>
-                        </span>
-
-                        <span class="ts-summary__date">
-                            <?php echo Text::_('COM_TICKETSTATION_DATE'); ?>: <?php echo Date::long($row->startdate, true); ?>
-                            <?php if (isset($row->show_end_date) ? $row->show_end_date : 0 == 1): ?>
-                                - <?php echo Date::long($row->end_date, true); ?>
-                            <?php endif; ?>
-                        </span>
-                    </td>
-                    <td class="ts-price">
-                        <a class="ts-btn ts-btn--danger ts-btn--icon ts-btn--remove" title="<?php echo Text::_('COM_TICKETSTATION_REMOVE'); ?>" href="<?php echo Route::_('index.php?option=com_ticketstation&controller=order&task=removeWaiting&id=' . $row->id . '&' . \Joomla\CMS\Session\Session::getFormToken() . '=1' . ($itemid ? '&Itemid=' . $itemid : '')); ?>">
-                            <?php echo $trashIcon; ?>
-                            <span class="ts-visually-hidden"><?php echo Text::_('COM_TICKETSTATION_REMOVE'); ?></span>
-                        </a>
-                    </td>
-                </tr>
-
-            <?php endforeach; ?>
-        </tbody>
-
-        <tfoot>
-            <tr class="ts-summary__subtotal">
-                <th scope="row"><?php echo Text::_('COM_TICKETSTATION_SUBTOTAL'); ?></th>
-                <td class="ts-price"><?php echo (new TicketstationFunctions)->showprice($this->config->priceformat , $totals->tickets, $this->config->valuta); ?></td>
-            </tr>
-
-            <?php if ($discount > 0): ?>
-                <tr class="ts-summary__discount">
-                    <th scope="row"><?php echo Text::_('COM_TICKETSTATION_DISCOUNT'); ?><?php if ($totals->discount_type == 1):?> (<?php echo (float) $totals->discount_amount;?>%)<?php endif; ?></th>
-                    <td class="ts-price">- <?php echo (new TicketstationFunctions)->showprice($this->config->priceformat, $discount, $this->config->valuta); ?></td>
-                </tr>
-            <?php endif; ?>
-
-            <?php if ($fees > 0 && $totals->fee_type != OrderTotals::FEE_NONE): ?>
-                <tr class="ts-summary__fees">
-                    <th scope="row"><?php echo Text::_('COM_TICKETSTATION_FEES'); ?><?php if ($totals->fee_type == OrderTotals::FEE_VARIABLE) { ?> (<?php echo (float) $totals->fee_rate ?>%)<?php } ?></th>
-                    <td class="ts-price"><?php echo (new TicketstationFunctions)->showprice($this->config->priceformat, $fees, $this->config->valuta); ?></td>
-                </tr>
-            <?php endif; ?>
-
-            <tr class="ts-summary__total">
-                <th scope="row"><?php echo Text::_('COM_TICKETSTATION_CART_TOTAL'); ?></th>
-                <td class="ts-price"><?php echo (new TicketstationFunctions)->showprice($this->config->priceformat, $ordertotal, $this->config->valuta); ?></td>
-            </tr>
-        </tfoot>
-    </table>
+    </div>
 
     <?php if ($this->config->show_remark_field == 1) { ?>
 
@@ -297,8 +289,166 @@ $trashIcon = '<svg class="ts-icon" viewBox="0 0 16 16" aria-hidden="true"><path 
 
 </div>
 
+<script>
+    (function ($) {
+
+        var max = 255;
+        var requestFailedMsg = <?php echo json_encode('<div class="ts-alert ts-alert--danger">' . Text::_('COM_TICKETSTATION_REQUEST_FAILED') . '</div>'); ?>;
+
+        $('#remarks').on('keyup', function() {
+            if ($(this).val().length > max) {
+                $(this).val($(this).val().substr(0, max));
+            }
+
+            $('#chars-remaining').html('<?php echo Text::_('COM_TICKETSTATION_REMAINING'); ?> ' + (max - $(this).val().length));
+        });
+
+        // Quantity buttons and remove links: do the change in the background, then swap in the
+        // cart lines of the refreshed page (totals, service fee and discount included). Without
+        // JavaScript the remove links still work as plain links.
+        function showCartMessage(html) {
+            $('#cart-message').stop(true, true).html(html).show();
+        }
+
+        function applyCartPage(response) {
+            return response.text().then(function (html) {
+                var fresh = new DOMParser().parseFromString(html, 'text/html').getElementById('ts-cart-lines');
+
+                // No cart lines: the cart is empty and the page moved on to the event list.
+                if (!fresh) {
+                    window.location.href = response.url;
+                    return;
+                }
+
+                $('#ts-cart-lines').replaceWith(fresh);
+                busy = false;
+            });
+        }
+
+        // One change at a time: a double click must not remove or add two tickets.
+        var busy = false;
+
+        function cartBusy(state) {
+            busy = state;
+            $('#ts-cart-lines').attr('aria-busy', state ? 'true' : 'false').find('button.ts-qty__btn').prop('disabled', state);
+        }
+
+        $('.ticketstation--cart').on('click', '[data-cart-remove]', function (e) {
+            e.preventDefault();
+
+            if (busy) {
+                return;
+            }
+
+            cartBusy(true);
+            $('#cart-message').hide();
+
+            fetch(this.href, {credentials: 'same-origin', cache: 'no-store'})
+                .then(function (response) {
+                    if (!response.ok) {
+                        throw new Error(response.status);
+                    }
+
+                    return applyCartPage(response);
+                })
+                .catch(function () { showCartMessage(requestFailedMsg); cartBusy(false); });
+        });
+
+        $('.ticketstation--cart').on('click', '[data-cart-add]', function () {
+            if (busy) {
+                return;
+            }
+
+            var data = new URLSearchParams({
+                amount: 1,
+                ticketid: this.dataset.ticketid,
+                eventid: this.dataset.eventid,
+                ordercode: <?php echo $ordercode; ?>
+            });
+            data.append('<?php echo $token; ?>', 1);
+
+            cartBusy(true);
+            $('#cart-message').hide();
+
+            fetch('<?php echo Uri::root(true); ?>/index.php?option=com_ticketstation&controller=order&task=buyticket&format=raw', {
+                method: 'POST', body: data, credentials: 'same-origin', cache: 'no-store'
+            })
+                .then(function (response) {
+                    if (!response.ok) {
+                        throw new Error(response.status);
+                    }
+
+                    return response.json();
+                })
+                .then(function (result) {
+                    // Only errors are shown: the new quantity speaks for itself.
+                    if (result.msg && result.msg.indexOf('ts-alert--danger') !== -1) {
+                        showCartMessage(result.msg);
+                    }
+
+                    return fetch(window.location.href, {credentials: 'same-origin', cache: 'no-store'}).then(applyCartPage);
+                })
+                .catch(function () { showCartMessage(requestFailedMsg); cartBusy(false); });
+        });
+
+        $('#checkout').on('click', function(e) {
+            e.preventDefault();
+
+            var required = $("#required").val();
+
+            if (required > 0) {
+                $('#additional_required').show();
+                return false;
+            }
+
+            // No note field (switched off in the Configuration): straight on to checkout.
+            if (!$('textarea#remarks').length) {
+                document.location.href = '<?php echo $link; ?>';
+                return;
+            }
+
+            // Save the customer note (an empty note removes an earlier one), then continue.
+            var data = {
+                content: $('#remarks').val(),
+                ordercode: <?php echo $ordercode; ?>
+            };
+            data['<?php echo $token; ?>'] = 1;
+
+            $.ajax({
+                url      : "<?php echo Uri::root(true); ?>/index.php?option=com_ticketstation&controller=cart&task=saveRemark&format=raw",
+                type     : "POST",
+                data     : data,
+                dataType : 'json',
+                cache    : false
+            }).done(function(response) {
+                if (response.status == 200) {
+                    $("#chars-remaining").html(response.msg).addClass('is-saved');
+                    setTimeout(function() {
+                        document.location.href = '<?php echo $link; ?>';
+                    }, 1000);
+                } else {
+                    noteFailed(response.msg);
+                }
+            }).fail(function() {
+                noteFailed(<?php echo json_encode('<span class="ts-text-danger">' . Text::_('COM_TICKETSTATION_SAVING_CONTENT_FAILED') . '</span>'); ?>);
+            });
+
+            // The order matters more than the note: say it wasn't saved, but never block checkout.
+            function noteFailed(msg) {
+                $("#chars-remaining").html(msg);
+                setTimeout(function() {
+                    document.location.href = '<?php echo $link; ?>';
+                }, 2500);
+            }
+
+        });
+
+    })(jQuery);
+</script>
+
 <?php function checkSeat($value, $seat)
 {
+    $seat_number = '';
 
     for ($i = 0, $n = count($seat); $i < $n; $i++)
     {

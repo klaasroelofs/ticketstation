@@ -18,6 +18,43 @@ defined('_JEXEC') or die('Restricted access');
 
 class Ticketcleaner
 {
+    /**
+     * Until when the tickets in a cart stay reserved: cleanup() removes a cart row that has no
+     * customer details yet once it is older than removal_hours. The earliest row decides.
+     *
+     * @param   integer  $ordercode  the cart's ordercode
+     *
+     * @return  integer|null  Unix timestamp, or null when nothing in the cart can expire
+     */
+    public static function reservedUntil($ordercode)
+    {
+        $db = Factory::getContainer()->get('DatabaseDriver');
+
+        $config = (new Config)->get(['remove_unfinished', 'removal_hours']);
+
+        if ($config->remove_unfinished != 1 || (float) $config->removal_hours <= 0) {
+            return null;
+        }
+
+        // The same rows as the first cleanup query below
+        $query = $db->getQuery(true)
+            ->select('MIN(' . $db->quoteName('orderdate') . ')')
+            ->from($db->quoteName('#__ticketstation_orders'))
+            ->where($db->quoteName('ordercode') . ' = ' . (int) $ordercode)
+            ->where($db->quoteName('paid') . ' = 0')
+            ->where($db->quoteName('userid') . ' = 0')
+            ->where($db->quoteName('published') . ' = 0');
+
+        $db->setQuery($query);
+        $oldest = $db->loadResult();
+
+        if (!$oldest) {
+            return null;
+        }
+
+        // orderdate is written with date(), so strtotime() reads it back in the same timezone.
+        return strtotime($oldest) + (int) round(3600 * (float) $config->removal_hours);
+    }
 
     function cleanup()
     {

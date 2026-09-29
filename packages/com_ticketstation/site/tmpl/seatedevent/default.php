@@ -100,9 +100,18 @@ $venue_website_url = preg_match('#^https?://#i', $this->ticketdetails->website) 
             <h2 class="ts-card__title"><?php echo rtrim(Text::_('COM_TICKETSTATION_INSTRUCTIONS'), ': '); ?></h2>
             <p><?php echo Text::_('COM_TICKETSTATION_SEAT_INSTRUCTION'); ?></p>
             <img class="ts-instruction-image" src="components/com_ticketstation/assets/images/stoelkeuze.png" alt="">
-            <ul class="ts-legend">
-                <li><?php echo Text::_( 'COM_TICKETSTATION_DROPPABLE_ORDERED_INFO' ); ?></li>
-                <li><?php echo Text::_( 'COM_TICKETSTATION_DROPPABLE_ORDERED_SEATS' ); ?></li>
+            <?php
+            ## Legend with the same look as the seats on the chart. A free seat is shown in the
+            ## colours of the first free seat (sections may have colours of their own).
+            $freeSeat = current(array_filter($this->items, fn ($seat) => (int) $seat->type === 1 && $seat->booked == 0));
+            $freeStyle = $freeSeat
+                ? 'color:#' . SeatChart::hex($freeSeat->font_color, '000000') . '; border-color:#' . SeatChart::hex($freeSeat->border_color, '198d02') . '; background-color:#' . SeatChart::hex($freeSeat->background_color, 'e1fdda') . ';'
+                : '';
+            ?>
+            <ul class="ts-seat-legend" aria-label="<?php echo Text::_('COM_TICKETSTATION_SEAT_LEGEND'); ?>">
+                <li><span class="ts-seat-swatch" style="<?php echo $freeStyle; ?>" aria-hidden="true"></span><?php echo Text::_('COM_TICKETSTATION_SEAT_FREE'); ?></li>
+                <li><span class="ts-seat-swatch seat-element--taken" aria-hidden="true"></span><?php echo Text::_('COM_TICKETSTATION_SEAT_TAKEN'); ?></li>
+                <li><span class="ts-seat-swatch seat-element--mine" aria-hidden="true"></span><?php echo Text::_('COM_TICKETSTATION_SEAT_MINE'); ?></li>
             </ul>
         </section>
 
@@ -146,23 +155,27 @@ $venue_website_url = preg_match('#^https?://#i', $this->ticketdetails->website) 
 
                 foreach ($this->items as $row) {
 
+                    ## Taken and chosen seats get their colours from the stylesheet (seat-element--taken
+                    ## and --mine), with a pattern and a dark edge so they don't depend on colour alone.
                     if ($row->booked > 0 && in_array((int) $row->id, $mine, true)){
 
-                        ## Chosen by this customer: orange, as right after picking it.
-                        $style = 'color:#fff; border-color:' . $hex($row->border_color, '000000') . '; cursor:no-drop; background-color:orange;';
+                        $state = ' seat-element--mine';
+                        $style = '';
 
                     }elseif ($row->booked > 0){
 
-                        $style = 'color:#fff; border-color:#000; cursor:no-drop; background-color:#FF0000;';
+                        $state = ' seat-element--taken';
+                        $style = '';
 
                     }else{
 
+                        $state = '';
                         $style = 'color:' . $hex($row->font_color, '000000') . '; border-color:' . $hex($row->border_color, '198d02') . '; background-color:' . $hex($row->background_color, 'e1fdda') . ';';
                     }
 
                     $label = (int) $row->type === 1 ? $row->row_name . $row->seatid : $row->ticketname;
 
-                    echo '<div id="seat-' . (int) $row->id . '" class="seat-element" style="' . SeatChart::seatStyle($row, $chartCanvas) . $style . '">'
+                    echo '<div id="seat-' . (int) $row->id . '" class="seat-element' . $state . '" style="' . SeatChart::seatStyle($row, $chartCanvas) . $style . '">'
                         . ((int) $row->type === 1 ? '' : '<strong>') . htmlspecialchars($label, ENT_QUOTES, 'UTF-8') . ((int) $row->type === 1 ? '' : '</strong>')
                         . '</div>';
                 }
@@ -263,9 +276,8 @@ $venue_website_url = preg_match('#^https?://#i', $this->ticketdetails->website) 
                 }else{
 
                     $( '#' + data.id ).remove();
-                    $( '#seat-' + data.id).css('background-color', '#'+data.background);
-                    $( '#seat-' + data.id).css('color', '#'+data.color);
-                    $( '#seat-' + data.id).css('cursor', ''); // back to the stylesheet's pointer
+                    $( '#seat-' + data.id).removeClass('seat-element--mine')
+                        .css({'background-color': '#' + data.background, 'color': '#' + data.color});
 
                     showMessage('success', data.msg);
 
@@ -347,9 +359,8 @@ $venue_website_url = preg_match('#^https?://#i', $this->ticketdetails->website) 
 
                     }else{
 
-                        $( '#seat-'+ data.id ).css('backgroundColor', 'orange');
-                        $( '#seat-'+ data.id ).css('color', '#FFF');
-                        $( '#seat-'+ data.id ).css('cursor', 'no-drop');
+                        // The free seat's own colours make way for the stylesheet's "mine" look.
+                        $( '#seat-'+ data.id ).addClass('seat-element--mine').css({'background-color': '', 'color': ''});
 
                         showMessage('success', data.msg);
 

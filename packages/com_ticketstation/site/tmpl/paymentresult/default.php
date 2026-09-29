@@ -59,6 +59,29 @@ $contactLink  = '<a href="mailto:' . $contactEmail . '">' . $contactEmail . '</a
             <h1 class="ts-page-title"><?php echo Text::_('COM_TICKETSTATION_PAYMENTRESULT_FAILED'); ?></h1>
         </div>
 
+        <?php if ($this->canRetry) {
+            $itemid = TicketstationFunctions::getSiteItemid(); ?>
+
+            <section class="ts-card ts-result ts-result--failed">
+                <p class="ts-lead"><?php echo Text::_('COM_TICKETSTATION_PAYMENTRESULT_NOT_COMPLETED'); ?></p>
+                <p><?php echo Text::sprintf('COM_TICKETSTATION_PAYMENTRESULT_ORDER_NUMBER', '<strong class="ts-order-code">' . $this->ordercode . '</strong>'); ?></p>
+
+                <form class="ts-actions" method="post" action="<?php echo Route::_('index.php?option=com_ticketstation' . ($itemid ? '&Itemid=' . $itemid : '')); ?>">
+                    <button type="submit" class="ts-btn ts-btn--primary"><?php echo Text::_('COM_TICKETSTATION_PAYMENTRESULT_PAY_AGAIN'); ?></button>
+
+                    <input type="hidden" name="option" value="com_ticketstation" />
+                    <input type="hidden" name="controller" value="payment" />
+                    <input type="hidden" name="task" value="makepayment" />
+                    <input type="hidden" name="ordercode" value="<?php echo (int) $this->ordercode; ?>" />
+                    <?php echo HTMLHelper::_('form.token'); ?>
+                </form>
+
+                <p><strong><?php echo Text::_('COM_TICKETSTATION_PAYMENTRESULT_PAID_ANYWAY_QUESTION'); ?></strong><br /><?php echo Text::sprintf('COM_TICKETSTATION_PAYMENTRESULT_PAID_ANYWAY', $contactLink); ?></p>
+                <p><?php echo Text::_('COM_TICKETSTATION_PAYMENTRESULT_NOT_ORDERING'); ?></p>
+            </section>
+
+        <?php } else { ?>
+
         <p class="ts-lead"><?php echo Text::_('COM_TICKETSTATION_PAYMENTRESULT_OOPS'); ?></p>
 
         <section class="ts-card ts-result ts-result--failed">
@@ -68,6 +91,8 @@ $contactLink  = '<a href="mailto:' . $contactEmail . '">' . $contactEmail . '</a
             <p><strong><?php echo Text::_('COM_TICKETSTATION_PAYMENTRESULT_PAID_ANYWAY_QUESTION'); ?></strong><br /><?php echo Text::sprintf('COM_TICKETSTATION_PAYMENTRESULT_PAID_ANYWAY', $contactLink); ?></p>
             <p><strong><?php echo Text::_('COM_TICKETSTATION_PAYMENTRESULT_FAILED_QUESTION'); ?></strong><br /><?php echo Text::_('COM_TICKETSTATION_PAYMENTRESULT_UNPAID_REMOVED'); ?></p>
         </section>
+
+        <?php } ?>
 
     <?php } else { ?>
 

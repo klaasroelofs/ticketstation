@@ -437,6 +437,53 @@ class OrderController extends BaseController
     }
 
     /**
+     * Removes a whole cart line: every unpaid ticket of one ticket type in this cart. Seats are
+     * removed one by one with remove(), so rows with a seat are left alone here.
+     *
+     * @return void
+     */
+    public function removeTicket()
+    {
+        $app       = Factory::getApplication();
+        $db        = Factory::getContainer()->get('DatabaseDriver');
+        $ticketid  = $app->getInput()->get('ticketid', 0, 'int');
+        $ordercode = (int) $app->getSession()->get('ordercode');
+        $cartUrl   = Route::_('index.php?option=com_ticketstation&view=cart' . (($itemid = TicketstationFunctions::getSiteItemid()) ? '&Itemid=' . $itemid : ''), false);
+
+        $query = $db->getQuery(true)
+            ->select($db->quoteName('orderid'))
+            ->from($db->quoteName('#__ticketstation_orders'))
+            ->where($db->quoteName('ordercode') . ' = ' . $ordercode)
+            ->where($db->quoteName('ticketid') . ' = ' . $ticketid)
+            ->where('COALESCE(' . $db->quoteName('seat_sector') . ', 0) = 0')
+            ->where($db->quoteName('paid') . ' != 1');
+
+        $db->setQuery($query);
+        $orderids = $db->loadColumn();
+
+        if (!$ordercode || !$orderids)
+        {
+            $app->enqueueMessage(Text::_('COM_TICKETSTATION_THIS_IS_NOT_YOUR_ORDER'), 'error');
+            $app->redirect($cartUrl);
+        }
+
+        foreach ($orderids as $orderid)
+        {
+            if ( ! (new Order)->removeSingleOrderFromDatabase($orderid))
+            {
+                $app->enqueueMessage(Text::_('COM_TICKETSTATION_REMOVE_ORDER_FAILED'), 'error');
+                $app->redirect($cartUrl);
+            }
+        }
+
+        PluginHelper::importPlugin('etickets');
+        $app->triggerEvent('onAfterRemovingOrder', [[]]);
+
+        $app->enqueueMessage(Text::_('COM_TICKETSTATION_REMOVED_ORDER'), 'success');
+        $app->redirect($cartUrl);
+    }
+
+    /**
      * Removing tickets from the waitinglist.
      *
      * @return bool
