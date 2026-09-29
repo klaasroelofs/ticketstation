@@ -245,3 +245,8 @@ a.badge:focus {
 [data-bs-theme="dark"] .ticketstation-theme-dark {
     display: inline;
 }
+
+/* "Save & Seat Plan" toolbar button on the ticket edit screen: Atum has no icon-chair of its own. */
+.icon-chair:before {
+    content: "\f6c0";
+}

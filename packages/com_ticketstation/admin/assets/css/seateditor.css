@@ -641,3 +641,8 @@
         border-top: 1px solid var(--ts-se-border);
     }
 }
+
+/* "Edit Ticket" toolbar button: Atum has no icon-ticket-alt of its own. */
+.icon-ticket-alt:before {
+    content: "\f3ff";
+}

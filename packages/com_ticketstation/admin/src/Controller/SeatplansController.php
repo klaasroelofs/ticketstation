@@ -81,6 +81,13 @@ class SeatplansController extends BaseController {
         $this->setRedirect(Uri::base() . 'index.php?option=com_ticketstation&view=tickets');
     }
 
+    ## "Edit Ticket" in the editor: the edit screen of the ticket that owns this chart. The editor
+    ## itself warns about unsaved changes before the page is left.
+    public function ticket($cachable = false, $urlparams = [])
+    {
+        $this->setRedirect(Uri::base() . 'index.php?option=com_ticketstation&controller=tickets&task=edit&cid=' . $this->ownerId());
+    }
+
     ## Saves the editor's layout: settings, shapes, section colours, seats and deleted seats.
     public function saveLayout()
     {

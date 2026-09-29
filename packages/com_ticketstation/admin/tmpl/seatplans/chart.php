@@ -29,6 +29,7 @@ $app->getDocument()->setTitle(Text::_('COM_TICKETSTATION_VIEW_SEATPLANS_CHART') 
     <input type="hidden" name="option" value="com_ticketstation" />
     <input type="hidden" name="controller" value="seatplans" />
     <input type="hidden" name="task" value="" />
+    <input type="hidden" name="cid[]" value="<?= (int) $app->getInput()->get('cid', [0], 'array')[0]; ?>" />
     <?= HTMLHelper::_('form.token'); ?>
 </form>
 

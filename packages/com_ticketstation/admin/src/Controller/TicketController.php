@@ -119,6 +119,31 @@ class TicketController extends FormController
         $this->setRedirect(Uri::base() . 'index.php?option=com_ticketstation&view=Tickets');
     }
 
+    ## "Save & Seat Plan": saves the ticket like Apply, then opens its seat plan editor, so
+    ## unsaved changes in the form are never lost. A ticket that is (no longer) a seated parent
+    ## after saving stays on the edit screen with the normal saved message.
+    public function seatplan()
+    {
+        if (!$this->apply()) {
+            return;
+        }
+
+        ## The button only exists for a saved ticket, so the form carries its ID.
+        $ticketid = (int) ($this->input->post->get('jform', [], 'array')['ticketid'] ?? 0);
+
+        $db   = Factory::getContainer()->get('DatabaseDriver');
+        $query = $db->getQuery(true)
+            ->select($db->quoteName(['parent', 'show_seatplans']))
+            ->from($db->quoteName('#__ticketstation_tickets'))
+            ->where($db->quoteName('ticketid') . ' = ' . $ticketid);
+
+        $ticket = $db->setQuery($query)->loadObject();
+
+        if ($ticket && (int) $ticket->parent === 0 && (int) $ticket->show_seatplans === 1) {
+            $this->setRedirect(Uri::base() . 'index.php?option=com_ticketstation&controller=seatplans&task=displaychart&cid=' . $ticketid, Text::_('COM_TICKETSTATION_TICKET_SAVED'));
+        }
+    }
+
     function removeDesign()
     {
         // Reached via a plain GET link in admin/tmpl/ticket/edit.php - check the

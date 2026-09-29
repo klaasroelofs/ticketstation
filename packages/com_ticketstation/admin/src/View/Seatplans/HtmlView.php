@@ -95,6 +95,7 @@ class HtmlView extends BaseHtmlView
             . ' <small>(' . htmlspecialchars($owner->ticketcode, ENT_QUOTES, 'UTF-8') . ')</small>';
         ToolbarHelper::title($title, 'fa fa-chair');
         ToolbarHelper::cancel('cancel', 'JTOOLBAR_CLOSE');
+        ToolbarHelper::custom('ticket', 'icon-ticket-alt', '', 'COM_TICKETSTATION_EDIT_TICKET', false);
         Docs::toolbarButton('seating-editor');
 
         parent::display($tpl);

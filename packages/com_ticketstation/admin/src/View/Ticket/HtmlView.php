@@ -43,6 +43,11 @@ class HtmlView extends BaseHtmlView
         }
         else {
             ToolbarHelper::cancel('cancel', 'JTOOLBAR_CLOSE');
+
+            ## A seated parent ticket: save the form, then open its seat plan editor.
+            if ((int) $this->item->parent === 0 && (int) $this->item->show_seatplans === 1) {
+                ToolbarHelper::custom('seatplan', 'icon-chair', '', 'COM_TICKETSTATION_SAVE_AND_EDIT_SEATPLAN', false);
+            }
         }
 
         $app = Factory::getApplication();
