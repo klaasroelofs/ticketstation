@@ -86,6 +86,7 @@ class HtmlView extends BaseHtmlView
             'worker'  => $assets . 'pdfjs/pdf.worker.min.js',
             'fields'  => $fields,
             'metrics' => TicketLayoutFields::metrics(),
+            'qr'      => TicketLayoutFields::sampleQr(),
         ]);
 
         ## Every string the editor script uses: the keys it passes to T() (prefix COM_TICKETSTATION_TLE_).

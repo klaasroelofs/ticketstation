@@ -95,7 +95,7 @@ class TicketController extends FormController
         } else {
 
             if ($model->store($data)) {
-                $this->setRedirect(Uri::base() . 'index.php?option=com_ticketstation&view=ticket&layout=edit&cid=' . $model->getTicketID(), Text::_('COM_TICKETSTATION_TICKET_SAVED'));
+                $this->setRedirect(Uri::base() . 'index.php?option=com_ticketstation&controller=tickets&task=edit&cid=' . $model->getTicketID(), Text::_('COM_TICKETSTATION_TICKET_SAVED'));
                 return true;
 
             } else {

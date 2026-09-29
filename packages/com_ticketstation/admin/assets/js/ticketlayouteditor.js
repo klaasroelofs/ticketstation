@@ -319,7 +319,7 @@
             var px = num(get('qrcode_width'), 0) || 30;
             var side = px * QR_MM_PER_PX;
 
-            return {pos: pos, box: {x: pos.x, y: pos.y, w: side, h: side}, side: side};
+            return {pos: pos, box: {x: pos.x, y: pos.y, w: side, h: side}, side: side, px: px};
         }
 
         var ls = lines(field);
@@ -442,7 +442,7 @@
 
             if (field.kind === 'qr') {
                 g.appendChild(svg('rect', {'class': 'ts-tle__frame', x: geo.box.x, y: geo.box.y, width: geo.box.w, height: geo.box.h}));
-                drawQr(g, geo.box.x, geo.box.y, geo.side);
+                drawQr(g, geo.box.x, geo.box.y, geo.side, geo.px);
             } else {
                 var holder = g;
 
@@ -485,21 +485,43 @@
         }
     }
 
-    // A QR-like placeholder: the three finder squares and a few modules.
-    function drawQr(g, x, y, side) {
-        var m = side / 21;
+    // The QR image as the ticket prints it: a sample code of the same size as a real ticket's
+    // (TicketLayoutFields::sampleQr()), with the modules rounded down to whole pixels and the
+    // rest of the image as a white margin, like get_qr_image_with_logo() does.
+    function drawQr(g, x, y, side, px) {
+        var rows = opts.qr || [];
+        var count = rows.length;
 
         g.appendChild(svg('rect', {x: x, y: y, width: side, height: side, fill: '#fff'}));
 
-        [[0, 0], [14, 0], [0, 14]].forEach(function (c) {
-            g.appendChild(svg('rect', {x: x + c[0] * m, y: y + c[1] * m, width: 7 * m, height: 7 * m, fill: '#000'}));
-            g.appendChild(svg('rect', {x: x + (c[0] + 1) * m, y: y + (c[1] + 1) * m, width: 5 * m, height: 5 * m, fill: '#fff'}));
-            g.appendChild(svg('rect', {x: x + (c[0] + 2) * m, y: y + (c[1] + 2) * m, width: 3 * m, height: 3 * m, fill: '#000'}));
+        if (!count) {
+            return;
+        }
+
+        var block = Math.max(1, Math.floor(px / count));
+        var margin = Math.floor((px - block * count) / 2);
+        var m = block * QR_MM_PER_PX;
+        var x0 = x + margin * QR_MM_PER_PX;
+        var y0 = y + margin * QR_MM_PER_PX;
+        var d = '';
+
+        // One path, with each run of dark modules in a row as one rectangle.
+        rows.forEach(function (row, r) {
+            var start = -1;
+
+            for (var c = 0; c <= count; c++) {
+                if (row.charAt(c) === '1') {
+                    if (start < 0) {
+                        start = c;
+                    }
+                } else if (start >= 0) {
+                    d += 'M' + (x0 + start * m) + ' ' + (y0 + r * m) + 'h' + ((c - start) * m) + 'v' + m + 'h' + (-(c - start) * m) + 'z';
+                    start = -1;
+                }
+            }
         });
 
-        [[9, 2], [11, 4], [8, 8], [10, 10], [13, 9], [16, 11], [9, 14], [12, 16], [15, 15], [18, 18], [17, 14], [10, 18]].forEach(function (c) {
-            g.appendChild(svg('rect', {x: x + c[0] * m, y: y + c[1] * m, width: 2 * m, height: 2 * m, fill: '#000'}));
-        });
+        g.appendChild(svg('path', {d: d, fill: '#000', 'shape-rendering': 'crispEdges'}));
     }
 
     function drawList() {

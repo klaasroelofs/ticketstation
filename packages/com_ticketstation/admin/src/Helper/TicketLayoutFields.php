@@ -11,6 +11,11 @@ namespace Ticketstation\Component\Ticketstation\Administrator\Helper;
 
 defined('_JEXEC') or die;
 
+use Endroid\QrCode\Bacon\MatrixFactory;
+use Endroid\QrCode\Encoding\Encoding;
+use Endroid\QrCode\ErrorCorrectionLevel\ErrorCorrectionLevelLow;
+use Endroid\QrCode\QrCode;
+
 /**
  * What the layout editor on the "Ticket Layout" tab (assets/js/ticketlayouteditor.js) needs to
  * know about the printed fields, so it can place them exactly where ticketcreator::doPDF() and
@@ -71,6 +76,38 @@ class TicketLayoutFields
         }
 
         return $metrics;
+    }
+
+    /**
+     * The modules of a QR code like the one on a real ticket, as one string of 0/1 per row.
+     *
+     * A ticket's code is 32 random hex characters (ticketcreator::doPDF()), encoded like
+     * get_qr_image_with_logo() does (UTF-8, error correction Low), which always gives the same
+     * number of modules. A fixed sample of that length keeps the editor's picture stable.
+     */
+    public static function sampleQr(): array
+    {
+        require_once JPATH_ADMINISTRATOR . '/components/com_ticketstation/autoloader.php';
+
+        $qrCode = QrCode::create(md5('Ticketstation'))
+            ->setEncoding(new Encoding('UTF-8'))
+            ->setErrorCorrectionLevel(new ErrorCorrectionLevelLow());
+
+        $matrix = (new MatrixFactory())->create($qrCode);
+        $count  = $matrix->getBlockCount();
+        $rows   = [];
+
+        for ($row = 0; $row < $count; $row++) {
+            $line = '';
+
+            for ($column = 0; $column < $count; $column++) {
+                $line .= $matrix->getBlockValue($row, $column) ? '1' : '0';
+            }
+
+            $rows[] = $line;
+        }
+
+        return $rows;
     }
 
     private static function widths(string $path): array

@@ -185,7 +185,7 @@ class TicketModel extends AdminModel
 
             $ticket_design['name'] = File::makeSafe($ticket_design['name']);
             ## The link to the previous saved data.
-            $link = 'index.php?option=com_ticketstation&view=ticket&layout=edit&cid='.$this->ticketid;
+            $link = 'index.php?option=com_ticketstation&controller=tickets&task=edit&cid='.$this->ticketid;
 
             // Check if submitted filetype is supported
             $allowed = array('image/jpeg','image/JPG','image/jpg','application/pdf');
@@ -250,7 +250,7 @@ class TicketModel extends AdminModel
 
             $ticket_bg['name'] = File::makeSafe($ticket_bg['name']);
             ## The link to the previous saved data.
-            $link = 'index.php?option=com_ticketstation&view=ticket&layout=edit&cid='.$this->ticketid;
+            $link = 'index.php?option=com_ticketstation&controller=tickets&task=edit&cid='.$this->ticketid;
 
             // Check if submitted filetype is supported
             $allowed = array('image/jpeg','image/JPG','image/jpg');

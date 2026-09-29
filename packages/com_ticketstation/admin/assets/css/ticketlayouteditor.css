@@ -38,10 +38,10 @@
 }
 
 .ts-tle {
-    --ts-tle-border: var(--template-bg-dark-10, #d8dde6);
+    --ts-tle-border: rgba(128, 128, 128, .35);
     --ts-tle-accent: var(--template-link-color, #2a69b8);
     --ts-tle-warning: #c52827;
-    --ts-tle-stage: var(--template-bg-light, #f0f4fb);
+    --ts-tle-stage: rgba(128, 128, 128, .12);
     border: 1px solid var(--ts-tle-border);
     border-radius: .375rem;
 }
@@ -69,11 +69,13 @@
 .ts-tle__status {
     margin-left: auto;
     font-size: .875rem;
-    color: var(--template-text-light, #6c757d);
+    color: inherit;
+    opacity: .75;
 }
 
 .ts-tle__status.is-error {
     color: var(--ts-tle-warning);
+    opacity: 1;
 }
 
 .ts-tle__notes:not(:empty) {
@@ -203,7 +205,8 @@
 .ts-tle__cond {
     flex-basis: 100%;
     padding-left: 1.5rem;
-    color: var(--template-text-light, #6c757d);
+    color: inherit;
+    opacity: .75;
     font-size: .75rem;
 }
 
@@ -236,11 +239,13 @@
 .ts-tle__hint {
     margin: .5rem 0 0;
     font-size: .8125rem;
-    color: var(--template-text-light, #6c757d);
+    color: inherit;
+    opacity: .75;
 }
 
 .ts-tle__hint.is-warning {
     color: var(--ts-tle-warning);
+    opacity: 1;
 }
 
 .ts-tle-advanced > summary {
