@@ -307,6 +307,12 @@
         return [{text: texts[field.key] || '', size: size, bold: field.bold, dy: 0}];
     }
 
+    // Whether (part of) an area lies beyond the edge of the ticket, where the PDF prints nothing.
+    function outside(box) {
+        return box.x < -0.01 || box.y < -0.01 ||
+            box.x + box.w > server.width + 0.01 || box.y + box.h > server.height + 0.01;
+    }
+
     // Where a field is, and the frame the editor draws around it, in mm.
     function geometry(field) {
         var pos = parsePosition(get(field.key + '_position'));
@@ -319,7 +325,9 @@
             var px = num(get('qrcode_width'), 0) || 30;
             var side = px * QR_MM_PER_PX;
 
-            return {pos: pos, box: {x: pos.x, y: pos.y, w: side, h: side}, side: side, px: px};
+            var qrBox = {x: pos.x, y: pos.y, w: side, h: side};
+
+            return {pos: pos, box: qrBox, side: side, px: px, outside: outside(qrBox)};
         }
 
         var ls = lines(field);
@@ -353,11 +361,17 @@
             };
         });
 
+        // A rotated field reads upwards from its position, so its printed area stands on end.
+        var printed = field.kind === 'rotated'
+            ? {x: box.y - pos.y + pos.x, y: pos.y - box.w, w: box.h, h: box.w}
+            : box;
+
         return {
             pos: pos,
             lines: ls,
             box: box,
             centered: centered,
+            outside: outside(printed),
             // Write() only fits a text in the page width minus the right margin and twice the cell
             // margin; the rest continues at the left margin, over the other text at that height.
             overflow: field.kind === 'text' && box.x + box.w > server.width - PAGE_MARGIN - CELL_MARGIN + 0.01
@@ -432,12 +446,13 @@
             }
 
             var g = svg('g', {
-                'class': 'ts-tle__field' + (selected === field.key ? ' is-selected' : '') + (geo.overflow ? ' is-overflow' : '') +
+                'class': 'ts-tle__field' + (selected === field.key ? ' is-selected' : '') + (geo.overflow || geo.outside ? ' is-overflow' : '') +
                     (field.condition ? ' is-conditional' : ''),
                 'data-key': field.key
             });
             var title = svg('title');
-            title.textContent = field.label + (field.condition ? ' (' + field.condition + ')' : '') + (geo.overflow ? ' - ' + T('OVERFLOW') : '');
+            title.textContent = field.label + (field.condition ? ' (' + field.condition + ')' : '') +
+                (geo.overflow ? ' - ' + T('OVERFLOW') : '') + (geo.outside ? ' - ' + T('OUTSIDE') : '');
             g.appendChild(title);
 
             if (field.kind === 'qr') {
@@ -527,11 +542,15 @@
     function drawList() {
         els.list.innerHTML = fields.map(function (field) {
             var on = parsePosition(get(field.key + '_position')) !== null;
+            // A field beyond the edge can't be clicked on the ticket, so the list points it out.
+            var geo = on ? geometry(field) : null;
+            var off = geo && geo.outside;
 
             return '<li class="ts-tle__item' + (selected === field.key ? ' is-selected' : '') + '">' +
                 '<input class="form-check-input" type="checkbox" id="ts-tle-on-' + field.key + '" data-toggle="' + field.key + '"' + (on ? ' checked' : '') + '>' +
                 '<button type="button" class="ts-tle__pick" data-pick="' + field.key + '"' + (on ? '' : ' disabled') + '>' + esc(field.label) + '</button>' +
                 (field.condition ? '<small class="ts-tle__cond">' + esc(field.condition) + '</small>' : '') +
+                (off ? '<small class="ts-tle__cond is-warning">' + esc(T('OUTSIDE_SHORT')) + '</small>' : '') +
             '</li>';
         }).join('');
     }
@@ -582,6 +601,10 @@
 
         if (geo.overflow) {
             html += '<p class="ts-tle__hint is-warning">' + esc(T('OVERFLOW')) + '</p>';
+        }
+
+        if (geo.outside) {
+            html += '<p class="ts-tle__hint is-warning">' + esc(T('OUTSIDE')) + '</p>';
         }
 
         if (field.condition) {

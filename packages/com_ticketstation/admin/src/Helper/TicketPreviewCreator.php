@@ -59,6 +59,8 @@ class TicketPreviewCreator
         require_once __DIR__ . '/PDF/FPDI_EAN13.php';
 
         $pdf = new FPDI_EAN13();
+        ## One page with fixed positions, same as ticketcreator::doPDF()
+        $pdf->SetAutoPageBreak(false);
         $pdf->AddPage($orientation, $ticket_size);
 
         ## Background: the built-in layout or the uploaded design, same as ticketcreator::doPDF()

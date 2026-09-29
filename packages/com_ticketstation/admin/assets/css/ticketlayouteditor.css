@@ -243,7 +243,8 @@
     opacity: .75;
 }
 
-.ts-tle__hint.is-warning {
+.ts-tle__hint.is-warning,
+.ts-tle__cond.is-warning {
     color: var(--ts-tle-warning);
     opacity: 1;
 }

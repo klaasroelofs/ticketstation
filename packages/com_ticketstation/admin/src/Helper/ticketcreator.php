@@ -154,6 +154,11 @@ class ticketcreator
 
         $pdf = new FPDI_EAN13();
 
+        ## A ticket is exactly one page with fixed positions. Without this, FPDF starts a new page
+        ## as soon as a field is written in the bottom 2 cm (or below the ticket), and every field
+        ## after it ends up on that extra page.
+        $pdf->SetAutoPageBreak(false);
+
         ## add a page
         $pdf->AddPage($order->ticket_orientation, $ticket_size);
 
