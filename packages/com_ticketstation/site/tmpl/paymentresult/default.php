@@ -107,69 +107,69 @@ $contactLink  = '<a href="mailto:' . $contactEmail . '">' . $contactEmail . '</a
             <p><?php echo Text::sprintf('COM_TICKETSTATION_PAYMENTRESULT_ORDER_NUMBER', '<strong class="ts-order-code">' . $this->ordercode . '</strong>'); ?></p>
             <p><?php echo Text::sprintf('COM_TICKETSTATION_PAYMENTRESULT_MAIL_SOON', '<strong>' . htmlspecialchars($this->data[0]->emailaddress, ENT_QUOTES, 'UTF-8') . '</strong>'); ?></p>
             <p><?php echo Text::sprintf('COM_TICKETSTATION_PAYMENTRESULT_CHECK_SPAM', $contactLink); ?></p>
+
+            <?php if ($this->hasCalendar) {
+                ## Unrouted, like the other task links: the SEF router would drop the order parameter
+                $calendar_link = Uri::root(true) . '/index.php?option=com_ticketstation&controller=paymentresult&task=calendar&order=' . (int) $this->ordercode;
+                ?>
+                <div class="ts-actions">
+                    <a class="ts-btn ts-btn--secondary" href="<?php echo $calendar_link; ?>" download>
+                        <svg class="ts-icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M5 1a1 1 0 0 1 1 1v1h4V2a1 1 0 1 1 2 0v1h1a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h1V2a1 1 0 0 1 1-1zM3 7v6h10V7H3z"/></svg>
+                        <?php echo Text::_('COM_TICKETSTATION_PAYMENTRESULT_ADD_TO_CALENDAR'); ?>
+                    </a>
+                </div>
+            <?php } ?>
         </section>
 
-        <?php if($this->data[0]->downloadbuttonshown != 1) {
+        <?php
+        $ticketcount = count($this->data);
+        $downloaded  = (int) $this->data[0]->downloaded === 1;
 
-            $download_link = Uri::root(true) . "/index.php?option=com_ticketstation&controller=paymentresult&task=downloadTicketAfterPurchase&order=" . $this->ordercode . "&" . \Joomla\CMS\Session\Session::getFormToken() . "=1";
-
-            $ticketcount = count($this->data);
+        ## Once downloaded, the tickets can't be downloaded here again (the download itself
+        ## checks this too); point to the Lost tickets page, which emails them again.
+        $itemid        = TicketstationFunctions::getSiteItemid();
+        $lost_link     = Route::_('index.php?option=com_ticketstation&view=losttickets' . ($itemid ? '&Itemid=' . $itemid : ''));
+        $lost_notice   = Text::sprintf('COM_TICKETSTATION_PAYMENTRESULT_DOWNLOADED', '<a href="' . $lost_link . '">' . Text::_('COM_TICKETSTATION_PAYMENTRESULT_EMAIL_AGAIN') . '</a>');
         ?>
 
-            <section class="ts-card ts-download" id="ts-download">
-                <h2 class="ts-card__title"><?php echo Text::_('COM_TICKETSTATION_PAYMENTRESULT_DOWNLOAD'); ?></h2>
-                <p><?php echo Text::plural('COM_TICKETSTATION_PAYMENTRESULT_DOWNLOAD_DESC', $ticketcount); ?></p>
+        <section class="ts-card ts-download" id="ts-download">
+            <h2 class="ts-card__title"><?php echo Text::_('COM_TICKETSTATION_PAYMENTRESULT_DOWNLOAD'); ?></h2>
 
-                <div class="ts-actions">
-                    <a id="download_button" class="ts-btn ts-btn--primary" href="<?php echo $download_link; ?>"><?php echo Text::plural('COM_TICKETSTATION_PAYMENTRESULT_DOWNLOAD_BUTTON', $ticketcount); ?></a>
+            <?php if (!$downloaded) {
+                $download_link = Uri::root(true) . "/index.php?option=com_ticketstation&controller=paymentresult&task=downloadTicketAfterPurchase&order=" . $this->ordercode . "&" . \Joomla\CMS\Session\Session::getFormToken() . "=1";
+                ?>
+                <div class="ts-download__offer">
+                    <p><?php echo Text::plural('COM_TICKETSTATION_PAYMENTRESULT_DOWNLOAD_DESC', $ticketcount); ?></p>
 
-                    <?php if ($this->mollieconfig->bypass_mode == '1') {
-
-                        $itemid = TicketstationFunctions::getSiteItemid();
-                        $link_to_start = Route::_('index.php?option=com_ticketstation&view=upcoming' . ($itemid ? '&Itemid=' . $itemid : ''));
-                        ?>
-
-                        <a class="ts-btn ts-btn--secondary ts-btn--next" href="<?php echo $link_to_start; ?>"><?php echo Text::_('COM_TICKETSTATION_NEW_ORDER'); ?></a>
-
-                    <?php } ?>
+                    <div class="ts-actions">
+                        <a id="download_button" class="ts-btn ts-btn--primary" href="<?php echo $download_link; ?>"><?php echo Text::plural('COM_TICKETSTATION_PAYMENTRESULT_DOWNLOAD_BUTTON', $ticketcount); ?></a>
+                    </div>
                 </div>
-            </section>
+            <?php } ?>
 
+            <p class="ts-download__done"<?php echo $downloaded ? '' : ' hidden'; ?>><?php echo $lost_notice; ?></p>
+
+            <?php if ($this->mollieconfig->bypass_mode == '1') {
+                $link_to_start = Route::_('index.php?option=com_ticketstation&view=upcoming' . ($itemid ? '&Itemid=' . $itemid : ''));
+                ?>
+                <div class="ts-actions">
+                    <a class="ts-btn ts-btn--secondary ts-btn--next" href="<?php echo $link_to_start; ?>"><?php echo Text::_('COM_TICKETSTATION_NEW_ORDER'); ?></a>
+                </div>
+            <?php } ?>
+        </section>
+
+        <?php if (!$downloaded) { ?>
             <script>
-                // The tickets can be downloaded once: hide the section after the click.
+                // The tickets can be downloaded once: after the click, say where to get them again.
                 document.getElementById('download_button').addEventListener('click', function () {
                     setTimeout(function () {
-                        document.getElementById('ts-download').hidden = true;
+                        document.querySelector('#ts-download .ts-download__offer').hidden = true;
+                        document.querySelector('#ts-download .ts-download__done').hidden = false;
                     }, 500);
                 });
             </script>
-
-            <?php MarkDownloadbuttonshown($this->ordercode); ?>
-
         <?php } ?>
 
     <?php } ?>
 
 </div>
-
-<?php function MarkDownloadbuttonshown($ordercode)
-{
-
-    $db = Factory::getContainer()->get('DatabaseDriver');
-
-    $query = $db->getQuery(true);
-
-    $fields = [
-        $db->quoteName('downloadbuttonshown') . ' = 1',
-    ];
-
-    $conditions = [$db->quoteName('ordercode') . ' = ' . $ordercode];
-
-    $query->update($db->quoteName('#__ticketstation_orders'))->set($fields)->where($conditions);
-
-    $db->setQuery($query);
-
-    $db->execute();
-
-}
-?>

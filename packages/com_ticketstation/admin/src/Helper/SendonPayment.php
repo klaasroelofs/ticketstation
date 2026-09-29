@@ -143,6 +143,9 @@ class SendonPayment
 
         $message->attachment($attachment);
 
+        ## "Add to calendar": the order's events as an .ics file next to the tickets
+        $message->stringAttachment(Calendar::ics((int) $this->eid), 'event-' . (int) $this->eid . '.ics', 'text/calendar');
+
         ## A mail that didn't go out leaves the order as "tickets not sent" (Needs attention).
         if ( ! $message->send())
         {

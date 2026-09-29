@@ -13,6 +13,7 @@ defined('_JEXEC') or die;
 
 use Joomla\CMS\Factory;
 use Joomla\CMS\MVC\View\HtmlView as BaseHtmlView;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\Calendar;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Config;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\PaymentAPI;
 
@@ -55,9 +56,13 @@ class HtmlView extends BaseHtmlView {
             $this->canRetry = $this->unpaid->total > 0
                 && $this->mollieconfig->bypass_mode == 0
                 && $attempt && (int) $attempt->processed === 5;
+
+            // "Add to calendar" only when the order has dated events
+            $this->hasCalendar = Calendar::events($ordercode) !== [];
         } else {
-            $this->data   = [];
-            $this->unpaid = null;
+            $this->data        = [];
+            $this->unpaid      = null;
+            $this->hasCalendar = false;
         }
 
         parent::display($tpl);

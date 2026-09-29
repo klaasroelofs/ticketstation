@@ -61,6 +61,10 @@ if ($available_tickets <= 0) {
 ## Venue website link (stored without scheme in the venue form, e.g. "www.example.nl")
 $venue_website_url = preg_match('#^https?://#i', $this->items->website) ? $this->items->website : 'https://' . $this->items->website;
 
+## The ticket's own background image, or else the event's (the same one as in the event list)
+$bannerStyle = TicketstationFunctions::backgroundImageStyle('ticket' . (int) $this->items->ticketid)
+    ?: TicketstationFunctions::backgroundImageStyle('event' . (int) $this->items->eventid);
+
 ## One table row per ticket: the child tickets (variants) of this ticket, or else the ticket itself.
 ## Every sold-out row offers the waiting list; only a ticket without variants gets the
 ## "few tickets left" notice, from the same point as the red "critical" bar (10% or less left).
@@ -96,6 +100,10 @@ if (count($this->childs) != 0) {
     </div>
 
     <section class="ts-card ts-ticketinfo">
+        <?php if ($bannerStyle) { ?>
+            <div class="ts-event-banner" style="<?php echo htmlspecialchars($bannerStyle, ENT_QUOTES, 'UTF-8'); ?>" role="img" aria-label="<?php echo htmlspecialchars($this->items->eventname, ENT_QUOTES, 'UTF-8'); ?>"></div>
+        <?php } ?>
+
         <h2 class="ts-card__title"><?php echo Text::_('COM_TICKETSTATION_TICKET_INFORMATION'); ?></h2>
 
         <dl class="ts-meta">
@@ -120,6 +128,12 @@ if (count($this->childs) != 0) {
                 <dd><a href="<?php echo htmlspecialchars($venue_website_url, ENT_QUOTES, 'UTF-8'); ?>" target="_blank" rel="noopener"><?php echo htmlspecialchars($this->items->website, ENT_QUOTES, 'UTF-8'); ?></a></dd>
             <?php } ?>
         </dl>
+
+        <?php if (trim(strip_tags((string) $this->items->eventdescription)) !== '') { ?>
+            <div class="ts-event-description">
+                <?php echo $this->items->eventdescription; ?>
+            </div>
+        <?php } ?>
 
         <?php if ($this->config->show_venue == 1 && $this->config->show_venue_description == 1 && trim(strip_tags($this->items->venuedescription)) != '') { ?>
             <div class="ts-venue-description">
@@ -201,7 +215,7 @@ if (count($this->childs) != 0) {
                         <?php } elseif ($published) { ?>
 
                             <button type="button" class="ts-btn ts-btn--secondary ts-btn--sm ts-btn--add" onclick="buytickets(<?php echo $ticketid; ?>)">
-                                <?php echo Text::_('COM_TICKETSTATION_ORDER'); ?>
+                                <?php echo Text::_('COM_TICKETSTATION_ADD_TO_BASKET_BUTTON'); ?>
                             </button>
 
                         <?php } ?>
@@ -254,9 +268,25 @@ if (count($this->childs) != 0) {
     // A call that failed (no connection, or an expired session that the server refuses with 403):
     // tell the customer instead of silently doing nothing.
     function requestFailed(){
-        jQuery( "#message" ).stop(true, true)
-            .html(<?php echo json_encode('<div class="ts-alert ts-alert--danger">' . Text::_('COM_TICKETSTATION_REQUEST_FAILED') . '</div>'); ?>)
-            .show();
+        showResult({ok: false, msg: <?php echo json_encode('<div class="ts-alert ts-alert--danger">' . Text::_('COM_TICKETSTATION_REQUEST_FAILED') . '</div>'); ?>});
+    }
+
+    // The result of adding tickets (or joining the waiting list) stays in view: after a success
+    // with the way to the basket, after an error until the next attempt.
+    function showResult(result){
+        var message = jQuery("#message");
+
+        message.html(result.msg).show();
+
+        if (result.ok) {
+            message.find(".ts-alert").addClass("ts-alert--action").append(
+                <?php echo json_encode('<a class="ts-btn ts-btn--primary ts-btn--sm" href="' . $gotocart . '">' . Text::_('COM_TICKETSTATION_GO_TO_BASKET') . '</a>'); ?>
+            );
+        }
+
+        if (message[0].scrollIntoView) {
+            message[0].scrollIntoView({block: "nearest", behavior: "smooth"});
+        }
     }
 
     function updateCart(){
@@ -354,11 +384,9 @@ if (count($this->childs) != 0) {
             cache: false,
             //success
             success: function (html) {
-                // We're done, show data; an error stays a little longer
-                jQuery( "#message" ).stop(true, true).html(html.msg).show();
+                showResult(html);
                 updateCart();
                 updateAvailable();
-                jQuery( "#message" ).delay(html.msg.indexOf('ts-alert--danger') !== -1 ? 6000 : 3000).fadeOut(500);
             },
             error: requestFailed
         });
@@ -388,12 +416,8 @@ if (count($this->childs) != 0) {
             cache: false,
             //success
             success: function (html) {
-                // We're done, show data
-
-                // #message is display:none by default, so it has to be shown explicitly. It stays
-                // visible (no fade-out): it tells the customer to continue to leave their details.
-                jQuery( "#message" ).stop(true, true).show();
-                jQuery( "#message" ).html(html.msg);
+                // Tells the customer to go to the basket to leave their details
+                showResult(html);
                 updateCart();
 
             },

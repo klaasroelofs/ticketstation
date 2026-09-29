@@ -36,6 +36,25 @@ class TicketstationFunctions
     }
 
     /**
+     * The background image of a ticket or event (Tickets/Events > Background image), as the
+     * CSS custom property --ts-ticket-image that component.css uses. Empty when there is none.
+     *
+     * @param   string  $name  'ticket<id>' or 'event<id>'
+     *
+     * @return  string
+     */
+    public static function backgroundImageStyle(string $name): string
+    {
+        $path = 'administrator/components/com_ticketstation/assets/images/ticketbackgrounds/' . $name . '.jpg';
+
+        if (!file_exists(JPATH_ROOT . '/' . $path)) {
+            return '';
+        }
+
+        return "--ts-ticket-image: url('" . \Joomla\CMS\Uri\Uri::root() . $path . "');";
+    }
+
+    /**
      * Returns the price formatted as chosen in configuration of Ticketstation
      *
      * @param $holder

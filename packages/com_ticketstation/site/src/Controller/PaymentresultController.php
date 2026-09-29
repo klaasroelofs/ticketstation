@@ -18,6 +18,7 @@ use Joomla\CMS\MVC\Factory\MVCFactoryInterface;
 use Joomla\CMS\Router\Route;
 use Joomla\CMS\Uri\Uri;
 use Mollie\Api\MollieApiClient;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\Calendar;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Config;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\eTicketsMessage;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\PaymentAPI;
@@ -134,6 +135,39 @@ class PaymentresultController extends BaseController
 
         }
 
+    }
+
+    /**
+     * "Add to calendar": the order's events as an .ics file. Read-only, and like the ticket
+     * download only for the browser session that completed this order.
+     */
+    public function calendar()
+    {
+        $app       = Factory::getApplication();
+        $ordercode = $app->getInput()->getInt('order', 0);
+
+        $authorized_ordercode = $app->getSession()->get('ticketstation.authorized_ordercode');
+
+        if ($ordercode === 0 || $authorized_ordercode === null || (int) $authorized_ordercode !== $ordercode)
+        {
+            exit(Text::sprintf('COM_TICKETSTATION_DOWNLOAD_NOT_AUTHORIZED', (new Config)->getContactEmail()));
+        }
+
+        $ics = Calendar::ics($ordercode);
+
+        if ($ics === '')
+        {
+            $itemid = TicketstationFunctions::getSiteItemid();
+            $app->redirect(Route::_('index.php?option=com_ticketstation&view=paymentresult&ordercode=' . $ordercode . ($itemid ? '&Itemid=' . $itemid : ''), false));
+        }
+
+        header('Content-Type: text/calendar; charset=utf-8');
+        header('Content-Disposition: attachment; filename="event-' . $ordercode . '.ics"');
+        header('Cache-Control: private, no-store');
+        header('Content-Length: ' . strlen($ics));
+        echo $ics;
+
+        $app->close();
     }
 
     function MarkDownloaded($ordercode)

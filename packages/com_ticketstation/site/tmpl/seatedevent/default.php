@@ -51,6 +51,10 @@ $seatHint = Text::_($this->pricechoice ? 'COM_TICKETSTATION_CLICK_TO_CHOOSE_PRIC
 
 ## Venue website link (stored without scheme in the venue form, e.g. "www.example.nl")
 $venue_website_url = preg_match('#^https?://#i', $this->ticketdetails->website) ? $this->ticketdetails->website : 'https://' . $this->ticketdetails->website;
+
+## The ticket's own background image, or else the event's (the same one as in the event list)
+$bannerStyle = TicketstationFunctions::backgroundImageStyle('ticket' . (int) $this->ticketdetails->ticketid)
+    ?: TicketstationFunctions::backgroundImageStyle('event' . (int) $this->ticketdetails->eventid);
 ?>
 
 <div class="ticketstation ticketstation--seatedevent">
@@ -62,6 +66,10 @@ $venue_website_url = preg_match('#^https?://#i', $this->ticketdetails->website) 
     </div>
 
     <section class="ts-card ts-ticketinfo">
+        <?php if ($bannerStyle) { ?>
+            <div class="ts-event-banner" style="<?php echo htmlspecialchars($bannerStyle, ENT_QUOTES, 'UTF-8'); ?>" role="img" aria-label="<?php echo htmlspecialchars($this->ticketdetails->eventname, ENT_QUOTES, 'UTF-8'); ?>"></div>
+        <?php } ?>
+
         <h2 class="ts-card__title"><?php echo Text::_('COM_TICKETSTATION_TICKET_INFORMATION'); ?></h2>
 
         <dl class="ts-meta">
@@ -86,6 +94,12 @@ $venue_website_url = preg_match('#^https?://#i', $this->ticketdetails->website) 
                 <dd><a href="<?php echo htmlspecialchars($venue_website_url, ENT_QUOTES, 'UTF-8'); ?>" target="_blank" rel="noopener"><?php echo htmlspecialchars($this->ticketdetails->website, ENT_QUOTES, 'UTF-8'); ?></a></dd>
             <?php } ?>
         </dl>
+
+        <?php if (trim(strip_tags((string) $this->ticketdetails->eventdescription)) !== '') { ?>
+            <div class="ts-event-description">
+                <?php echo $this->ticketdetails->eventdescription; ?>
+            </div>
+        <?php } ?>
 
         <?php if ($this->config->show_venue == 1 && $this->config->show_venue_description == 1 && trim(strip_tags($this->ticketdetails->venuedescription)) != '') { ?>
             <div class="ts-venue-description">

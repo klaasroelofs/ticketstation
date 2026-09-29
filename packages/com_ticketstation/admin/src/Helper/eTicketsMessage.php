@@ -22,7 +22,8 @@ class eTicketsMessage
 {
     var $template     = null;
     var $attachment   = [];
-    var $user         = null;
+    var $stringAttachments = [];
+    var $user        = null;
     var $variables    = [];
     var $replacements = [];
     var $templates    = null;
@@ -432,6 +433,11 @@ class eTicketsMessage
             }
         }
 
+        foreach ($this->stringAttachments as $attachment)
+        {
+            $mailer->addStringAttachment($attachment['content'], $attachment['name'], 'base64', $attachment['type']);
+        }
+
         // Joomla's mailer returns false or throws (mail switched off, SMTP error); either way
         // the mail didn't go out.
         try
@@ -460,6 +466,19 @@ class eTicketsMessage
     public function showHeader()
     {
         return $this->getSubject();
+    }
+
+    /**
+     * Attaches generated content (no file on disk), e.g. the order's calendar file.
+     */
+    public function stringAttachment(string $content, string $name, string $type = 'application/octet-stream')
+    {
+        if ($content !== '')
+        {
+            $this->stringAttachments[] = ['content' => $content, 'name' => $name, 'type' => $type];
+        }
+
+        return $this;
     }
 
     public function attachment($file)

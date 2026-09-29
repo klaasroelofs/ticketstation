@@ -78,7 +78,7 @@ class CsrfGate
         // session CSRF token. Each has its own independent protection (Mollie's
         // signed callback, single-use bypass_token, session-side redirect state).
         'payment'       => ['mollie', 'molliebypass', 'ipnprocesspayment'],
-        'paymentresult' => ['poll', 'return'],
+        'paymentresult' => ['poll', 'return', 'calendar'],
 
         // Ticket scanning hardware authenticates with its own API key
         // (checked in the constructor via hash_equals), not a browser session.

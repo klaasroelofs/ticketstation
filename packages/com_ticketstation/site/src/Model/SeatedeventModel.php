@@ -56,7 +56,7 @@ class SeatedeventModel extends BaseDatabaseModel {
         $db = Factory::getContainer()->get('DatabaseDriver');
 
         $query = $db->getQuery(true)
-            ->select(['a.*', 'b.eventname', 'b.eventdate', 'b.closingdate', 'v.*', 'v.id AS vid', 'a.published'])
+            ->select(['a.*', 'b.eventname', 'b.eventdescription', 'b.eventdate', 'b.closingdate', 'v.*', 'v.id AS vid', 'a.published'])
             ->from($db->quoteName('#__ticketstation_tickets', 'a'))
             ->join('LEFT', $db->quoteName('#__ticketstation_events', 'b') . ' ON ' . $db->quoteName('a.eventid') . ' = ' . $db->quoteName('b.eventid'))
             ->join('LEFT', $db->quoteName('#__ticketstation_venues', 'v') . ' ON ' . $db->quoteName('a.venue') . ' = ' . $db->quoteName('v.id'))

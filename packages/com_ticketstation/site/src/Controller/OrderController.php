@@ -70,7 +70,9 @@ class OrderController extends BaseController
     private function showMessage($type, $message)
     {
         $msg = '<div class="' . $type . '">' . $message . '</div>';
-        $arr = ['status' => '666', 'msg' => $msg];
+
+        // ok: the tickets were added, so the event page offers the way to the basket
+        $arr = ['status' => '666', 'msg' => $msg, 'ok' => str_contains($type, 'ts-alert--success')];
 
         echo json_encode($arr);
         exit();
@@ -158,12 +160,8 @@ class OrderController extends BaseController
             $this->showMessage('ts-alert ts-alert--danger', Text::_('COM_TICKETSTATION_EVENT_SOLD_OUT'));
         }
 
-        if ($this->amount == 1)
-        {
-            $this->showMessage('ts-alert ts-alert--success', Text::sprintf('COM_TICKETSTATION_EVENT_ADDED_TO_CART1', $this->amount));
-        } else {
-            $this->showMessage('ts-alert ts-alert--success', Text::sprintf('COM_TICKETSTATION_EVENT_ADDED_TO_CART', $this->amount));
-        }
+        // "2 × Adult added to your basket"
+        $this->showMessage('ts-alert ts-alert--success', Text::sprintf('COM_TICKETSTATION_ADDED_TO_BASKET', (int) $this->amount, htmlspecialchars($tickets->ticketname, ENT_QUOTES, 'UTF-8')));
     }
 
     /**

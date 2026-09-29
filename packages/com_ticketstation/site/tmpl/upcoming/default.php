@@ -11,7 +11,6 @@ use Joomla\CMS\Factory;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\Plugin\PluginHelper;
 use Joomla\CMS\Router\Route;
-use Joomla\CMS\Uri\Uri;
 use Joomla\Registry\Registry;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Availability;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Ticket;
@@ -57,13 +56,7 @@ if ($this->config->variable_transcosts == 0) {
 $itemid = TicketstationFunctions::getSiteItemid();
 
 ## Background image of a ticket or event, handed to component.css as --ts-ticket-image
-$backgroundStyle = function (string $name): string {
-    if (!file_exists(JPATH_ADMINISTRATOR . '/components/com_ticketstation/assets/images/ticketbackgrounds/' . $name . '.jpg')) {
-        return '';
-    }
-
-    return "--ts-ticket-image: url('" . Uri::root() . 'administrator/components/com_ticketstation/assets/images/ticketbackgrounds/' . $name . ".jpg');";
-};
+$backgroundStyle = [TicketstationFunctions::class, 'backgroundImageStyle'];
 
 ?>
 

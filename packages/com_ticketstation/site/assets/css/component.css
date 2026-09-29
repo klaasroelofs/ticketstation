@@ -443,6 +443,15 @@
     margin: 0;
 }
 
+/* A message with a button next to it, e.g. "2 × Adult added" + "Go to basket" */
+.ticketstation .ts-alert--action {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: .75rem;
+}
+
 /* Floating messages on the seat chart page, so the chart doesn't move while seats are picked */
 .ticketstation .ts-toast {
     position: fixed;
@@ -495,6 +504,30 @@
 
 .ticketstation .ts-venue-description {
     margin: 1rem 0 0;
+}
+
+/* Event page and seat chart page: the event's background image and description */
+.ticketstation .ts-event-banner {
+    height: clamp(8rem, 28vw, 16rem);
+    margin: -1.25rem -1.25rem 1.25rem;
+    background-image: var(--ts-ticket-image);
+    background-position: center;
+    background-size: cover;
+    background-repeat: no-repeat;
+    border-radius: var(--ts-radius) var(--ts-radius) 0 0;
+}
+
+.ticketstation .ts-event-description {
+    margin: 1rem 0 0;
+}
+
+.ticketstation .ts-event-description > :last-child {
+    margin-bottom: 0;
+}
+
+.ticketstation .ts-event-description img {
+    max-width: 100%;
+    height: auto;
 }
 
 /* ==========================================================================
