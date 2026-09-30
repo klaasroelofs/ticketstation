@@ -25,6 +25,8 @@ jobs:
       - uses: shivammathur/setup-php@v2
         with:
           php-version: '8.3'
+          # FPDF and the QR code library require GD, as the sites that run Ticketstation do.
+          extensions: gd
           tools: composer
 
       - name: Check that the tag matches the package version
