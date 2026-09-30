@@ -45,7 +45,7 @@ $mark = static fn (bool $allowed) => $allowed
         <h2 class="h4"><span class="fa fa-user-lock me-2" aria-hidden="true"></span><?= Text::_('COM_TICKETSTATION_PERMISSIONS_DOCS_TITLE') ?></h2>
         <p><?= Text::_('COM_TICKETSTATION_PERMISSIONS_DOCS_INTRO') ?></p>
 
-        <details id="docs-permissions-actions" class="mb-3 border rounded p-3" open>
+        <details id="docs-permissions-actions" class="mb-3 border rounded p-3">
             <summary class="h5 mb-0"><span class="fa fa-list-check me-2" aria-hidden="true"></span><?= Text::_('COM_TICKETSTATION_PERMISSIONS_DOCS_ACTIONS_TITLE') ?></summary>
             <div class="mt-3 table-responsive">
                 <table class="table table-sm align-middle">
