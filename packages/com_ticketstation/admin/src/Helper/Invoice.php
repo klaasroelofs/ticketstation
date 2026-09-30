@@ -250,7 +250,6 @@ class Invoice
                 'o.vat_percentage',
                 'SUM(COALESCE(o.discount, 0)) AS discount',
                 'SUM(o.price) AS netto_ticketprice',
-                'o.coupon AS couponcode',
             ])
             ->from($db->quoteName('#__ticketstation_orders', 'o'))
             ->join('LEFT', $db->quoteName('#__ticketstation_tickets', 't') . ' ON ' . $db->quoteName('t.ticketid') . ' = ' . $db->quoteName('o.ticketid'))
@@ -273,7 +272,7 @@ class Invoice
             $row->vat_percentage     = $item->vat_percentage;
             $row->discount           = $item->discount;
             $row->netto_ticketprice  = $item->netto_ticketprice;
-            $row->couponcode         = $item->couponcode ?: null;
+            $row->couponcode         = $invoice->coupon_code;
 
             $db->insertObject('#__ticketstation_invoice_items', $row);
         }

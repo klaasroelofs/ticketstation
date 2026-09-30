@@ -87,9 +87,11 @@ class Ticketcleaner
         }
         
         $query = $db->getQuery(true)
-            ->select(array('o.*', 't.parent AS parentticket'))
+            ->select(array('o.*', 't.parent AS parentticket', 'ot.coupon'))
             ->from($db->quoteName('#__ticketstation_orders', 'o'))
             ->join('LEFT', $db->quoteName('#__ticketstation_tickets', 't') . ' ON (' . $db->quoteName('o.ticketid') . ' = ' . $db->quoteName('t.ticketid') . ')')
+            // The coupon goes into the History snapshot, for the Box Office's list of removed orders.
+            ->join('LEFT', $db->quoteName('#__ticketstation_ordertotals', 'ot') . ' ON (' . $db->quoteName('ot.ordercode') . ' = ' . $db->quoteName('o.ordercode') . ')')
             ->where($db->quoteName('o.orderdate') . ' < ' . $db->quote($cleanup))
             ->where($db->quoteName('o.paid') . ' = 0')
             ->where($db->quoteName('o.userid') . ' = 0')
@@ -152,9 +154,11 @@ class Ticketcleaner
         $cleanup_pending = date('Y-m-d H:i:s', mktime(date('H'), date('i'), date('s'), date('m'), date('d') - $config->removal_days, date('Y')));
 
         $query = $db->getQuery(true)
-            ->select(array('o.*', 't.parent AS parentticket'))
+            ->select(array('o.*', 't.parent AS parentticket', 'ot.coupon'))
             ->from($db->quoteName('#__ticketstation_orders', 'o'))
             ->join('LEFT', $db->quoteName('#__ticketstation_tickets', 't') . ' ON (' . $db->quoteName('o.ticketid') . ' = ' . $db->quoteName('t.ticketid') . ')')
+            // The coupon goes into the History snapshot, for the Box Office's list of removed orders.
+            ->join('LEFT', $db->quoteName('#__ticketstation_ordertotals', 'ot') . ' ON (' . $db->quoteName('ot.ordercode') . ' = ' . $db->quoteName('o.ordercode') . ')')
             ->where('COALESCE(' . $db->quoteName('o.payment_requested') . ', ' . $db->quoteName('o.orderdate') . ') < ' . $db->quote($cleanup_pending))
             ->where('(' . $db->quoteName('o.paid') . ' = ' . $db->quote(0) . ' OR ' . $db->quoteName('o.paid') . ' = ' . $db->quote(3) . ')');
             //->where($db->quoteName('o.published') . ' = 1');

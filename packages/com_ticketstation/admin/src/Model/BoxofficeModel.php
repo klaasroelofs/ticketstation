@@ -515,7 +515,7 @@ class BoxofficeModel extends ListModel
      * eventname, tickets, ticketnames) and, with the event filter on, event_tickets.
      *
      * The order rows are summed up on their own, and everything that has one row per order
-     * (customer, remark, note, the latest transaction, the service fee terms) is looked up
+     * (customer, remark, note, the latest transaction, the service fee terms and coupon) is looked up
      * separately, so a second transaction can never count the tickets twice.
      *
      * @param   string[]  $codes
@@ -547,9 +547,6 @@ class BoxofficeModel extends ListModel
                 'SUM(COALESCE(a.pdfsent, 0) = 1) AS sent_tickets',
                 'MAX(COALESCE(a.downloaded, 0)) AS downloaded',
                 'MAX(a.published) AS published',
-                'MAX(a.coupon) AS coupon',
-                'MAX(a.discount_type) AS discount_type',
-                'MAX(a.discount_amount) AS discount_amount',
                 'SUM(a.price) AS tickets_amount',
                 ($event ? 'SUM(a.eventid = ' . $event . ')' : 'NULL') . ' AS event_tickets',
             ])
@@ -565,19 +562,24 @@ class BoxofficeModel extends ListModel
         $remarks      = $this->loadRemarks($codes);
         $notes        = $this->loadNotes($codes);
         $transactions = $this->loadTransactions($codes);
-        $terms        = $this->loadFeeTerms($codes);
+        $totals       = $this->loadOrderTotals($codes);
         $refunds      = Refund::summaries($codes);
 
         foreach ($rows as $code => $row)
         {
             $client      = $clients[$row->userid] ?? null;
             $transaction = $transactions[$code] ?? null;
+            $kept        = $totals[$code] ?? null;
+            $terms       = $kept && $kept->fee_type !== null
+                ? (object) ['fee_type' => (int) $kept->fee_type, 'fee_rate' => (float) $kept->fee_rate]
+                : OrderTotals::terms($code);
 
             // What the customer pays, worked out as OrderTotals::get() does it.
-            $tickets  = round((float) $row->tickets_amount, 2);
-            $discount = (string) $row->coupon !== '' ? Coupon::discountFor($tickets, $row->discount_type, $row->discount_amount) : 0.0;
-            $subtotal = round($tickets - $discount, 2);
-            $total    = round($subtotal + OrderTotals::feesFor($subtotal, $terms[$code] ?? OrderTotals::terms($code)), 2);
+            $row->coupon = (string) ($kept->coupon ?? '');
+            $tickets     = round((float) $row->tickets_amount, 2);
+            $discount    = $row->coupon !== '' ? Coupon::discountFor($tickets, $kept->discount_type, $kept->discount_amount) : 0.0;
+            $subtotal    = round($tickets - $discount, 2);
+            $total       = round($subtotal + OrderTotals::feesFor($subtotal, $terms), 2);
 
             $row->firstname       = $client->firstname ?? null;
             $row->name            = $client->name ?? null;
@@ -772,7 +774,7 @@ class BoxofficeModel extends ListModel
                 'sent_tickets'    => $count('pdfsent'),
                 'downloaded'      => $count('downloaded') > 0 ? 1 : 0,
                 'published'       => $candidate->first->published,
-                'coupon'          => $candidate->first->coupon,
+                'coupon'          => $candidate->first->coupon ?? null,
                 'orderprice'      => $transaction && (float) $transaction->amount > 0 ? (float) $transaction->amount : round($tickets, 2),
                 'transaction_pid' => $transaction->pid ?? null,
                 'remarks'         => $remarks[$ordercode] ?? '',
@@ -992,26 +994,22 @@ class BoxofficeModel extends ListModel
     }
 
     /**
-     * @return  array  ordercode => (object) fee_type, fee_rate
+     * The rows of #__ticketstation_ordertotals: the service fee terms (fee_type NULL when none
+     * are kept) and the coupon of each order.
+     *
+     * @return  array  ordercode => (object) fee_type, fee_rate, coupon, discount_type, discount_amount
      */
-    private function loadFeeTerms(array $codes)
+    private function loadOrderTotals(array $codes)
     {
         $db    = Factory::getContainer()->get('DatabaseDriver');
         $query = $db->getQuery(true)
-            ->select([$db->quoteName('ordercode'), $db->quoteName('fee_type'), $db->quoteName('fee_rate')])
+            ->select($db->quoteName(['ordercode', 'fee_type', 'fee_rate', 'coupon', 'discount_type', 'discount_amount']))
             ->from($db->quoteName('#__ticketstation_ordertotals'))
             ->whereIn($db->quoteName('ordercode'), $codes, ParameterType::STRING);
 
         $db->setQuery($query);
 
-        $terms = [];
-
-        foreach ($db->loadObjectList() as $row)
-        {
-            $terms[(string) $row->ordercode] = (object) ['fee_type' => (int) $row->fee_type, 'fee_rate' => (float) $row->fee_rate];
-        }
-
-        return $terms;
+        return $db->loadObjectList('ordercode');
     }
 
     /**
@@ -1026,14 +1024,14 @@ class BoxofficeModel extends ListModel
 
         $query = $db->getQuery(true);
 
-        $query->select(['a.*', 't.ticketname', 't.ticketprice', 'e.eventname', 'e.eventdate', 'cp.coupon_type', 'cp.coupon_discount',
+        $query->select(['a.*', 't.ticketname', 't.ticketprice', 'e.eventname', 'e.eventdate', 'ot.coupon', 'ot.discount_type', 'ot.discount_amount',
             'ext.row_name', 'ext.seatid', 'u.name AS scanner_name']);
         $query->from($db->quoteName('#__ticketstation_orders', 'a'));
         $query->join('LEFT', $db->quoteName('#__ticketstation_events', 'e') . ' ON (' . $db->quoteName('a.eventid') . ' = ' . $db->quoteName('e.eventid') . ')');
         $query->join('LEFT', $db->quoteName('#__ticketstation_tickets', 't') . ' ON (' . $db->quoteName('a.ticketid') . ' = ' . $db->quoteName('t.ticketid') . ')');
         $query->join('LEFT', $db->quoteName('#__users', 'u') . ' ON (' . $db->quoteName('a.scanner') . ' = ' . $db->quoteName('u.id') . ')');
         $query->join('LEFT OUTER',
-            $db->quoteName('#__ticketstation_coupons', 'cp') . ' ON (' . $db->quoteName('cp.coupon_code') . ' = ' . $db->quoteName('a.coupon') . ')');
+            $db->quoteName('#__ticketstation_ordertotals', 'ot') . ' ON (' . $db->quoteName('ot.ordercode') . ' = ' . $db->quoteName('a.ordercode') . ')');
         $query->join('LEFT OUTER',
             $db->quoteName('#__ticketstation_seatplancoords', 'ext') . ' ON (' . $db->quoteName('a.orderid') . ' = ' . $db->quoteName('ext.orderid') . ')');
         $query->where($db->quoteName('a.ordercode') . ' = ' . $db->quote((int) $this->id));

@@ -20,15 +20,16 @@ defined('_JEXEC') or die('Restricted access');
  * Discount coupons.
  *
  * A coupon applies to a whole order, one coupon per order. Applying it stores its code and
- * terms (discount_type 1 = percentage, 0 = amount; discount_amount) on every row of the
- * order, so later edits of the coupon don't change an order that already uses it. The
- * discount itself is taken over the order total (see discountFor()): a percentage of it, or
- * the fixed amount, but never more than the total.
+ * terms (discount_type 1 = percentage, 0 = amount; discount_amount) with the order in
+ * #__ticketstation_ordertotals (see OrderTotals::setCoupon()), so later edits of the coupon
+ * don't change an order that already uses it. The discount itself is taken over the order
+ * total (see discountFor()): a percentage of it, or the fixed amount, but never more than the
+ * total.
  *
  * How often a coupon is used is not counted up anywhere: it is the number of orders that
- * carry its code, whatever their status (see usage()). Just like a ticket, a use is given
- * back as soon as the order is gone: cleaned up by the ticketcleaner or deleted in the Box
- * Office.
+ * carry its code and still have rows, whatever their status (see usage()). Just like a
+ * ticket, a use is given back as soon as the order is gone: cleaned up by the ticketcleaner or
+ * deleted in the Box Office.
  */
 class Coupon
 {
@@ -61,21 +62,20 @@ class Coupon
 
         $db    = Factory::getContainer()->get('DatabaseDriver');
         $query = $db->getQuery(true)
-            ->select(['COUNT(*) AS items', 'MAX(COALESCE(' . $db->quoteName('coupon') . ', ' . $db->quote('') . ')) AS coupon'])
+            ->select('COUNT(*)')
             ->from($db->quoteName('#__ticketstation_orders'))
             ->where($db->quoteName('ordercode') . ' = ' . $ordercode);
 
         $db->setQuery($query);
-        $order = $db->loadObject();
 
-        if (!$ordercode || (int) $order->items === 0)
+        if (!$ordercode || (int) $db->loadResult() === 0)
         {
             $app->enqueueMessage(Text::_('COM_TICKETSTATION_EMPTY_CART'), 'error');
 
             return false;
         }
 
-        if ($order->coupon !== '')
+        if (OrderTotals::coupon($ordercode))
         {
             $app->enqueueMessage(Text::_('COM_TICKETSTATION_COUPON_ALREADY_APPLIED'), 'error');
 
@@ -89,18 +89,7 @@ class Coupon
             return false;
         }
 
-        $query = $db->getQuery(true)
-            ->update($db->quoteName('#__ticketstation_orders'))
-            ->set([
-                $db->quoteName('coupon') . ' = ' . $db->quote($coupon->coupon_code),
-                $db->quoteName('discount_type') . ' = ' . (int) $coupon->coupon_type,
-                $db->quoteName('discount_amount') . ' = ' . (float) $coupon->coupon_discount,
-            ])
-            ->where($db->quoteName('ordercode') . ' = ' . $ordercode);
-
-        $db->setQuery($query);
-
-        if (!$db->execute())
+        if (!OrderTotals::setCoupon($ordercode, $coupon->coupon_code, (int) $coupon->coupon_type, (float) $coupon->coupon_discount))
         {
             return false;
         }
@@ -113,24 +102,22 @@ class Coupon
      */
     public static function usage(string $code): int
     {
-        $db    = Factory::getContainer()->get('DatabaseDriver');
-        $query = $db->getQuery(true)
-            ->select('COUNT(DISTINCT ' . $db->quoteName('ordercode') . ')')
-            ->from($db->quoteName('#__ticketstation_orders'))
-            ->where($db->quoteName('coupon') . ' = ' . $db->quote($code));
+        $db = Factory::getContainer()->get('DatabaseDriver');
 
-        $db->setQuery($query);
+        $db->setQuery('SELECT ' . self::usageSql($db->quote($code)));
 
         return (int) $db->loadResult();
     }
 
     /**
      * usage() as an SQL expression, for lists of coupons: pass the qualified column that holds
-     * the coupon code (e.g. "c.coupon_code").
+     * the coupon code (e.g. "c.coupon_code"). An order whose rows are all gone but whose
+     * ordertotals row wasn't swept yet doesn't count.
      */
     public static function usageSql(string $codeColumn): string
     {
-        return '(SELECT COUNT(DISTINCT uo.ordercode) FROM #__ticketstation_orders AS uo WHERE uo.coupon = ' . $codeColumn . ')';
+        return '(SELECT COUNT(*) FROM #__ticketstation_ordertotals AS uot WHERE uot.coupon = ' . $codeColumn
+            . ' AND EXISTS (SELECT 1 FROM #__ticketstation_orders AS uo WHERE uo.ordercode = uot.ordercode))';
     }
 
     /**
@@ -154,36 +141,27 @@ class Coupon
      * with the coupon it carries, for everything that adds up the rows: the invoice, the
      * Box Office. The order's discount is spread over its rows in proportion to their price,
      * the last row taking the rounding difference, so the rows always add up to exactly the
-     * discount the customer pays with (see OrderTotals::get()). Rows added after the
-     * coupon was applied get its terms too. An order without a coupon is left alone.
+     * discount the customer pays with (see OrderTotals::get()), also when rows were added
+     * after the coupon was applied. An order without a coupon is left alone.
      */
     public static function refresh(int $ordercode): bool
     {
+        $terms = OrderTotals::coupon($ordercode);
+
+        if (!$terms)
+        {
+            return true;
+        }
+
         $db    = Factory::getContainer()->get('DatabaseDriver');
         $query = $db->getQuery(true)
-            ->select(['orderid', 'price', 'vat_percentage', 'coupon', 'discount_type', 'discount_amount'])
+            ->select(['orderid', 'price', 'vat_percentage'])
             ->from($db->quoteName('#__ticketstation_orders'))
             ->where($db->quoteName('ordercode') . ' = ' . $ordercode)
             ->order($db->quoteName('orderid') . ' ASC');
 
         $db->setQuery($query);
         $rows = $db->loadObjectList();
-
-        $terms = null;
-
-        foreach ($rows as $row)
-        {
-            if ((string) $row->coupon !== '')
-            {
-                $terms = $row;
-                break;
-            }
-        }
-
-        if (!$terms)
-        {
-            return true;
-        }
 
         $total    = array_sum(array_map(fn ($row) => (float) $row->price, $rows));
         $discount = self::discountFor($total, $terms->discount_type, $terms->discount_amount);
@@ -200,9 +178,6 @@ class Coupon
             $query = $db->getQuery(true)
                 ->update($db->quoteName('#__ticketstation_orders'))
                 ->set([
-                    $db->quoteName('coupon') . ' = ' . $db->quote($terms->coupon),
-                    $db->quoteName('discount_type') . ' = ' . (int) $terms->discount_type,
-                    $db->quoteName('discount_amount') . ' = ' . (float) $terms->discount_amount,
                     $db->quoteName('discount') . ' = ' . $share,
                     $db->quoteName('vat') . ' = ' . (float) $vat['vat_amount'],
                 ])

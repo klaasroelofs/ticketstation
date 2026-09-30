@@ -170,7 +170,6 @@ class OrderseatedController extends BaseController {
             ->update($db->quoteName('#__ticketstation_orders'))
             ->set($db->quoteName('ticketid') . ' = ' . (int) $ticket->ticketid)
             ->set($db->quoteName('price') . ' = ' . $db->quote($ticket->ticketprice))
-            ->set($db->quoteName('fees') . ' = ' . $db->quote($this->getSeatFee($ticket->ticketprice)))
             ->set($db->quoteName('vat') . ' = ' . $db->quote($pricing['vat_amount']))
             ->set($db->quoteName('price_excluding_vat') . ' = ' . $db->quote($pricing['price_excluding_vat']))
             ->set($db->quoteName('vat_percentage') . ' = ' . $db->quote($pricing['vat_percentage']))
@@ -398,7 +397,6 @@ class OrderseatedController extends BaseController {
         $post['ipaddress']           = $_SERVER['REMOTE_ADDR'];
         $post['ticketid']            = $ticketid;
         $post['price']               = $ticket->ticketprice;
-        $post['fees']                = $this->getSeatFee($ticket->ticketprice);
         $post['vat']                 = $pricing['vat_amount'];
         $post['price_excluding_vat'] = $pricing['price_excluding_vat'];
         $post['vat_percentage']      = $pricing['vat_percentage'];
@@ -429,19 +427,5 @@ class OrderseatedController extends BaseController {
         $arr = array('error' => '0', 'msg' => $msg, 'id' => $id, 'pricechoice' => $pricechoice, 'seatid' => $item->row_name.$item->seatid);
         echo json_encode($arr);
         exit();
-    }
-
-    /**
-     * The per-ticket transaction costs for a seat of the given price: a percentage when
-     * transaction costs are variable, otherwise nothing (fixed costs are added per order).
-     */
-    private function getSeatFee($ticketprice)
-    {
-        $db = Factory::getContainer()->get('DatabaseDriver');
-
-        $db->setQuery('SELECT variable_transcosts, transcosts FROM #__ticketstation_config WHERE configid = 1');
-        $config = $db->loadObject();
-
-        return ($config && $config->variable_transcosts == 1) ? (($ticketprice / 100) * $config->transcosts) : 0;
     }
 }

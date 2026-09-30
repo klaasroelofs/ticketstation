@@ -329,7 +329,6 @@ class PaymentController extends BaseController
 
         ## Clearing the session:
         $session->clear('ordercode');
-        $session->clear('coupon');
 
         ## Marking this browser session as authorized (see mollie() above).
         $session->set('ticketstation.authorized_ordercode', (int) $ordercode);

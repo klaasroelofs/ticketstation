@@ -34,8 +34,8 @@ $status   = $this->status;
 $valuta   = $this->escape($this->config->valuta);
 $datetime = $this->config->dateformat . ' ' . $this->config->time_format;
 
-// The coupon of the order and its discount as stored on the order rows when it was applied
-// (see Coupon::refresh()), not the coupon's current settings.
+// The coupon of the order with its terms as kept when it was applied (#__ticketstation_ordertotals),
+// and the discount spread over the rows (see Coupon::refresh()), not the coupon's current settings.
 $coupon        = '';
 $discount      = 0.0;
 $discount_text = '';

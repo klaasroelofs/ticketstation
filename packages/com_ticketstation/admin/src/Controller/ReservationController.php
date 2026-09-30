@@ -162,10 +162,6 @@ class ReservationController extends BaseController
         $ticket  = (new Ticket)->getTicketDetailsById($ticketid);
         $pricing = (new Amount)->calculateVatFromPrice($ticket->ticketprice, $ticket->vat_percentage);
 
-        // Manual/admin reservations don't go through Mollie, so transaction
-        // costs (variable or fixed) never apply here - always store a bare price.
-        $fee     = 0;
-
         if ($amount > Availability::forPurchase($ticketid))
         {
             $app->enqueueMessage(Text::_('COM_TICKETSTATION_EVENT_SOLD_OUT'), 'error');
@@ -183,7 +179,6 @@ class ReservationController extends BaseController
             'vat'                 => $pricing['vat_amount'],
             'price_excluding_vat' => $pricing['price_excluding_vat'],
             'vat_percentage'      => $pricing['vat_percentage'],
-            'fees'                => $fee,
             'requires_seat'       => 0,
             'orderdate'           => date('Y-m-d H:i:s'),
             'ipaddress'           => $_SERVER['REMOTE_ADDR'] ?? '',
@@ -243,13 +238,9 @@ class ReservationController extends BaseController
         }
 
         // Mirrors addQuantity() above - without this, seated orders never get a vat/vat_percentage/
-        // price_excluding_vat/fees value at all (they default to NULL/0), so invoices for seated
+        // price_excluding_vat value at all (they default to NULL), so invoices for seated
         // tickets always show 0% VAT regardless of what's configured on the ticket.
         $pricing = (new Amount)->calculateVatFromPrice($ticket->ticketprice, $ticket->vat_percentage);
-
-        // Manual/admin reservations don't go through Mollie, so transaction
-        // costs (variable or fixed) never apply here - always store a bare price.
-        $fee     = 0;
 
         $orderid = $model->insertOrderRow([
             'ordercode'           => $ordercode,
@@ -259,7 +250,6 @@ class ReservationController extends BaseController
             'vat'                 => $pricing['vat_amount'],
             'price_excluding_vat' => $pricing['price_excluding_vat'],
             'vat_percentage'      => $pricing['vat_percentage'],
-            'fees'                => $fee,
             'requires_seat'       => 1,
             'seat_sector'         => $coordId,
             'orderdate'           => date('Y-m-d H:i:s'),

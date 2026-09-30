@@ -125,13 +125,6 @@ class OrderController extends BaseController
             $this->showMessage('ts-alert ts-alert--danger', Text::_($config->show_waitinglist ? 'COM_TICKETSTATION_ADD_TO_WAITINGLIST' : 'COM_TICKETSTATION_EVENT_SOLD_OUT'));
         }
 
-        if ($config->variable_transcosts == 1)
-        {
-            $ticket_fee = (($tickets->ticketprice / 100) * $config->transcosts);
-        } else {
-            $ticket_fee = 0;
-        }
-
         $post  = Factory::getApplication()->getInput()->post->getArray();
         //$model = $this->getModel('order');
         $models = new OrderModel();
@@ -141,7 +134,6 @@ class OrderController extends BaseController
         $post['vat_percentage']      = $pricing['vat_percentage'];
         $post['requires_seat']       = $this->checkSeatRequirement($config, $tickets);
         $post['price']               = $tickets->ticketprice;
-        $post['fees']                = $ticket_fee;
         $post['orderdate']           = date('Y-m-d H:i:s', time());
         $post['ipaddress']           = $_SERVER['REMOTE_ADDR'];
         $post['ordercode']           = $this->ordercode;

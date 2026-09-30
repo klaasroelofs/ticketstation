@@ -18,12 +18,16 @@ defined('_JEXEC') or die;
  * and the total the customer pays.
  *
  * The order rows (#__ticketstation_orders) hold one ticket each, with the price at the moment
- * of ordering and, once a coupon is applied, the coupon's terms (see Coupon). The terms of the
- * transaction costs are kept per order in #__ticketstation_ordertotals: the kind (fixed,
- * variable or none, as in the Configuration) and the amount or percentage as it was when the
- * customer went to the payment page (Order::update()). A backend reservation and a bypassed
- * order get no transaction costs. Changing the Configuration afterwards leaves such an order
- * alone; a cart that hasn't been through checkout yet uses the current Configuration.
+ * of ordering. Per order, #__ticketstation_ordertotals keeps:
+ *
+ * - the coupon and its terms as they were when it was applied (see Coupon), so later edits of
+ *   the coupon don't change the order;
+ * - the terms of the transaction costs: the kind (fixed, variable or none, as in the
+ *   Configuration) and the amount or percentage as it was when the customer went to the payment
+ *   page (Order::update()). A backend reservation and a bypassed order get no transaction
+ *   costs. Changing the Configuration afterwards leaves such an order alone. Without kept terms
+ *   (fee_type NULL, or no row at all), as for a cart that hasn't been through checkout yet, the
+ *   current Configuration applies.
  *
  * The amounts themselves are always worked out from the rows and these terms, so removing a
  * ticket from an order keeps a fixed fee, and recalculates a percentage and the discount over
@@ -53,11 +57,6 @@ class OrderTotals
                 'COALESCE(' . $db->quoteName('vat_percentage') . ', 0) AS rate',
                 'COUNT(*) AS items',
                 'SUM(' . $db->quoteName('price') . ') AS tickets',
-                // The coupon terms are on every row it was applied to; rows added afterwards
-                // don't have them yet, hence MAX().
-                'MAX(' . $db->quoteName('coupon') . ') AS coupon',
-                'MAX(' . $db->quoteName('discount_type') . ') AS discount_type',
-                'MAX(' . $db->quoteName('discount_amount') . ') AS discount_amount',
             ])
             ->from($db->quoteName('#__ticketstation_orders'))
             ->where($db->quoteName('ordercode') . ' = ' . $db->quote((string) $ordercode))
@@ -73,9 +72,6 @@ class OrderTotals
 
         $items   = 0;
         $tickets = 0.0;
-        $coupon  = '';
-        $type    = null;
-        $amount  = null;
         $rates   = [];
 
         foreach ($groups as $group)
@@ -83,16 +79,13 @@ class OrderTotals
             $items   += (int) $group->items;
             $tickets += (float) $group->tickets;
             $rates[(string) (float) $group->rate] = (float) $group->tickets;
-
-            if ((string) $group->coupon !== '')
-            {
-                $coupon = (string) $group->coupon;
-                $type   = $group->discount_type;
-                $amount = $group->discount_amount;
-            }
         }
 
         $terms    = self::terms($ordercode);
+        $coupon   = self::coupon($ordercode);
+        $type     = $coupon->discount_type ?? null;
+        $amount   = $coupon->discount_amount ?? null;
+        $coupon   = $coupon->coupon ?? '';
         $tickets  = round($tickets, 2);
         $discount = $coupon !== '' ? Coupon::discountFor($tickets, $type, $amount) : 0.0;
         $subtotal = round($tickets - $discount, 2);
@@ -208,7 +201,7 @@ class OrderTotals
         $db->setQuery($query);
         $row = $db->loadObject();
 
-        if ($row)
+        if ($row && $row->fee_type !== null)
         {
             return (object) ['fee_type' => (int) $row->fee_type, 'fee_rate' => (float) $row->fee_rate];
         }
@@ -218,27 +211,83 @@ class OrderTotals
 
     /**
      * Keeps the terms for an order: the current Configuration, or none at all ($fees = false)
-     * for an order that never pays transaction costs. Replaces terms kept earlier.
+     * for an order that never pays transaction costs. Replaces terms kept earlier; the coupon
+     * of the order stays.
      */
     public static function capture($ordercode, bool $fees = true): bool
     {
         $terms = $fees ? self::configTerms() : (object) ['fee_type' => self::FEE_NONE, 'fee_rate' => 0.0];
 
-        self::remove($ordercode);
-
-        $row            = new \stdClass;
-        $row->ordercode = (string) $ordercode;
-        $row->fee_type  = $terms->fee_type;
-        $row->fee_rate  = $terms->fee_rate;
-        $row->captured  = Factory::getDate()->toSql();
-
-        return Factory::getContainer()->get('DatabaseDriver')->insertObject('#__ticketstation_ordertotals', $row);
+        return self::store($ordercode, [
+            'fee_type' => $terms->fee_type,
+            'fee_rate' => $terms->fee_rate,
+            'captured' => Factory::getDate()->toSql(),
+        ]);
     }
 
     /**
-     * Checkout of an order (Order::update()): its terms follow it to its final ordercode. An
-     * order that already has terms keeps them, for instance a reservation or waiting-list
-     * order paid through a payment link; any other order gets the current Configuration.
+     * The coupon of an order and its terms as they were when it was applied, or null.
+     *
+     * @return  object|null  coupon, discount_type (1 = percentage, 0 = amount), discount_amount
+     */
+    public static function coupon($ordercode): ?object
+    {
+        $db    = Factory::getContainer()->get('DatabaseDriver');
+        $query = $db->getQuery(true)
+            ->select([$db->quoteName('coupon'), $db->quoteName('discount_type'), $db->quoteName('discount_amount')])
+            ->from($db->quoteName('#__ticketstation_ordertotals'))
+            ->where($db->quoteName('ordercode') . ' = ' . $db->quote((string) $ordercode))
+            ->where($db->quoteName('coupon') . ' IS NOT NULL')
+            ->where($db->quoteName('coupon') . ' != ' . $db->quote(''));
+
+        $db->setQuery($query);
+
+        return $db->loadObject() ?: null;
+    }
+
+    /**
+     * Keeps a coupon and its current terms for an order; the terms of its transaction costs
+     * stay as they are.
+     */
+    public static function setCoupon($ordercode, string $code, int $type, float $amount): bool
+    {
+        return self::store($ordercode, [
+            'coupon'          => $code,
+            'discount_type'   => $type,
+            'discount_amount' => $amount,
+        ]);
+    }
+
+    /**
+     * Writes these fields to the row of an order, creating the row when there is none yet.
+     */
+    private static function store($ordercode, array $fields): bool
+    {
+        $db = Factory::getContainer()->get('DatabaseDriver');
+
+        $row            = (object) $fields;
+        $row->ordercode = (string) $ordercode;
+
+        $query = $db->getQuery(true)
+            ->select('COUNT(*)')
+            ->from($db->quoteName('#__ticketstation_ordertotals'))
+            ->where($db->quoteName('ordercode') . ' = ' . $db->quote((string) $ordercode));
+
+        $db->setQuery($query);
+
+        if ((int) $db->loadResult() > 0)
+        {
+            return $db->updateObject('#__ticketstation_ordertotals', $row, 'ordercode');
+        }
+
+        return $db->insertObject('#__ticketstation_ordertotals', $row);
+    }
+
+    /**
+     * Checkout of an order (Order::update()): its terms and coupon follow it to its final
+     * ordercode. An order that already has terms keeps them, for instance a reservation or
+     * waiting-list order paid through a payment link; any other order gets the current
+     * Configuration.
      */
     public static function move($from, $to): void
     {
@@ -247,7 +296,7 @@ class OrderTotals
         if ((string) $from !== (string) $to)
         {
             // Ordercodes get reused once the highest order is removed: a new order doesn't
-            // inherit the terms of the removed one.
+            // inherit the terms or the coupon of the removed one.
             self::remove($to);
 
             $query = $db->getQuery(true)
@@ -265,7 +314,7 @@ class OrderTotals
     }
 
     /**
-     * Whether terms are kept for an order.
+     * Whether the terms of the transaction costs are kept for an order.
      */
     public static function captured($ordercode): bool
     {
@@ -273,7 +322,8 @@ class OrderTotals
         $query = $db->getQuery(true)
             ->select('COUNT(*)')
             ->from($db->quoteName('#__ticketstation_ordertotals'))
-            ->where($db->quoteName('ordercode') . ' = ' . $db->quote((string) $ordercode));
+            ->where($db->quoteName('ordercode') . ' = ' . $db->quote((string) $ordercode))
+            ->where($db->quoteName('fee_type') . ' IS NOT NULL');
 
         $db->setQuery($query);
 
@@ -291,7 +341,8 @@ class OrderTotals
     }
 
     /**
-     * Removes the terms of orders that no longer have any rows (cleaned up or deleted).
+     * Removes the terms and coupons of orders that no longer have any rows (cleaned up or
+     * deleted), which also gives the use of such a coupon back (see Coupon::usage()).
      */
     public static function sweep(): void
     {

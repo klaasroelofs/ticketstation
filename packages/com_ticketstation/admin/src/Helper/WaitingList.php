@@ -151,14 +151,12 @@ class WaitingList
             ## Getting the ticket id's
             $data = $db->loadObjectList();
 
-            $config = (new Config)->getPartialConfig(['variable_transcosts', 'transcosts']);
-
             ## Loop the ticketnumbers for deletion
             for ($i = 0, $n = count($data); $i < $n; $i++ ){
 
                 $row  = $data[$i];
 
-                ## Price, VAT and fees as a normal purchase records them (see OrderController::buyticket()),
+                ## Price and VAT as a normal purchase records them (see OrderController::buyticket()),
                 ## so the invoice of this order shows the right amounts.
                 $pricing = (new Amount)->calculateVatFromPrice((float) $row->ticketprice, (float) $row->ticket_vat);
 
@@ -167,7 +165,6 @@ class WaitingList
                 $process->vat                 = $pricing['vat_amount'];
                 $process->vat_percentage      = $pricing['vat_percentage'];
                 $process->price_excluding_vat = $pricing['price_excluding_vat'];
-                $process->fees                = $config->variable_transcosts == 1 ? ($row->ticketprice / 100) * $config->transcosts : 0;
                 $process->userid 		= $row->userid;
                 $process->ordercode 	= $row->ordercode;
                 $process->eventid		= $row->eventid;

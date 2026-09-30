@@ -358,7 +358,6 @@ class PaymentAPI
         $app = Factory::getApplication();
         $session = $app->getSession();
         $session->clear('ordercode');
-        $session->clear('coupon');
 
         return true;
     }
