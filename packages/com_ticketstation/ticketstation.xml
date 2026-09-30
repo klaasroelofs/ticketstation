@@ -9,9 +9,7 @@
     <copyright>© 2026 Klaas Roelofs</copyright>
     <license>GPL v3</license>
     <version>2.10.0-rc2</version>
-    <description>
-        Thank you for installing Ticketstation!
-    </description>
+    <description>COM_TICKETSTATION_XML_DESCRIPTION</description>
 
     <namespace path="src/">Ticketstation\Component\Ticketstation</namespace>
 
