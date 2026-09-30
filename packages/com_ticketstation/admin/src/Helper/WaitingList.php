@@ -355,7 +355,7 @@ class WaitingList
             ->join('LEFT', $db->quoteName('#__ticketstation_events', 'e') . ' ON ' . $db->quoteName('a.eventid') . ' = ' . $db->quoteName('e.eventid'))
             ->join('LEFT', $db->quoteName('#__ticketstation_tickets', 't') . ' ON ' . $db->quoteName('a.ticketid') . ' = ' . $db->quoteName('t.ticketid'))
             ->join('LEFT', $db->quoteName('#__ticketstation_tickets', 'p') . ' ON ' . $db->quoteName('p.ticketid') . ' = ' . $db->quoteName('t.parent') . ' AND ' . $db->quoteName('t.parent') . ' > 0')
-            ->where($db->quoteName('a.ordercode') . " = " . $ordercode)
+            ->where($db->quoteName('a.ordercode') . " = " . (int) $ordercode)
             ->where($db->quoteName('a.processed') . " = 0");
 
         $db->setQuery($query);

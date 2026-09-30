@@ -123,8 +123,6 @@ class PaymentController extends BaseController
             ## removed order that had the same ordercode (ordercodes get reused): reusing it would
             ## make the webhook take this payment for a second payment of a paid order.
             if (!$existing || (int) $existing->processed === 1) {
-                ## Get the user object:
-                //$user =  JFactory::getUser();
 
                 $query = $db->getQuery(true)
                     ->select($db->quoteName('userid'))

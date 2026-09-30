@@ -61,8 +61,6 @@ class HtmlView extends BaseHtmlView {
         $gender = array(
             1 => array('value' => '1', 'text' => Text::_( 'COM_TICKETSTATION_MR' )),
             2 => array('value' => '2', 'text' => Text::_( 'COM_TICKETSTATION_MRS' )),
-            //3 => array('value' => '3', 'text' => JText::_( 'COM_TICKETSTATION_MISS' )),
-            //4 => array('value' => '4', 'text' => JText::_( 'COM_TICKETSTATION_FAMILY' )),
         );
 
         if($config->show_birthday != 0 )

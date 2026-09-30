@@ -46,12 +46,6 @@ class PaymentModel extends BaseDatabaseModel
      */
     function getData()
     {
-        // Updating the order if required, just a double check :)
-        //if(!(new \RDMedia\Order)->update(JFactory::getUser()->id, $this->ordercode))
-        //{
-        //return false;
-        //}
-
         return (new Order)->getOrdersInCart();
     }
 

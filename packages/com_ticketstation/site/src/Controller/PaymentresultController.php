@@ -181,7 +181,7 @@ class PaymentresultController extends BaseController
             $db->quoteName('downloaded') . ' = 1',
         ];
 
-        $conditions = [$db->quoteName('ordercode') . ' = ' . $ordercode];
+        $conditions = [$db->quoteName('ordercode') . ' = ' . (int) $ordercode];
 
         $query->update($db->quoteName('#__ticketstation_orders'))->set($fields)->where($conditions);
 

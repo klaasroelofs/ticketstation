@@ -39,7 +39,6 @@ class OrderController extends BaseController
     private $togo;
     private $eventid;
     private $ordercode;
-    private $userid;
     private $error;
 
     function __construct()
@@ -53,10 +52,8 @@ class OrderController extends BaseController
         $this->id        = $jinput->get('ticketid', '0', 'int');
         $this->togo      = $jinput->get('togo', '0', 'int');
         $this->eventid   = $jinput->get('eventid', '0', 'int');
-        //$this->eventname = $jinput->get('parentname', '0', 'cmd');
 
         $this->ordercode = Factory::getApplication()->getSession()->get('ordercode');
-        //$this->userid    = JFactory::getUser()->id;
     }
 
     /**
@@ -147,8 +144,6 @@ class OrderController extends BaseController
         $post['fees']                = $ticket_fee;
         $post['orderdate']           = date('Y-m-d H:i:s', time());
         $post['ipaddress']           = $_SERVER['REMOTE_ADDR'];
-        //$post['require_information'] = $tickets->named_tickets_required;
-        //$post['userid']              = ($this->userid) ? $this->userid : 0;
         $post['ordercode']           = $this->ordercode;
         $post['ticketid']            = $this->id;
         $post['eventid']             = $this->eventid;
@@ -399,7 +394,7 @@ class OrderController extends BaseController
             ->select(['o.*'])
             ->from($db->quoteName('#__ticketstation_orders', 'o'))
             ->where($db->quoteName('orderid') . " = " . (int) $orderid)
-            ->where($db->quoteName('ordercode') . " = " . $ordercode);
+            ->where($db->quoteName('ordercode') . " = " . (int) $ordercode);
 
         $db->setQuery($query);
         $tdata = $db->loadObject();

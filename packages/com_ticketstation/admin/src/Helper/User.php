@@ -48,7 +48,7 @@ class User
             ->select(['c.*'])
             ->from($db->quoteName('#__ticketstation_orders', 'o'))
             ->join('LEFT', $db->quoteName('#__ticketstation_clients', 'c') . ' ON ' . $db->quoteName('o.userid') . ' = ' . $db->quoteName('c.clientid'))
-            ->where($db->quoteName('ordercode') . " = " . $ordercode);
+            ->where($db->quoteName('ordercode') . " = " . (int) $ordercode);
 
         $db->setQuery($query);
 

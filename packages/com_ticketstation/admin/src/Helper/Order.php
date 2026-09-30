@@ -19,42 +19,6 @@ defined('_JEXEC') or die('Restricted access');
 class Order
 {
     /**
-     *
-     * @return mixed
-     *
-     * @since 3.5.4
-     */
-    public static function getOrdersInCartGroupedByEvent()
-    {
-        $db = Factory::getContainer()->get('DatabaseDriver');
-
-        $query = $db->getQuery(true)
-            ->select([
-                'o.eventid',
-                'o.ticketid',
-                'e.eventname',
-                'COUNT(o.ticketid) as total',
-                'o.ticketid',
-                'SUM(t.ticketprice) AS eventprice',
-            ])
-            ->from($db->quoteName('#__ticketstation_orders', 'o'))
-            ->join('LEFT', $db->quoteName('#__ticketstation_events', 'e') . ' ON ' . $db->quoteName('o.eventid') . ' = ' . $db->quoteName('e.eventid'))
-            ->join('LEFT', $db->quoteName('#__ticketstation_tickets', 't') . ' ON ' . $db->quoteName('t.ticketid') . ' = ' . $db->quoteName('o.ticketid'))
-            ->where($db->quoteName('o.ordercode') . " = " . Factory::getSession()->get('ordercode'))
-            ->group('eventid');
-
-        $db->setQuery($query);
-        $data = $db->loadObjectList();
-
-        foreach ($data as &$item)
-        {
-            $item->tickets = self::getTicketDetails($item->eventid);
-        }
-
-        return $data;
-    }
-
-    /**
      * The order rows of a cart as display lines, for the cart and payment pages: one line per
      * ticket type with its quantity, and one line per seat.
      *
@@ -134,41 +98,8 @@ class Order
             ->join('LEFT', $db->quoteName('#__ticketstation_tickets', 'p') . ' ON ' . $db->quoteName('p.ticketid') . ' = ' . $db->quoteName('t.parent') . ' AND ' . $db->quoteName('t.parent') . ' > 0')
             ->join('LEFT', $db->quoteName('#__ticketstation_clients', 'c') . ' ON ' . $db->quoteName('a.userid') . ' = ' . $db->quoteName('c.clientid'))
             ->join('LEFT', $db->quoteName('#__ticketstation_country', 'b') . ' ON ' . $db->quoteName('c.country_id') . ' = ' . $db->quoteName('b.country_id'))
-            ->where($db->quoteName('a.ordercode') . " = " . Factory::getApplication()->getSession()->get('ordercode'))
+            ->where($db->quoteName('a.ordercode') . " = " . (int) Factory::getApplication()->getSession()->get('ordercode'))
             ->where($db->quoteName('a.paid') . " != 1");
-
-        $db->setQuery($query);
-
-        return $db->loadObjectList();
-    }
-
-    /**
-     * Getting order details by ordercode.
-     * This can be paid and unpaid tickets
-     *
-     * @param null $ordercode
-     * @param null $userid
-     *
-     * @return mixed
-     *
-     * @since 1.0.0
-     */
-    public function getOrderDetailsByOrdercode($ordercode = null, $userid = null)
-    {
-        $db = Factory::getContainer()->get('DatabaseDriver');
-
-        $query = $db->getQuery(true)
-            ->select(['o.*', 't.ticketname', 't.eventid', 't.parent AS parent_ticket', 't.ticketdate', 't.ticketprice', 'c.seatid'])
-            ->from($db->quoteName('#__ticketstation_orders', 'o'))
-            ->join('LEFT', $db->quoteName('#__ticketstation_tickets', 't') . ' ON ' . $db->quoteName('o.ticketid') . ' = ' . $db->quoteName('t.ticketid'))
-            ->join('LEFT', $db->quoteName('#__ticketstation_seatplancoords', 'c') . ' ON ' . $db->quoteName('o.seat_sector') . ' = ' . $db->quoteName('c.id'))
-            ->where($db->quoteName('o.ordercode') . " = " . (int) $ordercode);
-
-        if ($userid)
-        {
-            // Getting only specific orders for this user. (no faking allowed for the frontend)
-            $query->where($db->quoteName('o.userid') . " = " . $userid);
-        }
 
         $db->setQuery($query);
 
@@ -210,7 +141,7 @@ class Order
         $query = $db->getQuery(true)
             ->select(['*'])
             ->from($db->quoteName('#__ticketstation_orders'))
-            ->where($db->quoteName('ordercode') . ' = ' . Factory::getApplication()->getSession()->get('ordercode'));
+            ->where($db->quoteName('ordercode') . ' = ' . (int) Factory::getApplication()->getSession()->get('ordercode'));
 
         if($ticketid)
         {
@@ -245,8 +176,7 @@ class Order
             $query = $db->getQuery(true)
                 ->select(['COUNT(ordercode) AS total'])
                 ->from($db->quoteName($table))
-                ->where($db->quoteName('ordercode') . " = " . $ordercode);
-            //->group('ordercode');
+                ->where($db->quoteName('ordercode') . " = " . (int) $ordercode);
 
             // Waiting-list rows that were already promoted to a real order no longer count as
             // waiting; this matches what the cart lists (WaitingList::getOrdersOnWaitingList()).
@@ -350,38 +280,6 @@ class Order
         $db->setQuery($query);
 
         ## When query goes wrong.. Show message with error.
-        if ( ! $db->execute())
-        {
-            return false;
-        }
-
-        return true;
-    }
-
-    /**
-     * Removing an order from the datbase by an orderid
-     *
-     * @param $orderid
-     *
-     * @return bool
-     *
-     * @since 1.0.0
-     */
-    public function removeFullOrderFromDatabase($ordercode)
-    {
-        $db = Factory::getContainer()->get('DatabaseDriver');
-
-        $query = $db->getQuery(true);
-
-        // Conditions for the removal.
-        $conditions = [$db->quoteName('ordercode') . ' = ' . $ordercode];
-
-        // prepare the query
-        $query->delete($db->quoteName('#__ticketstation_orders'))
-            ->where($conditions);
-
-        $db->setQuery($query);
-
         if ( ! $db->execute())
         {
             return false;

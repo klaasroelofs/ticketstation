@@ -35,7 +35,6 @@ class CheckoutModel extends BaseDatabaseModel
         parent::__construct();
 
         $this->ordercode = Factory::getApplication()->getSession()->get('ordercode');
-        //$this->userid    = JFactory::getUser()->id;
     }
 
     /**
