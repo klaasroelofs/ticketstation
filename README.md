@@ -9,7 +9,7 @@ Ticketstation ships as one Joomla package, `pkg_ticketstation`, which contains:
 | `com_ticketstation` (component) | [`packages/com_ticketstation`](packages/com_ticketstation) |
 | `mod_ticketstation_basket` (basket module) | [`packages/mod_ticketstation_basket`](packages/mod_ticketstation_basket) |
 
-Requirements: Joomla 6, PHP 8.3 or newer.
+Requirements: Joomla 6, PHP 8.3 or newer with the GD extension.
 
 ## Installing and updating
 
