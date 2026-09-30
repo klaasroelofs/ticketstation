@@ -16,6 +16,7 @@ use Joomla\CMS\MVC\Model\BaseDatabaseModel;
 use Joomla\CMS\Pagination\Pagination;
 use Joomla\Database\DatabaseQuery;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Config;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\Refund;
 
 /**
  * Ticketstation Seatedevent Model
@@ -105,6 +106,7 @@ class EventModel extends BaseDatabaseModel
         $query->select('COUNT(orderid) AS total_tickets_sold');
         $query->from($db->quoteName('#__ticketstation_orders'));
         $query->where($db->quoteName('ticketid') . " = " . (int) $this->id);
+        $query->where(Refund::heldSql());
 
         $db->setQuery($query);
         $data = $db->loadResult();

@@ -23,6 +23,7 @@ use Ticketstation\Component\Ticketstation\Administrator\Helper\MollieCurrencies;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\MolliePaymentMethods;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\OrderTotals;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\PaymentAPI;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\Refund;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Shop;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\TicketstationFunctions;
 
@@ -390,16 +391,25 @@ class PaymentController extends BaseController
 
         ## Mollie also calls the webhook after a payment was paid (a refund or a chargeback),
         ## and a customer may pay a second attempt of the same order. The order is complete
-        ## by then, so only note it: running the paid branch again would add a transaction
-        ## and create and send the tickets and the invoice once more. Another attempt that
-        ## fails or expires must not overwrite the paid state either.
+        ## by then, so don't run the paid branch again: it would add a transaction and create
+        ## and send the tickets and the invoice once more. Another attempt that fails or
+        ## expires must not overwrite the paid state either. Refunds and chargebacks of the
+        ## payment are stored; one made in the Mollie dashboard waits under "Needs attention"
+        ## for a decision about the tickets.
         if ((int) $tmpTransaction->processed === 1) {
             if ($tmpTransaction->message !== $payment->id) {
                 if ($payment->isPaid()) {
                     History::log($order_id, 'payment_duplicate', 'Second payment ' . $payment->id . ' received for an order that was already paid (transaction ' . $tmpTransaction->message . '); refund one of them in Mollie', ['mollie_id' => $payment->id, 'method' => $payment->method]);
                 }
             } elseif ($payment->hasRefunds() || $payment->hasChargebacks()) {
-                History::log($order_id, 'payment_refund_reported', 'Mollie reports a refund or chargeback for transaction ' . $payment->id . '; the order and its tickets were not changed', ['mollie_id' => $payment->id, 'method' => $payment->method]);
+                try {
+                    $new = Refund::syncFromMollie((int) $order_id, $payment);
+                    $this->log('Refunds and chargebacks of ' . $payment->id . ' stored, ' . $new . ' new.');
+                } catch (\Throwable $e) {
+                    $this->log('Could not store the refunds of ' . $payment->id . ': ' . $e->getMessage());
+                    http_response_code(500);
+                    exit();
+                }
             }
 
             $this->log('Payment ' . $payment->id . ' for an already paid order, not processed again.');

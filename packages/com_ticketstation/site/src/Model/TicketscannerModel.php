@@ -13,6 +13,7 @@ defined('_JEXEC') or die;
 
 use Joomla\CMS\Factory;
 use Joomla\CMS\MVC\Model\BaseDatabaseModel;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\Refund;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Scanner;
 
 /**
@@ -74,6 +75,7 @@ class TicketscannerModel extends BaseDatabaseModel
             ->select('COUNT(orderid)')
             ->from($db->quoteName('#__ticketstation_orders'))
             ->where($db->quoteName('paid') . ' = ' . $db->quote(1))
+            ->where(Refund::heldSql())
             ->where($db->quoteName('eventid') . ' = '. $db->quote((int) $this->eventid));
 
         $db->setQuery($query);
@@ -89,6 +91,7 @@ class TicketscannerModel extends BaseDatabaseModel
             ->select('COUNT(orderid)')
             ->from($db->quoteName('#__ticketstation_orders'))
             ->where($db->quoteName('paid') . ' = ' . $db->quote(1))
+            ->where(Refund::heldSql())
             ->whereIn($db->quoteName('ticketid'), Scanner::ticketGroup((int) $this->ticketid));
 
         $db->setQuery($query);

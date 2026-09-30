@@ -8,6 +8,7 @@ DROP TABLE IF EXISTS `#__ticketstation_history`;
 DROP TABLE IF EXISTS `#__ticketstation_invoices`;
 DROP TABLE IF EXISTS `#__ticketstation_invoice_items`;
 DROP TABLE IF EXISTS `#__ticketstation_mollie`;
+DROP TABLE IF EXISTS `#__ticketstation_refunds`;
 DROP TABLE IF EXISTS `#__ticketstation_orders`;
 DROP TABLE IF EXISTS `#__ticketstation_ordertotals`;
 DROP TABLE IF EXISTS `#__ticketstation_remarks`;

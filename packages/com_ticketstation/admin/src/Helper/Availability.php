@@ -17,7 +17,8 @@ use Joomla\CMS\Factory;
  * How many tickets are still available: the capacity minus the order rows that hold it,
  * whatever their status. Nothing is counted up or down anywhere else; an order row exists
  * exactly as long as its ticket is taken (the ticketcleaner, the Box Office and the cart
- * delete the row to release it).
+ * delete the row to release it). The one exception is a ticket released by a refund: its row
+ * stays so the order stays complete, and Refund::heldSql() leaves it out of the counts.
  *
  * Quantity tickets: the capacity is Capacity (starting_total_tickets). A parent with child
  * tickets chooses, in its own counter_choice, whether the children share its capacity
@@ -255,7 +256,8 @@ class Availability
         $query = $db->getQuery(true)
             ->select('COUNT(*)')
             ->from($db->quoteName('#__ticketstation_orders'))
-            ->whereIn($db->quoteName('ticketid'), $ticketids);
+            ->whereIn($db->quoteName('ticketid'), $ticketids)
+            ->where(Refund::heldSql());
 
         $db->setQuery($query);
 
@@ -296,6 +298,7 @@ class Availability
             ->select(['ticketid', 'COUNT(*) AS sold'])
             ->from($db->quoteName('#__ticketstation_orders'))
             ->whereIn($db->quoteName('ticketid'), $ids)
+            ->where(Refund::heldSql())
             ->group($db->quoteName('ticketid'));
 
         $db->setQuery($query);

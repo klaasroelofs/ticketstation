@@ -19,6 +19,7 @@ use Joomla\CMS\Updater\Updater;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Availability;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Coupon;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Date;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\Refund;
 
 /**
  * Ticketstation ControlPanel Model
@@ -459,6 +460,20 @@ class ControlpanelModel extends BaseDatabaseModel
         $db->setQuery($query);
         $add('COM_TICKETSTATION_CPANEL_ATTENTION_PENDING', $db->loadResult(),
             self::boxofficeLink(4), 'fa-clock');
+
+        // Refunds and chargebacks made in the Mollie dashboard that wait for a decision about the
+        // tickets, and refunds that failed after the tickets were dealt with. One opens straight
+        // away; more open the Box Office filtered on them.
+        $refunds = Refund::attention();
+        $order   = 'index.php?option=com_ticketstation&view=boxoffice&controller=boxoffice&task=';
+
+        $add('COM_TICKETSTATION_CPANEL_ATTENTION_REFUND_DECISION', $refunds->decision->count,
+            $refunds->decision->count === 1
+                ? $order . 'refundform&cid=' . $refunds->decision->ordercode . '&refund=' . $refunds->decision->id
+                : self::boxofficeLink(5), 'fa-reply', 'danger');
+        $add('COM_TICKETSTATION_CPANEL_ATTENTION_REFUND_FAILED', $refunds->failed->count,
+            $refunds->failed->count === 1 ? $order . 'edit&cid=' . $refunds->failed->ordercode : self::boxofficeLink(5),
+            'fa-exclamation-circle', 'danger');
 
         // Paid orders for upcoming tickets whose tickets were never e-mailed.
         $query = $db->getQuery(true)

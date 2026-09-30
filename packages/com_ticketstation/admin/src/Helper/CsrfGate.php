@@ -42,7 +42,7 @@ class CsrfGate
         'coupon'           => ['display', 'cancel', 'controlpanel'],
         'mollie'           => ['main', 'cancel'],
         'scanners'         => ['display', 'edit', 'cancel', 'controlpanel'],
-        'boxoffice'        => ['display', 'edit', 'cancel', 'reservation', 'controlpanel', 'downloadtickets'],
+        'boxoffice'        => ['display', 'edit', 'cancel', 'reservation', 'controlpanel', 'downloadtickets', 'refundform'],
         'configuration'    => ['main', 'cancel'],
         'clients'          => ['display', 'edit', 'cancel', 'controlpanel'],
         'templates'        => ['display', 'edit', 'cancel', 'controlpanel'],

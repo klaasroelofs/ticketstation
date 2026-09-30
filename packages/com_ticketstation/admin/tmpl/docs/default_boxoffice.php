@@ -68,6 +68,14 @@ $bullets = function (string $prefix, int $count) {
             </div>
         </details>
 
+        <details id="docs-boxoffice-refund" class="mb-3 border rounded p-3">
+            <summary class="h5 mb-0"><span class="fa fa-reply me-2" aria-hidden="true"></span><?= Text::_('COM_TICKETSTATION_BOXOFFICE_DOCS_REFUND_TITLE') ?></summary>
+            <div class="mt-3">
+                <p><?= Text::_('COM_TICKETSTATION_BOXOFFICE_DOCS_REFUND_INTRO') ?></p>
+                <?php $bullets('COM_TICKETSTATION_BOXOFFICE_DOCS_REFUND_', 5); ?>
+            </div>
+        </details>
+
         <details id="docs-boxoffice-gotchas" class="border rounded p-3">
             <summary class="h5 mb-0"><span class="fa fa-exclamation-circle me-2" aria-hidden="true"></span><?= Text::_('COM_TICKETSTATION_BOXOFFICE_DOCS_GOTCHAS_TITLE') ?></summary>
             <div class="mt-3">

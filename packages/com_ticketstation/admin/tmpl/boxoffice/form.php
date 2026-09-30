@@ -16,6 +16,7 @@ use Joomla\CMS\Uri\Uri;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\AclGate;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Date;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\OrderTotals;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\Refund;
 
 // No direct access to this file
 defined('_JEXEC') or die('Restricted Access');
@@ -114,6 +115,9 @@ $progress = function (int $done) use ($status) {
                                 <span class="badge bg-warning text-dark"><?= Text::_('COM_TICKETSTATION_PENDING'); ?></span>
                             <?php } else { ?>
                                 <span class="badge bg-danger"><?= Text::_('COM_TICKETSTATION_UNPAID_OVERVIEW'); ?></span>
+                            <?php } ?>
+                            <?php if ($this->refunded > 0) { ?>
+                                <span class="badge bg-info"><?= Text::_(Refund::isFull($this->refunded, $this->paidAmount) ? 'COM_TICKETSTATION_REFUND_BADGE_FULL' : 'COM_TICKETSTATION_REFUND_BADGE_PARTIAL'); ?>: <?= $valuta; ?> <?= number_format($this->refunded, 2, ',', ''); ?></span>
                             <?php } ?>
                         </td>
                     </tr>
@@ -248,6 +252,92 @@ $progress = function (int $done) use ($status) {
     </div>
 </div>
 
+<?php // Refunds and chargebacks, and a way to fetch them from Mollie when a webhook was missed. ?>
+<?php $canRefund = AclGate::can('ticketstation.payment'); ?>
+<?php if ($this->refunds || ($canRefund && $this->molliePayment !== '' && $status->paid === 1)) { ?>
+    <div class="card mb-3">
+        <div class="card-header d-flex flex-wrap align-items-center gap-2">
+            <h3 class="mb-0 me-auto"><?= Text::_('COM_TICKETSTATION_REFUNDS') ?></h3>
+            <?php if ($canRefund && $this->molliePayment !== '') { ?>
+                <button type="button" class="btn btn-sm btn-outline-primary" onclick="Joomla.submitbutton('syncrefunds');">
+                    <span class="fa fa-sync" aria-hidden="true"></span> <?= Text::_('COM_TICKETSTATION_REFUND_SYNC') ?>
+                </button>
+            <?php } ?>
+        </div>
+        <div class="card-body">
+            <?php if (!$this->refunds) { ?>
+                <p class="text-muted mb-0"><?= Text::_('COM_TICKETSTATION_REFUND_NONE') ?></p>
+            <?php } else { ?>
+                <div class="table-responsive">
+                    <table class="table table-sm align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th scope="col"><?= Text::_('COM_TICKETSTATION_DATE') ?></th>
+                                <th scope="col"><?= Text::_('COM_TICKETSTATION_REFUND_TYPE') ?></th>
+                                <th scope="col" class="text-end"><?= Text::_('COM_TICKETSTATION_REFUND_AMOUNT') ?></th>
+                                <th scope="col"><?= Text::_('COM_TICKETSTATION_REFUND_STATUS') ?></th>
+                                <th scope="col"><?= Text::_('COM_TICKETSTATION_REFUND_DECISION') ?></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        <?php foreach ($this->refunds as $refund) {
+                            $counts = Refund::counts($refund->status);
+                            ?>
+                            <tr>
+                                <td class="text-nowrap"><?= Date::_($refund->created, $datetime); ?></td>
+                                <td>
+                                    <?= Text::_($refund->type === 'chargeback' ? 'COM_TICKETSTATION_REFUND_TYPE_CHARGEBACK' : 'COM_TICKETSTATION_REFUND_TYPE_REFUND'); ?>
+                                    <br /><small class="text-muted">
+                                        <?= Text::_($refund->source === 'mollie' ? 'COM_TICKETSTATION_REFUND_SOURCE_MOLLIE' : ($refund->status === 'manual' ? 'COM_TICKETSTATION_REFUND_SOURCE_MANUAL' : 'COM_TICKETSTATION_REFUND_SOURCE_TICKETSTATION')); ?>
+                                        <?php if ($refund->created_by_name) { ?>&middot; <?= $this->escape($refund->created_by_name); ?><?php } ?>
+                                    </small>
+                                    <?php if ($refund->description !== '') { ?>
+                                        <br /><small><?= $this->escape($refund->description); ?></small>
+                                    <?php } ?>
+                                </td>
+                                <td class="text-end text-nowrap<?= $counts ? '' : ' text-decoration-line-through text-muted'; ?>"><?= $valuta; ?> <?= number_format((float) $refund->amount, 2, ',', ''); ?></td>
+                                <td>
+                                    <span class="badge <?= $counts ? 'bg-info' : 'bg-danger'; ?>"><?= Text::_('COM_TICKETSTATION_REFUND_STATUS_' . strtoupper($refund->status)); ?></span>
+                                    <?php if ($refund->mollie_id) { ?>
+                                        <br /><small class="text-muted"><code><?= $this->escape($refund->mollie_id); ?></code></small>
+                                    <?php } ?>
+                                </td>
+                                <td>
+                                    <?php if ((int) $refund->attention === Refund::ATTENTION_DECISION) { ?>
+                                        <?php if ($canRefund) { ?>
+                                            <a class="btn btn-sm btn-warning" href="index.php?option=com_ticketstation&controller=boxoffice&task=refundform&cid=<?= (int) $this->items->ordercode; ?>&refund=<?= (int) $refund->id; ?>">
+                                                <span class="fa fa-gavel" aria-hidden="true"></span> <?= Text::_('COM_TICKETSTATION_REFUND_DECIDE') ?>
+                                            </a>
+                                        <?php } else { ?>
+                                            <span class="badge bg-warning text-dark"><?= Text::_('COM_TICKETSTATION_REFUND_DECISION_NEEDED') ?></span>
+                                        <?php } ?>
+                                    <?php } elseif ((int) $refund->attention === Refund::ATTENTION_FAILED) { ?>
+                                        <span class="badge bg-danger"><?= Text::_($refund->type === 'chargeback' ? 'COM_TICKETSTATION_REFUND_REVERSED_NOTICE' : 'COM_TICKETSTATION_REFUND_FAILED_NOTICE') ?></span>
+                                        <?php if ($canRefund) { ?>
+                                            <button type="button" class="btn btn-sm btn-outline-secondary mt-1"
+                                                    onclick="document.adminForm.refund_id.value = '<?= (int) $refund->id; ?>'; Joomla.submitbutton('acknowledgerefund');">
+                                                <?= Text::_('COM_TICKETSTATION_REFUND_ACKNOWLEDGE') ?>
+                                            </button>
+                                        <?php } ?>
+                                    <?php } elseif ($refund->decided) { ?>
+                                        <small><?= Date::_($refund->decided, $datetime); ?><?php if ($refund->decided_by_name) { ?><br /><?= $this->escape($refund->decided_by_name); ?><?php } ?></small>
+                                        <?php if (Refund::isWaiting($refund)) { ?>
+                                            <br /><span class="badge bg-warning text-dark" title="<?= $this->escape(Text::_('COM_TICKETSTATION_REFUND_WAITING_DESC')); ?>"><span class="fa fa-hourglass-half" aria-hidden="true"></span> <?= Text::_('COM_TICKETSTATION_REFUND_WAITING'); ?></span>
+                                        <?php } ?>
+                                    <?php } else { ?>
+                                        <span class="text-muted">&ndash;</span>
+                                    <?php } ?>
+                                </td>
+                            </tr>
+                        <?php } ?>
+                        </tbody>
+                    </table>
+                </div>
+            <?php } ?>
+        </div>
+    </div>
+<?php } ?>
+
 <?= HTMLHelper::_('uitab.endTab'); ?>
 
 <?= HTMLHelper::_('uitab.addTab', 'boxofficeTab', 'tickets', Text::_('COM_TICKETSTATION_TICKETS_IN_ORDER') . ' (' . $status->tickets . ')'); ?>
@@ -338,6 +428,15 @@ $progress = function (int $done) use ($status) {
                             <?php if ($row->seat_sector != 0 && $row->seatid) { ?>
                                 <br /><small><?= Text::_('COM_TICKETSTATION_SEAT'); ?>: <?= $this->escape($row->row_name . $row->seatid); ?></small>
                             <?php } ?>
+                            <?php if ((int) $row->refund_state !== Refund::TICKET_UNCHANGED) { ?>
+                                <br /><span class="badge <?= (int) $row->refund_state === Refund::TICKET_VALID ? 'bg-info' : 'bg-danger'; ?>"><?= Text::_('COM_TICKETSTATION_REFUND_STATE_' . (int) $row->refund_state); ?></span>
+                            <?php } ?>
+                            <?php if (isset($this->waitingTreatments[(int) $row->orderid])) { ?>
+                                <br /><span class="badge bg-warning text-dark" title="<?= $this->escape(Text::_('COM_TICKETSTATION_REFUND_WAITING_DESC')); ?>">
+                                    <span class="fa fa-hourglass-half" aria-hidden="true"></span>
+                                    <?= Text::sprintf('COM_TICKETSTATION_REFUND_WAITING_TICKET', Text::_('COM_TICKETSTATION_REFUND_STATE_' . $this->waitingTreatments[(int) $row->orderid])); ?>
+                                </span>
+                            <?php } ?>
                         </td>
                         <td class="text-center">
                             <?php if ($row->scanned == 0) { ?>
@@ -395,6 +494,7 @@ $progress = function (int $done) use ($status) {
 <input name="option" type="hidden" value="com_ticketstation" />
 <input name="task" type="hidden" value="" />
 <input name="boxchecked" type="hidden" value="0"/>
+<input name="refund_id" type="hidden" value="0"/>
 <input name="controller" type="hidden" value="boxoffice"/>
 <?= HTMLHelper::_('form.token'); ?>
 

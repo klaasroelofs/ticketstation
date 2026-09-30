@@ -24,6 +24,7 @@ use Joomla\CMS\MVC\Factory\MVCFactoryInterface;
 use Joomla\Input\Input;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Date;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Order;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\Refund;
 
 
 class BoxofficeController extends BaseController {
@@ -226,36 +227,6 @@ class BoxofficeController extends BaseController {
         else
         {
             $app->enqueueMessage(Text::_('COM_TICKETSTATION_COMPLETED_ORDER'));
-        }
-
-        $this->setRedirect($link);
-    }
-
-    function refund()
-    {
-
-        $app 	= Factory::getApplication();
-        $link 	= 'index.php?option=com_ticketstation&controller=boxoffice';
-
-        $cid = $this->input->get('cid', array(), 'array');
-        ArrayHelper::toInteger($cid);
-
-        if (count( $cid ) < 1)
-        {
-            $app->enqueueMessage(Text::_('COM_TICKETSTATION_PLEASE_SELECT_ORDER'), 'error');
-            $this->setRedirect($link);
-        }
-
-        $model = $this->getModel('boxoffice');
-
-        if(!$model->changePaymentState($cid, 2))
-        {
-            $app->enqueueMessage(Text::_('COM_TICKETSTATION_ERROR_TICKETBOX'), 'error');
-            $this->setRedirect($link);
-        }
-        else
-        {
-            $app->enqueueMessage(Text::_('COM_TICKETSTATION_PAYMENTSTATUS_REFUNDED'));
         }
 
         $this->setRedirect($link);
@@ -670,20 +641,101 @@ class BoxofficeController extends BaseController {
     }
 
     /**
-     * Marks the order that is open as refunded.
+     * The refund screen of an order: a new refund, or with &refund=<id> the decision about the
+     * tickets for a refund or chargeback Mollie reported.
      */
-    function refundorder()
+    function refundform()
+    {
+        $jinput = Factory::getApplication()->getInput();
+        $jinput->set('layout', 'refund');
+        $jinput->set('view', 'boxoffice');
+        parent::display();
+    }
+
+    /**
+     * Saves the refund screen: makes the refund (at Mollie, or by hand) or records the decision,
+     * and gives the tickets their treatment.
+     */
+    function saverefund()
+    {
+        $app        = Factory::getApplication();
+        $jinput     = $app->getInput();
+        $ordercode  = $jinput->get('ordercode', 0, 'int');
+        $refundId   = $jinput->get('refund_id', 0, 'int');
+        $treatments = array_map('intval', (array) $jinput->get('treatment', [], 'array'));
+        $order      = 'index.php?option=com_ticketstation&controller=boxoffice&task=edit&cid=' . $ordercode;
+
+        try
+        {
+            if ($refundId)
+            {
+                Refund::decide($ordercode, $refundId, $treatments);
+                $app->enqueueMessage(Text::_('COM_TICKETSTATION_REFUND_DECIDED'));
+            }
+            else
+            {
+                $amount   = (float) str_replace(',', '.', trim((string) $jinput->get('amount', '', 'string')));
+                $refundId = Refund::create($ordercode, $amount, (string) $jinput->get('description', '', 'string'), $treatments);
+                $app->enqueueMessage(Text::_('COM_TICKETSTATION_REFUND_CREATED'));
+            }
+
+            // Tickets that wait until Mollie has processed the refund.
+            $refund = Refund::get($refundId);
+
+            if ($refund && Refund::isWaiting($refund))
+            {
+                $app->enqueueMessage(Text::_('COM_TICKETSTATION_REFUND_TICKETS_WAITING'), 'notice');
+            }
+        }
+        catch (\RuntimeException $e)
+        {
+            $app->enqueueMessage($e->getMessage(), 'error');
+            $this->setRedirect('index.php?option=com_ticketstation&controller=boxoffice&task=refundform&cid=' . $ordercode . ($refundId ? '&refund=' . $refundId : ''));
+
+            return;
+        }
+
+        $this->setRedirect($order);
+    }
+
+    /**
+     * Fetches the refunds and chargebacks of the order's payment from Mollie, for a webhook that
+     * never arrived or refunds made before 2.9.0.
+     */
+    function syncrefunds()
     {
         $app       = Factory::getApplication();
         $ordercode = $app->getInput()->get('ordercode', 0, 'int');
 
-        if (!$this->getModel('boxoffice')->changePaymentState([$ordercode], 2))
+        try
         {
-            $app->enqueueMessage(Text::_('COM_TICKETSTATION_ERROR_TICKETBOX'), 'error');
+            $new = Refund::sync($ordercode);
+            $app->enqueueMessage($new ? Text::plural('COM_TICKETSTATION_REFUND_SYNC_N_NEW', $new) : Text::_('COM_TICKETSTATION_REFUND_SYNC_NONE'));
         }
-        else
+        catch (\RuntimeException $e)
         {
-            $app->enqueueMessage(Text::_('COM_TICKETSTATION_PAYMENTSTATUS_REFUNDED'));
+            $app->enqueueMessage($e->getMessage(), 'error');
+        }
+
+        $this->setRedirect('index.php?option=com_ticketstation&controller=boxoffice&task=edit&cid=' . $ordercode);
+    }
+
+    /**
+     * Takes a failed refund or reversed chargeback off the "Needs attention" list.
+     */
+    function acknowledgerefund()
+    {
+        $app       = Factory::getApplication();
+        $jinput    = $app->getInput();
+        $ordercode = $jinput->get('ordercode', 0, 'int');
+
+        try
+        {
+            Refund::acknowledge($ordercode, $jinput->get('refund_id', 0, 'int'));
+        }
+        catch (\RuntimeException $e)
+        {
+            $app->enqueueMessage($e->getMessage(), 'error');
         }
 
         $this->setRedirect('index.php?option=com_ticketstation&controller=boxoffice&task=edit&cid=' . $ordercode);
@@ -880,11 +932,17 @@ class BoxofficeController extends BaseController {
         $query = $db->getQuery(true)
             ->select(['*'])
             ->from($db->quoteName('#__ticketstation_orders'))
-            ->where($db->quoteName('ordercode') . ' = ' . (int)$ordercode);
+            ->where($db->quoteName('ordercode') . ' = ' . (int)$ordercode)
+            ->where(Refund::validSql());
 
         $db->setQuery($query);
 
         $orderids = $db->loadObjectList();
+
+        if (!$orderids) {
+            $app->enqueueMessage(Text::_('COM_TICKETSTATION_TICKET_PDF_NOT_PRESENT'), 'error');
+            $app->redirect('index.php?option=com_ticketstation&controller=boxoffice&task=edit&cid=' . $ordercode);
+        }
 
 
         $multi_ticket = JPATH_ADMINISTRATOR . '/components/com_ticketstation/tickets/eTickets-' . (int)$ordercode . '.pdf';

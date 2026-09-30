@@ -22,6 +22,7 @@ use Ticketstation\Component\Ticketstation\Administrator\Helper\CustomerNote;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Invoice;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\MolliePaymentMethods;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\OrderTotals;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\Refund;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\ticketcreator;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Docs;
 
@@ -44,6 +45,12 @@ class HtmlView extends BaseHtmlView
         if($this->getLayout() == 'form')
         {
             $this->_displayForm($tpl);
+            return;
+        }
+
+        if ($this->getLayout() == 'refund')
+        {
+            $this->displayRefund($tpl);
             return;
         }
 
@@ -79,6 +86,7 @@ class HtmlView extends BaseHtmlView
             HTMLHelper::_('select.option', '2', Text::_('COM_TICKETSTATION_UNPAID_OVERVIEW')),
             HTMLHelper::_('select.option', '3', Text::_('COM_TICKETSTATION_REFUNDED')),
             HTMLHelper::_('select.option', '4', Text::_('COM_TICKETSTATION_PENDING')),
+            HTMLHelper::_('select.option', '5', Text::_('COM_TICKETSTATION_REFUND_FILTER_ATTENTION')),
         ];
 
         $lists['paid'] = HTMLHelper::_('select.genericlist', $paid, 'filter_ordering_paid',
@@ -94,6 +102,9 @@ class HtmlView extends BaseHtmlView
         $lists['sent'] = HTMLHelper::_('select.genericlist', $sent, 'filter_ordering_sent',
             'class="form-select" onchange="this.form.submit();" aria-label="' . Text::_('COM_TICKETSTATION_BOXOFFICE_SELECTLIST_SENT') . '"',
             'value', 'text', $filters['sent']);
+
+        // Refunds a colleague made in the Mollie Dashboard, before the webhook reports them.
+        Refund::pollMollie();
 
         $this->items      = $this->get('list');
         $this->pagination = $this->get('Pagination');
@@ -153,13 +164,6 @@ class HtmlView extends BaseHtmlView
             ->icon('fa fa-share')
             ->listCheck(true);
 
-        if ($payment)
-        {
-            $childBar->standardButton('refund', 'COM_TICKETSTATION_BOXOFFICE_MARK_REFUNDED', 'boxoffice.refund')
-                ->icon('fa fa-reply')
-                ->listCheck(true);
-        }
-
         $childBar->divider(Text::_('COM_TICKETSTATION_BOXOFFICE_TICKETS'));
 
         $childBar->standardButton('sendingticket', 'COM_TICKETSTATION_BOXOFFICE_SEND_TICKETS', 'boxoffice.sendingticket')
@@ -210,11 +214,36 @@ class HtmlView extends BaseHtmlView
 
         $config      = $this->get('config');
         $items       = $this->get('client');
+        $ordercode   = (int) ($items->ordercode ?? 0);
+        $refunds     = $model->getRefunds();
+
+        // Mollie doesn't call the webhook when a refund is cancelled, so a refund whose tickets
+        // wait for it is looked up at Mollie when the order is opened. The tickets change here
+        // when Mollie has processed it in the meantime.
+        $waiting = array_filter($refunds, static fn ($refund) => Refund::isWaiting($refund) && $refund->mollie_id);
+
+        if ($waiting)
+        {
+            try
+            {
+                Refund::sync($ordercode);
+                $refunds = $model->getRefunds();
+            }
+            catch (\Throwable $e)
+            {
+                // Mollie can't be reached: the order shows what is known.
+            }
+        }
+
         $data        = $this->get('data');
         $transaction = $model->getTransaction();
+        $paidAmount  = Refund::paidAmount($ordercode);
+        $refunded    = Refund::refundedAmount($ordercode);
 
         // What the tickets of the order have been through, for the toolbar and the Overview.
         $status = (object) [
+            'ordercode'  => $ordercode,
+            'refundable' => $refunded < $paidAmount - 0.004,
             'paid'     => (int) ($items->paid ?? 0),
             'tickets'  => count($data),
             'created'  => count(array_filter($data, static fn ($row) => (int) $row->pdfcreated === 1)),
@@ -222,7 +251,7 @@ class HtmlView extends BaseHtmlView
             'scanned'  => count(array_filter($data, static fn ($row) => (int) $row->scanned === 1)),
             'blocked'  => count(array_filter($data, static fn ($row) => (int) $row->blacklisted === 1)),
             'download' => (int) max(array_merge([0], array_map(static fn ($row) => (int) $row->downloaded, $data))),
-            'pdf'      => $this->ticketFileExists($items->ordercode ?? 0, $data),
+            'pdf'      => $this->ticketFileExists($items->ordercode ?? 0, array_values(array_filter($data, static fn ($row) => (int) $row->refund_state < Refund::TICKET_INVALID))),
         ];
 
         $this->addFormToolbar($status);
@@ -293,9 +322,85 @@ class HtmlView extends BaseHtmlView
         $this->invoiceNumber = $invoice ? (new Invoice)->getInvoiceNumber($invoice->invoiceid, $config->invoice_prefix) : '';
         $this->invoiceFile   = $invoice ? (new Invoice)->getPdfFilename($invoice->invoiceid) : '';
         $this->history       = $this->get('history');
+        $this->refunds       = $refunds;
+
+        // orderid => the treatment that waits until Mollie has processed its refund.
+        $this->waitingTreatments = [];
+
+        foreach ($refunds as $refund)
+        {
+            if (Refund::isWaiting($refund))
+            {
+                $this->waitingTreatments = array_replace($this->waitingTreatments, array_map('intval', (array) json_decode($refund->treatments, true)));
+            }
+        }
+        $this->refunded      = $refunded;
+        $this->paidAmount    = $paidAmount;
+        $this->molliePayment = Refund::molliePaymentId($ordercode);
 
         parent::display($tpl);
 
+    }
+
+    /**
+     * The refund screen: a new refund of the order, or the decision about the tickets for a
+     * refund or chargeback Mollie reported (&refund=<id>, only while it waits for one).
+     */
+    private function displayRefund($tpl = null)
+    {
+        $model = $this->getModel();
+        $input = Factory::getApplication()->getInput();
+
+        $items     = $this->get('client');
+        $ordercode = (int) ($items->ordercode ?? 0);
+        $refund    = Refund::get($input->getInt('refund', 0));
+
+        if ($refund && ((int) $refund->ordercode !== $ordercode || (int) $refund->attention !== Refund::ATTENTION_DECISION))
+        {
+            $refund = null;
+        }
+
+        $data       = $this->get('data');
+        $totals     = OrderTotals::get($ordercode);
+        $paidAmount = Refund::paidAmount($ordercode);
+        $refunded   = Refund::refundedAmount($ordercode);
+
+        // In a decision, the tickets that together match the refunded amount are proposed.
+        $proposal = $refund ? Refund::propose($data, (float) $refund->amount, (float) $totals->fees, round($paidAmount - $refunded + (float) $refund->amount, 2)) : [];
+
+        ToolBarHelper::title(Text::_($refund ? 'COM_TICKETSTATION_REFUND_DECIDE_TITLE' : 'COM_TICKETSTATION_REFUND_TITLE'), 'fa fa-reply');
+
+        $toolbar = Toolbar::getInstance('toolbar');
+        $toolbar->standardButton('saverefund', $refund ? 'COM_TICKETSTATION_REFUND_SAVE_DECISION' : 'COM_TICKETSTATION_REFUND_SAVE', 'saverefund')
+            ->icon($refund ? 'icon-save' : 'fa fa-reply')
+            ->buttonClass('btn btn-success');
+        $toolbar->linkButton('back', 'JTOOLBAR_CANCEL')
+            ->url('index.php?option=com_ticketstation&controller=boxoffice&task=edit&cid=' . $ordercode)
+            ->icon('icon-times')
+            ->buttonClass('btn btn-danger');
+        Docs::toolbarButton('boxoffice-refund');
+
+        $this->items         = $items;
+        $this->data          = $data;
+        $this->config        = $this->get('config');
+        $this->totals        = $totals;
+        $this->refund        = $refund;
+        $this->proposal      = $proposal;
+        $this->paidAmount    = $paidAmount;
+        $this->refunded      = $refunded;
+        $this->remaining     = max(0.0, round($paidAmount - $refunded, 2));
+        $this->molliePayment = Refund::molliePaymentId($ordercode);
+        $this->waitingTreatments = [];
+
+        foreach (Refund::forOrder($ordercode) as $other)
+        {
+            if (Refund::isWaiting($other))
+            {
+                $this->waitingTreatments = array_replace($this->waitingTreatments, array_map('intval', (array) json_decode($other->treatments, true)));
+            }
+        }
+
+        parent::display($tpl);
     }
 
     /**
@@ -346,9 +451,10 @@ class HtmlView extends BaseHtmlView
                     ->icon('fa fa-thumbs-down');
             }
 
-            if ($payment && $status->paid === 1)
+            if ($payment && $status->paid === 1 && $status->refundable)
             {
-                $childBar->standardButton('refundorder', 'COM_TICKETSTATION_BOXOFFICE_MARK_REFUNDED', 'refundorder')
+                $childBar->linkButton('refundform', 'COM_TICKETSTATION_REFUND_BUTTON')
+                    ->url('index.php?option=com_ticketstation&controller=boxoffice&task=refundform&cid=' . (int) $status->ordercode)
                     ->icon('fa fa-reply');
             }
         }

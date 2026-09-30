@@ -13,6 +13,7 @@ use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\Controller\BaseController;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Barcode;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Order;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\Refund;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Scanner;
 
 defined('_JEXEC') or die;
@@ -171,6 +172,12 @@ class CodescannerController extends BaseController
 		if ((int) $data->blacklisted === 1)
 		{
 			return $this->result(0, Text::_('COM_TICKETSTATION_TICKETSCANNING_BLACLISTED_BARCODE'), $order);
+		}
+
+		// A ticket a refund made invalid (whether or not its place was released).
+		if ((int) ($data->refund_state ?? 0) >= Refund::TICKET_INVALID)
+		{
+			return $this->result(0, Text::_('COM_TICKETSTATION_TICKETSCANNING_REFUNDED_TICKET'), $order);
 		}
 
 		if ((int) $data->scanned === 1)

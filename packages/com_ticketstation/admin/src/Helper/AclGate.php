@@ -201,8 +201,11 @@ class AclGate
             'full_process'       => self::PAYMENT,
             'completeorder'      => self::PAYMENT,
             'nopayment'          => self::PAYMENT,
-            'refund'             => self::PAYMENT,
-            'refundorder'        => self::PAYMENT,
+            // Refunds send money back and can invalidate or release tickets.
+            'refundform'         => self::PAYMENT,
+            'saverefund'         => self::PAYMENT,
+            'syncrefunds'        => self::PAYMENT,
+            'acknowledgerefund'  => self::PAYMENT,
             'remove'             => self::ORDER_DELETE,
             'removesingleorder'  => self::ORDER_DELETE,
         ],

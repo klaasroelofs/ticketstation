@@ -29,6 +29,7 @@ use Ticketstation\Component\Ticketstation\Administrator\Helper\Invoice;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Coupon;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\OrderTotals;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\PaymentAPI;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\Refund;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\SendonPayment;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\SendTicketCopy;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\ticketcreator;
@@ -51,9 +52,20 @@ class BoxofficeModel extends ListModel
     private const CONTEXT = 'com_ticketstation.boxoffice.';
 
     /**
-     * Payment status filter value => the paid value of the orders it shows.
+     * Payment status filter value => the paid value of the orders it shows. "Refunded" and
+     * "Refund needs attention" are handled on their own, see getKeyQuery().
      */
-    private const PAID_FILTER = [1 => 1, 2 => 0, 3 => 2, 4 => 3];
+    private const PAID_FILTER = [1 => 1, 2 => 0, 4 => 3];
+
+    /**
+     * Payment status filter: orders with a refund, or marked refunded before 2.9.0 (paid = 2).
+     */
+    private const FILTER_REFUNDED = 3;
+
+    /**
+     * Payment status filter: orders with a refund that waits for a decision or has failed.
+     */
+    private const FILTER_REFUND_ATTENTION = 5;
 
     /**
      * @var int
@@ -409,6 +421,16 @@ class BoxofficeModel extends ListModel
         {
             $query->having('MAX(' . $db->quoteName('a.paid') . ') = ' . self::PAID_FILTER[$paid]);
         }
+        elseif ($paid === self::FILTER_REFUNDED)
+        {
+            $query->having('(MAX(' . $db->quoteName('a.paid') . ') = 2 OR EXISTS (SELECT 1 FROM ' . $db->quoteName('#__ticketstation_refunds', 'rf')
+                . ' WHERE ' . $db->quoteName('rf.ordercode') . ' = ' . $db->quoteName('a.ordercode') . ' AND ' . Refund::countingSql('rf') . '))');
+        }
+        elseif ($paid === self::FILTER_REFUND_ATTENTION)
+        {
+            $query->where('EXISTS (SELECT 1 FROM ' . $db->quoteName('#__ticketstation_refunds', 'rf')
+                . ' WHERE ' . $db->quoteName('rf.ordercode') . ' = ' . $db->quoteName('a.ordercode') . ' AND ' . $db->quoteName('rf.attention') . ' > 0)');
+        }
 
         // An order that holds tickets for several events is shown for each of them.
         if ($event)
@@ -544,6 +566,7 @@ class BoxofficeModel extends ListModel
         $notes        = $this->loadNotes($codes);
         $transactions = $this->loadTransactions($codes);
         $terms        = $this->loadFeeTerms($codes);
+        $refunds      = Refund::summaries($codes);
 
         foreach ($rows as $code => $row)
         {
@@ -565,6 +588,8 @@ class BoxofficeModel extends ListModel
             $row->customer_note   = $notes[$code] ?? '';
             $row->events          = $events[$code] ?? [];
             $row->removed_auto    = false;
+            $row->refunded        = $refunds[$code]->refunded ?? 0.0;
+            $row->refund_attention = $refunds[$code]->attention ?? 0;
         }
 
         return $rows;
@@ -624,6 +649,13 @@ class BoxofficeModel extends ListModel
             }, $lines));
 
             if (isset(self::PAID_FILTER[$paid]) && $maxPaid !== self::PAID_FILTER[$paid])
+            {
+                continue;
+            }
+
+            // A removed order was never paid, so it has no refunds; only the old "refunded"
+            // status can match.
+            if (($paid === self::FILTER_REFUNDED && $maxPaid !== 2) || $paid === self::FILTER_REFUND_ATTENTION)
             {
                 continue;
             }
@@ -1240,6 +1272,7 @@ class BoxofficeModel extends ListModel
 
                 (new Invoice)->remove($affected_ordercode);
                 (new Transaction)->remove($affected_ordercode);
+                Refund::remove($affected_ordercode);
                 (new CustomerNote)->remove($affected_ordercode);
                 OrderTotals::remove($affected_ordercode);
                 History::remove($affected_ordercode);
@@ -1687,6 +1720,16 @@ class BoxofficeModel extends ListModel
         return true;
     }
 
+    /**
+     * The refunds and chargebacks of the order being viewed.
+     *
+     * @return  array
+     */
+    public function getRefunds()
+    {
+        return Refund::forOrder((int) $this->id);
+    }
+
     function paymentResender($cid = [])
     {
 
@@ -1827,6 +1870,9 @@ class BoxofficeModel extends ListModel
                 // Nor should its transaction, if one was ever recorded.
                 (new Transaction)->remove($removed_ordercode);
 
+                // And its refunds.
+                Refund::remove($removed_ordercode);
+
                 // And the note the customer added in the cart.
                 (new CustomerNote)->remove($removed_ordercode);
 
@@ -1929,6 +1975,7 @@ class BoxofficeModel extends ListModel
         $query->select('*');
         $query->from($db->quoteName('#__ticketstation_orders'));
         $query->where($db->quoteName('ordercode') . ' = '. $db->quote($ordercode));
+        $query->where(Refund::validSql());
 
         ## Do the query now
         $db->setQuery($query);
@@ -1961,6 +2008,7 @@ class BoxofficeModel extends ListModel
         $query->join('LEFT', $db->quoteName('#__ticketstation_tickets', 't') . ' ON (' .$db->quoteName('t.ticketid'). ' = ' .$db->quoteName('a.ticketid'). ')');
         $query->join('LEFT OUTER', $db->quoteName('#__ticketstation_seatplancoords', 'ext') . ' ON (' . $db->quoteName('ext.orderid') . ' = ' . $db->quoteName('a.orderid') . ')');
         $query->where($db->quoteName('a.ordercode') . ' = '. $db->quote($ordercode));
+        $query->where(Refund::validSql('a'));
         Tickets::orderForPdf($query, 'a');
 
         $db->setQuery($query);
@@ -2001,6 +2049,7 @@ class BoxofficeModel extends ListModel
                 $db->quoteName('ordercode'),
                 'MIN(' . $db->quoteName('paid') . ' = 1) AS ' . $db->quoteName('paid'),
                 'MIN(COALESCE(' . $db->quoteName('pdfcreated') . ', 0)) AS ' . $db->quoteName('created'),
+                'SUM(' . Refund::validSql() . ') AS ' . $db->quoteName('valid'),
             ])
             ->from($db->quoteName('#__ticketstation_orders'))
             ->whereIn($db->quoteName('ordercode'), $cid)
@@ -2010,7 +2059,7 @@ class BoxofficeModel extends ListModel
 
         foreach ($db->loadObjectList() as $order)
         {
-            if ((int) $order->paid !== 1 || (int) $order->created !== 1)
+            if ((int) $order->paid !== 1 || (int) $order->created !== 1 || (int) $order->valid === 0)
             {
                 $this->skippedTicketMails[] = $order->ordercode;
                 continue;

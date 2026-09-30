@@ -15,6 +15,7 @@ use Joomla\CMS\Factory;
 use Joomla\CMS\MVC\Model\BaseDatabaseModel;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Date;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\History;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\Refund;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\SendTicketCopy;
 
 /**
@@ -49,6 +50,7 @@ class LostticketsModel extends BaseDatabaseModel
             ->where($db->quoteName('c.emailaddress') . ' = ' . $db->quote($email))
             ->where($db->quoteName('o.paid') . ' = 1')
             ->where($db->quoteName('o.pdfcreated') . ' = 1')
+            ->where(Refund::validSql('o'))
             ->where($db->quoteName('t.enddate') . ' >= ' . $db->quote(Date::localNow()));
 
         $db->setQuery($query);
@@ -94,7 +96,8 @@ class LostticketsModel extends BaseDatabaseModel
         $query = $db->getQuery(true)
             ->select($db->quoteName('orderid'))
             ->from($db->quoteName('#__ticketstation_orders'))
-            ->where($db->quoteName('ordercode') . ' = ' . $db->quote((int) $ordercode));
+            ->where($db->quoteName('ordercode') . ' = ' . $db->quote((int) $ordercode))
+            ->where(Refund::validSql());
 
         $db->setQuery($query);
         $orderids = $db->loadColumn();

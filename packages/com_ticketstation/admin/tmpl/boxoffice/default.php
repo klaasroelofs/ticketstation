@@ -13,6 +13,7 @@ use Joomla\CMS\Language\Text;
 use Joomla\CMS\Router\Route;
 use Joomla\CMS\Uri\Uri;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Date;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\Refund;
 
 // No direct access to this file
 defined('_JEXEC') or die('Restricted Access');
@@ -191,6 +192,12 @@ $progress = function (int $done, int $total, string $title, string $complete = '
                                     <span class="badge bg-warning text-dark"><?= Text::_('COM_TICKETSTATION_PENDING'); ?></span>
                                 <?php } else { ?>
                                     <span class="badge bg-danger"><?= Text::_('COM_TICKETSTATION_UNPAID_OVERVIEW'); ?></span>
+                                <?php } ?>
+                                <?php if (($row->refunded ?? 0) > 0) { ?>
+                                    <br /><span class="badge bg-info mt-1" title="<?= $this->escape($this->config->valuta) . ' ' . number_format((float) $row->refunded, 2, ',', ''); ?>"><?= Text::_(Refund::isFull((float) $row->refunded, (float) $row->orderprice) ? 'COM_TICKETSTATION_REFUND_BADGE_FULL' : 'COM_TICKETSTATION_REFUND_BADGE_PARTIAL'); ?></span>
+                                <?php } ?>
+                                <?php if (($row->refund_attention ?? 0) > 0) { ?>
+                                    <br /><span class="badge bg-warning text-dark mt-1"><span class="fa fa-exclamation-triangle" aria-hidden="true"></span> <?= Text::_((int) $row->refund_attention === Refund::ATTENTION_DECISION ? 'COM_TICKETSTATION_REFUND_DECISION_NEEDED' : 'COM_TICKETSTATION_REFUND_FAILED_SHORT'); ?></span>
                                 <?php } ?>
                             </td>
                             <td class="small d-none d-lg-table-cell text-center text-nowrap">

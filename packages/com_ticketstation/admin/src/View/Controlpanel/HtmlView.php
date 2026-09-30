@@ -16,6 +16,7 @@ use Joomla\CMS\MVC\View\HtmlView as BaseHtmlView;
 use Joomla\CMS\Toolbar\ToolbarHelper;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\AclGate;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Docs;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\Refund;
 
 /**
  * Ticketstation Controlpanel Admin View
@@ -60,6 +61,13 @@ class HtmlView extends BaseHtmlView {
 
         $this->stats        = $model->getStats();
         $this->availability = $model->getAvailability();
+
+        // Refunds a colleague made in the Mollie Dashboard, before the webhook reports them.
+        if (($this->mollie->bypass_mode ?? '0') != '1')
+        {
+            Refund::pollMollie();
+        }
+
         $this->attention    = $model->getAttention($this->config, $this->mollie);
         $this->dailySales   = $model->getDailySales();
         $this->setupSteps   = $model->getSetupSteps($this->config, $this->mollie);

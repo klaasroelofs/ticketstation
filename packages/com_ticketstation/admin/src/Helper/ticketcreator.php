@@ -126,6 +126,7 @@ class ticketcreator
         $query->from($db->quoteName('#__ticketstation_orders', 'o'));
         $query->join('LEFT OUTER', $db->quoteName('#__ticketstation_seatplancoords', 'ext') . ' ON (' . $db->quoteName('ext.orderid') . ' = ' . $db->quoteName('o.orderid') . ')');
         $query->where($db->quoteName('o.ordercode') . ' = ' . $db->quote((int)$order->ordercode));
+        $query->where(Refund::validSql('o'));
         Tickets::orderForPdf($query, 'o');
 
         $db->setQuery($query);

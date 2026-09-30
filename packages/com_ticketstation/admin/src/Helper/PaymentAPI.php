@@ -275,6 +275,7 @@ class PaymentAPI
         $query->select('*');
         $query->from($db->quoteName('#__ticketstation_orders'));
         $query->where($db->quoteName('ordercode') . ' = ' . $db->quote((int)$this->ordercode));
+        $query->where(Refund::validSql());
 
         $db->setQuery($query);
         $data = $db->loadObjectList();

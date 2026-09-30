@@ -278,6 +278,8 @@ CREATE TABLE IF NOT EXISTS `#__ticketstation_orders` (
   `discount_amount` float DEFAULT NULL,
   `vat_percentage` float DEFAULT NULL,
   `validation_token` varchar(64) NOT NULL,
+  `refund_state` tinyint(1) NOT NULL DEFAULT '0',
+  `refund_id` int(11) NOT NULL DEFAULT '0',
   PRIMARY KEY (`orderid`),
   KEY `ordercode` (`ordercode`),
   KEY `idx_barcode` (`barcode`),
@@ -472,6 +474,30 @@ CREATE TABLE IF NOT EXISTS `#__ticketstation_history` (
   PRIMARY KEY (`id`),
   KEY `ordercode` (`ordercode`)
 )  ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 DEFAULT COLLATE=utf8mb4_unicode_ci;
+
+DROP TABLE IF EXISTS `#__ticketstation_refunds`;
+CREATE TABLE IF NOT EXISTS `#__ticketstation_refunds` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `ordercode` int(11) NOT NULL,
+  `type` varchar(20) NOT NULL DEFAULT 'refund',
+  `mollie_id` varchar(50) DEFAULT NULL,
+  `mollie_payment_id` varchar(50) NOT NULL DEFAULT '',
+  `amount` decimal(10,2) NOT NULL DEFAULT '0.00',
+  `currency` varchar(3) NOT NULL DEFAULT 'EUR',
+  `description` varchar(255) NOT NULL DEFAULT '',
+  `status` varchar(20) NOT NULL DEFAULT '',
+  `source` varchar(20) NOT NULL DEFAULT 'ticketstation',
+  `attention` tinyint(1) NOT NULL DEFAULT '0',
+  `created` datetime NOT NULL,
+  `created_by` int(11) NOT NULL DEFAULT '0',
+  `decided` datetime DEFAULT NULL,
+  `decided_by` int(11) NOT NULL DEFAULT '0',
+  `treatments` text DEFAULT NULL,
+  `applied` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `idx_mollie_id` (`mollie_id`),
+  KEY `ordercode` (`ordercode`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 DEFAULT COLLATE=utf8mb4_unicode_ci;
 
 DROP TABLE IF EXISTS `#__ticketstation_invoices`;
 CREATE TABLE IF NOT EXISTS `#__ticketstation_invoices` (

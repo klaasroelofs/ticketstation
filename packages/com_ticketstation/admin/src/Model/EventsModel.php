@@ -17,6 +17,7 @@ use Joomla\CMS\MVC\Model\AdminModel;
 use Joomla\CMS\MVC\Model\BaseDatabaseModel;
 use Joomla\CMS\MVC\Model\ListModel;
 use Joomla\CMS\Pagination\Pagination;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\Refund;
 use Ticketstation\Component\Ticketstation\Administrator\Model\Mixin\ListState;
 use Joomla\CMS\Uri\Uri;
 use Joomla\Utilities\ArrayHelper;
@@ -91,6 +92,7 @@ class EventsModel extends ListModel
         $query->select(array('eventid', 'COUNT(orderid) AS soldtickets'));
         $query->from($db->quoteName('#__ticketstation_orders'));
         $query->where($db->quoteName('paid') . ' = 1');
+        $query->where(Refund::heldSql());
         $query->group($db->quoteName('eventid'));
 
         $db->setQuery($query);
