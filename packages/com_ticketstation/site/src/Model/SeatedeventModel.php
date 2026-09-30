@@ -139,12 +139,18 @@ class SeatedeventModel extends BaseDatabaseModel {
 
             $db = Factory::getContainer()->get('DatabaseDriver');
 
-            ## The seats already picked in this order, with the colours they have on the chart.
-            $sql='SELECT a.seat_sector, c.seatid, c.row_name, ' . SeatplanSettings::COLUMNS . '
+            ## The seats already picked in this order, with the colours they have on the chart and
+            ## the chart they are on (owner: the parent ticket of a section seat), so the page can
+            ## tell this chart's seats from those on other charts.
+            $sql='SELECT a.seat_sector, c.seatid, c.row_name, IF(c.parent > 0, c.parent, c.ticketid) AS owner,
+                    o.ticketname AS owner_ticketname, e.eventname, o.startdate AS owner_startdate, ' . SeatplanSettings::COLUMNS . '
 			      FROM #__ticketstation_orders AS a
-			      INNER JOIN #__ticketstation_seatplancoords AS c ON c.orderid = a.orderid'
+			      INNER JOIN #__ticketstation_seatplancoords AS c ON c.orderid = a.orderid
+			      LEFT JOIN #__ticketstation_tickets AS o ON o.ticketid = IF(c.parent > 0, c.parent, c.ticketid)
+			      LEFT JOIN #__ticketstation_events AS e ON e.eventid = a.eventid'
                 . SeatplanSettings::JOINS . '
-				  WHERE a.ordercode = '.(int)$this->ordercode;
+				  WHERE a.ordercode = '.(int)$this->ordercode . '
+				  ORDER BY a.orderid';
 
             $db->setQuery($sql);
             $this->data = $db->loadObjectList();

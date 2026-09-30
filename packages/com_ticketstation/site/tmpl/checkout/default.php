@@ -105,6 +105,17 @@ $requiredMark = '<span class="ts-required" aria-hidden="true">*</span>';
 
             <?php } ?>
 
+            <?php if ($this->captcha) {
+                $error = $this->errors['captcha'] ?? null; ?>
+                <div class="ts-field ts-field--captcha<?php echo $error ? ' ts-field--invalid' : ''; ?>">
+                    <?php echo $this->captcha; ?>
+
+                    <?php if ($error) { ?>
+                        <p class="ts-field__error" id="captcha-error"><?php echo htmlspecialchars($error, ENT_QUOTES, 'UTF-8'); ?></p>
+                    <?php } ?>
+                </div>
+            <?php } ?>
+
         </div>
 
         <div class="ts-actions">

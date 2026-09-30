@@ -124,12 +124,20 @@ if ($items == 0 && $waiters == 0) {
                     ## Within the ticket's minimum and maximum per order
                     $canDecrease = $quantity > max(1, (int) $row->min_qty);
                     $canIncrease = $row->max_qty == 0 || $quantity < (int) $row->max_qty;
+
+                    ## Back to the page the ticket was ordered on (the parent ticket's): the seat
+                    ## chart, e.g. to change a seat, or the ticket page.
+                    $owner     = (int) ($row->owner_ticketid ?? $row->ticketid);
+                    $ticketUrl = Route::_(((int) ($row->owner_seatplans ?? 0) === 1
+                        ? 'index.php?option=com_ticketstation&view=seatedevent&cid=' . $owner
+                        : 'index.php?option=com_ticketstation&view=event&id=' . $owner) . ($itemid ? '&Itemid=' . $itemid : ''));
+                    $ticketTip = Text::_((int) ($row->owner_seatplans ?? 0) === 1 ? 'COM_TICKETSTATION_CART_TO_SEATPLAN' : 'COM_TICKETSTATION_CART_TO_TICKETPAGE');
                     ?>
 
                     <tr class="ts-summary__item">
                         <td>
                             <span class="ts-summary__name">
-                                <?php echo $name; ?>
+                                <a class="ts-summary__link" href="<?php echo $ticketUrl; ?>" title="<?php echo $ticketTip; ?>"><?php echo $name; ?></a>
 
                                 <?php if ($line->seated) { ?>
                                     <?php echo ' - ' . Text::_('COM_TICKETSTATION_SEATNUMBER') . ': ' . htmlspecialchars($line->seat, ENT_QUOTES, 'UTF-8'); ?>

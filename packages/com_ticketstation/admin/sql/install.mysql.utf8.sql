@@ -195,6 +195,7 @@ CREATE TABLE IF NOT EXISTS `#__ticketstation_coupons` (
   `coupon_type` tinyint(1) NOT NULL DEFAULT '1',
   `coupon_discount` int(11) NOT NULL DEFAULT '0',
   `coupon_used` int(11) NOT NULL DEFAULT '0',
+  `coupon_tickets` varchar(2000) NOT NULL DEFAULT '',
   `published` tinyint(1) NOT NULL DEFAULT '1',
   PRIMARY KEY (`coupon_id`)
 )  ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 DEFAULT COLLATE=utf8mb4_unicode_ci;
@@ -286,6 +287,7 @@ CREATE TABLE IF NOT EXISTS `#__ticketstation_ordertotals` (
   `coupon` varchar(25) DEFAULT NULL,
   `discount_type` tinyint(1) DEFAULT NULL,
   `discount_amount` float DEFAULT NULL,
+  `coupon_tickets` text DEFAULT NULL,
   PRIMARY KEY (`ordercode`),
   KEY `coupon` (`coupon`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 DEFAULT COLLATE=utf8mb4_unicode_ci;

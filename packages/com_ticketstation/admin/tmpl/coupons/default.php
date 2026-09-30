@@ -65,7 +65,12 @@ $wa->registerAndUseStyle('ticketstation', Uri::base() . 'components\com_ticketst
                                 echo (new PublishedButton)->render((int) $row->published, $i, $options);
                                 ?>
                             </td>
-                            <td><a href="<?php echo $link; ?>"><?php echo $row->coupon_name; ?></a></td>
+                            <td>
+                                <a href="<?php echo $link; ?>"><?php echo $row->coupon_name; ?></a>
+                                <?php if (trim((string) ($row->coupon_tickets ?? '')) !== '') { ?>
+                                    <div class="small text-muted"><?php echo Text::plural('COM_TICKETSTATION_COUPON_TICKETS_N', count(array_filter(explode(',', $row->coupon_tickets)))); ?></div>
+                                <?php } ?>
+                            </td>
                             <td><?php echo $row->coupon_code; ?></td>
                             <td class="small d-none d-md-table-cell text-center">
                                 <?php if ($row->coupon_type == 1){

@@ -11,9 +11,9 @@ namespace Ticketstation\Component\Ticketstation\Site\View\Losttickets;
 
 defined('_JEXEC') or die;
 
-use Joomla\CMS\Captcha\Captcha;
 use Joomla\CMS\Factory;
 use Joomla\CMS\MVC\View\HtmlView as BaseHtmlView;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\SiteCaptcha;
 
 
 class HtmlView extends BaseHtmlView {
@@ -29,22 +29,9 @@ class HtmlView extends BaseHtmlView {
         $app = Factory::getApplication();
 
         $this->itemid  = $app->getInput()->getInt('Itemid', 0);
-        $this->captcha = '';
 
-        ## The site's default captcha (Global Configuration), when one is set.
-        $plugin = $app->get('captcha', '0');
-
-        if (!empty($plugin) && $plugin !== '0') {
-            try {
-                $captcha = Captcha::getInstance($plugin, ['namespace' => 'com_ticketstation.losttickets']);
-
-                if ($captcha !== null) {
-                    $this->captcha = $captcha->display('captcha', 'ts-losttickets-captcha', 'required');
-                }
-            } catch (\Throwable $e) {
-                $this->captcha = '';
-            }
-        }
+        ## The site's default captcha (Global Configuration), when one is set; not for staff.
+        $this->captcha = SiteCaptcha::display('losttickets');
 
         parent::display($tpl);
     }

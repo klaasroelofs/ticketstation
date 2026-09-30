@@ -19,12 +19,13 @@ defined('_JEXEC') or die('Restricted access');
 /**
  * Discount coupons.
  *
- * A coupon applies to a whole order, one coupon per order. Applying it stores its code and
- * terms (discount_type 1 = percentage, 0 = amount; discount_amount) with the order in
- * #__ticketstation_ordertotals (see OrderTotals::setCoupon()), so later edits of the coupon
- * don't change an order that already uses it. The discount itself is taken over the order
- * total (see discountFor()): a percentage of it, or the fixed amount, but never more than the
- * total.
+ * One coupon per order. Applying it stores its code and terms (discount_type 1 = percentage,
+ * 0 = amount; discount_amount; coupon_tickets) with the order in #__ticketstation_ordertotals
+ * (see OrderTotals::setCoupon()), so later edits of the coupon don't change an order that
+ * already uses it. A coupon counts for the whole order, or only for the tickets it is limited
+ * to (coupon_tickets; a parent ticket brings its child tickets, see expandTickets()). The
+ * discount itself is taken over the total of the tickets it counts for (see discountFor()): a
+ * percentage of it, or the fixed amount, but never more than that total.
  *
  * How often a coupon is used is not counted up anywhere: it is the number of orders that
  * carry its code and still have rows, whatever their status (see usage()). Just like a
@@ -82,6 +83,27 @@ class Coupon
             return false;
         }
 
+        // A coupon for certain tickets only: the cart must hold at least one of them.
+        $tickets = self::expandTickets((string) ($coupon->coupon_tickets ?? ''));
+
+        if ($tickets)
+        {
+            $query = $db->getQuery(true)
+                ->select('COUNT(*)')
+                ->from($db->quoteName('#__ticketstation_orders'))
+                ->where($db->quoteName('ordercode') . ' = ' . $ordercode)
+                ->whereIn($db->quoteName('ticketid'), $tickets);
+
+            $db->setQuery($query);
+
+            if ((int) $db->loadResult() === 0)
+            {
+                $app->enqueueMessage(Text::_('COM_TICKETSTATION_COUPON_NOT_FOR_CART'), 'error');
+
+                return false;
+            }
+        }
+
         if ($coupon->coupon_limit > 0 && self::usage($coupon->coupon_code) >= $coupon->coupon_limit)
         {
             $app->enqueueMessage(Text::_('COM_TICKETSTATION_COUPON_WAS_LIMITED'), 'error');
@@ -89,7 +111,7 @@ class Coupon
             return false;
         }
 
-        if (!OrderTotals::setCoupon($ordercode, $coupon->coupon_code, (int) $coupon->coupon_type, (float) $coupon->coupon_discount))
+        if (!OrderTotals::setCoupon($ordercode, $coupon->coupon_code, (int) $coupon->coupon_type, (float) $coupon->coupon_discount, implode(',', $tickets)))
         {
             return false;
         }
@@ -155,7 +177,7 @@ class Coupon
 
         $db    = Factory::getContainer()->get('DatabaseDriver');
         $query = $db->getQuery(true)
-            ->select(['orderid', 'price', 'vat_percentage'])
+            ->select(['orderid', 'ticketid', 'price', 'vat_percentage'])
             ->from($db->quoteName('#__ticketstation_orders'))
             ->where($db->quoteName('ordercode') . ' = ' . $ordercode)
             ->order($db->quoteName('orderid') . ' ASC');
@@ -163,14 +185,28 @@ class Coupon
         $db->setQuery($query);
         $rows = $db->loadObjectList();
 
-        $total    = array_sum(array_map(fn ($row) => (float) $row->price, $rows));
+        // Only the rows of the tickets the coupon counts for share in the discount; the others
+        // get none.
+        $tickets  = self::ticketIds($terms->coupon_tickets ?? '');
+        $counts   = fn ($row) => !$tickets || in_array((int) $row->ticketid, $tickets, true);
+        $eligible = array_values(array_filter($rows, $counts));
+
+        $total    = array_sum(array_map(fn ($row) => (float) $row->price, $eligible));
         $discount = self::discountFor($total, $terms->discount_type, $terms->discount_amount);
         $left     = $discount;
-        $last     = count($rows) - 1;
+        $last     = $eligible ? (int) end($eligible)->orderid : 0;
 
-        foreach ($rows as $i => $row)
+        foreach ($rows as $row)
         {
-            $share = $i === $last ? $left : ($total > 0 ? round($discount * (float) $row->price / $total, 2) : 0.0);
+            if (!$counts($row))
+            {
+                $share = 0.0;
+            }
+            else
+            {
+                $share = (int) $row->orderid === $last ? $left : ($total > 0 ? round($discount * (float) $row->price / $total, 2) : 0.0);
+            }
+
             $share = min(max($share, 0.0), (float) $row->price);
             $left  = round($left - $share, 2);
             $vat   = (new Amount)->calculateVatFromPrice((float) $row->price - $share, (float) $row->vat_percentage);
@@ -192,6 +228,47 @@ class Coupon
         }
 
         return true;
+    }
+
+    /**
+     * The ticket ids in a list as kept with a coupon or an order ("12,14"); empty for a coupon
+     * that counts for the whole order.
+     *
+     * @return  int[]
+     */
+    public static function ticketIds(?string $list): array
+    {
+        return array_values(array_unique(array_filter(array_map('intval', explode(',', (string) $list)))));
+    }
+
+    /**
+     * The tickets a coupon limited to these tickets counts for: the tickets themselves and the
+     * child tickets of any parent among them, as a seated or general-admission parent is sold
+     * through its child tickets.
+     *
+     * @return  int[]  empty for a coupon that counts for the whole order
+     */
+    public static function expandTickets(string $list): array
+    {
+        $ids = self::ticketIds($list);
+
+        if (!$ids)
+        {
+            return [];
+        }
+
+        $db    = Factory::getContainer()->get('DatabaseDriver');
+        $query = $db->getQuery(true)
+            ->select($db->quoteName('ticketid'))
+            ->from($db->quoteName('#__ticketstation_tickets'))
+            ->whereIn($db->quoteName('parent'), $ids);
+
+        $db->setQuery($query);
+
+        $all = array_merge($ids, array_map('intval', $db->loadColumn()));
+        sort($all);
+
+        return array_values(array_unique($all));
     }
 
     /**

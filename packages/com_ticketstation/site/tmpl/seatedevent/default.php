@@ -194,11 +194,28 @@ $bannerStyle = TicketstationFunctions::backgroundImageStyle('ticket' . (int) $th
 
         <section class="ts-card ts-panel ts-panel--chosen">
             <h2 class="ts-card__title"><?php echo rtrim(Text::_( 'COM_TICKETSTATION_CHOSEN_SEATS' ), ': '); ?></h2>
+            <?php
+            ## Only this chart's seats can be changed here; seats the customer chose on other
+            ## charts (another performance or hall) are listed below, with a link to their chart.
+            $ownSeats    = array_filter($this->seats, fn ($seat) => (int) $seat->owner === $chartOwner);
+            $otherCharts = [];
+
+            foreach ($this->seats as $seat) {
+                if ((int) $seat->owner === $chartOwner) {
+                    continue;
+                }
+
+                $otherCharts[(int) $seat->owner] ??= (object) [
+                    'name'  => trim($seat->eventname . ' - ' . $seat->owner_ticketname, ' -'),
+                    'date'  => $seat->owner_startdate,
+                    'seats' => [],
+                ];
+                $otherCharts[(int) $seat->owner]->seats[] = $seat->row_name . $seat->seatid;
+            }
+            ?>
             <div id="items" class="ts-chosen-seats">
 
-                <?php for ($i = 0, $n = count($this->seats); $i < $n; $i++ ){
-                    $row = $this->seats[$i];
-                    ?>
+                <?php foreach ($ownSeats as $row) { ?>
 
                     <div id="<?php echo $row->seat_sector; ?>" class="ts-chosen-seat">
                         <span class="ts-seat-chip" style="background-color:#<?php echo htmlspecialchars($row->background_color, ENT_QUOTES, 'UTF-8'); ?>; border-color:#<?php echo htmlspecialchars($row->border_color, ENT_QUOTES, 'UTF-8'); ?>; color:#<?php echo htmlspecialchars($row->font_color, ENT_QUOTES, 'UTF-8'); ?>;">
@@ -214,6 +231,23 @@ $bannerStyle = TicketstationFunctions::backgroundImageStyle('ticket' . (int) $th
             <div id="ticket-options" class="ts-seat-options">
                 <?php echo $seatHint; ?>
             </div>
+
+            <?php if ($otherCharts) { ?>
+                <div class="ts-other-seats">
+                    <p class="ts-other-seats__title"><?php echo Text::_('COM_TICKETSTATION_CHOSEN_SEATS_OTHER'); ?></p>
+                    <ul class="ts-other-seats__list">
+                        <?php foreach ($otherCharts as $owner => $chart) {
+                            natcasesort($chart->seats);
+                            $chartLink = Route::_('index.php?option=com_ticketstation&view=seatedevent&cid=' . $owner . ($itemid ? '&Itemid=' . $itemid : '')); ?>
+                            <li>
+                                <a href="<?php echo $chartLink; ?>"><?php echo htmlspecialchars($chart->name, ENT_QUOTES, 'UTF-8'); ?></a>
+                                <span class="ts-other-seats__date"><?php echo Date::long($chart->date, true); ?></span>
+                                <span class="ts-other-seats__seats"><?php echo Text::plural('COM_TICKETSTATION_CHOSEN_SEATS_N', count($chart->seats), htmlspecialchars(implode(', ', $chart->seats), ENT_QUOTES, 'UTF-8')); ?></span>
+                            </li>
+                        <?php } ?>
+                    </ul>
+                </div>
+            <?php } ?>
         </section>
 
     </div>

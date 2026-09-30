@@ -21,6 +21,7 @@ use Ticketstation\Component\Ticketstation\Administrator\Helper\Config;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\CustomerNote;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Order;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\SeatOrphans;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\SiteCaptcha;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Ticket;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\TicketstationFunctions;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\User;
@@ -132,6 +133,13 @@ class CheckoutController extends BaseController
         // Validating the form: on errors back to the form, which shows them next to the fields
         // and keeps what the customer typed.
         $errors = $this->validateForm($config);
+
+        // The site's default captcha, for guests only (SiteCaptcha). A wrong answer comes back
+        // like any other field error, so what the customer typed stays.
+        if (!SiteCaptcha::check('checkout'))
+        {
+            $errors[SiteCaptcha::FIELD] = Text::_('COM_TICKETSTATION_CAPTCHA_INCORRECT');
+        }
 
         if ($errors)
         {

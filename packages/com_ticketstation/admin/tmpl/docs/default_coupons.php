@@ -35,14 +35,14 @@ $bullets = function (string $prefix, int $count) {
         <details id="docs-coupons-setup" class="mb-3 border rounded p-3">
             <summary class="h5 mb-0"><span class="fa fa-plus-circle me-2" aria-hidden="true"></span><?= Text::_('COM_TICKETSTATION_COUPONS_DOCS_SETUP_TITLE') ?></summary>
             <div class="mt-3">
-                <?php $bullets('COM_TICKETSTATION_COUPONS_DOCS_SETUP_', 4); ?>
+                <?php $bullets('COM_TICKETSTATION_COUPONS_DOCS_SETUP_', 5); ?>
             </div>
         </details>
 
         <details id="docs-coupons-how" class="mb-3 border rounded p-3">
             <summary class="h5 mb-0"><span class="fa fa-calculator me-2" aria-hidden="true"></span><?= Text::_('COM_TICKETSTATION_COUPONS_DOCS_HOW_TITLE') ?></summary>
             <div class="mt-3">
-                <?php $bullets('COM_TICKETSTATION_COUPONS_DOCS_HOW_', 4); ?>
+                <?php $bullets('COM_TICKETSTATION_COUPONS_DOCS_HOW_', 5); ?>
             </div>
         </details>
 

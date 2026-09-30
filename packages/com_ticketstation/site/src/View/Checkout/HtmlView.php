@@ -18,6 +18,7 @@ use Joomla\CMS\MVC\View\HtmlView as BaseHtmlView;
 use Joomla\CMS\Router\Route;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Config;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\SeatOrphans;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\SiteCaptcha;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\TicketstationFunctions;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\User;
 use Ticketstation\Component\Ticketstation\Site\Controller\CheckoutController;
@@ -149,6 +150,9 @@ class HtmlView extends BaseHtmlView {
         $lists['country'] = HTMLHelper::_('select.genericlist',  $countrylist, 'country_id',
             'class="ts-select" required' . (isset($this->errors['country_id']) ? ' aria-invalid="true" aria-describedby="country_id-error"' : ''),
             'id', 'name', (int) $this->values['country_id']);
+
+        ## The site's default captcha (Global Configuration), when one is set; not for staff.
+        $this->captcha  = SiteCaptcha::display('checkout');
 
         $this->lists    = $lists;
         $this->data     = $data;

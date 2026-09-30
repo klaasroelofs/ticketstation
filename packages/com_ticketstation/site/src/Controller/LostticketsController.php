@@ -11,12 +11,12 @@ namespace Ticketstation\Component\Ticketstation\Site\Controller;
 
 defined('_JEXEC') or die;
 
-use Joomla\CMS\Captcha\Captcha;
 use Joomla\CMS\Factory;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\Mail\MailHelper;
 use Joomla\CMS\MVC\Controller\BaseController;
 use Joomla\CMS\Router\Route;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\SiteCaptcha;
 
 /**
  * Ticketstation Losttickets Controller: the form on the "Lost tickets" page.
@@ -44,7 +44,7 @@ class LostticketsController extends BaseController
             return;
         }
 
-        if (!$this->checkCaptcha())
+        if (!SiteCaptcha::check('losttickets'))
         {
             $app->enqueueMessage(Text::_('COM_TICKETSTATION_CAPTCHA_INCORRECT'), 'error');
             $this->setRedirect($back);
@@ -67,29 +67,5 @@ class LostticketsController extends BaseController
 
         $app->enqueueMessage(Text::sprintf('COM_TICKETSTATION_LOSTTICKETS_SENT', htmlspecialchars($email, ENT_QUOTES, 'UTF-8')), 'message');
         $this->setRedirect($back);
-    }
-
-    /**
-     * Checks the site's default captcha (Global Configuration), when one is set.
-     */
-    private function checkCaptcha(): bool
-    {
-        $plugin = Factory::getApplication()->get('captcha', '0');
-
-        if (empty($plugin) || $plugin === '0')
-        {
-            return true;
-        }
-
-        try
-        {
-            $captcha = Captcha::getInstance($plugin, ['namespace' => 'com_ticketstation.losttickets']);
-
-            return $captcha === null || $captcha->checkAnswer($this->input->post->getString('captcha', ''));
-        }
-        catch (\Throwable $e)
-        {
-            return false;
-        }
     }
 }

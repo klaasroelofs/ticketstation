@@ -60,6 +60,9 @@ class CouponController extends FormController
         // Customers' input is compared in capitals (Coupon::check()), so store the code that way.
         $data['coupon_code'] = strtoupper(trim((string) ($data['coupon_code'] ?? '')));
 
+        // The tickets the coupon is limited to, as a list of ids; none selected = the whole order.
+        $data['coupon_tickets'] = implode(',', array_unique(array_filter(array_map('intval', (array) ($data['coupon_tickets'] ?? [])))));
+
         $coupon_name  = $data['coupon_name'];
         $coupon_id  = $data['coupon_id'];
         $couponcode = $data['coupon_code'];

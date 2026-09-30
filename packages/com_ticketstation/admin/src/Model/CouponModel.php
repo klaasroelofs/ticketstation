@@ -76,6 +76,16 @@ class CouponModel extends AdminModel
             }
         }
 
+        // The multiple select wants the tickets as a list, the table keeps them as "1,2,3".
+        if (is_object($data) && isset($data->coupon_tickets) && is_string($data->coupon_tickets))
+        {
+            $data->coupon_tickets = array_filter(explode(',', $data->coupon_tickets));
+        }
+        elseif (is_array($data) && isset($data['coupon_tickets']) && is_string($data['coupon_tickets']))
+        {
+            $data['coupon_tickets'] = array_filter(explode(',', $data['coupon_tickets']));
+        }
+
         $this->preprocessData('com_ticketstation.coupon', $data);
 
         return $data;

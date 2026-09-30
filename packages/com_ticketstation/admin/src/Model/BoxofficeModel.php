@@ -577,7 +577,22 @@ class BoxofficeModel extends ListModel
             // What the customer pays, worked out as OrderTotals::get() does it.
             $row->coupon = (string) ($kept->coupon ?? '');
             $tickets     = round((float) $row->tickets_amount, 2);
-            $discount    = $row->coupon !== '' ? Coupon::discountFor($tickets, $kept->discount_type, $kept->discount_amount) : 0.0;
+
+            // A coupon for certain tickets only: its discount over those tickets (rare, so one
+            // extra look-up per such order).
+            if ($row->coupon === '')
+            {
+                $discount = 0.0;
+            }
+            elseif (Coupon::ticketIds($kept->coupon_tickets ?? ''))
+            {
+                $discount = OrderTotals::get($code)->discount;
+            }
+            else
+            {
+                $discount = Coupon::discountFor($tickets, $kept->discount_type, $kept->discount_amount);
+            }
+
             $subtotal    = round($tickets - $discount, 2);
             $total       = round($subtotal + OrderTotals::feesFor($subtotal, $terms), 2);
 
@@ -1003,7 +1018,7 @@ class BoxofficeModel extends ListModel
     {
         $db    = Factory::getContainer()->get('DatabaseDriver');
         $query = $db->getQuery(true)
-            ->select($db->quoteName(['ordercode', 'fee_type', 'fee_rate', 'coupon', 'discount_type', 'discount_amount']))
+            ->select($db->quoteName(['ordercode', 'fee_type', 'fee_rate', 'coupon', 'discount_type', 'discount_amount', 'coupon_tickets']))
             ->from($db->quoteName('#__ticketstation_ordertotals'))
             ->whereIn($db->quoteName('ordercode'), $codes, ParameterType::STRING);
 

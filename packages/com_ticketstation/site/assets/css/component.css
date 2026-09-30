@@ -1268,6 +1268,48 @@
     margin: 0 0 .75rem;
 }
 
+/* Seats chosen on other charts: read-only, with a link to their chart */
+.ticketstation .ts-other-seats {
+    margin: 1rem 0 0;
+    padding: 1rem 0 0;
+    font-size: .875rem;
+    border-top: 1px dashed var(--ts-border-strong);
+}
+
+.ticketstation .ts-other-seats__title {
+    margin: 0 0 .5rem;
+    font-weight: 600;
+}
+
+.ticketstation .ts-other-seats__list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.ticketstation .ts-other-seats__list li + li {
+    margin-top: .5rem;
+}
+
+.ticketstation .ts-other-seats__date,
+.ticketstation .ts-other-seats__seats {
+    display: block;
+    color: var(--ts-muted);
+}
+
+/* Cart: the ticket name leads back to its ticket page or seat chart */
+.ticketstation .ts-summary__link {
+    color: inherit;
+    text-decoration: underline;
+    text-decoration-color: var(--ts-border-strong);
+    text-underline-offset: .2em;
+}
+
+.ticketstation .ts-summary__link:hover,
+.ticketstation .ts-summary__link:focus-visible {
+    text-decoration-color: currentColor;
+}
+
 .ticketstation .ts-seatmap {
     padding: 0 0 1rem;
 }

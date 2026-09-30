@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<form>
+<form addfieldprefix="Ticketstation\Component\Ticketstation\Administrator\Field">
     <fieldset name="details">
 
         <field
@@ -53,6 +53,16 @@
                 label="COM_TICKETSTATION_COUPON_DISCOUNT"
                 description="COM_TICKETSTATION_COUPON_DISCOUNT_DESC"
                 class="form-control"
+        />
+
+        <field
+                name="coupon_tickets"
+                type="tickets"
+                label="COM_TICKETSTATION_COUPON_TICKETS"
+                description="COM_TICKETSTATION_COUPON_TICKETS_DESC"
+                layout="joomla.form.field.groupedlist-fancy-select"
+                multiple="true"
+                hint="COM_TICKETSTATION_COUPON_TICKETS_ALL"
         />
 
     </fieldset>

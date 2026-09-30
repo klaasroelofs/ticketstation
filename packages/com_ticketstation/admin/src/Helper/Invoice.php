@@ -271,7 +271,8 @@ class Invoice
             $row->vat_percentage     = $item->vat_percentage;
             $row->discount           = $item->discount;
             $row->netto_ticketprice  = $item->netto_ticketprice;
-            $row->couponcode         = $invoice->coupon_code;
+            // Only on the lines that got the discount: a coupon can be limited to certain tickets.
+            $row->couponcode         = (float) $item->discount > 0 ? $invoice->coupon_code : null;
 
             $db->insertObject('#__ticketstation_invoice_items', $row);
         }
