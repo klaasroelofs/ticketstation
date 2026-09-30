@@ -119,7 +119,16 @@ $backgroundStyle = [TicketstationFunctions::class, 'backgroundImageStyle'];
 
                             // Over all published variants (child tickets) and following their counter
                             // settings; for seated tickets the free seats on the chart.
-                            $available_tickets = Availability::forListing((int) $row->ticketid);
+                            $availability      = Availability::summary((int) $row->ticketid);
+                            $available_tickets = $availability->available;
+
+                            // The badge colour follows the share still available, with the same
+                            // thresholds as the availability bar in the event view.
+                            $percentage_available = ($availability->capacity > 0)
+                                ? round((($available_tickets / $availability->capacity) * 100), 0)
+                                : 0;
+                            $availability_badge = $percentage_available < 11 ? 'ts-badge--critical'
+                                : ($percentage_available < 26 ? 'ts-badge--few' : 'ts-badge--available');
 
                             // A sold-out ticket stays clickable when the waiting list is on, so the
                             // customer can reach the event page to join it. Seated tickets are excluded:
@@ -191,7 +200,7 @@ $backgroundStyle = [TicketstationFunctions::class, 'backgroundImageStyle'];
                                                     <span class="ts-badge ts-badge--waitinglist"><?= Text::_( 'COM_TICKETSTATION_WAITINGLIST_AVAILABLE' ); ?></span>
                                                 <?php } ?>
                                             <?php } else { ?>
-                                                <span class="ts-badge <?= $available_tickets < 50 ? 'ts-badge--few' : 'ts-badge--available'; ?>"><?= Text::_( 'COM_TICKETSTATION_PLACES_LEFT' ); ?> <?= $available_tickets; ?></span>
+                                                <span class="ts-badge <?= $availability_badge; ?>"><?= Text::_( 'COM_TICKETSTATION_PLACES_LEFT' ); ?> <?= $available_tickets; ?></span>
                                             <?php } ?>
                                         </div>
                                     <?php } ?>

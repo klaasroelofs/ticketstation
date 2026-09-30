@@ -640,6 +640,7 @@
     background: var(--ts-warning-bg);
 }
 
+.ticketstation .ts-badge--critical,
 .ticketstation .ts-badge--soldout {
     color: var(--ts-danger);
     background: var(--ts-danger-bg);

@@ -30,16 +30,9 @@ class Availability
 {
     /**
      * Tickets available for a top-level ticket as a whole, as shown in the upcoming-events
-     * list: for a parent with child tickets, the total over all its published variants.
-     */
-    public static function forListing(int $ticketid): int
-    {
-        return self::summary($ticketid)->available;
-    }
-
-    /**
-     * Tickets available for a top-level ticket as a whole (see forListing()) together with
-     * the capacity they are part of, for the availability bar: {available, capacity}. With
+     * list (for a parent with child tickets, the total over all its published variants),
+     * together with the capacity they are part of, for the availability bar and the
+     * badge's colour: {available, capacity}. With
      * a capacity per child ticket, both are the sums over the published children; for a
      * seated ticket, the seats.
      */
