@@ -248,6 +248,15 @@ class Refund
     }
 
     /**
+     * A status, method or other value from Mollie as a plain string. Since version 4 of Mollie's
+     * library such fields hold an enum case for the values it knows and a string for the rest.
+     */
+    public static function mollieValue($value): string
+    {
+        return $value instanceof \BackedEnum ? (string) $value->value : (string) $value;
+    }
+
+    /**
      * Refunds (part of) a paid order and records what happens to its tickets. With a Mollie
      * payment the refund is made at Mollie; nothing is stored when Mollie refuses it. The tickets
      * only change once the refund can't be cancelled any more (see FINAL): usually a day later,
@@ -311,13 +320,13 @@ class Refund
                     'description' => $description,
                     'metadata'    => ['source' => 'ticketstation', 'ordercode' => $ordercode],
                 ]);
-            } catch (\Mollie\Api\Exceptions\ApiException $e) {
+            } catch (\Mollie\Api\Exceptions\MollieException $e) {
                 throw new \RuntimeException(Text::sprintf('COM_TICKETSTATION_REFUND_ERROR_MOLLIE', $e->getPlainMessage()));
             }
 
             $refund->mollie_id = $mollieRefund->id;
             $refund->currency  = $currency;
-            $refund->status    = (string) $mollieRefund->status;
+            $refund->status    = self::mollieValue($mollieRefund->status);
         } else {
             $remaining = round(self::paidAmount($ordercode) - self::refundedAmount($ordercode), 2);
 
@@ -603,7 +612,7 @@ class Refund
 
         foreach ($payment->refunds() as $refund) {
             $new += self::report($ordercode, $payment->id, 'refund', $refund->id, (float) $refund->amount->value, $refund->amount->currency,
-                (string) $refund->description, (string) $refund->status, (string) $refund->createdAt,
+                (string) $refund->description, self::mollieValue($refund->status), (string) $refund->createdAt,
                 isset($refund->metadata->source) && $refund->metadata->source === 'ticketstation');
         }
 
@@ -634,7 +643,7 @@ class Refund
 
         try {
             return self::syncFromMollie($ordercode, self::mollieClient()->payments->get($paymentId));
-        } catch (\Mollie\Api\Exceptions\ApiException $e) {
+        } catch (\Mollie\Api\Exceptions\MollieException $e) {
             throw new \RuntimeException(Text::sprintf('COM_TICKETSTATION_REFUND_ERROR_MOLLIE', $e->getPlainMessage()));
         }
     }
@@ -670,7 +679,7 @@ class Refund
 
             foreach ($mollie->refunds->page(null, 50) as $refund) {
                 $found[] = ['refund', $refund->paymentId, $refund->id, (float) $refund->amount->value, $refund->amount->currency,
-                    (string) $refund->description, (string) $refund->status, (string) $refund->createdAt,
+                    (string) $refund->description, self::mollieValue($refund->status), (string) $refund->createdAt,
                     isset($refund->metadata->source) && $refund->metadata->source === 'ticketstation'];
             }
 

@@ -179,7 +179,7 @@ class PaymentController extends BaseController
                         "order_id"      => $this->ordercode,
                     ),
                 ));
-            } catch (\Mollie\Api\Exceptions\ApiException $e) {
+            } catch (\Mollie\Api\Exceptions\MollieException $e) {
                 $this->log('Mollie API error while creating payment: ' . $e->getMessage());
                 exit(Text::_('COM_TICKETSTATION_MOLLIE_ERROR_1000'));
             }
@@ -360,7 +360,7 @@ class PaymentController extends BaseController
 
         try {
             $payment = $mollie->payments->get($response['id']);
-        } catch (\Mollie\Api\Exceptions\ApiException $e) {
+        } catch (\Mollie\Api\Exceptions\MollieException $e) {
             $this->log('Mollie API error while fetching payment: ' . $e->getMessage());
             exit('Unable to retrieve payment from Mollie.');
         }
@@ -429,7 +429,7 @@ class PaymentController extends BaseController
                 $payment_state = $newPayment->updateOrder();
 
                 ## Insert transaction details:
-                $newPayment->saveTransaction($order_id, $tmpTransaction->userid, $payment_details, $paid_price, ucfirst($payment->method));
+                $newPayment->saveTransaction($order_id, $tmpTransaction->userid, $payment_details, $paid_price, ucfirst(Refund::mollieValue($payment->method)));
 
                 ## if state is true, create the tickets:
                 if ($payment_state == true) {

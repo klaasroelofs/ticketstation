@@ -96,7 +96,7 @@ class MolliePaymentMethods
             // Apple Pay is only listed when asked for explicitly.
             $active = [];
 
-            foreach ($mollie->methods->allActive(['includeWallets' => 'applepay']) as $method) {
+            foreach ($mollie->methods->allEnabled(['includeWallets' => ['applepay']]) as $method) {
                 $active[] = $method->id;
             }
 

@@ -16,8 +16,6 @@ use Joomla\CMS\HTML\HTMLHelper;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\View\HtmlView as BaseHtmlView;
 use Joomla\CMS\Router\Route;
-use Mollie\Api\MollieApiClient;
-use Mollie\Api\Types\PaymentMethod;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Config;
 
 
