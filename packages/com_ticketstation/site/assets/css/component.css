@@ -1164,6 +1164,21 @@
     margin: 0;
 }
 
+/* "More about this" under the instruction examples: closed by default to save space. */
+.ticketstation .ts-more {
+    margin: 0 0 .75rem;
+    font-size: .875rem;
+}
+
+.ticketstation .ts-more summary {
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.ticketstation .ts-more p {
+    margin: .375rem 0 0;
+}
+
 .ticketstation .ts-seat-example__row {
     display: flex;
     gap: 2px;

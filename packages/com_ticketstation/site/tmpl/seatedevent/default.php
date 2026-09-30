@@ -178,6 +178,13 @@ $bannerStyle = TicketstationFunctions::backgroundImageStyle('ticket' . (int) $th
                 <?php } ?>
             </div>
 
+            <?php if ($preventOrphans) { ?>
+                <details class="ts-more">
+                    <summary><?php echo Text::_('COM_TICKETSTATION_SEAT_INSTRUCTION_MORE'); ?></summary>
+                    <p><?php echo Text::_('COM_TICKETSTATION_SEAT_INSTRUCTION_DETAILS'); ?></p>
+                </details>
+            <?php } ?>
+
             <ul class="ts-seat-legend" aria-label="<?php echo Text::_('COM_TICKETSTATION_SEAT_LEGEND'); ?>">
                 <li><span class="ts-seat-swatch" style="<?php echo $freeStyle; ?>" aria-hidden="true"></span><?php echo Text::_('COM_TICKETSTATION_SEAT_FREE'); ?></li>
                 <li><span class="ts-seat-swatch seat-element--taken" style="<?php echo $takenStyle; ?>" aria-hidden="true"></span><?php echo Text::_('COM_TICKETSTATION_SEAT_TAKEN'); ?></li>
