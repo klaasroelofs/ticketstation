@@ -13,7 +13,7 @@ defined('_JEXEC') or die;
 
 use Endroid\QrCode\Bacon\MatrixFactory;
 use Endroid\QrCode\Encoding\Encoding;
-use Endroid\QrCode\ErrorCorrectionLevel\ErrorCorrectionLevelLow;
+use Endroid\QrCode\ErrorCorrectionLevel;
 use Endroid\QrCode\QrCode;
 
 /**
@@ -71,7 +71,7 @@ class TicketLayoutFields
 
         foreach (self::FONT_FILES as $family => $files) {
             foreach ($files as $style => $file) {
-                $metrics[$family][$style] = self::widths(__DIR__ . '/PDF/font/' . $file . '.php');
+                $metrics[$family][$style] = self::widths(Pdf::fontFile($file));
             }
         }
 
@@ -87,11 +87,13 @@ class TicketLayoutFields
      */
     public static function sampleQr(): array
     {
-        require_once JPATH_ADMINISTRATOR . '/components/com_ticketstation/autoloader.php';
+        require_once JPATH_SITE . '/components/com_ticketstation/vendor/autoload.php';
 
-        $qrCode = QrCode::create(md5('Ticketstation'))
-            ->setEncoding(new Encoding('UTF-8'))
-            ->setErrorCorrectionLevel(new ErrorCorrectionLevelLow());
+        $qrCode = new QrCode(
+            data: md5('Ticketstation'),
+            encoding: new Encoding('UTF-8'),
+            errorCorrectionLevel: ErrorCorrectionLevel::Low
+        );
 
         $matrix = (new MatrixFactory())->create($qrCode);
         $count  = $matrix->getBlockCount();
@@ -118,15 +120,11 @@ class TicketLayoutFields
             return $widths;
         }
 
-        ## The font file defines $cw (and more) in the scope that includes it.
-        $cw = (static function (string $path) {
-            include $path;
+        ## FPDF's JSON font definition: cw holds the width of every byte, 0 to 255.
+        $font = json_decode((string) file_get_contents($path), true);
 
-            return $cw ?? [];
-        })($path);
-
-        foreach ($cw as $char => $width) {
-            $widths[ord((string) $char)] = (int) $width;
+        foreach ($font['cw'] ?? [] as $byte => $width) {
+            $widths[(int) $byte] = (int) $width;
         }
 
         return $widths;

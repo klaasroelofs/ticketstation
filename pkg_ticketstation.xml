@@ -3,16 +3,23 @@
 
 	<name>Ticketstation</name>
 	<packagename>ticketstation</packagename>
+	<!-- Joomla takes the element from packagename; tools such as the JED Checker read it here. -->
+	<element>pkg_ticketstation</element>
 	<creationDate>2026-09-30</creationDate>
 	<author>Klaas Roelofs</author>
 	<authorEmail>klaasroelofs@huibuuke.nl</authorEmail>
 	<authorUrl>https://www.huibuuke.nl</authorUrl>
 	<copyright>© 2026 Klaas Roelofs</copyright>
 	<license>GPL v3</license>
-	<version>2.10.0-rc1</version>
-	<description>Ticketstation for Joomla: the Ticketstation component and the Ticketstation Basket module in one package.</description>
+	<version>2.10.0-rc2</version>
+	<description>PKG_TICKETSTATION_XML_DESCRIPTION</description>
 
 	<scriptfile>pkg_script.php</scriptfile>
+
+	<languages folder="language">
+		<language tag="en-GB">en-GB/pkg_ticketstation.sys.ini</language>
+		<language tag="nl-NL">nl-NL/pkg_ticketstation.sys.ini</language>
+	</languages>
 
 	<files folder="packages">
 		<file type="component" id="com_ticketstation">com_ticketstation.zip</file>

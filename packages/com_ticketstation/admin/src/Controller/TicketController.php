@@ -18,6 +18,7 @@ use Joomla\CMS\MVC\Controller\FormController;
 use Joomla\CMS\Uri\Uri;
 use Ticketstation\Component\Ticketstation\Administrator\Controller\Mixin\RegisterControllerTasks;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\DefaultTicketLayout;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\Pdf;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\TicketDesign;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\TicketPreviewCreator;
 use Joomla\CMS\Application\CMSApplication;
@@ -279,9 +280,7 @@ class TicketController extends FormController
 
         $orientation = ($data['ticket_orientation'] ?? '') === 'L' ? 'L' : 'P';
 
-        require_once JPATH_ADMINISTRATOR . '/components/com_ticketstation/src/Helper/PDF/FPDI_EAN13.php';
-
-        $pdf = new \setasign\Fpdi\FPDI_EAN13();
+        $pdf = new Pdf();
         $pdf->AddPage($orientation, $size);
 
         $defaults = null;

@@ -100,6 +100,12 @@ try {
     $mollieDir = Join-Path $comStage 'site\vendor\mollie\mollie-api-php'
     Remove-Item (Join-Path $mollieDir 'examples') -Recurse -Force -ErrorAction SilentlyContinue
     Remove-Item (Join-Path $mollieDir 'phpstan.neon'), (Join-Path $mollieDir 'phpstan-baseline.neon'), (Join-Path $mollieDir '.php-cs-fixer.dist.php') -ErrorAction SilentlyContinue
+    # The same for FPDF's tutorials, documentation and font converter (tutorial\makefont.php even
+    # writes files); only fpdf.php and its core fonts are used.
+    $fpdfDir = Join-Path $comStage 'site\vendor\setasign\fpdf'
+    foreach ($dir in 'tutorial', 'doc', 'makefont') {
+        Remove-Item (Join-Path $fpdfDir $dir) -Recurse -Force -ErrorAction SilentlyContinue
+    }
     $comVersion = Get-ManifestVersion (Join-Path $comStage 'ticketstation.xml')
     New-Zip $comStage (Join-Path $pkgRoot 'packages\com_ticketstation.zip')
 
@@ -111,6 +117,7 @@ try {
 
     # Package
     Copy-Item (Join-Path $RepoRoot 'pkg_ticketstation.xml'), (Join-Path $RepoRoot 'pkg_script.php') $pkgRoot
+    Copy-Tree (Join-Path $RepoRoot 'language') (Join-Path $pkgRoot 'language')
     $pkgManifest = Get-Manifest (Join-Path $pkgRoot 'pkg_ticketstation.xml')
     $pkgVersion  = $pkgManifest.SelectSingleNode('/extension/version').InnerText
 
@@ -128,7 +135,14 @@ try {
     # Update feed
     $sha256      = (Get-FileHash -LiteralPath $out -Algorithm SHA256).Hash.ToLower()
     $name        = Escape-Xml $pkgManifest.SelectSingleNode('/extension/name').InnerText
-    $description = Escape-Xml $pkgManifest.SelectSingleNode('/extension/description').InnerText
+    $description = $pkgManifest.SelectSingleNode('/extension/description').InnerText
+    # The manifest has a language key there; the feed gets its English text.
+    $sysIni = Join-Path $RepoRoot 'language\en-GB\pkg_ticketstation.sys.ini'
+    $line   = Select-String -LiteralPath $sysIni -Pattern ('^' + [regex]::Escape($description) + '="(.*)"$') | Select-Object -First 1
+    if ($line) {
+        $description = $line.Matches[0].Groups[1].Value
+    }
+    $description = Escape-Xml $description
     $releaseUrl  = "https://github.com/$GitHubRepo/releases/tag/v$pkgVersion"
     $downloadUrl = "https://github.com/$GitHubRepo/releases/download/v$pkgVersion/$zipName"
     # Joomla only offers an update whose stability tag meets the site's Minimum Extension

@@ -36,7 +36,7 @@ jobs:
           }
           "VERSION=$version" >> $env:GITHUB_ENV
 
-      - name: Install the Mollie library into site/vendor
+      - name: Install the libraries (Mollie, FPDF/FPDI, QR code) into site/vendor
         working-directory: packages/com_ticketstation/site
         run: composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader
 

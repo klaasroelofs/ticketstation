@@ -14,8 +14,8 @@ defined('_JEXEC') or die('Restricted access');
 /**
  * The fonts a ticket's text can be printed in (the "Font" setting on the Ticket Layout tab).
  *
- * Each key is also the FPDF family name, with its definition in PDF/font/ (<key>.php and
- * <key>b.php for bold). Helvetica, Times and Courier are the PDF standard fonts that every
+ * Each key is also the FPDF family name, with its definition in <key>.json and <key>b.json
+ * for bold (see Pdf::fontFile()). Helvetica, Times and Courier are the PDF standard fonts that every
  * PDF reader has built in, so nothing is embedded; Raleway and Open Sans are embedded.
  *
  * @since  2.6.6

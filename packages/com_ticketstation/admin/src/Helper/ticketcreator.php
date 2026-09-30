@@ -11,10 +11,9 @@ namespace Ticketstation\Component\Ticketstation\Administrator\Helper;
 
 use Endroid\QrCode\Color\Color;
 use Endroid\QrCode\Encoding\Encoding;
-use Endroid\QrCode\ErrorCorrectionLevel\ErrorCorrectionLevelLow;
+use Endroid\QrCode\ErrorCorrectionLevel;
 use Endroid\QrCode\QrCode;
-use Endroid\QrCode\RoundBlockSizeMode\RoundBlockSizeModeEnlarge;
-use Endroid\QrCode\RoundBlockSizeMode\RoundBlockSizeModeMargin;
+use Endroid\QrCode\RoundBlockSizeMode;
 use Endroid\QrCode\Writer\PngWriter;
 use Endroid\QrCode\Writer\SvgWriter;
 use Joomla\CMS\Factory;
@@ -22,12 +21,9 @@ use Joomla\CMS\Factory;
 use Joomla\Filesystem\File;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\Uri\Uri;
-use setasign\Fpdi\FPDI_EAN13;
-
 
 defined('_JEXEC') or die;
 
-require_once (JPATH_COMPONENT . '/autoloader.php');
 
 class ticketcreator
 {
@@ -151,9 +147,7 @@ class ticketcreator
             $ticket_size = explode(",", '148,210');
         }
 
-        require_once __DIR__ . '/PDF/FPDI_EAN13.php';
-
-        $pdf = new FPDI_EAN13();
+        $pdf = new Pdf();
 
         ## A ticket is exactly one page with fixed positions. Without this, FPDF starts a new page
         ## as soon as a field is written in the bottom 2 cm (or below the ticket), and every field
@@ -586,6 +580,7 @@ class ticketcreator
 
         function get_qr_image_with_logo($barcode, $qr_width, $destinationpath='', $filetype = 'PNG')
         {
+            require_once JPATH_SITE . '/components/com_ticketstation/vendor/autoload.php';
 
             if ($destinationpath == '') {
                 $destinationpath = JPATH_ADMINISTRATOR . '/components/com_ticketstation/assets/cache/' . $barcode . '.png';
@@ -597,20 +592,16 @@ class ticketcreator
                 $writer = new PngWriter();
             }
 
-            // Create QR code
-            $qrCode = QrCode::create($barcode)
-                ->setEncoding(new Encoding('UTF-8'))
-                //->setErrorCorrectionLevel(new ErrorCorrectionLevelHigh())
-                //->setErrorCorrectionLevel(new ErrorCorrectionLevelQuartile())
-                //->setErrorCorrectionLevel(new ErrorCorrectionLevelMedium())
-                ->setErrorCorrectionLevel(new ErrorCorrectionLevelLow())
-                ->setSize($qr_width)
-                ->setMargin(0)
-                ->setRoundBlockSizeMode(new RoundBlockSizeModeMargin())
-                //->setRoundBlockSizeMode(new RoundBlockSizeModeEnlarge())
-                //->setRoundBlockSizeMode(new RoundBlockSizeModeNone())
-                ->setForegroundColor(new Color(0, 0, 0))
-                ->setBackgroundColor(new Color(255, 255, 255));
+            $qrCode = new QrCode(
+                data: (string) $barcode,
+                encoding: new Encoding('UTF-8'),
+                errorCorrectionLevel: ErrorCorrectionLevel::Low,
+                size: (int) $qr_width,
+                margin: 0,
+                roundBlockSizeMode: RoundBlockSizeMode::Margin,
+                foregroundColor: new Color(0, 0, 0),
+                backgroundColor: new Color(255, 255, 255)
+            );
 
             $result = $writer->write($qrCode);
 

@@ -12,11 +12,9 @@ namespace Ticketstation\Component\Ticketstation\Administrator\Helper;
 use Joomla\CMS\Factory;
 use Joomla\Filesystem\File;
 use Joomla\CMS\Language\Text;
-use setasign\Fpdi\FPDI_EAN13;
 
 defined('_JEXEC') or die;
 
-require_once (JPATH_COMPONENT . '/autoloader.php');
 
 /**
  * Renders an in-memory preview PDF for the "Ticket Layout" tab.
@@ -57,9 +55,7 @@ class TicketPreviewCreator
         $orientation = ($data['ticket_orientation'] ?? '') ?: 'P';
         $this->font  = TicketFont::family($data['ticket_font'] ?? null);
 
-        require_once __DIR__ . '/PDF/FPDI_EAN13.php';
-
-        $pdf = new FPDI_EAN13();
+        $pdf = new Pdf();
         ## One page with fixed positions, same as ticketcreator::doPDF()
         $pdf->SetAutoPageBreak(false);
         $pdf->AddPage($orientation, $ticket_size);

@@ -5,7 +5,10 @@
   "license": "GPL-3.0-or-later",
   "require": {
     "php": ">=8.3",
-    "mollie/mollie-api-php": "2.63.0"
+    "endroid/qr-code": "^6.0",
+    "mollie/mollie-api-php": "2.63.0",
+    "setasign/fpdf": "^1.8.6",
+    "setasign/fpdi": "^2.6.7"
   },
   "config": {
     "optimize-autoloader": true,

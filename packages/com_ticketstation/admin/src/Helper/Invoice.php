@@ -16,7 +16,6 @@ use Joomla\CMS\Factory;
 use Joomla\Filesystem\File;
 use Joomla\Filesystem\Folder;
 use Joomla\CMS\Language\Text;
-use setasign\Fpdi\FPDF;
 use stdClass;
 
 defined('_JEXEC') or die('Restricted access');
@@ -344,13 +343,7 @@ class Invoice
         $font_name = 'helvetica';
         $font_size = 9;
 
-        // Every other consumer of the vendored setasign/fpdi classes in this component
-        // require_once's the file directly (see SendTicketCopy.php, ticketcreator.php,
-        // SendonPayment.php) rather than relying on Composer's autoloader alone - it isn't
-        // reliably registered for setasign\Fpdi\* in every controller/task dispatch context.
-        require_once __DIR__ . '/PDF/FPDF.php';
-
-        $pdf = new FPDF('P', 'mm', 'A4');
+        $pdf = new Pdf('P', 'mm', 'A4');
         $pdf->AddPage();
         $pdf->SetFont($font_name, '', $font_size);
         $pdf->SetTextColor(0, 0, 0);

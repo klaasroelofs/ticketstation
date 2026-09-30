@@ -14,7 +14,6 @@ use Joomla\Filesystem\File;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\Uri\Uri;
 use stdClass;
-use setasign\Fpdi\FPDI_EAN13;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\eTicketsMessage;
 
 defined('_JEXEC') or die;
@@ -46,9 +45,7 @@ class SendTicketCopy
             $width = 148;
         }
 
-        require_once __DIR__ . '/PDF/FPDI_EAN13.php';
-
-        $pdf = new FPDI_EAN13();
+        $pdf = new Pdf();
 
         $foutn = JPATH_ADMINISTRATOR . '/components/com_ticketstation/tickets/eTickets-'.$initrow->ordercode.'.pdf';
 

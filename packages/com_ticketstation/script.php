@@ -45,6 +45,9 @@ class com_ticketstationInstallerScript extends InstallerScript
         '/administrator/components/com_ticketstation/assets/css/seatchart.css',
         // Unused payment helper; payments go through PaymentAPI.
         '/administrator/components/com_ticketstation/src/Helper/Payment.php',
+        // Own class loader for the libraries below; Composer's autoloader in site/vendor since 2.10.0.
+        '/administrator/components/com_ticketstation/autoloader.php',
+        '/components/com_ticketstation/autoloader.php',
     ];
 
     protected $deleteFolders = [
@@ -54,6 +57,13 @@ class com_ticketstationInstallerScript extends InstallerScript
         '/administrator/components/com_ticketstation/tmpl/seatplansettings',
         '/components/com_ticketstation/src/View/Statistics',
         '/components/com_ticketstation/tmpl/statistics',
+        // Copies of FPDF/FPDI and the QR code libraries (FPDI 2.5.0 had known security issues);
+        // they come through Composer in site/vendor since 2.10.0, the fonts in admin/assets/fonts/pdf.
+        '/administrator/components/com_ticketstation/src/Helper/PDF',
+        '/administrator/components/com_ticketstation/src/Helper/BaconQrCode',
+        '/administrator/components/com_ticketstation/src/Helper/DASPRiD',
+        '/administrator/components/com_ticketstation/src/Helper/Endroid',
+        '/administrator/components/com_ticketstation/src/Helper/cache',
     ];
 
     public function postflight($type, $parent)

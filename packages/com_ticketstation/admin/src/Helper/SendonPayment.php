@@ -12,7 +12,6 @@ namespace Ticketstation\Component\Ticketstation\Administrator\Helper;
 use Joomla\CMS\Factory;
 use Joomla\Filesystem\File;
 use Joomla\CMS\Language\Text;
-use setasign\Fpdi\FPDI_EAN13;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\eTicketsMessage;
 
 defined('_JEXEC') or die;
@@ -36,9 +35,7 @@ class SendonPayment
 
         $initrow = $info[0];
 
-        require_once __DIR__ . '/PDF/FPDI_EAN13.php';
-
-        $pdf = new FPDI_EAN13();
+        $pdf = new Pdf();
 
         $foutn = JPATH_ADMINISTRATOR . '/components/com_ticketstation/tickets/eTickets-'.$initrow->ordercode.'.pdf';
 

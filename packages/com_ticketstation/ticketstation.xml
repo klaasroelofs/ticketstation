@@ -8,7 +8,7 @@
     <authorUrl>https://www.huibuuke.nl</authorUrl>
     <copyright>© 2026 Klaas Roelofs</copyright>
     <license>GPL v3</license>
-    <version>2.10.0-rc1</version>
+    <version>2.10.0-rc2</version>
     <description>
         Thank you for installing Ticketstation!
     </description>
@@ -24,7 +24,6 @@
         <folder>src</folder>
         <folder>tmpl</folder>
         <folder>vendor</folder>
-        <file>autoloader.php</file>
     </files>
 
     <languages folder="site/">
@@ -57,7 +56,6 @@
             <folder>tickets</folder>
             <folder>tmpl</folder>
             <file>access.xml</file>
-            <file>autoloader.php</file>
             <file>config.xml</file>
         </files>
 
