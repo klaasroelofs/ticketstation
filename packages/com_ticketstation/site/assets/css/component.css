@@ -464,6 +464,7 @@
 
 .ticketstation .ts-toast .ts-alert {
     margin: 0;
+    cursor: pointer;
     border-color: rgba(0, 0, 0, .08);
     box-shadow: 0 8px 24px rgba(0, 0, 0, .15);
 }
@@ -1111,6 +1112,29 @@
     font-weight: 700;
 }
 
+/* A free seat the customer's choice would leave on its own ("Prevent single empty seats" on the
+   seat plan): a red ring that blinks a few times, until the choice changes. */
+.ticketstation .seat-element--orphan {
+    z-index: 1;
+    outline: 3px solid #d00000;
+    outline-offset: 1px;
+    animation: ts-orphan 1s ease-in-out 3;
+}
+
+/* The same ring in the example rows of the instruction: drawn inside the seat, as the seats
+   stand close together there, and without blinking. */
+.ticketstation .ts-seat-example .seat-element--orphan {
+    outline-width: 2px;
+    outline-offset: -2px;
+    animation: none;
+}
+
+@keyframes ts-orphan {
+    50% {
+        outline-color: transparent;
+    }
+}
+
 .ticketstation .ts-seat-legend {
     display: flex;
     flex-wrap: wrap;
@@ -1169,7 +1193,8 @@
     color: var(--ts-danger);
 }
 
-.ticketstation .ts-seat-example--right figcaption .ts-icon {
+.ticketstation .ts-seat-example--right figcaption .ts-icon,
+.ticketstation .ts-seat-example--middle figcaption .ts-icon {
     color: var(--ts-success);
 }
 

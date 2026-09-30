@@ -16,6 +16,7 @@ use Joomla\CMS\Uri\Uri;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Date;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Ordercode;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\SeatChart;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\SeatOrphans;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\SeatplanSettings;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\TicketstationFunctions;
 
@@ -41,6 +42,15 @@ $chartBackground = SeatChart::background($chartSettings, $chartOwner);
 $chartShapes     = SeatChart::shapes($chartSettings);
 $chartCanvas     = SeatChart::canvas($chartSettings, $this->items, $chartBackground, $chartShapes);
 
+## "Prevent single empty seats": the instruction becomes a rule, checked before continuing.
+$preventOrphans  = SeatOrphans::enabled($chartOwner);
+
+## Sent back from the cart or checkout (SeatOrphans::guard()): say why and ring the seats that
+## are still left on their own; nothing when the choice has been put right since.
+$pageOrphans = $preventOrphans && $app->getInput()->getInt('orphans', 0) === 1
+    ? SeatOrphans::forChart($chartOwner, (int) $ordercode) : [];
+$orphanIds   = array_map(fn ($seat) => (int) $seat->id, $pageOrphans);
+
 
 ## Redirection link in JRoute:
 $itemid = TicketstationFunctions::getSiteItemid();
@@ -65,6 +75,12 @@ $bannerStyle = TicketstationFunctions::backgroundImageStyle('ticket' . (int) $th
     <div class="page-header">
         <h1 class="ts-page-title"><?php echo Text::_('COM_TICKETSTATION_SELECT_SEATS'); ?></h1>
     </div>
+
+    <?php if ($pageOrphans) { ?>
+        <div id="ts-orphan-notice" class="ts-alert ts-alert--danger" role="alert">
+            <?php echo SeatOrphans::message($pageOrphans); ?>
+        </div>
+    <?php } ?>
 
     <section class="ts-card ts-ticketinfo">
         <?php if ($bannerStyle) { ?>
@@ -113,7 +129,7 @@ $bannerStyle = TicketstationFunctions::backgroundImageStyle('ticket' . (int) $th
 
         <section class="ts-card ts-panel ts-panel--instructions">
             <h2 class="ts-card__title"><?php echo rtrim(Text::_('COM_TICKETSTATION_INSTRUCTIONS'), ': '); ?></h2>
-            <p><?php echo Text::_('COM_TICKETSTATION_SEAT_INSTRUCTION'); ?></p>
+            <p><?php echo Text::_($preventOrphans ? 'COM_TICKETSTATION_SEAT_INSTRUCTION_STRICT' : 'COM_TICKETSTATION_SEAT_INSTRUCTION'); ?></p>
             <?php
             ## Legend with the same look as the seats on the chart. A free seat is shown in the
             ## colours of the first free seat (sections may have colours of their own).
@@ -126,13 +142,21 @@ $bannerStyle = TicketstationFunctions::backgroundImageStyle('ticket' . (int) $th
             $takenStyle = 'color:#fff; border-color:#000; background-color:#ff0000;';
             $mineStyle  = 'color:#fff; border-color:#000; background-color:#ffa500;';
 
-            ## Example row of six seats: taken, taken, then the customer's two seats with or without a gap
-            $exampleSeat = fn (int $number, string $state) => '<span class="ts-seat-swatch' . ['taken' => ' seat-element--taken', 'mine' => ' seat-element--mine', 'free' => ''][$state] . '" style="'
-                . ['taken' => $takenStyle, 'mine' => $mineStyle, 'free' => $freeStyle][$state] . '">' . $number . '</span>';
-            $examples = [
-                'wrong' => ['taken', 'taken', 'free', 'mine', 'mine', 'free'],
-                'right' => ['taken', 'taken', 'mine', 'mine', 'free', 'free'],
-            ];
+            ## Example rows of six seats: taken, taken, then the customer's two seats with or without a
+            ## gap. With "Prevent single empty seats" the seats left on their own get the red ring of
+            ## the chart, and a third row shows that the middle of a free stretch is fine too.
+            $exampleSeat = fn (int $number, string $state) => '<span class="ts-seat-swatch' . ['taken' => ' seat-element--taken', 'mine' => ' seat-element--mine', 'free' => '', 'orphan' => ' seat-element--orphan'][$state] . '" style="'
+                . ['taken' => $takenStyle, 'mine' => $mineStyle, 'free' => $freeStyle, 'orphan' => $freeStyle][$state] . '">' . $number . '</span>';
+            $examples = $preventOrphans
+                ? [
+                    'wrong'  => ['taken', 'taken', 'orphan', 'mine', 'mine', 'orphan'],
+                    'right'  => ['taken', 'taken', 'mine', 'mine', 'free', 'free'],
+                    'middle' => ['free', 'free', 'mine', 'mine', 'free', 'free'],
+                ]
+                : [
+                    'wrong' => ['taken', 'taken', 'free', 'mine', 'mine', 'free'],
+                    'right' => ['taken', 'taken', 'mine', 'mine', 'free', 'free'],
+                ];
             ?>
             <div class="ts-seat-examples">
                 <?php foreach ($examples as $kind => $states) { ?>
@@ -148,7 +172,7 @@ $bannerStyle = TicketstationFunctions::backgroundImageStyle('ticket' . (int) $th
                             <?php } else { ?>
                                 <svg class="ts-icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M13.7 3.3a1 1 0 0 1 0 1.4l-7 7a1 1 0 0 1-1.4 0l-3-3a1 1 0 1 1 1.4-1.4L6 9.6l6.3-6.3a1 1 0 0 1 1.4 0z"/></svg>
                             <?php } ?>
-                            <?php echo Text::_('COM_TICKETSTATION_SEAT_EXAMPLE_' . strtoupper($kind)); ?>
+                            <?php echo Text::_('COM_TICKETSTATION_SEAT_EXAMPLE_' . strtoupper($kind) . ($preventOrphans && $kind === 'wrong' ? '_STRICT' : '')); ?>
                         </figcaption>
                     </figure>
                 <?php } ?>
@@ -221,7 +245,7 @@ $bannerStyle = TicketstationFunctions::backgroundImageStyle('ticket' . (int) $th
 
                     }else{
 
-                        $state = '';
+                        $state = in_array((int) $row->id, $orphanIds, true) ? ' seat-element--orphan' : '';
                         $style = 'color:' . $hex($row->font_color, '000000') . '; border-color:' . $hex($row->border_color, '198d02') . '; background-color:' . $hex($row->background_color, 'e1fdda') . ';';
                     }
 
@@ -267,13 +291,18 @@ $bannerStyle = TicketstationFunctions::backgroundImageStyle('ticket' . (int) $th
 
     var seatHint = <?php echo json_encode($seatHint); ?>;
 
-    // Shows a message at the bottom of the screen; errors stay a little longer.
-    function showMessage(type, msg) {
+    // Shows a message at the bottom of the screen; errors stay a little longer, a longer text
+    // can ask for more time. A click closes it.
+    function showMessage(type, msg, duration) {
         var alertBox = $('<div class="ts-alert"></div>').addClass('ts-alert--' + type).html(msg);
 
         $('#ajaxMessage').stop(true, true).empty().append(alertBox).show()
-            .delay(type === 'danger' ? 5000 : 3000).fadeOut(500);
+            .delay(duration || (type === 'danger' ? 5000 : 3000)).fadeOut(500);
     }
+
+    $('#ajaxMessage').on('click', function () {
+        $(this).stop(true, true).fadeOut(200);
+    });
 
     // A call that failed (no connection, or an expired session that the server refuses with 403).
     function requestFailed() {
@@ -451,7 +480,52 @@ $bannerStyle = TicketstationFunctions::backgroundImageStyle('ticket' . (int) $th
 
     });
 
+<?php if ($preventOrphans) { ?>
+    // "Prevent single empty seats": the whole choice is checked before going to the cart, as
+    // seats are claimed one click at a time. Seats left on their own are ringed in red.
+    $('#continue-button').on('click', function (event) {
+
+        var link = this.href;
+        var tokenName = '<?php echo \Joomla\CMS\Session\Session::getFormToken(); ?>';
+
+        event.preventDefault();
+        $('.seat-element--orphan').removeClass('seat-element--orphan');
+
+        $.ajax({
+            url: "<?php echo Uri::root(true); ?>/index.php?option=com_ticketstation&controller=orderseated&task=checkOrphans&format=raw",
+            type: "POST",
+            data: 'cid=<?php echo $chartOwner; ?>&' + tokenName + '=1',
+            dataType: 'json',
+            cache: false,
+            success: function (data) {
+
+                if (data.ok) {
+                    window.location.href = link;
+                    return;
+                }
+
+                $.each(data.seats, function (i, id) {
+                    $('#seat-' + id).addClass('seat-element--orphan');
+                });
+
+                showMessage('danger', data.msg, 12000);
+
+                var first = document.getElementById('seat-' + data.seats[0]);
+
+                if (first) {
+                    first.scrollIntoView({block: 'center', inline: 'center', behavior: 'smooth'});
+                }
+            },
+            error: requestFailed
+        });
+    });
+<?php } ?>
+
     function updateCart(){
+
+        // The choice changed: an earlier "single empty seat" ring or notice no longer applies.
+        $('.seat-element--orphan').removeClass('seat-element--orphan');
+        $('#ts-orphan-notice').remove();
 
         var order = 'ordercode=' + <?php echo $ordercode; ?> ;
 

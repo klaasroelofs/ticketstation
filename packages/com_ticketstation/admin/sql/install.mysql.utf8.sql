@@ -399,6 +399,7 @@ CREATE TABLE IF NOT EXISTS `#__ticketstation_seatplansettings` (
   `canvas_width` int(11) NOT NULL DEFAULT '0',
   `canvas_height` int(11) NOT NULL DEFAULT '0',
   `grid_size` int(11) NOT NULL DEFAULT '10',
+  `prevent_orphans` tinyint(1) NOT NULL DEFAULT '0',
   `shapes` mediumtext NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `idx_ticketid` (`ticketid`)
@@ -424,7 +425,7 @@ CREATE TABLE IF NOT EXISTS `#__ticketstation_seatplancoords` (
   `y_pos` int(4) NOT NULL,
   `ticketid` int(11) NOT NULL,
   `row_name` varchar(5) DEFAULT NULL,
-  `seatid` int(11) NOT NULL,
+  `seatid` varchar(10) NOT NULL DEFAULT '0',
   `booked` tinyint(1) NOT NULL DEFAULT '0',
   `blocked` tinyint(1) NOT NULL DEFAULT '0',
   `parent` int(11) NOT NULL DEFAULT '0',

@@ -117,6 +117,7 @@ class SeatplanLayout
             'canvas_width'     => (int) $settings->canvas_width,
             'canvas_height'    => (int) $settings->canvas_height,
             'grid_size'        => max(1, (int) $settings->grid_size ?: 10),
+            'prevent_orphans'  => (int) ($settings->prevent_orphans ?? 0) === 1 ? 1 : 0,
         ];
     }
 
@@ -145,7 +146,7 @@ class SeatplanLayout
                 'w'         => (int) $row->width,
                 'h'         => (int) $row->height,
                 'row'       => (string) $row->row_name,
-                'num'       => (int) $row->seatid,
+                'num'       => (string) $row->seatid,
                 'ticketid'  => (int) $row->ticketid,
                 ## Taken without an order counts as blocked, as on the site (see the class comment).
                 'blocked'   => (int) $row->orderid === 0 && ((int) $row->blocked === 1 || (int) $row->booked === 1),
@@ -350,7 +351,7 @@ class SeatplanLayout
                 }
 
                 $db->setQuery('UPDATE #__ticketstation_seatplancoords SET row_name = ' . $db->quote($seat['row'])
-                    . ', seatid = ' . $seat['num']
+                    . ', seatid = ' . $db->quote($seat['num'])
                     . ', ticketid = ' . $seat['ticketid']
                     . ', parent = ' . ($seat['ticketid'] === $ownerId ? 0 : $ownerId)
                     . ', blocked = ' . $seat['blocked'] . ', booked = ' . $seat['blocked']
@@ -399,6 +400,7 @@ class SeatplanLayout
             'canvas_width'     => min(20000, max(0, (int) ($input['canvas_width'] ?? 0))),
             'canvas_height'    => min(20000, max(0, (int) ($input['canvas_height'] ?? 0))),
             'grid_size'        => min(200, max(1, (int) ($input['grid_size'] ?? 10))),
+            'prevent_orphans'  => empty($input['prevent_orphans']) ? 0 : 1,
             'shapes'           => json_encode(SeatChart::cleanShapes($shapes)),
         ];
 
@@ -438,10 +440,21 @@ class SeatplanLayout
             'w'        => min(500, max(4, (int) ($input['w'] ?? $settings->seat_width))),
             'h'        => min(500, max(4, (int) ($input['h'] ?? $settings->seat_height))),
             'row'      => mb_substr(trim((string) ($input['row'] ?? '')), 0, 5),
-            'num'      => min(99999, max(0, (int) ($input['num'] ?? 0))),
+            'num'      => self::number($input['num'] ?? ''),
             'ticketid' => in_array($ticketid, $kinds, true) ? $ticketid : $ownerId,
             'blocked'  => empty($input['blocked']) ? 0 : 1,
         ];
+    }
+
+    /**
+     * A seat number as stored: up to 5 digits, leading zeros kept ("01"), so a row named with a
+     * number still reads naturally (row 1, seat 01 = "101"). "0" when there are no digits.
+     */
+    private static function number($value): string
+    {
+        $digits = substr(preg_replace('/\D/', '', (string) $value), 0, 5);
+
+        return $digits === '' ? '0' : $digits;
     }
 
     /**
@@ -747,7 +760,7 @@ class SeatplanLayout
             'seats'    => [],
         ];
 
-        foreach (['seat_width', 'seat_height', 'bg_offset_x', 'bg_offset_y', 'canvas_width', 'canvas_height', 'grid_size'] as $key) {
+        foreach (['seat_width', 'seat_height', 'bg_offset_x', 'bg_offset_y', 'canvas_width', 'canvas_height', 'grid_size', 'prevent_orphans'] as $key) {
             $layout['settings'][$key] = (int) ($in['settings'][$key] ?? 0);
         }
 
@@ -774,7 +787,7 @@ class SeatplanLayout
                 'w'       => min(500, max(4, (int) ($seat['w'] ?? 22))),
                 'h'       => min(500, max(4, (int) ($seat['h'] ?? 22))),
                 'row'     => mb_substr(trim((string) ($seat['row'] ?? '')), 0, 5),
-                'num'     => min(99999, max(0, (int) ($seat['num'] ?? 0))),
+                'num'     => self::number($seat['num'] ?? ''),
                 'blocked' => !empty($seat['blocked']),
                 'section' => mb_substr((string) ($seat['section'] ?? ''), 0, 255),
             ];

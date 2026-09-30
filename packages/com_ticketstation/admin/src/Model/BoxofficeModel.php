@@ -344,7 +344,7 @@ class BoxofficeModel extends ListModel
                 . ' ON ' . $db->quoteName('r.ordercode') . ' = ' . $db->quoteName('a.ordercode'))
             ->order([
                 $db->quoteName('e.eventdate') . ' DESC', $db->quoteName('e.eventname'), $db->quoteName('c.name'), $db->quoteName('c.firstname'),
-                $db->quoteName('a.ordercode'), $db->quoteName('co.row_name'), $db->quoteName('co.seatid'), $db->quoteName('a.orderid'),
+                $db->quoteName('a.ordercode'), $db->quoteName('co.row_name'), 'CAST(' . $db->quoteName('co.seatid') . ' AS UNSIGNED)', $db->quoteName('co.seatid'), $db->quoteName('a.orderid'),
             ]);
 
         if ($event)
@@ -1037,7 +1037,7 @@ class BoxofficeModel extends ListModel
         $query->where($db->quoteName('a.ordercode') . ' = ' . $db->quote((int) $this->id));
         $query->order([
             $db->quoteName('e.eventdate') . ' ASC', $db->quoteName('a.eventid') . ' ASC', $db->quoteName('a.ticketid') . ' ASC',
-            $db->quoteName('ext.row_name') . ' ASC', $db->quoteName('ext.seatid') . ' ASC', $db->quoteName('a.orderid') . ' ASC',
+            $db->quoteName('ext.row_name') . ' ASC', 'CAST(' . $db->quoteName('ext.seatid') . ' AS UNSIGNED) ASC', $db->quoteName('ext.seatid') . ' ASC', $db->quoteName('a.orderid') . ' ASC',
         ]);
 
         $db->setQuery($query);

@@ -14,6 +14,7 @@ defined('_JEXEC') or die;
 use Joomla\CMS\Factory;
 use Joomla\CMS\MVC\View\HtmlView as BaseHtmlView;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Config;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\SeatOrphans;
 
 
 class HtmlView extends BaseHtmlView {
@@ -26,6 +27,9 @@ class HtmlView extends BaseHtmlView {
      * @return  void
      */
     public function display($tpl = null) {
+
+        ## Seats that leave a single empty seat: back to the seat-picking page.
+        SeatOrphans::guard();
 
         $items    = $this->get('data');
         $waiters  = $this->get('waiters');

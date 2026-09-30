@@ -47,6 +47,7 @@ class Tickets
                 'IFNULL(' . $db->quoteName('pdf_p.startdate') . ', ' . $db->quoteName('pdf_t.startdate') . ') ASC',
                 'IFNULL(' . $db->quoteName('pdf_p.ticketid') . ', ' . $db->quoteName('pdf_t.ticketid') . ') ASC',
                 $db->quoteName($seatAlias . '.row_name') . ' ASC',
+                'CAST(' . $db->quoteName($seatAlias . '.seatid') . ' AS UNSIGNED) ASC',
                 $db->quoteName($seatAlias . '.seatid') . ' ASC',
                 $db->quoteName($orderAlias . '.orderid') . ' ASC',
             ]);

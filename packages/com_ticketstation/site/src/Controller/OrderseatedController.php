@@ -18,6 +18,7 @@ use Joomla\CMS\Uri\Uri;
 use Joomla\CMS\HTML\HTMLHelper;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Amount;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\OrderTotals;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\SeatOrphans;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\SeatplanSettings;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Shop;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\TicketstationFunctions;
@@ -239,6 +240,23 @@ class OrderseatedController extends BaseController {
         echo '<label class="ts-label" for="' . (int) $item->orderid . '">' . Text::_('COM_TICKETSTATION_PRICE_CATEGORY') . ' ' . $label . ':</label>';
         echo HTMLHelper::_('select.genericlist', $options, (string) (int) $item->orderid, 'class="ts-select ticketid"', 'value', 'text', $current);
         echo $remove;
+        exit();
+    }
+
+    /**
+     * Checks the session's seats on one chart against "Prevent single empty seats" before the
+     * customer continues (SeatOrphans); the cart checks it again.
+     */
+    function checkOrphans(){
+
+        $ownerId = Factory::getApplication()->getInput()->getInt('cid', 0);
+        $orphans = SeatOrphans::forChart($ownerId, (int) $this->ordercode);
+
+        echo json_encode([
+            'ok'    => !$orphans,
+            'msg'   => $orphans ? SeatOrphans::message($orphans) : '',
+            'seats' => array_map(fn ($seat) => (int) $seat->id, $orphans),
+        ]);
         exit();
     }
 

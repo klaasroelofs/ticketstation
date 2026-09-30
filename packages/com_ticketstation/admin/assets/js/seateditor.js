@@ -53,6 +53,26 @@
         return isNaN(n) ? fallback : n;
     }
 
+    /** Only the digits of a typed seat number, at most 5, leading zeros kept. */
+    function digits(value) {
+        return String(value == null ? '' : value).replace(/\D/g, '').slice(0, 5);
+    }
+
+    /**
+     * The seat number `offset` places after `start` as typed, as text. Leading zeros of the start
+     * set the minimum width: "01" counts 01, 02 … 09, 10, 11, so row 1 reads 101, 102 … 111.
+     */
+    function seatNumber(start, offset) {
+        var typed = digits(start);
+        var text = String(clamp(int(typed, 1) + offset, 0, 99999));
+
+        while (text.length < typed.length) {
+            text = '0' + text;
+        }
+
+        return text;
+    }
+
     function hex(value, fallback) {
         value = String(value || '').replace('#', '').trim();
 
@@ -743,7 +763,7 @@
             '<div class="ts-se-grid2">' +
                 field(T('ROW_NAME'), textInput('data-param="row.row"', p.row, ' maxlength="5"')) +
                 field(T('SEAT_COUNT'), numberInput('data-param="row.count" min="1" max="200"', p.count)) +
-                field(T('START_NUMBER'), numberInput('data-param="row.start" min="0"', p.start)) +
+                field(T('START_NUMBER'), textInput('data-param="row.start" inputmode="numeric" maxlength="5"', p.start), esc(T('START_NUMBER_HINT'))) +
                 field(T('NUMBERING'), selectInput('data-param="row.step"', numberingOptions(), p.step)) +
                 field(T('GAP'), numberInput('data-param="row.gap" min="0" max="200"', p.gap)) +
                 field(T('DIRECTION'), selectInput('data-param="row.dir"', [['h', T('HORIZONTAL')], ['v', T('VERTICAL')]], p.dir)) +
@@ -763,7 +783,7 @@
                 field(T('ROWS'), numberInput('data-param="block.rows" min="1" max="100"', p.rows)) +
                 field(T('SEATS_PER_ROW'), numberInput('data-param="block.cols" min="1" max="200"', p.cols)) +
                 field(T('FIRST_ROW'), textInput('data-param="block.row"', p.row, ' maxlength="5"')) +
-                field(T('START_NUMBER'), numberInput('data-param="block.start" min="0"', p.start)) +
+                field(T('START_NUMBER'), textInput('data-param="block.start" inputmode="numeric" maxlength="5"', p.start), esc(T('START_NUMBER_HINT'))) +
                 field(T('NUMBERING'), selectInput('data-param="block.step"', numberingOptions(), p.step)) +
                 field(T('GAP'), numberInput('data-param="block.gapX" min="0" max="200"', p.gapX)) +
                 field(T('ROW_GAP'), numberInput('data-param="block.gapY" min="0" max="400"', p.gapY)) +
@@ -826,7 +846,7 @@
             html += section(T('SEAT'),
                 '<div class="ts-se-grid2">' +
                     field(T('ROW_NAME'), textInput('data-seat="row"', seat.row, ' maxlength="5"' + dis)) +
-                    field(T('NUMBER'), numberInput('data-seat="num" min="0"', seat.num, dis)) +
+                    field(T('NUMBER'), textInput('data-seat="num" inputmode="numeric" maxlength="5"', seat.num, dis)) +
                 '</div>' +
                 field(T('KIND'), selectInput('data-seat="ticketid"', kindOptions(), seat.ticketid, dis)) +
                 (seat.locked ? '' : categoryNote(seat.ticketid)) +
@@ -864,7 +884,7 @@
 
             html += section(T('RENUMBER'),
                 '<div class="ts-se-grid2">' +
-                    field(T('START_NUMBER'), numberInput('data-renumber="start" min="0"', 1)) +
+                    field(T('START_NUMBER'), textInput('data-renumber="start" inputmode="numeric" maxlength="5"', '1'), esc(T('START_NUMBER_HINT'))) +
                     field(T('NUMBERING'), selectInput('data-renumber="step"', numberingOptions(), 1)) +
                 '</div>' +
                 field(T('ORDER'), selectInput('data-renumber="order"', [['ltr', T('ORDER_LTR')], ['rtl', T('ORDER_RTL')], ['ttb', T('ORDER_TTB')], ['btt', T('ORDER_BTT')]], 'ltr')) +
@@ -946,6 +966,10 @@
             field(T('GRID_SIZE'), numberInput('data-setting="grid_size" min="1" max="200"', s.grid_size)) +
             '<label class="form-check"><input type="checkbox" class="form-check-input" data-pref="snap"' + (prefs.snap ? ' checked' : '') + '> <span class="form-check-label">' + esc(T('SNAP')) + '</span></label>' +
             '<label class="form-check"><input type="checkbox" class="form-check-input" data-pref="grid"' + (prefs.grid ? ' checked' : '') + '> <span class="form-check-label">' + esc(T('SHOW_GRID')) + '</span></label>');
+
+        html += section(T('SEAT_SELECTION'),
+            '<label class="form-check"><input type="checkbox" class="form-check-input" data-setting="prevent_orphans"' + (int(s.prevent_orphans, 0) === 1 ? ' checked' : '') + '> <span class="form-check-label">' + esc(T('PREVENT_ORPHANS')) + '</span></label>' +
+            '<p class="ts-se-small">' + esc(T('PREVENT_ORPHANS_HINT')) + '</p>');
 
         var rows = L.kinds.map(function (k) {
             var own = S.colours[ownerId];
@@ -1365,7 +1389,6 @@
         var gap = clamp(int(p.gap, 4), 0, 200);
         var curve = int(p.curve, 0);
         var step = int(p.step, 1);
-        var start = int(p.start, 1);
         var seats = [];
 
         for (var i = 0; i < n; i++) {
@@ -1375,7 +1398,7 @@
             seats.push({
                 x: Math.max(0, p.dir === 'v' ? origin.x + bend : origin.x + i * (w + gap)),
                 y: Math.max(0, p.dir === 'v' ? origin.y + i * (h + gap) : origin.y + bend),
-                w: w, h: h, row: String(p.row || '').slice(0, 5), num: Math.max(0, start + i * step), ticketid: kindParam.row
+                w: w, h: h, row: String(p.row || '').slice(0, 5), num: seatNumber(p.start, i * step), ticketid: kindParam.row
             });
         }
 
@@ -1391,7 +1414,6 @@
         var gapX = clamp(int(p.gapX, 4), 0, 200);
         var gapY = clamp(int(p.gapY, 8), 0, 400);
         var step = int(p.step, 1);
-        var start = int(p.start, 1);
         var row = String(p.row || 'A').slice(0, 5);
         var seats = [];
 
@@ -1400,7 +1422,7 @@
                 seats.push({
                     x: origin.x + c * (w + gapX),
                     y: origin.y + r * (h + gapY),
-                    w: w, h: h, row: row, num: Math.max(0, start + c * step), ticketid: kindParam.block
+                    w: w, h: h, row: row, num: seatNumber(p.start, c * step), ticketid: kindParam.block
                 });
             }
 
@@ -1817,7 +1839,7 @@
     }
 
     function renumber() {
-        var start = int(els.panel.querySelector('[data-renumber="start"]').value, 1);
+        var start = els.panel.querySelector('[data-renumber="start"]').value;
         var step = int(els.panel.querySelector('[data-renumber="step"]').value, 1);
         var order = els.panel.querySelector('[data-renumber="order"]').value;
         var seats = selectedSeats().filter(function (s) {
@@ -1834,7 +1856,7 @@
 
         change(function () {
             seats.forEach(function (s, i) {
-                s.num = Math.max(0, start + i * step);
+                s.num = seatNumber(start, i * step);
             });
         });
 
@@ -1987,6 +2009,8 @@
                 kindParam[path[1]] = int(value, ownerId);
             } else if (t.type === 'color') {
                 prefs[path[0]][path[1]] = hex(value, '000000');
+            } else if (path[1] === 'start') {
+                prefs[path[0]][path[1]] = digits(value) || '1';
             } else if (t.type === 'number' || path[1] === 'step') {
                 prefs[path[0]][path[1]] = int(value, 0);
             } else {
@@ -2012,7 +2036,7 @@
             var setting = t.getAttribute('data-setting');
 
             change(function () {
-                S.settings[setting] = int(value, 0);
+                S.settings[setting] = t.type === 'checkbox' ? (value ? 1 : 0) : int(value, 0);
             });
             return;
         }
@@ -2042,6 +2066,8 @@
                     seat.blocked = value === '1';
                 } else if (prop === 'w' || prop === 'h') {
                     seat[prop] = clamp(int(value, 22), 4, 500);
+                } else if (prop === 'num') {
+                    seat.num = digits(value) || '0';
                 } else {
                     seat[prop] = Math.max(0, int(value, 0));
                 }

@@ -20,6 +20,7 @@ use Ticketstation\Component\Ticketstation\Administrator\Helper;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Config;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\CustomerNote;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Order;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\SeatOrphans;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Ticket;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\TicketstationFunctions;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\User;
@@ -121,6 +122,9 @@ class CheckoutController extends BaseController
         $db     = Factory::getContainer()->get('DatabaseDriver');
         $app    = Factory::getApplication();
         $jinput = Factory::getApplication()->getInput();
+
+        // Seats that leave a single empty seat: back to the seat-picking page.
+        SeatOrphans::guard();
 
         // Getting the configuration
         $config = (new Config)->get(['use_automatic_login', 'auto_username', 'show_birthday', 'show_phone', 'show_country', 'show_address', 'show_secondaddress', 'show_thirdaddress', 'show_zipcode', 'show_city', 'show_salutation']);

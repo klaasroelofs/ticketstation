@@ -78,6 +78,7 @@ class SeatChart
             'canvas_width'     => 0,
             'canvas_height'    => 0,
             'grid_size'        => 10,
+            'prevent_orphans'  => 0,
             'shapes'           => '[]',
         ];
     }

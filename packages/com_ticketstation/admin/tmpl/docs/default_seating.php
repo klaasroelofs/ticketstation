@@ -100,6 +100,9 @@ $modes = ['SINGLE', 'TIERS', 'SECTIONS'];
             <div class="mt-3">
                 <?php $steps('COM_TICKETSTATION_SEATING_DOCS_FLOW_', 5); ?>
 
+                <h3 class="h6 mt-3"><?= Text::_('COM_TICKETSTATION_SEATING_DOCS_ORPHANS_TITLE') ?></h3>
+                <?php $bullets('COM_TICKETSTATION_SEATING_DOCS_ORPHANS_', 4); ?>
+
                 <h3 class="h6 mt-3"><?= Text::_('COM_TICKETSTATION_SEATING_DOCS_RELEASE_TITLE') ?></h3>
                 <?php $bullets('COM_TICKETSTATION_SEATING_DOCS_RELEASE_', 4); ?>
             </div>

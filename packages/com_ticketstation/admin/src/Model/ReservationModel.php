@@ -262,7 +262,7 @@ class ReservationModel extends BaseDatabaseModel
             ->join('LEFT', $db->quoteName('#__ticketstation_events', 'e') . ' ON ' . $db->quoteName('e.eventid') . ' = ' . $db->quoteName('a.eventid'))
             ->join('LEFT', $db->quoteName('#__ticketstation_seatplancoords', 'sc') . ' ON ' . $db->quoteName('sc.id') . ' = ' . $db->quoteName('a.seat_sector'))
             ->where($db->quoteName('a.ordercode') . ' = ' . $db->quote($ordercode))
-            ->order([$db->quoteName('sc.row_name'), $db->quoteName('sc.seatid')]);
+            ->order([$db->quoteName('sc.row_name'), 'CAST(' . $db->quoteName('sc.seatid') . ' AS UNSIGNED)', $db->quoteName('sc.seatid')]);
 
         $db->setQuery($query);
 

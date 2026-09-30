@@ -17,6 +17,7 @@ use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\View\HtmlView as BaseHtmlView;
 use Joomla\CMS\Router\Route;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Config;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\SeatOrphans;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\TicketstationFunctions;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\User;
 use Ticketstation\Component\Ticketstation\Site\Controller\CheckoutController;
@@ -35,6 +36,9 @@ class HtmlView extends BaseHtmlView {
 
         $app    = Factory::getApplication();
         $db     = Factory::getContainer()->get('DatabaseDriver');
+
+        ## Seats that leave a single empty seat: back to the seat-picking page.
+        SeatOrphans::guard();
 
         $info = $app->getUserState('com_ticketstation.registration');
 
