@@ -69,6 +69,17 @@ class TicketstationNomenuRules implements RulesInterface
      */
     public function parse(&$segments, &$vars)
     {
+        // build() writes tmpl=component as a 'cleaninterface' segment, on any view. Take it out
+        // here and turn it back into tmpl=component, so the page renders without the template.
+        $cleanInterface = false;
+        $position       = array_search('cleaninterface', $segments, true);
+
+        if ($position !== false) {
+            unset($segments[$position]);
+            $segments       = array_values($segments);
+            $cleanInterface = true;
+        }
+
         // Nothing left for us to interpret (e.g. the request matched a menu item's own SEF
         // route exactly). Keep whatever view StandardRules already resolved from that menu
         // item's stored query, as long as it is actually one of ours; only wipe it when it
@@ -77,6 +88,10 @@ class TicketstationNomenuRules implements RulesInterface
         if (empty($segments)) {
             if (!isset($vars['view']) || !array_key_exists($vars['view'], $this->router->getViews())) {
                 $vars = [];
+            }
+
+            if ($cleanInterface) {
+                $vars['tmpl'] = 'component';
             }
 
             return;
@@ -173,6 +188,10 @@ class TicketstationNomenuRules implements RulesInterface
                 $vars['id'] = substr($segments[0],strpos($segments[0],'-') + 1);
 
                 break;
+        }
+
+        if ($cleanInterface) {
+            $vars['tmpl'] = 'component';
         }
 
         // Empty array to prevent Router from throwing an exception
@@ -280,7 +299,7 @@ class TicketstationNomenuRules implements RulesInterface
             $segments[] = 'e-' . $query['eventid'];
             unset($query['eventid']);
         };
-        if (isset($query['tmpl']))
+        if (isset($query['tmpl']) && $query['tmpl'] === 'component')
         {
             $segments[] = 'cleaninterface';
             unset($query['tmpl']);
