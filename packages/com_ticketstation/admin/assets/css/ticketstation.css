@@ -178,6 +178,17 @@ a.badge:focus {
     font-size: .9rem;
     line-height: 1.25;
 }
+/* A screen whose feature is switched off (Mollie with online payments off): faded icon, small note. */
+.ticketstation-cpanel-tile--off .ticketstation-cpanel-tile-icon {
+    filter: grayscale(1);
+    opacity: .45;
+}
+.ticketstation-cpanel-tile-state {
+    margin-top: -.35rem;
+    font-size: .75rem;
+    color: inherit;
+    opacity: .7;
+}
 .ticketstation-cpanel-tile-badge {
     min-width: 1.5rem;
     padding: .3em .55em;
@@ -249,4 +260,13 @@ a.badge:focus {
 /* "Save & Seat Plan" toolbar button on the ticket edit screen: Atum has no icon-chair of its own. */
 .icon-chair:before {
     content: "\f6c0";
+}
+
+/* Mollie settings while online payments are switched off: kept, but visibly not in use. */
+.ts-mollie-settings {
+    min-width: 0;
+}
+
+.ts-mollie-settings:disabled .row {
+    opacity: .55;
 }

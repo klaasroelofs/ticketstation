@@ -87,6 +87,14 @@ class PaymentController extends BaseController
         }
 
         $orderamount = OrderTotals::get($this->ordercode, true)->total;
+
+        ## With online payments switched off only an order of nothing goes through; paid tickets
+        ## are sold at the box office. Covers a cart filled before the switch, and payment links.
+        if ($orderamount > 0 && !Shop::paymentsOn()) {
+            $itemid = TicketstationFunctions::getSiteItemid();
+            Factory::getApplication()->enqueueMessage(Text::_('COM_TICKETSTATION_ONLINE_PAYMENTS_OFF_ORDER'), 'error');
+            Factory::getApplication()->redirect(Route::_('index.php?option=com_ticketstation&view=cart' . ($itemid ? '&Itemid=' . $itemid : ''), false));
+        }
         //$return_url = URI::root() . 'index.php?option=com_ticketstation&controller=payment&task=mollie';
         $return_url = URI::root() . 'index.php?option=com_ticketstation&controller=payment&task=mollie';
         $notify_url = URI::root() . 'index.php?option=com_ticketstation&controller=payment&task=IPNProcessPayment';
@@ -246,7 +254,7 @@ class PaymentController extends BaseController
         }
 
         ## if tickets has been created:
-        if ($ticket_creator == true && $this->mollieconfig->send_tickets_directly == 1) {
+        if ($ticket_creator == true && $this->sendTicketsDirectly()) {
             $newPayment->sendTickets();
         }
 
@@ -441,7 +449,7 @@ class PaymentController extends BaseController
                 $newPayment->updateTempTransaction($return_token, '1', $response['id']);
 
                 ## if tickets has been created:
-                if ($ticket_creator == true && $this->mollieconfig->send_tickets_directly == 1) {
+                if ($ticket_creator == true && $this->sendTicketsDirectly()) {
                     $newPayment->sendTickets();
                     $this->log('Tickets sent');
                 }
@@ -499,6 +507,15 @@ class PaymentController extends BaseController
         Log::add($text, Log::INFO, 'com_ticketstation.mollie');
 
         return true;
+    }
+
+    /**
+     * "Send tickets directly" in the Configuration: email the tickets as soon as an order is paid
+     * online or a free order is completed.
+     */
+    private function sendTicketsDirectly(): bool
+    {
+        return (int) ((new Config)->get(['send_tickets_directly'])->send_tickets_directly ?? 1) === 1;
     }
 
 }

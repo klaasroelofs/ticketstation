@@ -49,6 +49,14 @@ class HtmlView extends BaseHtmlView {
             $app->redirect(Route::_('index.php?option=com_ticketstation&view=upcoming' . ($itemid ? '&Itemid=' . $itemid : '')));
         }
 
+        ## With online payments off a chart with paid seats is only sold at the box office.
+        if (Shop::boxOfficeOnly((int) $ticketdetails->ticketid, false))
+        {
+            $app->enqueueMessage(Text::_('COM_TICKETSTATION_ONLINE_PAYMENTS_OFF_TICKET'), 'info');
+            $itemid = TicketstationFunctions::getSiteItemid();
+            $app->redirect(Route::_('index.php?option=com_ticketstation&view=upcoming' . ($itemid ? '&Itemid=' . $itemid : '')));
+        }
+
         ## Every seat of the chart: free seats and section seats.
         $items	= $this->get('seats');
 

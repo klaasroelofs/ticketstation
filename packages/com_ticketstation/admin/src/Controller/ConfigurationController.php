@@ -15,6 +15,7 @@ use Joomla\CMS\Factory;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\Uri\Uri;
 use Ticketstation\Component\Ticketstation\Administrator\Controller\Mixin\RegisterControllerTasks;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\Ordercode;
 use Joomla\CMS\Application\CMSApplication;
 use Joomla\CMS\MVC\Controller\BaseController;
 use Joomla\CMS\MVC\Factory\MVCFactoryInterface;
@@ -56,6 +57,21 @@ class ConfigurationController extends BaseController {
         $post 	= $jinput->post->getArray();
 
         $post['valuta'] = $app->getInput()->get('valuta', null, 'raw');
+
+        // Next order number: empty (default) or a whole number of at most 6 digits. Longer
+        // numbers would run into the legacy 7-digit and temporary 9-digit ordercodes.
+        if (isset($post['next_ordercode']))
+        {
+            $post['next_ordercode'] = trim((string) $post['next_ordercode']);
+
+            if ($post['next_ordercode'] !== ''
+                && ! preg_match('/^[1-9][0-9]{0,' . (Ordercode::SEQUENTIAL_MAX_DIGITS - 1) . '}$/', $post['next_ordercode']))
+            {
+                $this->setRedirect(Uri::base() . 'index.php?option=com_ticketstation&view=Configuration', Text::_('COM_TICKETSTATION_NEXT_ORDERCODE_INVALID'), 'error');
+
+                return false;
+            }
+        }
 
         $model = $this->getModel('Configuration', 'Administrator');
 

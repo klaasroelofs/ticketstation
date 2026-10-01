@@ -94,6 +94,12 @@ class WaitingList
             $db->setQuery($query);
             $lines = $db->loadObjectList();
 
+            // The customer gets a payment link, which can't be paid while online payments are
+            // off: an order with paid tickets keeps waiting until they are on again.
+            if (!Shop::paymentsOn() && Shop::highestPrice(array_column($lines, 'ticketid')) > 0) {
+                continue;
+            }
+
             if ($this->fits($lines) && $this->processWaitingListItem([$ordercode])) {
                 $promoted += array_sum(array_column($lines, 'total'));
             }

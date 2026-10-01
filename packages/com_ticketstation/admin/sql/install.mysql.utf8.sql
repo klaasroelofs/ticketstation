@@ -22,10 +22,10 @@ CREATE TABLE IF NOT EXISTS `#__ticketstation_mollie` (
   `send_confirmation` tinyint(1) DEFAULT '0',
   `mollie_language` varchar(255) DEFAULT 'en',
   `change_payment_state` tinyint(1) DEFAULT '1',
-  `send_tickets_directly` tinyint(1) DEFAULT '1',
   `send_mail_after_return` tinyint(1) DEFAULT '0',
   `payment_methods` varchar(255) NOT NULL DEFAULT 'ideal',
   `currency` varchar(3) NOT NULL DEFAULT 'EUR',
+  `enabled` tinyint(1) NOT NULL DEFAULT 1,
   PRIMARY KEY (`configid`)
 )  ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 DEFAULT COLLATE=utf8mb4_unicode_ci;
 
@@ -151,6 +151,7 @@ CREATE TABLE IF NOT EXISTS `#__ticketstation_config` (
   `from_email` varchar(255) NOT NULL DEFAULT '',
   `terms_url` varchar(255) NOT NULL DEFAULT '',
   `privacy_url` varchar(255) NOT NULL DEFAULT '',
+  `send_tickets_directly` tinyint(1) NOT NULL DEFAULT 1,
   PRIMARY KEY (`configid`)
 )  ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 DEFAULT COLLATE=utf8mb4_unicode_ci;
 
@@ -816,10 +817,10 @@ INSERT IGNORE INTO `#__ticketstation_mollie` VALUES(
 "0",
 "en_GB",
 "1",
-"1",
 "0",
 "ideal",
-"EUR");
+"EUR",
+"1");
 
 INSERT IGNORE INTO `#__ticketstation_config` VALUES(
 "1",
@@ -921,4 +922,5 @@ INSERT IGNORE INTO `#__ticketstation_config` VALUES(
 "",
 "",
 "",
-"");
+"",
+"1");

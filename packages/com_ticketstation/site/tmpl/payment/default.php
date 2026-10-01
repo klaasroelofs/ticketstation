@@ -203,7 +203,8 @@ foreach (['terms_url' => 'COM_TICKETSTATION_TERMS_AND_CONDITIONS', 'privacy_url'
                     </tr>
                 <?php } ?>
 
-                <?php if ($totals->fee_type != OrderTotals::FEE_NONE) { ?>
+                <?php ## No fees row when there is no fee: switched off, or nothing to pay (a free order). ?>
+                <?php if ($fees > 0 && $totals->fee_type != OrderTotals::FEE_NONE) { ?>
                     <tr class="ts-summary__fees">
                         <th scope="row"><?= Text::_('COM_TICKETSTATION_FEES'); ?><?php if ($totals->fee_type == OrderTotals::FEE_VARIABLE) { ?> (<?= (float) $totals->fee_rate ?>%)<?php } ?></th>
                         <td class="ts-price"><?= (new TicketstationFunctions)->showprice($this->config->priceformat , $fees, $this->config->valuta); ?></td>
@@ -227,13 +228,19 @@ foreach (['terms_url' => 'COM_TICKETSTATION_TERMS_AND_CONDITIONS', 'privacy_url'
             <p class="ts-note"><?= Text::sprintf('COM_TICKETSTATION_ZERO_TOTAL', (new TicketstationFunctions)->showprice($this->config->priceformat, 0, $this->config->valuta)); ?></p>
         <?php } ?>
 
+        <?php if (!$this->paymentsOn && $ordertotal > 0) { ?>
+            <div class="ts-alert ts-alert--danger"><?= Text::_('COM_TICKETSTATION_ONLINE_PAYMENTS_OFF_ORDER'); ?></div>
+        <?php } ?>
+
         <form action="<?= Route::_('index.php?option=com_ticketstation' . ($itemid ? '&Itemid=' . $itemid : '')); ?>" method="POST" name="adminForm" id="adminForm" class="ts-actions">
 
             <a class="ts-btn ts-btn--secondary ts-btn--back" href="<?php echo $gotocheckout; ?>">
                 <?= Text::_('COM_TICKETSTATION_BACK'); ?>
             </a>
 
-            <?php if (($this->mollieconfig->bypass_mode == 0) && ($ordertotal > 0)) { ?>
+            <?php if (!$this->paymentsOn && $ordertotal > 0) { ?>
+                <?php ## Paid tickets in the cart while online payments are off: nothing to pay with. ?>
+            <?php } elseif (($this->mollieconfig->bypass_mode == 0) && ($ordertotal > 0)) { ?>
                 <button class="ts-btn ts-btn--primary ts-btn--next" id="payment_button" type="submit"><?= Text::_( 'COM_TICKETSTATION_MOLLIE_MAKE_PAYMENT' )?></button>
             <?php } else { ?>
                 <button class="ts-btn ts-btn--primary ts-btn--next" id="order_button" type="submit"><?= Text::_('COM_TICKETSTATION_PLACE_ORDER'); ?></button>

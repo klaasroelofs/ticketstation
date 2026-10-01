@@ -317,8 +317,10 @@ $sum28     = array_sum(array_column($this->dailySales, 'tickets'));
                 <div class="ticketstation-cpanel-tiles">
                     <?php foreach ($tiles as [$view, $icon, $labelKey]) {
                         $badge = $badges[$view] ?? null;
+                        // Online payments switched off: the Mollie button looks faded and says so.
+                        $off   = $view === 'mollie' && ($this->mollie->enabled ?? '1') != '1';
                         ?>
-                        <a class="ticketstation-cpanel-tile" href="index.php?option=com_ticketstation&view=<?= $view; ?>">
+                        <a class="ticketstation-cpanel-tile<?= $off ? ' ticketstation-cpanel-tile--off' : ''; ?>" href="index.php?option=com_ticketstation&view=<?= $view; ?>"<?= $off ? ' title="' . $this->escape(Text::_('COM_TICKETSTATION_CPANEL_MOLLIE_OFF_TITLE')) . '"' : ''; ?>>
                             <span class="ticketstation-cpanel-tile-icon" aria-hidden="true">
                                 <?php if ($icon === 'mollie') { ?>
                                     <?php // Black monogram on the light theme, white one on the dark theme ?>
@@ -329,6 +331,9 @@ $sum28     = array_sum(array_column($this->dailySales, 'tickets'));
                                 <?php } ?>
                             </span>
                             <span class="ticketstation-cpanel-tile-label"><?= Text::_($labelKey) ?></span>
+                            <?php if ($off) { ?>
+                                <span class="ticketstation-cpanel-tile-state"><?= Text::_('COM_TICKETSTATION_CPANEL_MOLLIE_OFF') ?></span>
+                            <?php } ?>
                             <?php if ($badge) { ?>
                                 <span class="ticketstation-cpanel-tile-badge badge rounded-pill text-bg-<?= $badge->level; ?>" title="<?= $this->escape(implode("\n", $badge->titles)); ?>">
                                     <?= $badge->count; ?>

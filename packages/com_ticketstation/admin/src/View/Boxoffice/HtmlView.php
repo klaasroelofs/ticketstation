@@ -23,6 +23,7 @@ use Ticketstation\Component\Ticketstation\Administrator\Helper\Invoice;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\MolliePaymentMethods;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\OrderTotals;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Refund;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\Shop;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\ticketcreator;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Docs;
 
@@ -160,9 +161,13 @@ class HtmlView extends BaseHtmlView
                 ->listCheck(true);
         }
 
-        $childBar->standardButton('resendpayment', 'COM_TICKETSTATION_RESEND_PAYMENT', 'boxoffice.resendpayment')
-            ->icon('fa fa-share')
-            ->listCheck(true);
+        // A payment request can't be paid while online payments are off.
+        if (Shop::paymentsOn())
+        {
+            $childBar->standardButton('resendpayment', 'COM_TICKETSTATION_RESEND_PAYMENT', 'boxoffice.resendpayment')
+                ->icon('fa fa-share')
+                ->listCheck(true);
+        }
 
         $childBar->divider(Text::_('COM_TICKETSTATION_BOXOFFICE_TICKETS'));
 
@@ -417,9 +422,9 @@ class HtmlView extends BaseHtmlView
         $toolbar = Toolbar::getInstance('toolbar');
 
         // Payment. Without the right to register payments only a payment request remains, and
-        // only for an order that isn't paid.
+        // only for an order that isn't paid and while online payments are on.
         $payment = AclGate::can('ticketstation.payment');
-        $request = in_array($status->paid, [0, 3], true);
+        $request = in_array($status->paid, [0, 3], true) && Shop::paymentsOn();
 
         if ($payment || $request)
         {

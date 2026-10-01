@@ -165,6 +165,12 @@ class OrderseatedController extends BaseController {
             exit();
         }
 
+        ## With online payments off only a free price category can be chosen on the website.
+        if (!Shop::canPay((int) $ticket->ticketid)) {
+            echo Text::_('COM_TICKETSTATION_ONLINE_PAYMENTS_OFF_TICKET');
+            exit();
+        }
+
         $pricing = (new Amount)->calculateVatFromPrice($ticket->ticketprice, $ticket->vat_percentage);
 
         $query = $db->getQuery(true)
@@ -388,6 +394,13 @@ class OrderseatedController extends BaseController {
 
             $msg = Text::_( 'COM_TICKETSTATION_ORDER_FAILED' );
             $arr = array('error' => '1', 'msg' => $msg, 'id' => $id);
+            echo json_encode($arr);
+            exit();
+        }
+
+        ## With online payments off only a free seat can be taken on the website.
+        if (!Shop::canPay((int) $ticketid)) {
+            $arr = array('error' => '1', 'msg' => Text::_('COM_TICKETSTATION_ONLINE_PAYMENTS_OFF_TICKET'), 'id' => $id);
             echo json_encode($arr);
             exit();
         }

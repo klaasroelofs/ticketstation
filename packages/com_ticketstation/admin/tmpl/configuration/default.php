@@ -305,7 +305,7 @@ $document->getWebAssetManager()->addInlineScript("
                     </label>
                     <div class="col-sm-9">
                         <input type="text" name="next_ordercode" id="next_ordercode"
-                               class="form-control" maxlength="5"
+                               class="form-control" maxlength="6" inputmode="numeric" pattern="[1-9][0-9]{0,5}"
                                value="<?= isset($this->config->next_ordercode)?$this->config->next_ordercode:null; ?>"/>
                         <small class="form-text">
                             <?= Text::_('COM_TICKETSTATION_NEXT_ORDERCODE_DESC') ?>
@@ -509,6 +509,19 @@ $document->getWebAssetManager()->addInlineScript("
                                value="<?= isset($this->config->transactioncosts)?$this->config->transactioncosts:null; ?>"/>
                         <small class="form-text">
                             <?= Text::_('COM_TICKETSTATION_TRANSACTION_COSTS_DESC') ?>
+                        </small>
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <label for="send_tickets_directly" class="col-sm-3 col-form-label"
+                           rel="popover"
+                           title="<?= Text::_('COM_TICKETSTATION_SEND_TICKETS_DIRECTLY') ?>">
+                        <?= Text::_('COM_TICKETSTATION_SEND_TICKETS_DIRECTLY') ?>
+                    </label>
+                    <div class="col-sm-9">
+                        <?= $this->lists['send_tickets_directly']; ?>
+                        <small class="form-text">
+                            <?= Text::_('COM_TICKETSTATION_SEND_TICKETS_DIRECTLY_DESC') ?>
                         </small>
                     </div>
                 </div>

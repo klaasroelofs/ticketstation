@@ -652,6 +652,12 @@
     background: var(--ts-info-bg);
 }
 
+/* Paid tickets while online payments are switched off */
+.ticketstation .ts-badge--boxoffice {
+    color: inherit;
+    background: var(--ts-info-bg);
+}
+
 /* Countdown to the start of sale */
 .ticketstation .ts-countdown-title {
     margin: 0;

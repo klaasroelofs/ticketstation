@@ -173,8 +173,11 @@ if (count($this->childs) != 0) {
                 $hasLimit  = ($ticket->min_qty != 0 || $ticket->max_qty != 0);
                 $hasNote   = $ticketRow->fewLeft || !empty($ticket->free_text_1) || $hasLimit;
 
+                ## With online payments off a paid ticket is only sold at the box office.
+                $boxOfficeOnly = !$this->paymentsOn && (float) $ticket->ticketprice > 0;
+
                 ## Only offer a quantity when there is something to add it to (tickets or the waiting list)
-                $canOrder = $published && ($ticketRow->available > 0 || $ticketRow->waitinglist);
+                $canOrder = $published && !$boxOfficeOnly && ($ticketRow->available > 0 || $ticketRow->waitinglist);
 
                 ## Quantities on offer: up to the ticket's maximum per order (10 without one), and no
                 ## more than are left - unless it's sold out and the quantity is for the waiting list.
@@ -202,9 +205,13 @@ if (count($this->childs) != 0) {
                         <?php } ?>
                     </td>
                     <td class="ts-tickets__action">
-                        <?php if ($ticketRow->available <= 0) { ?>
+                        <?php if ($boxOfficeOnly && $published && $ticketRow->available > 0) { ?>
 
-                            <?php if ($ticketRow->waitinglist && $published) { ?>
+                            <span class="ts-badge ts-badge--boxoffice"><?php echo Text::_('COM_TICKETSTATION_AT_THE_BOX_OFFICE'); ?></span>
+
+                        <?php } elseif ($ticketRow->available <= 0) { ?>
+
+                            <?php if ($ticketRow->waitinglist && $published && !$boxOfficeOnly) { ?>
                                 <button type="button" class="ts-btn ts-btn--secondary ts-btn--sm ts-btn--waitinglist" onclick="waitinglist(<?php echo $ticketid; ?>)">
                                     <?php echo Text::_('COM_TICKETSTATION_JOIN_WAITINGLIST'); ?>
                                 </button>

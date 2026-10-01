@@ -11,6 +11,7 @@ namespace Ticketstation\Component\Ticketstation\Administrator\View\Mollie;
 
 defined('_JEXEC') or die;
 
+use Joomla\CMS\Factory;
 use Joomla\CMS\HTML\HTMLHelper;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\View\HtmlView as BaseHtmlView;
@@ -54,6 +55,13 @@ class HtmlView extends BaseHtmlView {
      */
     public $currency = MollieCurrencies::DEFAULT;
 
+    /**
+     * The number of orders waiting for payment.
+     *
+     * @var int
+     */
+    public $pending = 0;
+
     function display($tpl = null) {
 
         // Set up the toolbar
@@ -73,6 +81,19 @@ class HtmlView extends BaseHtmlView {
         ];
 
         $lists = [];
+
+        $lists['enabled'] = HTMLHelper::_('select.genericList', $yesno, 'enabled', ' class="form-select" ' . '',
+            'value', 'text', $config->enabled);
+
+        // Orders waiting for payment, for the warning under the switch: payment links sent
+        // from the Box Office or the waiting list stop working while online payments are off.
+        $db    = Factory::getContainer()->get('DatabaseDriver');
+        $query = $db->getQuery(true)
+            ->select('COUNT(DISTINCT ' . $db->quoteName('ordercode') . ')')
+            ->from($db->quoteName('#__ticketstation_orders'))
+            ->where($db->quoteName('paid') . ' = 3');
+        $db->setQuery($query);
+        $this->pending = (int) $db->loadResult();
 
         $lists['test_mode'] = HTMLHelper::_('select.genericList', $yesno, 'test_mode', ' class="form-select" ' . '',
             'value', 'text', $config->test_mode);
@@ -101,15 +122,14 @@ class HtmlView extends BaseHtmlView {
         $lists['currency'] = HTMLHelper::_('select.genericList', $currencies, 'currency', ' class="form-select" ' . '',
             'value', 'text', $this->currency);
 
-        $lists['send_tickets_directly'] =HTMLHelper::_('select.genericList', $yesno, 'send_tickets_directly', ' class="form-select" ' . '',
-            'value', 'text', $config->send_tickets_directly);
-
-
         $this->paymentMethods = MolliePaymentMethods::fromConfig($config->payment_methods ?? '');
 
         // Ask Mollie with the key the checkout uses, so the screen can flag chosen methods
-        // that are not activated in the Mollie Dashboard (Mollie would refuse those).
-        $this->activeMethods = MolliePaymentMethods::activeInMollie($config->test_mode == '1' ? $config->api_key_test : $config->api_key);
+        // that are not activated in the Mollie Dashboard (Mollie would refuse those). Not
+        // while online payments are off: the site may have no Mollie account at all.
+        if ($config->enabled == '1') {
+            $this->activeMethods = MolliePaymentMethods::activeInMollie($config->test_mode == '1' ? $config->api_key_test : $config->api_key);
+        }
 
         $this->config = $config;
         $this->lists = $lists;

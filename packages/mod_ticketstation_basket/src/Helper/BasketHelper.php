@@ -105,8 +105,9 @@ class BasketHelper
             'subtotal' => $format($total - $fees),
             'fees'     => $format($fees),
             'total'    => $format($total),
-            // No service fee for this order (switched off, or a reservation): no fees row.
-            'showFees' => $totals->fee_type !== OrderTotals::FEE_NONE,
+            // No service fee for this order (switched off, a reservation, or nothing to pay as
+            // with a free order): no fees row.
+            'showFees' => $fees > 0 && $totals->fee_type !== OrderTotals::FEE_NONE,
         ];
     }
 

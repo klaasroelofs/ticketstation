@@ -265,6 +265,14 @@ class OrderController extends BaseController
             return false;
         }
 
+        // With online payments off a paid ticket is only sold at the box office.
+        if ( ! Shop::canPay((int) $this->id))
+        {
+            $this->error = Text::_('COM_TICKETSTATION_ONLINE_PAYMENTS_OFF_TICKET');
+
+            return false;
+        }
+
         // Only what the ticket page offers this visitor: a published ticket, and in test or
         // bypass mode only to logged-in users.
         if ( ! Shop::sells((int) $this->id))
@@ -324,10 +332,11 @@ class OrderController extends BaseController
 
         $update = '';
 
-        // Transaction costs switched off in the configuration: no fees row at all.
+        // Transaction costs switched off in the configuration, or nothing to pay (a free order):
+        // no fees row at all.
         $feesRow = '';
 
-        if ($totals->fee_type != OrderTotals::FEE_NONE) {
+        if ($fees > 0 && $totals->fee_type != OrderTotals::FEE_NONE) {
             $feesRow = '<tr>
 								<td>' . Text::_('COM_TICKETSTATION_FEES') . '</td>
 								<td>' . $TicketstationFunctions->showprice($config->priceformat, $fees, $config->valuta) . '</td>

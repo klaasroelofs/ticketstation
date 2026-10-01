@@ -13,6 +13,7 @@ use Joomla\CMS\Plugin\PluginHelper;
 use Joomla\CMS\Router\Route;
 use Joomla\Registry\Registry;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Availability;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\Shop;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Ticket;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\TicketstationFunctions;
 
@@ -43,7 +44,8 @@ $fmt = datefmt_create(
     'EEEE d MMMM yyyy'
 );
 
-$show_transaction_costs = $this->config->variable_transcosts != 2;
+## Without online payments only free tickets are sold on the website: no transaction costs.
+$show_transaction_costs = $this->config->variable_transcosts != 2 && Shop::paymentsOn();
 
 if ($this->config->variable_transcosts == 0) {
     $transaction_costs = Text::sprintf('COM_TICKETSTATION_TRANSACTION_COSTS_PER_ORDER',
@@ -135,7 +137,15 @@ $backgroundStyle = [TicketstationFunctions::class, 'backgroundImageStyle'];
                             // their seat-picker has no waiting list.
                             $waitinglist_open = ($available_tickets < 1 && $this->config->show_waitinglist == 1 && $row->show_seatplans != 1);
 
-                            $clickable = ($available_tickets > 0 || $waitinglist_open);
+                            // With online payments off, a ticket of which nothing is free is only sold at
+                            // the box office; a seating chart as soon as one of its seats costs something.
+                            $box_office_only = Shop::boxOfficeOnly((int) $row->ticketid, $row->show_seatplans != 1);
+
+                            if ($box_office_only) {
+                                $waitinglist_open = false;
+                            }
+
+                            $clickable = !$box_office_only && ($available_tickets > 0 || $waitinglist_open);
 
                             $ticket_classes = 'ts-ticket'
                                 . ($clickable ? ' ts-ticket--link' : '')
@@ -192,9 +202,11 @@ $backgroundStyle = [TicketstationFunctions::class, 'backgroundImageStyle'];
                                         <?php } ?>
                                     </dl>
 
-                                    <?php if ((($this->config->show_quantity_eventlist == 1) && ($available_tickets > 0)) || $available_tickets < 1) { ?>
+                                    <?php if ((($this->config->show_quantity_eventlist == 1) && ($available_tickets > 0)) || $available_tickets < 1 || $box_office_only) { ?>
                                         <div class="ts-ticket__status">
-                                            <?php if ($available_tickets < 1) { ?>
+                                            <?php if ($box_office_only && $available_tickets > 0) { ?>
+                                                <span class="ts-badge ts-badge--boxoffice"><?= Text::_( 'COM_TICKETSTATION_AT_THE_BOX_OFFICE' ); ?></span>
+                                            <?php } elseif ($available_tickets < 1) { ?>
                                                 <span class="ts-badge ts-badge--soldout"><?= Text::_( 'COM_TICKETSTATION_SOLD_OUT2' ); ?></span>
                                                 <?php if ($waitinglist_open) { ?>
                                                     <span class="ts-badge ts-badge--waitinglist"><?= Text::_( 'COM_TICKETSTATION_WAITINGLIST_AVAILABLE' ); ?></span>

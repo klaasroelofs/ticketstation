@@ -17,6 +17,7 @@ use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\View\HtmlView as BaseHtmlView;
 use Joomla\CMS\Router\Route;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Config;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\Shop;
 
 
 class HtmlView extends BaseHtmlView {
@@ -88,6 +89,7 @@ class HtmlView extends BaseHtmlView {
         $this->waitlist = $waitlist;
         $this->config   = $config;
         $this->mollieconfig = $mollieconfig;
+        $this->paymentsOn   = Shop::paymentsOn();
 
         parent::display($tpl);
 

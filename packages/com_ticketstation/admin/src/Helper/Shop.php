@@ -20,10 +20,22 @@ use Joomla\CMS\Factory;
  * either is on, only logged-in site users (the organisation's own staff) see tickets and can
  * order them. Anonymous visitors get the same answer as for an unpublished ticket, but still
  * see the events whose sale is about to start (the countdown in the upcoming-events list).
+ *
+ * With online payments switched off (Mollie settings) the website only sells free tickets: an
+ * order of nothing never goes to Mollie. Paid tickets are sold through Reservations and the
+ * Box Office, and the website says so. Test and bypass mode don't apply then.
  */
 class Shop
 {
     private static ?object $mollie = null;
+
+    /**
+     * Whether customers can pay online through Mollie.
+     */
+    public static function paymentsOn(): bool
+    {
+        return self::getMollie()->enabled == '1';
+    }
 
     /**
      * Whether Mollie's test mode or bypass mode is on.
@@ -32,7 +44,7 @@ class Shop
     {
         $mollie = self::getMollie();
 
-        return $mollie->test_mode == '1' || $mollie->bypass_mode == '1';
+        return self::paymentsOn() && ($mollie->test_mode == '1' || $mollie->bypass_mode == '1');
     }
 
     /**
@@ -45,12 +57,60 @@ class Shop
     }
 
     /**
+     * Whether the website can take an order for the given ticket as far as paying goes:
+     * online payments are on, or the ticket is free.
+     */
+    public static function canPay(int $ticketid): bool
+    {
+        return self::paymentsOn() || self::highestPrice([$ticketid]) <= 0;
+    }
+
+    /**
+     * Whether only the box office sells the given ticket: online payments are off and none of
+     * the ticket, or with $family its child tickets (variants, price categories and sections),
+     * is free. With $all = false: as soon as one of them costs something, as for a seating
+     * chart, whose seats are picked on one page.
+     */
+    public static function boxOfficeOnly(int $ticketid, bool $all = true): bool
+    {
+        if (self::paymentsOn()) {
+            return false;
+        }
+
+        $db    = Factory::getContainer()->get('DatabaseDriver');
+        $query = $db->getQuery(true)
+            ->select($all ? 'MIN(' . $db->quoteName('ticketprice') . ')' : 'MAX(' . $db->quoteName('ticketprice') . ')')
+            ->from($db->quoteName('#__ticketstation_tickets'))
+            ->where('(' . $db->quoteName('ticketid') . ' = ' . $ticketid . ' OR (' . $db->quoteName('parent') . ' = ' . $ticketid
+                . ' AND ' . $db->quoteName('published') . ' = 1))');
+
+        // A ticket with variants sells the variants, not itself.
+        if ($all) {
+            $variants = $db->getQuery(true)
+                ->select('COUNT(*)')
+                ->from($db->quoteName('#__ticketstation_tickets'))
+                ->where($db->quoteName('parent') . ' = ' . $ticketid)
+                ->where($db->quoteName('published') . ' = 1');
+            $db->setQuery($variants);
+
+            if ((int) $db->loadResult() > 0) {
+                $query->where($db->quoteName('ticketid') . ' != ' . $ticketid);
+            }
+        }
+
+        $db->setQuery($query);
+
+        return (float) $db->loadResult() > 0;
+    }
+
+    /**
      * Whether the current visitor may order the given ticket on the website: the shop is open
-     * to them and the ticket and its event are published, as on the ticket page itself.
+     * to them, the ticket and its event are published, as on the ticket page itself, and it
+     * can be paid for (see canPay()).
      */
     public static function sells(int $ticketid): bool
     {
-        if (self::isClosed()) {
+        if (self::isClosed() || !self::canPay($ticketid)) {
             return false;
         }
 
@@ -68,18 +128,42 @@ class Shop
         return (int) $db->loadResult() > 0;
     }
 
+    /**
+     * The highest price among the given tickets.
+     *
+     * @param   int[]  $ticketids
+     */
+    public static function highestPrice(array $ticketids): float
+    {
+        $ticketids = array_values(array_unique(array_map('intval', $ticketids)));
+
+        if (!$ticketids) {
+            return 0.0;
+        }
+
+        $db    = Factory::getContainer()->get('DatabaseDriver');
+        $query = $db->getQuery(true)
+            ->select('MAX(' . $db->quoteName('ticketprice') . ')')
+            ->from($db->quoteName('#__ticketstation_tickets'))
+            ->whereIn($db->quoteName('ticketid'), $ticketids);
+
+        $db->setQuery($query);
+
+        return (float) $db->loadResult();
+    }
+
     private static function getMollie(): object
     {
         if (self::$mollie === null) {
             $db    = Factory::getContainer()->get('DatabaseDriver');
             $query = $db->getQuery(true)
-                ->select($db->quoteName(['test_mode', 'bypass_mode']))
+                ->select($db->quoteName(['enabled', 'test_mode', 'bypass_mode']))
                 ->from($db->quoteName('#__ticketstation_mollie'))
                 ->where($db->quoteName('configid') . ' = 1');
 
             $db->setQuery($query);
 
-            self::$mollie = $db->loadObject() ?: (object) ['test_mode' => '0', 'bypass_mode' => '0'];
+            self::$mollie = $db->loadObject() ?: (object) ['enabled' => '1', 'test_mode' => '0', 'bypass_mode' => '0'];
         }
 
         return self::$mollie;

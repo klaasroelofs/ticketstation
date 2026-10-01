@@ -25,6 +25,35 @@ foreach ($this->summary as $row)
 {
     $total += (float) $row->price + (float) $row->fees;
 }
+
+// A No/Yes switch set to Yes, with the markup of Joomla's own joomla.form.field.radio.switcher
+// layout so it looks like the switches in Joomla's forms. A switch that depends on the one above
+// it is indented one step per level: label, switch and description.
+Factory::getApplication()->getDocument()->getWebAssetManager()->useStyle('switcher');
+
+$switcher = function (string $name, string $label, string $description, int $level = 0): void
+{
+    $indent = $level ? ' style="margin-inline-start: ' . (1.5 * $level) . 'rem"' : '';
+    ?>
+    <div class="row mb-3" id="<?= $name ?>-row">
+        <div class="col-sm-3 col-form-label" id="<?= $name ?>-lbl"><span class="d-block"<?= $indent ?>><?= Text::_($label) ?></span></div>
+        <div class="col-sm-9">
+            <div<?= $indent ?>>
+                <fieldset id="<?= $name ?>" aria-labelledby="<?= $name ?>-lbl">
+                    <div class="switcher">
+                        <input type="radio" id="<?= $name ?>0" name="<?= $name ?>" value="0">
+                        <label for="<?= $name ?>0"><?= Text::_('JNO') ?></label>
+                        <input type="radio" id="<?= $name ?>1" name="<?= $name ?>" value="1" checked class="active">
+                        <label for="<?= $name ?>1"><?= Text::_('JYES') ?></label>
+                        <span class="toggle-outside"><span class="toggle-inside"></span></span>
+                    </div>
+                </fieldset>
+                <small class="form-text"><?= Text::_($description) ?></small>
+            </div>
+        </div>
+    </div>
+    <?php
+};
 ?>
 
 <div class="btn-toolbar mb-3" role="toolbar">
@@ -92,37 +121,22 @@ foreach ($this->summary as $row)
 
         <form action="<?= Route::_('index.php?option=com_ticketstation&controller=reservation&task=complete') ?>" method="post">
 
+            <?php if (!AclGate::can('ticketstation.payment')) : ?>
             <div class="row mb-3">
                 <label class="col-sm-3 col-form-label"><?= Text::_('COM_TICKETSTATION_RESERVATION_PAYMENT_STATUS') ?></label>
                 <div class="col-sm-9">
-                    <?php if (!AclGate::can('ticketstation.payment')) : ?>
                     <input type="hidden" name="paid" value="0" />
                     <p class="form-control-plaintext"><?= Text::_('COM_TICKETSTATION_RESERVATION_NOT_YET_PAID') ?></p>
                     <small class="form-text"><?= Text::_('COM_TICKETSTATION_RESERVATION_PAID_NOT_ALLOWED') ?></small>
-                    <?php else : ?>
-                    <div class="form-check">
-                        <input class="form-check-input" type="radio" name="paid" id="paid1" value="1" checked>
-                        <label class="form-check-label" for="paid1"><?= Text::_('COM_TICKETSTATION_RESERVATION_ALREADY_PAID') ?></label>
-                    </div>
-                    <div class="form-check">
-                        <input class="form-check-input" type="radio" name="paid" id="paid0" value="0">
-                        <label class="form-check-label" for="paid0"><?= Text::_('COM_TICKETSTATION_RESERVATION_NOT_YET_PAID') ?></label>
-                    </div>
-                    <small class="form-text"><?= Text::_('COM_TICKETSTATION_RESERVATION_ALREADY_PAID_DESC') ?></small>
-                    <?php endif; ?>
                 </div>
             </div>
+            <?php else : ?>
+                <?php $switcher('paid', 'COM_TICKETSTATION_RESERVATION_ALREADY_PAID', 'COM_TICKETSTATION_RESERVATION_ALREADY_PAID_DESC'); ?>
+            <?php endif; ?>
 
-            <div class="row mb-3">
-                <div class="col-sm-9 offset-sm-3">
-                    <input type="hidden" name="start_new" value="0" />
-                    <div class="form-check form-switch">
-                        <input class="form-check-input" type="checkbox" role="switch" name="start_new" id="start_new" value="1" checked>
-                        <label class="form-check-label" for="start_new"><?= Text::_('COM_TICKETSTATION_RESERVATION_START_NEW') ?></label>
-                    </div>
-                    <small class="form-text"><?= Text::_('COM_TICKETSTATION_RESERVATION_START_NEW_DESC') ?></small>
-                </div>
-            </div>
+            <?php $switcher('start_new', 'COM_TICKETSTATION_RESERVATION_START_NEW', 'COM_TICKETSTATION_RESERVATION_START_NEW_DESC'); ?>
+            <?php $switcher('same_event', 'COM_TICKETSTATION_RESERVATION_SAME_EVENT', 'COM_TICKETSTATION_RESERVATION_SAME_EVENT_DESC', 1); ?>
+            <?php $switcher('same_ticket', 'COM_TICKETSTATION_RESERVATION_SAME_TICKET', 'COM_TICKETSTATION_RESERVATION_SAME_TICKET_DESC', 2); ?>
 
             <button type="submit" class="btn btn-success"><?= Text::_('COM_TICKETSTATION_RESERVATION_COMPLETE') ?></button>
             <?= HTMLHelper::_( 'form.token' ); ?>
@@ -130,3 +144,27 @@ foreach ($this->summary as $row)
 
     </div>
 </div>
+
+<script>
+    // "For the same event" only applies to a new reservation, "For the same ticket" only to one
+    // for the same event: hide each while the switch above it is off.
+    (function () {
+        var value = function (name) {
+            var checked = document.querySelector('input[name="' + name + '"]:checked');
+            return checked ? checked.value : '0';
+        };
+        var toggle = function () {
+            var startNew = value('start_new') === '1';
+            document.getElementById('same_event-row').hidden = !startNew;
+            document.getElementById('same_ticket-row').hidden = !startNew || value('same_event') !== '1';
+        };
+
+        ['start_new', 'same_event'].forEach(function (name) {
+            document.querySelectorAll('input[name="' + name + '"]').forEach(function (input) {
+                input.addEventListener('change', toggle);
+            });
+        });
+
+        toggle();
+    })();
+</script>

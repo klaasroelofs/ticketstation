@@ -24,6 +24,7 @@ use Joomla\Input\Input;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Date;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Order;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Refund;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\Shop;
 
 
 class BoxofficeController extends BaseController {
@@ -344,7 +345,12 @@ class BoxofficeController extends BaseController {
 
         $model = $this->getModel('boxoffice');
 
-        if(!$model->paymentResender($cid))
+        // A payment link can't be paid while online payments are off.
+        if (!Shop::paymentsOn())
+        {
+            $app->enqueueMessage(Text::_('COM_TICKETSTATION_PAYMENT_REQUESTS_PAYMENTS_OFF'), 'error');
+        }
+        elseif(!$model->paymentResender($cid))
         {
             $app->enqueueMessage(Text::_('COM_TICKETSTATION_ERROR_TICKETBOX'), 'error');
             $this->setRedirect($link);
@@ -623,7 +629,12 @@ class BoxofficeController extends BaseController {
         $ordercode = $app->getInput()->get('ordercode', 0, 'int');
         $model     = $this->getModel('boxoffice');
 
-        if (!$model->paymentResender([$ordercode]))
+        // A payment link can't be paid while online payments are off.
+        if (!Shop::paymentsOn())
+        {
+            $app->enqueueMessage(Text::_('COM_TICKETSTATION_PAYMENT_REQUESTS_PAYMENTS_OFF'), 'error');
+        }
+        elseif (!$model->paymentResender([$ordercode]))
         {
             $app->enqueueMessage(Text::_('COM_TICKETSTATION_ERROR_TICKETBOX'), 'error');
         }

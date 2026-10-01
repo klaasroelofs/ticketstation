@@ -53,6 +53,21 @@ class MollieModel extends BaseDatabaseModel
     {
         $table = $this->getTable();
 
+        // With online payments switched off the Mollie settings are greyed out and not sent:
+        // only the switch is stored, so switching back on finds everything as it was.
+        if (isset($data['enabled']) && $data['enabled'] == '0') {
+            try
+            {
+                return $table->load(1) && $table->bind(['enabled' => 0]) && $table->store();
+            }
+            catch (\Exception $e)
+            {
+                Factory::getApplication()->enqueueMessage($e->getMessage(), 'error');
+
+                return false;
+            }
+        }
+
         // Keep the existing API keys when the submitted value is empty, so a stray
         // browser autofill/generated password on the field can't wipe out the stored key.
         $existing = $this->getData();

@@ -157,6 +157,9 @@ class HtmlView extends BaseHtmlView {
         $lists['send_invoice'] = HTMLHelper::_('select.genericList', $yesno, 'send_invoice', ' class="form-select" ' . '',
             'value', 'text', $config->send_invoice);
 
+        $lists['send_tickets_directly'] = HTMLHelper::_('select.genericList', $yesno, 'send_tickets_directly', ' class="form-select" ' . '',
+            'value', 'text', $config->send_tickets_directly ?? 1);
+
         ## Filling the Array() for a dropdown list.
         $jquery               = [
             '1' => ['value' => '1', 'text' => Text::_('COM_TICKETSTATION_JQ_LOAD_FROM_CDN_JQUERY')],

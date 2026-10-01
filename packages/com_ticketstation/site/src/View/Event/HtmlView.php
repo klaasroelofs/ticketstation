@@ -87,6 +87,7 @@ class HtmlView extends BaseHtmlView {
         $this->childs       = $childs;
         $this->config       = $config;
         $this->soldtickets  = $soldtickets;
+        $this->paymentsOn   = Shop::paymentsOn();
 
         parent::display($tpl);
     }

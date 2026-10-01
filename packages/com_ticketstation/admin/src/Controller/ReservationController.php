@@ -40,16 +40,40 @@ class ReservationController extends BaseController
      * Starts a brand new reservation: clears any previous wizard state and generates a fresh
      * temporary ordercode, then shows step 1 (event/ticket selection). When called with an
      * eventid (see complete()'s "start a new reservation immediately" redirect), that event is
-     * preselected on step 1 instead of the picker starting empty.
+     * preselected on step 1 instead of the picker starting empty. With a ticketid as well, step 1
+     * is skipped while that ticket can still be booked; otherwise step 1 shows its event.
      */
     public function start()
     {
-        $eventid = Factory::getApplication()->getInput()->getInt('eventid', 0);
+        $app      = Factory::getApplication();
+        $eventid  = $app->getInput()->getInt('eventid', 0);
+        $ticketid = $app->getInput()->getInt('ticketid', 0);
 
         $this->setState([]);
 
         $ordercode = (new Ordercode)->getTemporaryOrdercode();
         (new Ordercode)->setOrdercode($ordercode);
+
+        if ($eventid && $ticketid)
+        {
+            // The same check step 1 makes: a ticket of this event that hasn't ended and has
+            // tickets or seats left.
+            foreach ($this->getModel('Reservation')->getTicketsForEvent($eventid) as $ticket)
+            {
+                if ((int) $ticket->ticketid === $ticketid && $ticket->available > 0)
+                {
+                    $this->setState(['ticketid' => $ticketid, 'eventid' => $eventid]);
+
+                    $layout = $ticket->show_seatplans == 1 ? 'seatplan' : 'quantity';
+
+                    $this->setRedirect(Uri::base() . 'index.php?option=com_ticketstation&view=reservation&layout=' . $layout);
+
+                    return;
+                }
+            }
+
+            $app->enqueueMessage(Text::_('COM_TICKETSTATION_RESERVATION_TICKET_UNAVAILABLE'), 'warning');
+        }
 
         $redirect = 'index.php?option=com_ticketstation&view=reservation';
 
@@ -408,6 +432,9 @@ class ReservationController extends BaseController
         $clientid  = (int) ($state['clientid'] ?? 0);
         $paid      = $jinput->getInt('paid', 1);
         $startNew  = $jinput->getBool('start_new', true);
+        // "For the same event" and "For the same ticket" only count when the switch above them is on.
+        $sameEvent  = $startNew && $jinput->getBool('same_event', true);
+        $sameTicket = $sameEvent && $jinput->getBool('same_ticket', true);
 
         if (! $ordercode || ! $clientid)
         {
@@ -450,7 +477,8 @@ class ReservationController extends BaseController
             $payment->sendTickets();
         }
 
-        $lastEventId = (int) ($state['eventid'] ?? 0);
+        $lastEventId  = (int) ($state['eventid'] ?? 0);
+        $lastTicketId = (int) ($state['ticketid'] ?? 0);
 
         $this->setState([]);
         Factory::getApplication()->getSession()->clear('ordercode');
@@ -461,9 +489,14 @@ class ReservationController extends BaseController
         {
             $redirect = 'index.php?option=com_ticketstation&controller=reservation&task=start';
 
-            if ($lastEventId)
+            if ($sameEvent && $lastEventId)
             {
                 $redirect .= '&eventid=' . $lastEventId;
+
+                if ($sameTicket && $lastTicketId)
+                {
+                    $redirect .= '&ticketid=' . $lastTicketId;
+                }
             }
 
             $this->setRedirect(Uri::base() . $redirect);

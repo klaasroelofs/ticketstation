@@ -337,7 +337,8 @@ class ControlpanelModel extends BaseDatabaseModel
 
         $steps = [
             ['COM_TICKETSTATION_CPANEL_START_COMPANY', !$this->isCompanyIncomplete($config), 'index.php?option=com_ticketstation&view=configuration#company'],
-            ['COM_TICKETSTATION_CPANEL_START_MOLLIE', trim((string) $mollie->api_key) !== '', 'index.php?option=com_ticketstation&view=mollie'],
+            // With online payments switched off there is no Mollie account to set up.
+            ['COM_TICKETSTATION_CPANEL_START_MOLLIE', $mollie->enabled != '1' || trim((string) $mollie->api_key) !== '', 'index.php?option=com_ticketstation&view=mollie'],
             ['COM_TICKETSTATION_CPANEL_START_VENUE', $has('#__ticketstation_venues'), 'index.php?option=com_ticketstation&view=venues'],
             ['COM_TICKETSTATION_CPANEL_START_EVENT', $has('#__ticketstation_events'), 'index.php?option=com_ticketstation&view=events'],
             ['COM_TICKETSTATION_CPANEL_START_TICKET', $has('#__ticketstation_tickets', $db->quoteName('parent') . ' = 0'), 'index.php?option=com_ticketstation&view=tickets'],
@@ -418,25 +419,29 @@ class ControlpanelModel extends BaseDatabaseModel
             }
         };
 
-        // Mollie configuration: bypass mode, test mode and the live API key each get their own, specific warning.
+        // Mollie configuration: bypass mode, test mode and the live API key each get their own, specific
+        // warning. None while online payments are switched off: the site may have no Mollie account.
         $mollieLink = 'index.php?option=com_ticketstation&view=mollie';
 
-        $add('COM_TICKETSTATION_CPANEL_ATTENTION_MOLLIE_BYPASS', $mollie->bypass_mode == '1' ? 1 : 0,
-            $mollieLink, 'fa-exclamation-circle', 'danger');
-        $add('COM_TICKETSTATION_CPANEL_ATTENTION_MOLLIE_TEST', $mollie->test_mode == '1' ? 1 : 0,
-            $mollieLink, 'fa-exclamation-circle', 'danger');
+        if ($mollie->enabled == '1')
+        {
+            $add('COM_TICKETSTATION_CPANEL_ATTENTION_MOLLIE_BYPASS', $mollie->bypass_mode == '1' ? 1 : 0,
+                $mollieLink, 'fa-exclamation-circle', 'danger');
+            $add('COM_TICKETSTATION_CPANEL_ATTENTION_MOLLIE_TEST', $mollie->test_mode == '1' ? 1 : 0,
+                $mollieLink, 'fa-exclamation-circle', 'danger');
 
-        if ($mollie->api_key == '')
-        {
-            $add('COM_TICKETSTATION_CPANEL_ATTENTION_MOLLIE_KEY_MISSING', 1, $mollieLink, 'fa-exclamation-circle', 'danger');
-        }
-        elseif (substr($mollie->api_key, 0, 5) === 'test_')
-        {
-            $add('COM_TICKETSTATION_CPANEL_ATTENTION_MOLLIE_KEY_IS_TEST', 1, $mollieLink, 'fa-exclamation-circle', 'danger');
-        }
-        elseif (substr($mollie->api_key, 0, 5) !== 'live_')
-        {
-            $add('COM_TICKETSTATION_CPANEL_ATTENTION_MOLLIE_KEY_INVALID', 1, $mollieLink, 'fa-exclamation-circle', 'danger');
+            if ($mollie->api_key == '')
+            {
+                $add('COM_TICKETSTATION_CPANEL_ATTENTION_MOLLIE_KEY_MISSING', 1, $mollieLink, 'fa-exclamation-circle', 'danger');
+            }
+            elseif (substr($mollie->api_key, 0, 5) === 'test_')
+            {
+                $add('COM_TICKETSTATION_CPANEL_ATTENTION_MOLLIE_KEY_IS_TEST', 1, $mollieLink, 'fa-exclamation-circle', 'danger');
+            }
+            elseif (substr($mollie->api_key, 0, 5) !== 'live_')
+            {
+                $add('COM_TICKETSTATION_CPANEL_ATTENTION_MOLLIE_KEY_INVALID', 1, $mollieLink, 'fa-exclamation-circle', 'danger');
+            }
         }
 
         // Company details and mail sender, both on the Company tab of the Configuration.

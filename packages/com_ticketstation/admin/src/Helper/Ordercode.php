@@ -19,6 +19,37 @@ defined('_JEXEC') or die('Restricted access');
 class Ordercode
 {
     /**
+     * Length of a temporary ordercode, see getTemporaryOrdercode().
+     *
+     * @since 2.13.0
+     */
+    public const TEMPORARY_DIGITS = 9;
+
+    /**
+     * Longest sequential ordercode that can be told apart from the legacy 7-digit codes, and so
+     * the highest value the "Next order number" setting accepts (999999).
+     *
+     * @since 2.13.0
+     */
+    public const SEQUENTIAL_MAX_DIGITS = 6;
+
+    /**
+     * Whether the given code is a temporary ordercode, still to be replaced by a final one.
+     *
+     * @param mixed $ordercode
+     *
+     * @return bool
+     *
+     * @since 2.13.0
+     */
+    public static function isTemporaryOrdercode($ordercode): bool
+    {
+        $ordercode = (string) $ordercode;
+
+        return ctype_digit($ordercode) && strlen($ordercode) === self::TEMPORARY_DIGITS;
+    }
+
+    /**
      * Setting an ordercode at request.
      *
      * @param null $ordercode
@@ -56,14 +87,14 @@ class Ordercode
      */
     public function getTemporaryOrdercode()
     {
-        // Generating a 10 digit ordercode.
-        return $this->generateOrdercode(9);
+        return $this->generateOrdercode(self::TEMPORARY_DIGITS);
     }
 
     /**
      * A temporary ordercode (9 digits, see getTemporaryOrdercode()) is replaced by the final,
-     * sequential ordercode (at most 5 digits: a 2-digit season prefix plus a 3-digit sequence,
-     * eg. 26001). Anything already at or under that length is a final code and is left as-is.
+     * sequential ordercode (eg. 26001: a 2-digit season prefix plus a 3-digit sequence, growing
+     * to 6 digits and beyond once the counter passes 99999). Anything else is already a final
+     * code, the legacy 7-digit ones included, and is left as-is.
      *
      * @param $ordercode
      *
@@ -73,7 +104,7 @@ class Ordercode
      */
     public function getFinalOrdercode($ordercode)
     {
-        if (strlen($ordercode) > 5)
+        if (self::isTemporaryOrdercode($ordercode))
         {
             return $this->getReformattedOrdercode();
         }
@@ -92,7 +123,15 @@ class Ordercode
      */
     public function getReformattedOrdercode()
     {
-        $next_ordercode = max($this->getHighestNumericOrdercode() + 1, $this->getConfiguredNextOrdercode());
+        $next_ordercode = max($this->getHighestNumericOrdercode(self::SEQUENTIAL_MAX_DIGITS) + 1, $this->getConfiguredNextOrdercode());
+
+        // Past 999999 the sequence runs into the 7-digit range of the legacy codes, which the
+        // query above leaves out. From there on count every final code, legacy ones included, so
+        // the new code is always higher than any existing one and never collides.
+        if (strlen((string) $next_ordercode) > self::SEQUENTIAL_MAX_DIGITS)
+        {
+            $next_ordercode = max($this->getHighestNumericOrdercode(self::TEMPORARY_DIGITS - 1) + 1, $next_ordercode);
+        }
 
         // Resetting the ordercode to move on.
         Factory::getApplication()->getSession()->set('ordercode', $next_ordercode);
@@ -122,23 +161,26 @@ class Ordercode
     }
 
     /**
-     * Returns the highest numeric ordercode already used, so the next one can be assigned
-     * sequentially without colliding with an existing order. Restricted to (at most) 5-digit
-     * codes so older 7-digit ordercodes, from before the switch to the shorter format, are
-     * ignored here rather than pushing new codes back up to 7 digits.
+     * Returns the highest numeric ordercode of at most $maxDigits digits already used, so the
+     * next one can be assigned sequentially without colliding with an existing order. With
+     * SEQUENTIAL_MAX_DIGITS, the older 7-digit ordercodes from before the switch to the shorter
+     * format are ignored rather than pushing new codes up to 7 digits. Temporary 9-digit codes
+     * are never counted.
+     *
+     * @param int $maxDigits
      *
      * @return int
      *
      * @since 1.7.0
      */
-    private function getHighestNumericOrdercode(): int
+    private function getHighestNumericOrdercode(int $maxDigits): int
     {
         $db = Factory::getContainer()->get('DatabaseDriver');
 
         $query = $db->getQuery(true)
             ->select('MAX(CAST(' . $db->quoteName('ordercode') . ' AS UNSIGNED))')
             ->from($db->quoteName('#__ticketstation_orders'))
-            ->where($db->quoteName('ordercode') . ' REGEXP ' . $db->quote('^[0-9]{1,5}$'));
+            ->where($db->quoteName('ordercode') . ' REGEXP ' . $db->quote('^[0-9]{1,' . $maxDigits . '}$'));
 
         $db->setQuery($query);
 

@@ -52,11 +52,19 @@ $bullets = function (string $prefix, int $count) {
             <summary class="h5 mb-0"><span class="fa fa-cog me-2" aria-hidden="true"></span><?= Text::_('COM_TICKETSTATION_MOLLIE_DOCS_SETTINGS_TITLE') ?></summary>
             <div class="mt-3">
                 <p><?= Text::_('COM_TICKETSTATION_MOLLIE_DOCS_SETTINGS_INTRO') ?></p>
-                <?php $bullets('COM_TICKETSTATION_MOLLIE_DOCS_SETTINGS_', 8); ?>
+                <?php $bullets('COM_TICKETSTATION_MOLLIE_DOCS_SETTINGS_', 7); ?>
             </div>
         </details>
 
-        <details id="docs-mollie-flow" class="mb-3 border rounded p-3">
+        <details id="docs-mollie-off" class="mb-3 border rounded p-3">
+            <summary class="h5 mb-0"><span class="fa fa-power-off me-2" aria-hidden="true"></span><?= Text::_('COM_TICKETSTATION_MOLLIE_DOCS_OFF_TITLE') ?></summary>
+            <div class="mt-3">
+                <p><?= Text::_('COM_TICKETSTATION_MOLLIE_DOCS_OFF_INTRO') ?></p>
+                <?php $bullets('COM_TICKETSTATION_MOLLIE_DOCS_OFF_', 5); ?>
+            </div>
+        </details>
+
+        <details id="docs-mollie-flow"class="mb-3 border rounded p-3">
             <summary class="h5 mb-0"><span class="fa fa-exchange-alt me-2" aria-hidden="true"></span><?= Text::_('COM_TICKETSTATION_MOLLIE_DOCS_FLOW_TITLE') ?></summary>
             <div class="mt-3">
                 <?php $steps('COM_TICKETSTATION_MOLLIE_DOCS_FLOW_', 4); ?>

@@ -35,8 +35,35 @@ $wa->registerAndUseScript('passwordview', Uri::root() . 'media/system/js/fields/
         </h3>
         <div class="card-body">
 
+            <?php $enabled = $this->config->enabled == '1'; ?>
+
             <div class="row mb-3">
-                <label for="api_key" class="col-sm-3 col-form-label"
+                <label for="enabled" class="col-sm-3 col-form-label"
+                       rel="popover"
+                       title="<?= Text::_('COM_TICKETSTATION_MOLLIE_ENABLED') ?>">
+                    <?= Text::_('COM_TICKETSTATION_MOLLIE_ENABLED') ?>
+                </label>
+                <div class="col-sm-9">
+                    <?= $this->lists['enabled']; ?>
+                    <small class="form-text">
+                        <?= Text::_('COM_TICKETSTATION_MOLLIE_ENABLED_DESC') ?>
+                    </small>
+                    <?php if ($this->pending > 0) : ?>
+                        <div id="ts-mollie-pending" class="alert alert-warning mt-2 mb-0"<?= $enabled ? ' hidden' : '' ?>>
+                            <?= Text::plural('COM_TICKETSTATION_MOLLIE_ENABLED_PENDING', $this->pending) ?>
+                        </div>
+                    <?php endif; ?>
+                </div>
+            </div>
+
+            <fieldset id="ts-mollie-settings" class="ts-mollie-settings"<?= $enabled ? '' : ' disabled' ?>>
+
+            <p id="ts-mollie-off" class="alert alert-info"<?= $enabled ? ' hidden' : '' ?>>
+                <?= Text::_('COM_TICKETSTATION_MOLLIE_SETTINGS_OFF') ?>
+            </p>
+
+            <div class="row mb-3">
+                <label for="api_key"class="col-sm-3 col-form-label"
                        rel="popover"
                        title="<?= Text::_('COM_TICKETSTATION_MOLLIE_API_KEY') ?>">
                     <?= Text::_('COM_TICKETSTATION_MOLLIE_API_KEY') ?>
@@ -181,19 +208,7 @@ $wa->registerAndUseScript('passwordview', Uri::root() . 'media/system/js/fields/
                 </div>
             </div>
 
-            <div class="row mb-3">
-                <label for="send_tickets_directly" class="col-sm-3 col-form-label"
-                       rel="popover"
-                       title="<?= Text::_('COM_TICKETSTATION_MOLLIE_SEND_TICKETS_DIRECTLY') ?>">
-                    <?= Text::_('COM_TICKETSTATION_MOLLIE_SEND_TICKETS_DIRECTLY') ?>
-                </label>
-                <div class="col-sm-9">
-                    <?= $this->lists['send_tickets_directly']; ?>
-                    <small class="form-text">
-                        <?= Text::_('COM_TICKETSTATION_MOLLIE_SEND_TICKETS_DIRECTLY_DESC') ?>
-                    </small>
-                </div>
-            </div>
+            </fieldset>
 
         </div>
     </div>
@@ -205,3 +220,18 @@ $wa->registerAndUseScript('passwordview', Uri::root() . 'media/system/js/fields/
     <input name="controller" type="hidden" value="mollie" />
     <?= HTMLHelper::_( 'form.token' ); ?>
 </form>
+
+<script>
+    // Switching online payments off greys out the Mollie settings; they are kept as they are.
+    document.getElementById('enabled').addEventListener('change', function () {
+        var off = this.value === '0';
+        var pending = document.getElementById('ts-mollie-pending');
+
+        document.getElementById('ts-mollie-settings').disabled = off;
+        document.getElementById('ts-mollie-off').hidden = !off;
+
+        if (pending) {
+            pending.hidden = !off;
+        }
+    });
+</script>
