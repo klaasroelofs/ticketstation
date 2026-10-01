@@ -95,7 +95,12 @@ class HtmlView extends BaseHtmlView {
         $db->setQuery($query);
         $this->pending = (int) $db->loadResult();
 
-        $lists['test_mode'] = HTMLHelper::_('select.genericList', $yesno, 'test_mode', ' class="form-select" ' . '',
+        $onoff = [
+            '0' => ['value' => '0', 'text' => Text::_('COM_TICKETSTATION_OFF')],
+            '1' => ['value' => '1', 'text' => Text::_('COM_TICKETSTATION_ON')],
+        ];
+
+        $lists['test_mode'] = HTMLHelper::_('select.genericList', $onoff, 'test_mode', ' class="form-select" ' . '',
             'value', 'text', $config->test_mode);
 
         $language = [
