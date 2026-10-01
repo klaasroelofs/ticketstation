@@ -156,6 +156,26 @@
     stroke-opacity: 1;
 }
 
+/* Alignment guides while dragging; magenta stands out on most ticket designs. */
+.ts-tle__guide {
+    stroke: #d6249f;
+    stroke-width: 1.5;
+    stroke-dasharray: 5 3;
+    vector-effect: non-scaling-stroke;
+    pointer-events: none;
+}
+
+.ts-tle__handle {
+    cursor: nwse-resize;
+}
+
+.ts-tle__grip {
+    fill: #fff;
+    stroke: var(--ts-tle-accent);
+    stroke-width: 1.5;
+    vector-effect: non-scaling-stroke;
+}
+
 .ts-tle__side {
     flex: 0 0 17rem;
     padding: .75rem;

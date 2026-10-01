@@ -18,6 +18,9 @@
  * from X/Y, and the QR image is placed at 96 dpi. Text widths come from FPDF's own font metrics,
  * and the SVG text is stretched to exactly that width, so the frames match the PDF.
  *
+ * While dragging, a field snaps to guides: the left edge, centre, top or baseline of the other
+ * fields and the centre of the page. Undo/redo keeps snapshots of the form fields it writes.
+ *
  * Every user-facing string goes through T(key), which reads COM_TICKETSTATION_TLE_<key>; the
  * view registers all keys it finds in this file, so keep the key a literal.
  */
@@ -327,7 +330,7 @@
 
             var qrBox = {x: pos.x, y: pos.y, w: side, h: side};
 
-            return {pos: pos, box: qrBox, side: side, px: px, outside: outside(qrBox)};
+            return {pos: pos, box: qrBox, printed: qrBox, side: side, px: px, outside: outside(qrBox)};
         }
 
         var ls = lines(field);
@@ -370,6 +373,7 @@
             pos: pos,
             lines: ls,
             box: box,
+            printed: printed,
             centered: centered,
             outside: outside(printed),
             // Write() only fits a text in the page width minus the right margin and twice the cell
@@ -390,6 +394,10 @@
                     '<option value="5">5 mm</option>' +
                 '</select>' +
             '</label>' +
+            '<span class="btn-group" role="group">' +
+                '<button type="button" class="btn btn-sm btn-outline-secondary" data-tle="undo" title="' + esc(T('UNDO')) + ' (Ctrl+Z)" disabled><span class="icon-undo-2" aria-hidden="true"></span><span class="visually-hidden">' + esc(T('UNDO')) + '</span></button>' +
+                '<button type="button" class="btn btn-sm btn-outline-secondary" data-tle="redo" title="' + esc(T('REDO')) + ' (Ctrl+Y)" disabled><span class="icon-redo-2" aria-hidden="true"></span><span class="visually-hidden">' + esc(T('REDO')) + '</span></button>' +
+            '</span>' +
             '<button type="button" class="btn btn-sm btn-secondary" data-tle="preview"><span class="icon-search" aria-hidden="true"></span> ' + esc(T('PREVIEW')) + '</button>' +
             '<span class="ts-tle__status" data-tle="status" aria-live="polite"></span>' +
         '</div>' +
@@ -458,6 +466,10 @@
             if (field.kind === 'qr') {
                 g.appendChild(svg('rect', {'class': 'ts-tle__frame', x: geo.box.x, y: geo.box.y, width: geo.box.w, height: geo.box.h}));
                 drawQr(g, geo.box.x, geo.box.y, geo.side, geo.px);
+
+                if (selected === field.key) {
+                    drawHandle(g, geo.box.x + geo.side, geo.box.y + geo.side);
+                }
             } else {
                 var holder = g;
 
@@ -492,7 +504,16 @@
             layer.appendChild(g);
         });
 
+        if (drag && drag.guides) {
+            drag.guides.forEach(function (guide) {
+                layer.appendChild(svg('line', guide.axis === 'x'
+                    ? {'class': 'ts-tle__guide', x1: guide.at, y1: 0, x2: guide.at, y2: server.height}
+                    : {'class': 'ts-tle__guide', x1: 0, y1: guide.at, x2: server.width, y2: guide.at}));
+            });
+        }
+
         drawList();
+        updateHistoryButtons();
         drawNotes();
 
         if (!keepProps) {
@@ -537,6 +558,21 @@
         });
 
         g.appendChild(svg('path', {d: d, fill: '#000', 'shape-rendering': 'crispEdges'}));
+    }
+
+    // The resize handle in the bottom-right corner of the selected QR code: a small square on
+    // screen, with a larger invisible area around it so it is easy to grab with a finger.
+    function drawHandle(g, x, y) {
+        var size = 9 / scale;
+        var hit = 28 / scale;
+        var handle = svg('g', {'class': 'ts-tle__handle'});
+        var title = svg('title');
+
+        title.textContent = T('QR_RESIZE');
+        handle.appendChild(title);
+        handle.appendChild(svg('rect', {x: x - hit / 2, y: y - hit / 2, width: hit, height: hit, fill: 'transparent'}));
+        handle.appendChild(svg('rect', {'class': 'ts-tle__grip', x: x - size / 2, y: y - size / 2, width: size, height: size}));
+        g.appendChild(handle);
     }
 
     function drawList() {
@@ -803,6 +839,7 @@
             }
         }
 
+        record();
         draw();
     }
 
@@ -812,7 +849,91 @@
         return {x: (event.clientX - rect.left) / scale, y: (event.clientY - rect.top) / scale};
     }
 
+    // ---------------------------------------------------------------- alignment guides
+
+    var GUIDE_PX = 6; // how close (on screen) a field has to come to a line to snap to it
+
+    // The lines of a field that others can align to, in mm: its left edge and centre, and its top,
+    // centre and (for a text) the baseline of its first line.
+    function anchors(field, geo) {
+        var p = geo.printed;
+
+        return {
+            x: {left: p.x, center: p.x + p.w / 2},
+            y: {top: p.y, middle: p.y + p.h / 2, baseline: field.kind === 'text' ? geo.lines[0].baseline : null}
+        };
+    }
+
+    // Everything the dragged field can snap to: the same line of every other field, and the
+    // centre of the page for its own centre.
+    function guideTargets(key) {
+        var targets = {
+            x: [{kind: 'center', at: server.width / 2}],
+            y: [{kind: 'middle', at: server.height / 2}]
+        };
+
+        fields.forEach(function (field) {
+            var geo = field.key === key ? null : geometry(field);
+
+            if (!geo) {
+                return;
+            }
+
+            var a = anchors(field, geo);
+
+            ['x', 'y'].forEach(function (axis) {
+                Object.keys(a[axis]).forEach(function (kind) {
+                    if (a[axis][kind] !== null) {
+                        targets[axis].push({kind: kind, at: a[axis][kind]});
+                    }
+                });
+            });
+        });
+
+        return targets;
+    }
+
+    // The nearest guide for a field at position `at` on one axis, as the position that lines it up.
+    function align(axis, at) {
+        var offsets = drag.offsets[axis];
+        var best = null;
+        var reach = GUIDE_PX / scale;
+
+        drag.targets[axis].forEach(function (target) {
+            if (offsets[target.kind] === null || offsets[target.kind] === undefined) {
+                return;
+            }
+
+            var shift = target.at - (at + offsets[target.kind]);
+
+            if (Math.abs(shift) <= reach && (!best || Math.abs(shift) < Math.abs(best.shift))) {
+                best = {shift: shift, at: target.at};
+            }
+        });
+
+        return best;
+    }
+
+    function startDrag(event, key) {
+        var field = fieldByKey(key);
+        var geo = geometry(field);
+        var a = anchors(field, geo);
+        var offsets = {x: {}, y: {}};
+
+        ['x', 'y'].forEach(function (axis) {
+            Object.keys(a[axis]).forEach(function (kind) {
+                offsets[axis][kind] = a[axis][kind] === null ? null : a[axis][kind] - geo.pos[axis];
+            });
+        });
+
+        drag = {
+            mode: 'move', key: key, start: pointerMm(event), pos: geo.pos, moved: false,
+            centered: geo.centered, offsets: offsets, targets: guideTargets(key), guides: []
+        };
+    }
+
     layer.addEventListener('pointerdown', function (event) {
+        var handle = event.target.closest ? event.target.closest('.ts-tle__handle') : null;
         var target = event.target.closest ? event.target.closest('.ts-tle__field') : null;
 
         if (!target) {
@@ -822,10 +943,17 @@
         }
 
         var key = target.getAttribute('data-key');
-        var geo = geometry(fieldByKey(key));
 
         selected = key;
-        drag = {key: key, start: pointerMm(event), pos: geo.pos, moved: false, centered: geo.centered};
+
+        if (handle) {
+            var geo = geometry(fieldByKey(key));
+
+            drag = {mode: 'resize', key: key, start: pointerMm(event), pos: geo.pos, side: geo.side, moved: false};
+        } else {
+            startDrag(event, key);
+        }
+
         layer.setPointerCapture(event.pointerId);
         event.preventDefault();
         els.paper.focus({preventScroll: true});
@@ -847,19 +975,177 @@
 
         drag.moved = true;
 
-        // A centred reference keeps its X: only its height on the page can change.
-        var x = drag.centered ? drag.pos.x : snap(drag.pos.x + dx);
+        if (drag.mode === 'resize') {
+            // The top-left corner stays put; the code grows along the diagonal, within the page.
+            var room = Math.max(5, Math.min(server.width - drag.pos.x, server.height - drag.pos.y));
+            var side = clamp(snap(drag.side + (dx + dy) / 2), 5, room);
 
-        setPosition(drag.key, x, snap(drag.pos.y + dy));
+            materializeDefaults();
+            write('qrcode_width', String(Math.round(side / QR_MM_PER_PX)), true);
+            draw();
+            return;
+        }
+
+        var x = drag.pos.x + dx;
+        var y = drag.pos.y + dy;
+        var gx = drag.centered ? null : align('x', x);
+        var gy = align('y', y);
+
+        // A centred reference keeps its X: only its height on the page can change. A guide wins
+        // from the grid, so a field lines up exactly even when the other one is off the grid.
+        x = drag.centered ? drag.pos.x : (gx ? x + gx.shift : snap(x));
+        y = gy ? y + gy.shift : snap(y);
+
+        drag.guides = [];
+
+        if (gx) {
+            drag.guides.push({axis: 'x', at: gx.at});
+        }
+
+        if (gy) {
+            drag.guides.push({axis: 'y', at: gy.at});
+        }
+
+        setPosition(drag.key, x, y);
         draw();
     });
 
     function endDrag() {
+        var moved = drag && drag.moved;
+
         drag = null;
+
+        if (moved) {
+            record();
+            draw();
+        }
     }
 
     layer.addEventListener('pointerup', endDrag);
     layer.addEventListener('pointercancel', endDrag);
+
+    // ---------------------------------------------------------------- undo / redo
+
+    // Undo works on the form fields the editor writes, so it also takes back changes typed under
+    // Advanced and "Load Values". Each step is a snapshot of all those fields.
+    var RADIOS = ['orderticketindex_prependtext_print', 'orderreference_centered'];
+    var historyNames = ['qrcode_width', 'orderticketindex_prependtext'].concat(RADIOS);
+    var undoStack = [];
+    var redoStack = [];
+    var recordTimer = null;
+
+    fields.forEach(function (field) {
+        historyNames.push(field.key + '_position', field.key + '_fontsize', field.key + '_fontcolor');
+    });
+
+    function snapshot() {
+        var state = {};
+
+        historyNames.forEach(function (name) {
+            state[name] = RADIOS.indexOf(name) !== -1 ? radio(name) : value(name);
+        });
+
+        return JSON.stringify(state);
+    }
+
+    var committed = snapshot();
+
+    // Closes a step: called when a drag, a toggle or a typed value is done.
+    function record() {
+        var now = snapshot();
+
+        clearTimeout(recordTimer);
+
+        if (now === committed) {
+            return;
+        }
+
+        undoStack.push(committed);
+
+        if (undoStack.length > 100) {
+            undoStack.shift();
+        }
+
+        redoStack = [];
+        committed = now;
+        updateHistoryButtons();
+    }
+
+    // "Load Values" changes many fields in one go; this makes that a single step.
+    function scheduleRecord() {
+        clearTimeout(recordTimer);
+        recordTimer = setTimeout(record, 0);
+    }
+
+    function restore(state) {
+        var values = JSON.parse(state);
+
+        Object.keys(values).forEach(function (name) {
+            if (RADIOS.indexOf(name) === -1) {
+                write(name, values[name], true);
+            } else if (radio(name) !== values[name]) {
+                writeRadio(name, values[name]);
+            }
+        });
+
+        committed = state;
+
+        if (selected && !parsePosition(get(selected + '_position'))) {
+            selected = null;
+        }
+
+        draw();
+    }
+
+    function undo() {
+        record();
+
+        if (undoStack.length) {
+            redoStack.push(committed);
+            restore(undoStack.pop());
+        }
+    }
+
+    function redo() {
+        if (redoStack.length) {
+            undoStack.push(committed);
+            restore(redoStack.pop());
+        }
+    }
+
+    function updateHistoryButtons() {
+        els.undo.disabled = !undoStack.length;
+        els.redo.disabled = !redoStack.length;
+    }
+
+    els.undo.addEventListener('click', undo);
+    els.redo.addEventListener('click', redo);
+
+    // Ctrl+Z / Ctrl+Y (or Ctrl+Shift+Z) anywhere in the editor, except in its input boxes,
+    // which keep the browser's own undo for the text being typed.
+    root.addEventListener('keydown', function (event) {
+        var key = String(event.key).toLowerCase();
+        var typing = event.target.matches && event.target.matches('input:not([type="checkbox"]), select, textarea');
+
+        if (!(event.ctrlKey || event.metaKey) || event.altKey || typing || (key !== 'z' && key !== 'y')) {
+            return;
+        }
+
+        event.preventDefault();
+
+        if (key === 'y' || event.shiftKey) {
+            redo();
+        } else {
+            undo();
+        }
+    });
+
+    els.paper.addEventListener('keyup', function (event) {
+        // Holding an arrow key moves the field in many small steps; letting go makes it one undo step.
+        if (/^Arrow/.test(event.key)) {
+            record();
+        }
+    });
 
     els.paper.addEventListener('keydown', function (event) {
         var moves = {ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1]};
@@ -935,6 +1221,9 @@
         draw(true);
     });
 
+    // A typed value becomes one undo step once it is done (Enter, leaving the box, closing the colour picker).
+    els.props.addEventListener('change', record);
+
     els.grid.addEventListener('change', function () {
         prefs.grid = num(els.grid.value, 0);
         savePrefs();
@@ -958,6 +1247,10 @@
         if (['ticket_size', 'ticket_orientation', 'override_ticketsize', 'venue', 'eventid', 'ticketname',
             'ticketcode', 'freetext_1', 'startdate', 'ticketprice'].indexOf(name) !== -1) {
             scheduleLoad();
+        }
+
+        if (event.type === 'change') {
+            scheduleRecord();
         }
 
         draw();
