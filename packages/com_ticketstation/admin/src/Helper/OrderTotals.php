@@ -22,9 +22,9 @@ defined('_JEXEC') or die;
  *
  * - the coupon and its terms as they were when it was applied (see Coupon), so later edits of
  *   the coupon don't change the order;
- * - the terms of the transaction costs: the kind (fixed, variable or none, as in the
- *   Configuration) and the amount or percentage as it was when the customer went to the payment
- *   page (Order::update()). A backend reservation and a free order get no transaction
+ * - the terms of the transaction costs: the kind (fixed, variable, fixed and variable, or
+ *   none, as in the Configuration) and the amount and/or percentage as it was when the customer
+ *   went to the payment page (Order::update()). A backend reservation and a free order get no transaction
  *   costs. Changing the Configuration afterwards leaves such an order alone. Without kept terms
  *   (fee_type NULL, or no row at all), as for a cart that hasn't been through checkout yet, the
  *   current Configuration applies.
@@ -38,6 +38,7 @@ class OrderTotals
     public const FEE_FIXED    = 0;
     public const FEE_VARIABLE = 1;
     public const FEE_NONE     = 2;
+    public const FEE_BOTH     = 3;
 
     /**
      * The amounts of an order.
@@ -48,7 +49,9 @@ class OrderTotals
      *
      * @return  object  items, tickets, coupon, discount_type, discount_amount, discount,
      *                  coupon_tickets (the tickets a limited coupon counts for, else empty),
-     *                  subtotal (tickets - discount), fee_type, fee_rate, fees and total.
+     *                  subtotal (tickets - discount), fee_type, fee_rate (the amount for a
+     *                  fixed fee, else the percentage), fee_fixed (the fixed amount on top of
+     *                  the percentage for FEE_BOTH), fees and total.
      */
     public static function get($ordercode, bool $openOnly = false): object
     {
@@ -116,6 +119,7 @@ class OrderTotals
             'subtotal'        => $subtotal,
             'fee_type'        => $terms->fee_type,
             'fee_rate'        => $terms->fee_rate,
+            'fee_fixed'       => $terms->fee_fixed,
             'fees'            => $fees,
             'total'           => round($subtotal + $fees, 2),
             'vat_rates'       => $vat,
@@ -187,7 +191,8 @@ class OrderTotals
 
     /**
      * The transaction costs over what the customer pays for the tickets. Nothing to pay means
-     * no transaction costs either.
+     * no transaction costs either. Fixed and variable: the percentage over the tickets, plus
+     * the fixed amount.
      */
     public static function feesFor(float $subtotal, object $terms): float
     {
@@ -204,32 +209,68 @@ class OrderTotals
             case self::FEE_VARIABLE:
                 return round($subtotal / 100 * (float) $terms->fee_rate, 2);
 
+            case self::FEE_BOTH:
+                return round($subtotal / 100 * (float) $terms->fee_rate + (float) ($terms->fee_fixed ?? 0), 2);
+
             default:
                 return 0.0;
         }
     }
 
     /**
-     * The terms of the transaction costs of an order (fee_type and fee_rate): the ones kept
-     * for it, or the current Configuration for a cart that hasn't been through checkout.
+     * The terms of the transaction costs of an order (fee_type, fee_rate and fee_fixed): the
+     * ones kept for it, or the current Configuration for a cart that hasn't been through checkout.
      */
     public static function terms($ordercode): object
     {
         $db    = Factory::getContainer()->get('DatabaseDriver');
         $query = $db->getQuery(true)
-            ->select([$db->quoteName('fee_type'), $db->quoteName('fee_rate')])
+            ->select([$db->quoteName('fee_type'), $db->quoteName('fee_rate'), $db->quoteName('fee_fixed')])
             ->from($db->quoteName('#__ticketstation_ordertotals'))
             ->where($db->quoteName('ordercode') . ' = ' . $db->quote((string) $ordercode));
 
         $db->setQuery($query);
-        $row = $db->loadObject();
 
-        if ($row && $row->fee_type !== null)
+        return self::keptTerms($db->loadObject() ?: null) ?? self::configTerms();
+    }
+
+    /**
+     * The terms kept in a row of #__ticketstation_ordertotals, or null when it has none.
+     */
+    public static function keptTerms(?object $row): ?object
+    {
+        if (!$row || $row->fee_type === null)
         {
-            return (object) ['fee_type' => (int) $row->fee_type, 'fee_rate' => (float) $row->fee_rate];
+            return null;
         }
 
-        return self::configTerms();
+        return (object) [
+            'fee_type'  => (int) $row->fee_type,
+            'fee_rate'  => (float) $row->fee_rate,
+            'fee_fixed' => (float) ($row->fee_fixed ?? 0),
+        ];
+    }
+
+    /**
+     * What goes in brackets behind the transaction costs: the percentage for a variable fee,
+     * "percentage + amount" for fixed and variable, nothing otherwise.
+     *
+     * @param   object    $terms  fee_type, fee_rate and fee_fixed, as in the result of get()
+     * @param   callable  $money  formats an amount as the screen shows prices
+     */
+    public static function feeLabel(object $terms, callable $money): string
+    {
+        switch ((int) $terms->fee_type)
+        {
+            case self::FEE_VARIABLE:
+                return ' (' . (float) $terms->fee_rate . '%)';
+
+            case self::FEE_BOTH:
+                return ' (' . (float) $terms->fee_rate . '% + ' . $money((float) $terms->fee_fixed) . ')';
+
+            default:
+                return '';
+        }
     }
 
     /**
@@ -239,12 +280,13 @@ class OrderTotals
      */
     public static function capture($ordercode, bool $fees = true): bool
     {
-        $terms = $fees ? self::configTerms() : (object) ['fee_type' => self::FEE_NONE, 'fee_rate' => 0.0];
+        $terms = $fees ? self::configTerms() : (object) ['fee_type' => self::FEE_NONE, 'fee_rate' => 0.0, 'fee_fixed' => 0.0];
 
         return self::store($ordercode, [
-            'fee_type' => $terms->fee_type,
-            'fee_rate' => $terms->fee_rate,
-            'captured' => Factory::getDate()->toSql(),
+            'fee_type'  => $terms->fee_type,
+            'fee_rate'  => $terms->fee_rate,
+            'fee_fixed' => $terms->fee_fixed,
+            'captured'  => Factory::getDate()->toSql(),
         ]);
     }
 
@@ -385,6 +427,7 @@ class OrderTotals
     {
         $config = (new Config)->getPartialConfig(['variable_transcosts', 'transactioncosts', 'transcosts']);
         $type   = (int) ($config->variable_transcosts ?? self::FEE_FIXED);
+        $fixed  = 0.0;
 
         switch ($type)
         {
@@ -396,11 +439,16 @@ class OrderTotals
                 $rate = (float) $config->transactioncosts;
                 break;
 
+            case self::FEE_BOTH:
+                $rate  = (float) $config->transcosts;
+                $fixed = (float) $config->transactioncosts;
+                break;
+
             default:
                 $type = self::FEE_NONE;
                 $rate = 0.0;
         }
 
-        return (object) ['fee_type' => $type, 'fee_rate' => $rate];
+        return (object) ['fee_type' => $type, 'fee_rate' => $rate, 'fee_fixed' => $fixed];
     }
 }

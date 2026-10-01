@@ -50,6 +50,9 @@ $show_transaction_costs = $this->config->variable_transcosts != 2 && Shop::payme
 if ($this->config->variable_transcosts == 0) {
     $transaction_costs = Text::sprintf('COM_TICKETSTATION_TRANSACTION_COSTS_PER_ORDER',
         (new TicketstationFunctions)->showprice($this->config->priceformat ,$this->config->transactioncosts,$this->config->valuta));
+} elseif ($this->config->variable_transcosts == 3) {
+    $transaction_costs = Text::sprintf('COM_TICKETSTATION_TRANSACTION_COSTS_PERCENTAGE_PLUS', $this->config->transcosts,
+        (new TicketstationFunctions)->showprice($this->config->priceformat ,$this->config->transactioncosts,$this->config->valuta));
 } elseif ($show_transaction_costs) {
     $transaction_costs = Text::sprintf('COM_TICKETSTATION_TRANSACTION_COSTS_PERCENTAGE', $this->config->transcosts);
 }

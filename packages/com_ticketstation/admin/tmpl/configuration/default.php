@@ -40,8 +40,8 @@ $document->getWebAssetManager()->addInlineScript("
             variableRow = variableRow.closest('.row');
             fixedRow = fixedRow.closest('.row');
             var toggleCosts = function () {
-                variableRow.style.display = costsKind.value === '1' ? '' : 'none';
-                fixedRow.style.display = costsKind.value === '0' ? '' : 'none';
+                variableRow.style.display = costsKind.value === '1' || costsKind.value === '3' ? '' : 'none';
+                fixedRow.style.display = costsKind.value === '0' || costsKind.value === '3' ? '' : 'none';
             };
             costsKind.addEventListener('change', toggleCosts);
             toggleCosts();

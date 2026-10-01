@@ -227,7 +227,7 @@ if ($items == 0 && $waiters == 0) {
 
                 <?php if ($fees > 0 && $totals->fee_type != OrderTotals::FEE_NONE): ?>
                     <tr class="ts-summary__fees">
-                        <th scope="row"><?php echo Text::_('COM_TICKETSTATION_FEES'); ?><?php if ($totals->fee_type == OrderTotals::FEE_VARIABLE) { ?> (<?php echo (float) $totals->fee_rate ?>%)<?php } ?></th>
+                        <th scope="row"><?php echo Text::_('COM_TICKETSTATION_FEES'); ?><?php echo OrderTotals::feeLabel($totals, $price); ?></th>
                         <td class="ts-price"><?php echo $price($fees); ?></td>
                     </tr>
                 <?php endif; ?>

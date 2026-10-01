@@ -59,6 +59,7 @@ class HtmlView extends BaseHtmlView {
         $variablefixed = [
             '0' => ['value' => '0', 'text' => Text::_('COM_TICKETSTATION_FIXED')],
             '1' => ['value' => '1', 'text' => Text::_('COM_TICKETSTATION_VARIABLE')],
+            '3' => ['value' => '3', 'text' => Text::_('COM_TICKETSTATION_FIXED_AND_VARIABLE')],
             '2' => ['value' => '2', 'text' => Text::_('COM_TICKETSTATION_NONE')],
         ];
 

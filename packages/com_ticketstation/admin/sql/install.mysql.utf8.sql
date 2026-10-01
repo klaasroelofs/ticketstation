@@ -283,6 +283,7 @@ CREATE TABLE IF NOT EXISTS `#__ticketstation_ordertotals` (
   `ordercode` varchar(50) NOT NULL,
   `fee_type` tinyint(1) DEFAULT NULL,
   `fee_rate` decimal(10,4) DEFAULT NULL,
+  `fee_fixed` decimal(10,4) DEFAULT NULL,
   `captured` datetime DEFAULT NULL,
   `coupon` varchar(25) DEFAULT NULL,
   `discount_type` tinyint(1) DEFAULT NULL,

@@ -570,9 +570,7 @@ class BoxofficeModel extends ListModel
             $client      = $clients[$row->userid] ?? null;
             $transaction = $transactions[$code] ?? null;
             $kept        = $totals[$code] ?? null;
-            $terms       = $kept && $kept->fee_type !== null
-                ? (object) ['fee_type' => (int) $kept->fee_type, 'fee_rate' => (float) $kept->fee_rate]
-                : OrderTotals::terms($code);
+            $terms       = OrderTotals::keptTerms($kept) ?? OrderTotals::terms($code);
 
             // What the customer pays, worked out as OrderTotals::get() does it.
             $row->coupon = (string) ($kept->coupon ?? '');
@@ -1012,13 +1010,13 @@ class BoxofficeModel extends ListModel
      * The rows of #__ticketstation_ordertotals: the service fee terms (fee_type NULL when none
      * are kept) and the coupon of each order.
      *
-     * @return  array  ordercode => (object) fee_type, fee_rate, coupon, discount_type, discount_amount
+     * @return  array  ordercode => (object) fee_type, fee_rate, fee_fixed, coupon, discount_type, discount_amount
      */
     private function loadOrderTotals(array $codes)
     {
         $db    = Factory::getContainer()->get('DatabaseDriver');
         $query = $db->getQuery(true)
-            ->select($db->quoteName(['ordercode', 'fee_type', 'fee_rate', 'coupon', 'discount_type', 'discount_amount', 'coupon_tickets']))
+            ->select($db->quoteName(['ordercode', 'fee_type', 'fee_rate', 'fee_fixed', 'coupon', 'discount_type', 'discount_amount', 'coupon_tickets']))
             ->from($db->quoteName('#__ticketstation_ordertotals'))
             ->whereIn($db->quoteName('ordercode'), $codes, ParameterType::STRING);
 

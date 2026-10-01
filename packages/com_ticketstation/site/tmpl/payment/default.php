@@ -206,7 +206,7 @@ foreach (['terms_url' => 'COM_TICKETSTATION_TERMS_AND_CONDITIONS', 'privacy_url'
                 <?php ## No fees row when there is no fee: switched off, or nothing to pay (a free order). ?>
                 <?php if ($fees > 0 && $totals->fee_type != OrderTotals::FEE_NONE) { ?>
                     <tr class="ts-summary__fees">
-                        <th scope="row"><?= Text::_('COM_TICKETSTATION_FEES'); ?><?php if ($totals->fee_type == OrderTotals::FEE_VARIABLE) { ?> (<?= (float) $totals->fee_rate ?>%)<?php } ?></th>
+                        <th scope="row"><?= Text::_('COM_TICKETSTATION_FEES'); ?><?= OrderTotals::feeLabel($totals, fn ($amount) => (new TicketstationFunctions)->showprice($this->config->priceformat, $amount, $this->config->valuta)); ?></th>
                         <td class="ts-price"><?= (new TicketstationFunctions)->showprice($this->config->priceformat , $fees, $this->config->valuta); ?></td>
                     </tr>
                 <?php } ?>

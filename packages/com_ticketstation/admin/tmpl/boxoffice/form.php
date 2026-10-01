@@ -156,7 +156,7 @@ $progress = function (int $done) use ($status) {
 
                     <?php // The service fee with the terms kept for this order (see OrderTotals). ?>
                     <tr>
-                        <th scope="row" class="fw-normal"><?= Text::_('COM_TICKETSTATION_SERVICE_FEE'); ?><?= $this->totals->fee_type == OrderTotals::FEE_VARIABLE ? ' (' . (float) $this->totals->fee_rate . '%)' : ''; ?></th>
+                        <th scope="row" class="fw-normal"><?= Text::_('COM_TICKETSTATION_SERVICE_FEE'); ?><?= OrderTotals::feeLabel($this->totals, fn ($amount) => $valuta . ' ' . number_format($amount, 2, ',', '')); ?></th>
                         <td>
                             <?php if ($this->totals->fee_type == OrderTotals::FEE_NONE) { ?>
                                 <?= Text::_('COM_TICKETSTATION_NONE'); ?>
