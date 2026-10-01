@@ -111,7 +111,7 @@ $topicTitle = fn (string $slug) => Text::_('COM_TICKETSTATION_DOCS_NAV_' . strto
     </div>
 
     <div class="row">
-        <div class="col-lg-3 d-none d-lg-block">
+        <div class="col-lg-3 col-xl-2 d-none d-lg-block">
             <nav class="ts-docs-sidebar" aria-label="<?= $this->escape(Text::_('COM_TICKETSTATION_DOCS_TOPICS')) ?>">
                 <?php foreach ($groups as $group => $topics) { ?>
                     <div data-docs-navgroup>
@@ -132,7 +132,7 @@ $topicTitle = fn (string $slug) => Text::_('COM_TICKETSTATION_DOCS_NAV_' . strto
             </nav>
         </div>
 
-        <div class="col-lg-9">
+        <div class="col-lg-9 col-xl-10">
             <div class="d-lg-none mb-4">
                 <label for="ts-docs-jump" class="visually-hidden"><?= Text::_('COM_TICKETSTATION_DOCS_JUMP') ?></label>
                 <select id="ts-docs-jump" class="form-select">
