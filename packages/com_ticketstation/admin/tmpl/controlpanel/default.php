@@ -153,7 +153,9 @@ $sum28     = array_sum(array_column($this->dailySales, 'tickets'));
                     <div>
                         <div class="text-muted small"><?= Text::_('COM_TICKETSTATION_CPANEL_STATS_REVENUE_WEEK') ?></div>
                         <div class="fs-2 fw-bold lh-sm"><?= Price::_($stats['week']->revenue); ?></div>
-                        <div class="small text-muted"><?= Text::plural('COM_TICKETSTATION_CPANEL_STATS_N_ORDERS', $stats['week']->orders); ?></div>
+                        <div class="small text-muted"><?= $stats['week']->fees > 0
+                            ? Text::plural('COM_TICKETSTATION_CPANEL_STATS_N_ORDERS_EXCL_FEES', $stats['week']->orders, Price::_($stats['week']->fees))
+                            : Text::plural('COM_TICKETSTATION_CPANEL_STATS_N_ORDERS', $stats['week']->orders); ?></div>
                     </div>
                 </div>
             </div>
@@ -165,7 +167,9 @@ $sum28     = array_sum(array_column($this->dailySales, 'tickets'));
                     <div>
                         <div class="text-muted small"><?= Text::_('COM_TICKETSTATION_CPANEL_STATS_REVENUE_MONTH') ?></div>
                         <div class="fs-2 fw-bold lh-sm"><?= Price::_($stats['month']->revenue); ?></div>
-                        <div class="small text-muted"><?= Text::plural('COM_TICKETSTATION_CPANEL_STATS_N_TICKETS', $stats['month']->tickets); ?></div>
+                        <div class="small text-muted"><?= $stats['month']->fees > 0
+                            ? Text::plural('COM_TICKETSTATION_CPANEL_STATS_N_TICKETS_EXCL_FEES', $stats['month']->tickets, Price::_($stats['month']->fees))
+                            : Text::plural('COM_TICKETSTATION_CPANEL_STATS_N_TICKETS', $stats['month']->tickets); ?></div>
                     </div>
                 </div>
             </div>

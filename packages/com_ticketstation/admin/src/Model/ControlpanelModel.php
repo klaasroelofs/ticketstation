@@ -19,6 +19,7 @@ use Joomla\CMS\Updater\Updater;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Availability;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Coupon;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Date;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\OrderTotals;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Refund;
 
 /**
@@ -197,7 +198,7 @@ class ControlpanelModel extends BaseDatabaseModel
      * Paid tickets, orders and ticket revenue (price minus discount, excluding
      * administration costs) for a period. An empty end means "until now".
      *
-     * @return  object  tickets, orders, revenue
+     * @return  object  tickets, orders, revenue, fees (the service fees on top of the revenue)
      */
     private function getSalesForPeriod($start, $end = null)
     {
@@ -224,8 +225,52 @@ class ControlpanelModel extends BaseDatabaseModel
         $sales->tickets = (int) $sales->tickets;
         $sales->orders  = (int) $sales->orders;
         $sales->revenue = (float) $sales->revenue;
+        $sales->fees    = $this->getFeesForPeriod($start, $end);
 
         return $sales;
+    }
+
+    /**
+     * The service fees of the paid orders in a period. They aren't stored but worked out per
+     * order from its paid rows (price minus the coupon discount on the row) and the terms kept
+     * for it, as OrderTotals::get() does.
+     *
+     * @return  float
+     */
+    private function getFeesForPeriod($start, $end = null)
+    {
+        $db = Factory::getContainer()->get('DatabaseDriver');
+
+        $query = $db->getQuery(true)
+            ->select([
+                $db->quoteName('o.ordercode'),
+                'SUM(COALESCE(' . $db->quoteName('o.price') . ', 0) - COALESCE(' . $db->quoteName('o.discount') . ', 0)) AS subtotal',
+                'MAX(' . $db->quoteName('ot.fee_type') . ') AS fee_type',
+                'MAX(' . $db->quoteName('ot.fee_rate') . ') AS fee_rate',
+                'MAX(' . $db->quoteName('ot.fee_fixed') . ') AS fee_fixed',
+            ])
+            ->from($db->quoteName('#__ticketstation_orders', 'o'))
+            ->join('LEFT', $db->quoteName('#__ticketstation_ordertotals', 'ot') . ' ON ' . $db->quoteName('ot.ordercode') . ' = ' . $db->quoteName('o.ordercode'))
+            ->where($db->quoteName('o.paid') . ' = 1')
+            ->where($db->quoteName('o.orderdate') . ' >= ' . $db->quote($start))
+            ->group($db->quoteName('o.ordercode'));
+
+        if ($end)
+        {
+            $query->where($db->quoteName('o.orderdate') . ' < ' . $db->quote($end));
+        }
+
+        $db->setQuery($query);
+
+        $fees = 0.0;
+
+        foreach ($db->loadObjectList() as $order)
+        {
+            $terms = OrderTotals::keptTerms($order) ?? OrderTotals::terms($order->ordercode);
+            $fees += OrderTotals::feesFor((float) $order->subtotal, $terms);
+        }
+
+        return round($fees, 2);
     }
 
     /**
