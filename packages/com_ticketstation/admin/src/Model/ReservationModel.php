@@ -25,17 +25,28 @@ use Ticketstation\Component\Ticketstation\Administrator\Helper\SeatplanSettings;
 class ReservationModel extends BaseDatabaseModel
 {
     /**
-     * All events, for the step 1 picker - published or not, since admin-made reservations
-     * are allowed against unpublished events (see getTicketsForEvent()).
+     * Events for the step 1 picker - published or not, since admin-made reservations are
+     * allowed against unpublished events - but only those with at least one ticket that
+     * getTicketsForEvent() would list, so the picker never offers an event with nothing to book.
      */
     public function getUpcomingEvents()
     {
         $db = Factory::getContainer()->get('DatabaseDriver');
 
+        // Same ticket conditions as getTicketsForEvent().
+        $tickets = $db->getQuery(true)
+            ->select('1')
+            ->from($db->quoteName('#__ticketstation_tickets', 't'))
+            ->join('LEFT', $db->quoteName('#__ticketstation_tickets', 'p') . ' ON ' . $db->quoteName('p.ticketid') . ' = ' . $db->quoteName('t.parent') . ' AND ' . $db->quoteName('t.parent') . ' > 0')
+            ->where($db->quoteName('t.eventid') . ' = ' . $db->quoteName('e.eventid'))
+            ->where($db->quoteName('t.enddate') . ' > ' . $db->quote(Date::localNow()))
+            ->where('(' . $db->quoteName('p.ticketid') . ' IS NULL OR ' . $db->quoteName('p.show_seatplans') . ' = 0)');
+
         $query = $db->getQuery(true)
-            ->select(['eventid', 'eventname'])
-            ->from($db->quoteName('#__ticketstation_events'))
-            ->order($db->quoteName('eventname') . ' ASC');
+            ->select([$db->quoteName('e.eventid'), $db->quoteName('e.eventname')])
+            ->from($db->quoteName('#__ticketstation_events', 'e'))
+            ->where('EXISTS (' . $tickets . ')')
+            ->order($db->quoteName('e.eventname') . ' ASC');
 
         $db->setQuery($query);
 
