@@ -125,10 +125,17 @@ $wa->registerAndUseScript('passwordview', Uri::root() . 'media/system/js/fields/
                                    <?= in_array($method, $this->paymentMethods, true) ? 'checked' : '' ?>/>
                             <label class="form-check-label" for="payment_method_<?= $method ?>">
                                 <?= htmlspecialchars(MolliePaymentMethods::label($method), ENT_QUOTES, 'UTF-8') ?>
+                                <?php if ($method === 'creditcard') : ?>
+                                    <?= Text::_('COM_TICKETSTATION_MOLLIE_METHOD_CREDITCARD_GOOGLEPAY') ?>
+                                <?php endif; ?>
                             </label>
                             <?php if ($this->activeMethods !== null && !in_array($method, $this->activeMethods, true)) : ?>
                                 <span class="badge <?= in_array($method, $this->paymentMethods, true) ? 'bg-danger' : 'bg-secondary' ?> ms-1">
                                     <?= Text::_('COM_TICKETSTATION_MOLLIE_METHOD_NOT_ACTIVE') ?>
+                                </span>
+                            <?php elseif ($method === 'creditcard' && $this->activeMethods !== null && !in_array('googlepay', $this->activeMethods, true)) : ?>
+                                <span class="badge bg-secondary ms-1">
+                                    <?= Text::_('COM_TICKETSTATION_MOLLIE_GOOGLEPAY_NOT_ACTIVE') ?>
                                 </span>
                             <?php endif; ?>
                             <?php if (!MollieCurrencies::supportsMethod($this->currency, $method)) : ?>

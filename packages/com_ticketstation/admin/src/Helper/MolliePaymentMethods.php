@@ -93,10 +93,12 @@ class MolliePaymentMethods
             $mollie = new MollieApiClient();
             $mollie->setApiKey($apiKey);
 
-            // Apple Pay is only listed when asked for explicitly.
+            // Wallets are only listed when asked for explicitly. Google Pay can't be passed as a
+            // method; Mollie shows it within "creditcard", so it is only asked for to tell the
+            // admin whether it is switched on in the Mollie Dashboard.
             $active = [];
 
-            foreach ($mollie->methods->allEnabled(['includeWallets' => ['applepay']]) as $method) {
+            foreach ($mollie->methods->allEnabled(['includeWallets' => ['applepay', 'googlepay']]) as $method) {
                 $active[] = $method->id;
             }
 
