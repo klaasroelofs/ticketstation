@@ -63,10 +63,7 @@ class HtmlView extends BaseHtmlView {
         $this->availability = $model->getAvailability();
 
         // Refunds a colleague made in the Mollie Dashboard, before the webhook reports them.
-        if (($this->mollie->bypass_mode ?? '0') != '1')
-        {
-            Refund::pollMollie();
-        }
+        Refund::pollMollie();
 
         $this->attention    = $model->getAttention($this->config, $this->mollie);
         $this->dailySales   = $model->getDailySales();

@@ -54,7 +54,6 @@ class HtmlView extends BaseHtmlView {
             $attempt = (new PaymentAPI($ordercode))->getTempTransactionByOrdercode($ordercode);
 
             $this->canRetry = $this->unpaid->total > 0
-                && $this->mollieconfig->bypass_mode == 0
                 && $attempt && (int) $attempt->processed === 5;
 
             // "Add to calendar" only when the order has dated events

@@ -49,7 +49,7 @@ $list = function (string $tag, string $prefix, int $count) {
         <details id="docs-reservation-gotchas" class="border rounded p-3">
             <summary class="h5 mb-0"><span class="fa fa-exclamation-circle me-2" aria-hidden="true"></span><?= Text::_('COM_TICKETSTATION_RESERVATION_DOCS_GOTCHAS_TITLE') ?></summary>
             <div class="mt-3">
-                <?php $list('ul', 'COM_TICKETSTATION_RESERVATION_DOCS_GOTCHA_', 4); ?>
+                <?php $list('ul', 'COM_TICKETSTATION_RESERVATION_DOCS_GOTCHA_', 5); ?>
             </div>
         </details>
     </div>

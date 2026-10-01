@@ -16,14 +16,13 @@ use Joomla\CMS\Factory;
 /**
  * Who may see and order tickets on the website.
  *
- * Mollie's test mode and bypass mode are for trying the shop out, never for customers: while
- * either is on, only logged-in site users (the organisation's own staff) see tickets and can
- * order them. Anonymous visitors get the same answer as for an unpublished ticket, but still
+ * Mollie's test mode is for trying the shop out, never for customers: while it is on, only
+ * logged-in site users (the organisation's own staff) see tickets and can order them. Anonymous visitors get the same answer as for an unpublished ticket, but still
  * see the events whose sale is about to start (the countdown in the upcoming-events list).
  *
  * With online payments switched off (Mollie settings) the website only sells free tickets: an
  * order of nothing never goes to Mollie. Paid tickets are sold through Reservations and the
- * Box Office, and the website says so. Test and bypass mode don't apply then.
+ * Box Office, and the website says so. Test mode doesn't apply then.
  */
 class Shop
 {
@@ -38,17 +37,15 @@ class Shop
     }
 
     /**
-     * Whether Mollie's test mode or bypass mode is on.
+     * Whether Mollie's test mode is on.
      */
     public static function inTestMode(): bool
     {
-        $mollie = self::getMollie();
-
-        return self::paymentsOn() && ($mollie->test_mode == '1' || $mollie->bypass_mode == '1');
+        return self::paymentsOn() && self::getMollie()->test_mode == '1';
     }
 
     /**
-     * Whether the shop is closed to the current visitor: test or bypass mode is on and the
+     * Whether the shop is closed to the current visitor: test mode is on and the
      * visitor isn't logged in.
      */
     public static function isClosed(): bool
@@ -157,13 +154,13 @@ class Shop
         if (self::$mollie === null) {
             $db    = Factory::getContainer()->get('DatabaseDriver');
             $query = $db->getQuery(true)
-                ->select($db->quoteName(['enabled', 'test_mode', 'bypass_mode']))
+                ->select($db->quoteName(['enabled', 'test_mode']))
                 ->from($db->quoteName('#__ticketstation_mollie'))
                 ->where($db->quoteName('configid') . ' = 1');
 
             $db->setQuery($query);
 
-            self::$mollie = $db->loadObject() ?: (object) ['enabled' => '1', 'test_mode' => '0', 'bypass_mode' => '0'];
+            self::$mollie = $db->loadObject() ?: (object) ['enabled' => '1', 'test_mode' => '0'];
         }
 
         return self::$mollie;

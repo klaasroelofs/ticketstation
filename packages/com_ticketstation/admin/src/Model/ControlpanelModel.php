@@ -419,14 +419,12 @@ class ControlpanelModel extends BaseDatabaseModel
             }
         };
 
-        // Mollie configuration: bypass mode, test mode and the live API key each get their own, specific
+        // Mollie configuration: test mode and the live API key each get their own, specific
         // warning. None while online payments are switched off: the site may have no Mollie account.
         $mollieLink = 'index.php?option=com_ticketstation&view=mollie';
 
         if ($mollie->enabled == '1')
         {
-            $add('COM_TICKETSTATION_CPANEL_ATTENTION_MOLLIE_BYPASS', $mollie->bypass_mode == '1' ? 1 : 0,
-                $mollieLink, 'fa-exclamation-circle', 'danger');
             $add('COM_TICKETSTATION_CPANEL_ATTENTION_MOLLIE_TEST', $mollie->test_mode == '1' ? 1 : 0,
                 $mollieLink, 'fa-exclamation-circle', 'danger');
 

@@ -24,7 +24,7 @@ defined('_JEXEC') or die;
  *   the coupon don't change the order;
  * - the terms of the transaction costs: the kind (fixed, variable or none, as in the
  *   Configuration) and the amount or percentage as it was when the customer went to the payment
- *   page (Order::update()). A backend reservation and a bypassed order get no transaction
+ *   page (Order::update()). A backend reservation and a free order get no transaction
  *   costs. Changing the Configuration afterwards leaves such an order alone. Without kept terms
  *   (fee_type NULL, or no row at all), as for a cart that hasn't been through checkout yet, the
  *   current Configuration applies.

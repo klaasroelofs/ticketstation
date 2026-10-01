@@ -366,7 +366,7 @@ class OrderseatedController extends BaseController {
         }
 
         ## Only charts the seat-picking page shows this visitor: its ticket is published, and in
-        ## test or bypass mode only to logged-in users.
+        ## test mode only to logged-in users.
         if (!Shop::sells((int) ($item->parent > 0 ? $item->parent : $item->ticketid))) {
             $arr = array('error' => '1', 'msg' => Text::_( 'COM_TICKETSTATION_TICKET_NOT_AVAILABLE' ), 'id' => $id);
             echo json_encode($arr);

@@ -273,8 +273,8 @@ class OrderController extends BaseController
             return false;
         }
 
-        // Only what the ticket page offers this visitor: a published ticket, and in test or
-        // bypass mode only to logged-in users.
+        // Only what the ticket page offers this visitor: a published ticket, and in test mode
+        // only to logged-in users.
         if ( ! Shop::sells((int) $this->id))
         {
             $this->error = Text::_('COM_TICKETSTATION_TICKET_NOT_AVAILABLE');

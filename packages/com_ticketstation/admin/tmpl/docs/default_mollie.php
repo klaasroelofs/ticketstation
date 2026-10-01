@@ -52,7 +52,7 @@ $bullets = function (string $prefix, int $count) {
             <summary class="h5 mb-0"><span class="fa fa-cog me-2" aria-hidden="true"></span><?= Text::_('COM_TICKETSTATION_MOLLIE_DOCS_SETTINGS_TITLE') ?></summary>
             <div class="mt-3">
                 <p><?= Text::_('COM_TICKETSTATION_MOLLIE_DOCS_SETTINGS_INTRO') ?></p>
-                <?php $bullets('COM_TICKETSTATION_MOLLIE_DOCS_SETTINGS_', 7); ?>
+                <?php $bullets('COM_TICKETSTATION_MOLLIE_DOCS_SETTINGS_', 6); ?>
             </div>
         </details>
 

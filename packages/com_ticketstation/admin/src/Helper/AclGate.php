@@ -218,6 +218,7 @@ class AclGate
             'makereservation' => self::RESERVE,
             'removeseat'      => self::RESERVE,
             'finishseats'     => self::RESERVE,
+            'touch'           => self::RESERVE,
             'savecustomer'    => self::RESERVE,
             // Saving the reservation as paid additionally needs ticketstation.payment,
             // checked in ReservationController::complete().

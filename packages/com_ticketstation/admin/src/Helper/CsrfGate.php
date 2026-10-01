@@ -76,8 +76,8 @@ class CsrfGate
         // Payment-provider webhook / browser redirect-back endpoints: these are
         // never a form submission from our own UI and can never carry a Joomla
         // session CSRF token. Each has its own independent protection (Mollie's
-        // signed callback, single-use bypass_token, session-side redirect state).
-        'payment'       => ['mollie', 'molliebypass', 'ipnprocesspayment'],
+        // signed callback, single-use free-order token, session-side redirect state).
+        'payment'       => ['mollie', 'freeorder', 'ipnprocesspayment'],
         'paymentresult' => ['poll', 'return', 'calendar'],
 
         // Ticket scanning hardware authenticates with its own API key

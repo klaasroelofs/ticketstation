@@ -12,10 +12,13 @@ namespace Ticketstation\Component\Ticketstation\Administrator\View\Reservation;
 defined('_JEXEC') or die;
 
 use Joomla\CMS\Factory;
+use Joomla\CMS\HTML\HTMLHelper;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\View\HtmlView as BaseHtmlView;
 use Joomla\CMS\Router\Route;
+use Joomla\CMS\Session\Session;
 use Joomla\CMS\Toolbar\ToolbarHelper;
+use Joomla\CMS\Uri\Uri;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Availability;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Config;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\SeatplanSettings;
@@ -63,11 +66,45 @@ class HtmlView extends BaseHtmlView
         $model = $this->getModel('Reservation');
         $state = $session->get(self::SESSION_KEY, []);
 
+        // Every step page counts as activity for the cleanup of unfinished orders, as does the
+        // ping from reservation.js below.
+        $rows = $model->touchOrderRows((string) $ordercode);
+
+        // Steps 3 and 4 are only reached with tickets in the reservation: none left means the
+        // cleanup removed them (see ReservationController::restartIfExpired()).
+        if ($rows === 0 && in_array($layout, ['customer', 'confirm'], true))
+        {
+            $eventid = (int) ($state['eventid'] ?? 0);
+
+            $app->enqueueMessage(Text::_('COM_TICKETSTATION_RESERVATION_EXPIRED'), 'warning');
+            $app->redirect(Route::_('index.php?option=com_ticketstation&controller=reservation&task=start' . ($eventid ? '&eventid=' . $eventid : ''), false));
+
+            return;
+        }
+
         // Plain links (not Toolbar::custom()) for cancel/control panel: this wizard's steps
         // each POST to their own action URL rather than sharing one adminForm, so the usual
         // Joomla.submitbutton() toolbar mechanism (which re-targets a single adminForm's hidden
         // task field) has no form to attach to here.
         ToolbarHelper::title(Text::_('COM_TICKETSTATION_VIEW_RESERVATION_TITLE'), 'fa fa-calendar-plus');
+
+        // The ordercode and wizard state live in the admin session, so an admin who lingers on
+        // one step (typing customer details during a phone call) would otherwise be logged out
+        // and lose the reservation in progress. Pings the server while the page is open.
+        HTMLHelper::_('behavior.keepalive');
+
+        $this->getDocument()->addScriptOptions('com_ticketstation.reservation', [
+            'url'   => Route::_('index.php?option=com_ticketstation&controller=reservation&task=touch&format=raw', false),
+            'token' => Session::getFormToken(),
+        ]);
+        $this->getDocument()->getWebAssetManager()->registerAndUseScript(
+            'com_ticketstation.reservation',
+            Uri::base() . 'components/com_ticketstation/assets/js/reservation.js',
+            [],
+            ['defer' => true],
+            ['core']
+        );
+
         Docs::toolbarButton('reservation');
 
         $this->ordercode = $ordercode;

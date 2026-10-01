@@ -240,7 +240,7 @@ foreach (['terms_url' => 'COM_TICKETSTATION_TERMS_AND_CONDITIONS', 'privacy_url'
 
             <?php if (!$this->paymentsOn && $ordertotal > 0) { ?>
                 <?php ## Paid tickets in the cart while online payments are off: nothing to pay with. ?>
-            <?php } elseif (($this->mollieconfig->bypass_mode == 0) && ($ordertotal > 0)) { ?>
+            <?php } elseif ($ordertotal > 0) { ?>
                 <button class="ts-btn ts-btn--primary ts-btn--next" id="payment_button" type="submit"><?= Text::_( 'COM_TICKETSTATION_MOLLIE_MAKE_PAYMENT' )?></button>
             <?php } else { ?>
                 <button class="ts-btn ts-btn--primary ts-btn--next" id="order_button" type="submit"><?= Text::_('COM_TICKETSTATION_PLACE_ORDER'); ?></button>

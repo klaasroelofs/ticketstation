@@ -98,9 +98,6 @@ class HtmlView extends BaseHtmlView {
         $lists['test_mode'] = HTMLHelper::_('select.genericList', $yesno, 'test_mode', ' class="form-select" ' . '',
             'value', 'text', $config->test_mode);
 
-        $lists['bypass_mode'] = HTMLHelper::_('select.genericList', $yesno, 'bypass_mode', ' class="form-select" ' . '',
-            'value', 'text', $config->bypass_mode);
-
         $language = [
             'nl_NL' => ['value' => 'nl_NL', 'text' => 'Nederlands'],
             'en_GB' => ['value' => 'en_GB', 'text' => 'English'],

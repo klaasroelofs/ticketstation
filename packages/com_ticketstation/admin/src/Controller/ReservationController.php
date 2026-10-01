@@ -294,6 +294,9 @@ class ReservationController extends BaseController
             $app->close();
         }
 
+        // Seats picked earlier on this page get the same, fresh orderdate.
+        $model->touchOrderRows((string) $ordercode);
+
         $state             = $this->getState();
         $state['eventid']  = $ticket->eventid;
         $state['ticketid'] = SeatplanSettings::owner($seat);
@@ -334,6 +337,21 @@ class ReservationController extends BaseController
         $model->freeSeatCoords($coordId);
 
         echo json_encode(['error' => '0', 'msg' => Text::_('COM_TICKETSTATION_THIS_SEAT_IS_REMOVED'), 'id' => $coordId]);
+        $app->close();
+    }
+
+    /**
+     * AJAX ping from every wizard step (assets/js/reservation.js) while the page is open: keeps
+     * the reservation's tickets out of the automatic cleanup of unfinished orders, see
+     * ReservationModel::touchOrderRows().
+     */
+    public function touch()
+    {
+        $app       = Factory::getApplication();
+        $ordercode = $this->getOrdercode();
+        $rows      = $ordercode ? $this->getModel('Reservation')->touchOrderRows((string) $ordercode) : 0;
+
+        echo json_encode(['rows' => $rows]);
         $app->close();
     }
 
@@ -385,6 +403,11 @@ class ReservationController extends BaseController
             $app->enqueueMessage(Text::_('COM_TICKETSTATION_RESERVATION_CUSTOMER_REQUIRED'), 'error');
             $this->setRedirect(Uri::base() . 'index.php?option=com_ticketstation&view=reservation&layout=customer');
 
+            return;
+        }
+
+        if ($this->restartIfExpired($ordercode))
+        {
             return;
         }
 
@@ -441,6 +464,14 @@ class ReservationController extends BaseController
             $app->enqueueMessage(Text::_('COM_TICKETSTATION_RESERVATION_SAVE_FAILED'), 'error');
             $this->setRedirect(Uri::base() . 'index.php?option=com_ticketstation&view=reservation');
 
+            return;
+        }
+
+        // Without this, Order::update() below happily "completes" an order with no rows: it
+        // takes a final ordercode, logs the order as created and, when paid, sends the customer
+        // a ticket email without tickets.
+        if ($this->restartIfExpired($ordercode))
+        {
             return;
         }
 
@@ -507,6 +538,31 @@ class ReservationController extends BaseController
         $this->setRedirect(
             Uri::base() . 'index.php?option=com_ticketstation&controller=boxoffice&task=edit&cid=' . $finalOrdercode
         );
+    }
+
+    /**
+     * Steps 3 and 4 are only reached with tickets in the reservation, so no rows left means the
+     * automatic cleanup of unfinished orders removed them (the page was closed or the computer
+     * slept longer than removal_hours). Then the wizard starts again with the same event.
+     *
+     * @return  boolean  true when the reservation was restarted and the caller must stop
+     */
+    private function restartIfExpired($ordercode): bool
+    {
+        if (count($this->getModel('Reservation')->getOrderSummary((string) $ordercode)) > 0)
+        {
+            return false;
+        }
+
+        // start() clears the wizard state and takes a fresh ordercode.
+        $eventid = (int) ($this->getState()['eventid'] ?? 0);
+
+        Factory::getApplication()->enqueueMessage(Text::_('COM_TICKETSTATION_RESERVATION_EXPIRED'), 'warning');
+        $this->setRedirect(
+            Uri::base() . 'index.php?option=com_ticketstation&controller=reservation&task=start' . ($eventid ? '&eventid=' . $eventid : '')
+        );
+
+        return true;
     }
 
     private function getOrdercode()

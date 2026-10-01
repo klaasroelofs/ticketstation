@@ -61,8 +61,8 @@ class PaymentController extends BaseController
         $jinput = Factory::getApplication()->getInput();
         $db = Factory::getContainer()->get('DatabaseDriver');
 
-        ## Test and bypass mode are for logged-in staff only: a visitor who still has a cart from
-        ## before the mode was switched on can't pay it (and in bypass mode get it for free).
+        ## Test mode is for logged-in staff only: a visitor who still has a cart from before the
+        ## mode was switched on can't pay it.
         if (Shop::isClosed()) {
             $itemid = TicketstationFunctions::getSiteItemid();
             Factory::getApplication()->enqueueMessage(Text::_('COM_TICKETSTATION_TICKET_NOT_AVAILABLE'), 'error');
@@ -99,10 +99,10 @@ class PaymentController extends BaseController
         $return_url = URI::root() . 'index.php?option=com_ticketstation&controller=payment&task=mollie';
         $notify_url = URI::root() . 'index.php?option=com_ticketstation&controller=payment&task=IPNProcessPayment';
 
-        if (($orderamount != 0) && ($this->mollieconfig->bypass_mode == '0')) {
+        if ($orderamount != 0) {
 
             ## Only set up Mollie when the order actually goes there: setApiKey() throws on an
-            ## empty key, which would break bypass mode and free orders on a site without keys.
+            ## empty key, which would break free orders on a site without keys.
             if ($this->mollieconfig->test_mode == '1') {
                 $api_key = $this->mollieconfig->api_key_test;
             } else {
@@ -202,25 +202,24 @@ class PaymentController extends BaseController
 
         } else {
 
-            ## Amount is 0 or Mollie Config is in Bypass-mode
-            ## Generate a random token for bypass authorization (not the guessable ordercode).
-            $bypass_token = bin2hex(random_bytes(32));
+            ## Amount is 0: the order never goes to Mollie.
+            ## Generate a random token for the redirect (not the guessable ordercode).
+            $free_token = bin2hex(random_bytes(32));
 
-            ## Store the bypass token in a session-side map (token => ordercode) so
-            ## molliebypass() can verify it. Keyed by token rather than a single slot,
-            ## so a second bypass-eligible checkout started in another tab (or before
-            ## the first redirect is followed) doesn't clobber an earlier one still in
-            ## flight under the same session.
-            $bypassSession = Factory::getApplication()->getSession();
-            $bypassTokens = $bypassSession->get('ticketstation.bypass_tokens', []);
-            $bypassTokens[$bypass_token] = $this->ordercode;
-            $bypassSession->set('ticketstation.bypass_tokens', $bypassTokens);
+            ## Store the token in a session-side map (token => ordercode) so freeorder() can
+            ## verify it. Keyed by token rather than a single slot, so a second free checkout
+            ## started in another tab (or before the first redirect is followed) doesn't
+            ## clobber an earlier one still in flight under the same session.
+            $freeSession = Factory::getApplication()->getSession();
+            $freeTokens = $freeSession->get('ticketstation.free_order_tokens', []);
+            $freeTokens[$free_token] = $this->ordercode;
+            $freeSession->set('ticketstation.free_order_tokens', $freeTokens);
 
             ## Process the order
-            if ($this->ProcessBypassMollie($this->ordercode)) {
-                ## Bypass or amount = 0 >> redirect to mollieBypass with token
+            if ($this->processFreeOrder($this->ordercode)) {
+                ## Redirect to freeorder with the token
                 $itemid = TicketstationFunctions::getSiteItemid();
-                Factory::getApplication()->redirect(Route::_('index.php?option=com_ticketstation&controller=payment&task=molliebypass&token=' . $bypass_token . ($itemid ? '&Itemid=' . $itemid : '')));
+                Factory::getApplication()->redirect(Route::_('index.php?option=com_ticketstation&controller=payment&task=freeorder&token=' . $free_token . ($itemid ? '&Itemid=' . $itemid : '')));
             }
 
         }
@@ -229,9 +228,9 @@ class PaymentController extends BaseController
 
     }
 
-    function ProcessBypassMollie($ordercode)
+    function processFreeOrder($ordercode)
     {
-        $this->log('ProcessBypassMollie');
+        $this->log('processFreeOrder');
         $this->log('Sent ordercode: ' . $ordercode);
 
         $order_id = $ordercode;
@@ -242,7 +241,7 @@ class PaymentController extends BaseController
         ## Update the order state in the order table:
         $payment_state = $newPayment->updateOrder();
 
-        ## No payment was made as Mollie is bypassed, so no transaction costs either (the
+        ## No payment was made as the order is free, so no transaction costs either (the
         ## invoice reads them from the order).
         OrderTotals::capture($ordercode, false);
 
@@ -297,32 +296,32 @@ class PaymentController extends BaseController
 
     }
 
-    function molliebypass()
+    function freeorder()
     {
 
         $jinput = Factory::getApplication()->getInput();
         $session = Factory::getApplication()->getSession();
 
-        ## Get the token from query parameter (generated in makepayment for bypass mode).
-        $bypass_token = $jinput->getString('token', '');
+        ## Get the token from query parameter (generated in makepayment for a free order).
+        $free_token = $jinput->getString('token', '');
 
         ## Look the token up in the session-side map (token => ordercode). Using
         ## hash_equals-safe array key lookup here is fine since PHP array key
         ## lookup is not a secret-comparison timing channel the way a direct
         ## string compare against a single stored value could be perceived to be;
         ## the token itself is still the 256-bit secret being checked for presence.
-        $bypassTokens = $session->get('ticketstation.bypass_tokens', []);
+        $freeTokens = $session->get('ticketstation.free_order_tokens', []);
 
-        if ($bypass_token === '' || !isset($bypassTokens[$bypass_token])) {
-            exit('Invalid or missing bypass authorization token');
+        if ($free_token === '' || !isset($freeTokens[$free_token])) {
+            exit('Invalid or missing order token');
         }
 
-        $ordercode = $bypassTokens[$bypass_token];
+        $ordercode = $freeTokens[$free_token];
 
-        ## Single-use: remove only this token, leaving any other bypass-eligible
-        ## checkout still in flight under this session untouched.
-        unset($bypassTokens[$bypass_token]);
-        $session->set('ticketstation.bypass_tokens', $bypassTokens);
+        ## Single-use: remove only this token, leaving any other free checkout still in
+        ## flight under this session untouched.
+        unset($freeTokens[$free_token]);
+        $session->set('ticketstation.free_order_tokens', $freeTokens);
 
         ## Check if order is processed
         $db = Factory::getContainer()->get('DatabaseDriver');

@@ -148,14 +148,6 @@ $contactLink  = '<a href="mailto:' . $contactEmail . '">' . $contactEmail . '</a
             <?php } ?>
 
             <p class="ts-download__done"<?php echo $downloaded ? '' : ' hidden'; ?>><?php echo $lost_notice; ?></p>
-
-            <?php if ($this->mollieconfig->bypass_mode == '1') {
-                $link_to_start = Route::_('index.php?option=com_ticketstation&view=upcoming' . ($itemid ? '&Itemid=' . $itemid : ''));
-                ?>
-                <div class="ts-actions">
-                    <a class="ts-btn ts-btn--secondary ts-btn--next" href="<?php echo $link_to_start; ?>"><?php echo Text::_('COM_TICKETSTATION_NEW_ORDER'); ?></a>
-                </div>
-            <?php } ?>
         </section>
 
         <?php if (!$downloaded) { ?>

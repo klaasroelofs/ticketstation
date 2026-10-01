@@ -42,8 +42,8 @@ class HtmlView extends BaseHtmlView {
         $pagination = $this->get('pagination');
         $mollie     = $this->get('mollie');
 
-        // In test or bypass mode only logged-in users see the tickets (with a warning that the
-        // mode is on); other visitors only see the events whose sale is about to start.
+        // In test mode only logged-in users see the tickets (with a warning that the mode is
+        // on); other visitors only see the events whose sale is about to start.
         if (Shop::isClosed())
         {
             $items  = [];

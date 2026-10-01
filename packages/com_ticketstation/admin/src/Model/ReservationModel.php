@@ -281,6 +281,33 @@ class ReservationModel extends BaseDatabaseModel
     }
 
     /**
+     * Resets the orderdate of the reservation's rows to now. Until step 4 they carry no client
+     * (userid 0), so Ticketcleaner::cleanup() treats them as an abandoned cart and removes them
+     * once older than removal_hours; refreshing them while the wizard is open makes that period
+     * count from the last activity instead of from the first ticket added.
+     *
+     * @return  integer  the number of rows the reservation still holds
+     */
+    public function touchOrderRows(string $ordercode): int
+    {
+        $db = Factory::getContainer()->get('DatabaseDriver');
+
+        $query = $db->getQuery(true)
+            ->update($db->quoteName('#__ticketstation_orders'))
+            // Written with date(), like the inserts, as cleanup() compares against date() too.
+            ->set($db->quoteName('orderdate') . ' = ' . $db->quote(date('Y-m-d H:i:s')))
+            ->where($db->quoteName('ordercode') . ' = ' . $db->quote($ordercode))
+            ->where($db->quoteName('paid') . ' = 0')
+            ->where($db->quoteName('userid') . ' = 0')
+            ->where($db->quoteName('published') . ' = 0');
+
+        $db->setQuery($query);
+        $db->execute();
+
+        return count($this->getOrderSummary($ordercode));
+    }
+
+    /**
      * Abandons an in-progress reservation: frees any booked seats and removes the order rows
      * for this ordercode, which makes their tickets available again.
      */

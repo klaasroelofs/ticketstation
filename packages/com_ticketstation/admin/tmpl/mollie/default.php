@@ -112,19 +112,6 @@ $wa->registerAndUseScript('passwordview', Uri::root() . 'media/system/js/fields/
                 </div>
             </div>
 
-            <div class="row mb-3">
-                <label for="bypass_mode" class="col-sm-3 col-form-label"
-                       rel="popover"
-                       title="<?= Text::_('COM_TICKETSTATION_MOLLIE_BYPASS_MODE') ?>">
-                    <?= Text::_('COM_TICKETSTATION_MOLLIE_BYPASS_MODE') ?>
-                </label>
-                <div class="col-sm-9">
-                    <?= $this->lists['bypass_mode']; ?>
-                    <small class="form-text">
-                        <?= Text::_('COM_TICKETSTATION_MOLLIE_BYPASS_MODE_DESC') ?>
-                    </small>
-                </div>
-            </div>
 
             <div class="row mb-3">
                 <label for="currency" class="col-sm-3 col-form-label"

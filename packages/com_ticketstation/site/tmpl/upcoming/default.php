@@ -68,14 +68,9 @@ $backgroundStyle = [TicketstationFunctions::class, 'backgroundImageStyle'];
         <h1 class="ts-page-title"><?= Text::_('COM_TICKETSTATION_PAGE_HEADING_TICKETS'); ?></h1>
     </div>
 
-    <?php if ($this->testmode) { ?>
-        <?php if (($this->mollie->test_mode == '1') && ($this->mollie->bypass_mode == '1')) {
-            $mollie_text = Text::_('COM_TICKETSTATION_MOLLIE_MODE_BYPASS_AND_TEST');
-        } elseif ($this->mollie->test_mode == '1') {
-            $mollie_text = Text::_('COM_TICKETSTATION_MOLLIE_MODE_TEST');
-        } elseif ($this->mollie->bypass_mode == '1') {
-            $mollie_text = Text::_('COM_TICKETSTATION_MOLLIE_MODE_BYPASS');
-        } ?>
+    <?php if ($this->testmode) {
+        $mollie_text = Text::_('COM_TICKETSTATION_MOLLIE_MODE_TEST');
+        ?>
         <div class="ts-alert ts-alert--danger ts-mode-notice" role="alert">
             <svg class="ts-icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1a7 7 0 1 0 0 14A7 7 0 0 0 8 1zm0 3.5a.9.9 0 0 1 .9.95l-.25 4.3a.65.65 0 0 1-1.3 0l-.25-4.3A.9.9 0 0 1 8 4.5zm0 6.6a.85.85 0 1 1 0 1.7.85.85 0 0 1 0-1.7z"/></svg>
             <span><?= Text::sprintf('COM_TICKETSTATION_MOLLIE_MODE_ACTIVE', $mollie_text); ?></span>

@@ -14,7 +14,6 @@ DROP TABLE IF EXISTS `#__ticketstation_mollie`;
 CREATE TABLE IF NOT EXISTS `#__ticketstation_mollie` (
   `configid` int(1) NOT NULL AUTO_INCREMENT,
   `test_mode` tinyint(1) DEFAULT '0',
-  `bypass_mode` tinyint(1) DEFAULT '0',
   `api_key_test` varchar(255) NOT NULL DEFAULT '',
   `api_key` varchar(255) NOT NULL DEFAULT '',
   `description` varchar(255) DEFAULT '',

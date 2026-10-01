@@ -469,7 +469,7 @@
     box-shadow: 0 8px 24px rgba(0, 0, 0, .15);
 }
 
-/* Test/bypass mode notice for administrators */
+/* Test mode notice for administrators */
 .ticketstation .ts-mode-notice {
     display: flex;
     align-items: center;

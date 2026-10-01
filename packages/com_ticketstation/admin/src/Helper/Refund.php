@@ -204,7 +204,7 @@ class Refund
 
     /**
      * The Mollie payment the order was paid with, or '' when it was paid outside Mollie (Box
-     * Office, bypass mode). The webhook stores the payment id on the processed attempt.
+     * Office, reservation). The webhook stores the payment id on the processed attempt.
      */
     public static function molliePaymentId(int $ordercode): string
     {
