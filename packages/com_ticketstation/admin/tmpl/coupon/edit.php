@@ -54,6 +54,37 @@ $document->setTitle($add_edit .' '.Text::_('COM_TICKETSTATION_COUPON') . ' - ' .
     </div>
 
 
+    <script>
+        // "Valid for": the placeholder "All tickets (the whole order)" only applies while no
+        // ticket is selected; the fancy select would otherwise keep showing it.
+        customElements.whenDefined('joomla-field-fancy-select').then(function () {
+            var select = document.getElementById('jform_coupon_tickets');
+            var field  = select ? select.closest('joomla-field-fancy-select') : null;
+
+            if (!field) {
+                return;
+            }
+
+            var hint = field.getAttribute('placeholder') || '';
+
+            function update() {
+                var input = field.querySelector('input.choices__input');
+
+                if (input) {
+                    input.placeholder = select.selectedOptions.length ? '' : hint;
+                }
+            }
+
+            select.addEventListener('change', update);
+            select.addEventListener('addItem', update);
+            select.addEventListener('removeItem', update);
+
+            // The fancy select builds its input after the element is defined.
+            setTimeout(update, 0);
+            window.addEventListener('load', update);
+        });
+    </script>
+
     <input type="hidden" name="option" value="com_ticketstation" />
     <input type="hidden" name="controller" value="coupon" />
     <input type="hidden" name="task" value="" />
