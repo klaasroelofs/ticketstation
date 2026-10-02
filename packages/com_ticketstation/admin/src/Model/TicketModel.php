@@ -18,6 +18,7 @@ use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\Model\AdminModel;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Config;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Ticket;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\TicketDesign;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\WaitingList;
 
 
@@ -207,6 +208,19 @@ class TicketModel extends AdminModel
                 if (!File::upload($ticket_design['tmp_name'], $path . $ticket . '.jpg')) {
                     $app->enqueueMessage($ticket_design['name'].' '.Text::_( 'COM_TICKETSTATION_COULD_NOT_MOVE_FILE'), 'error');
                     $app->redirect($link);
+                }
+
+                // Scale a heavy picture down to what the ticket needs: every ticket in an order carries it
+                $shrunk = TicketDesign::shrinkJpg($path . $ticket . '.jpg', TicketDesign::pageSize($data));
+
+                if ($shrunk) {
+                    $app->enqueueMessage(Text::sprintf(
+                        'COM_TICKETSTATION_DESIGN_SHRUNK',
+                        $shrunk['width'],
+                        $shrunk['height'],
+                        round($shrunk['to'] / 1024),
+                        round($shrunk['from'] / 1024)
+                    ), 'notice');
                 }
 
                 // Delete PDF design, if present

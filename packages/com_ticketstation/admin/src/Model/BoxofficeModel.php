@@ -30,7 +30,6 @@ use Ticketstation\Component\Ticketstation\Administrator\Helper\Coupon;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\OrderTotals;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\PaymentAPI;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Refund;
-use Ticketstation\Component\Ticketstation\Administrator\Helper\SendonPayment;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\SendTicketCopy;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\ticketcreator;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Tickets;
@@ -1970,70 +1969,29 @@ class BoxofficeModel extends ListModel
             return false;
         }
 
-        foreach ($orderids as $orderid)
-        {
-            (new ticketcreator((int) $orderid))->doPDF(true);
-        }
+        // The combined file of the order, with the new codes in it.
+        $result = $this->ticketprocessor($ordercode, $orderids);
 
         History::log($ordercode, 'tickets_generated', 'New QR code for ' . count($orderids) . ' ticket(s)');
 
-        // The combined file of the order, with the new codes in it.
-        return $this->ticketprocessor($ordercode);
+        return $result;
     }
 
-    function ticketprocessor($ordercode)
+    /**
+     * Makes the ticket file of an order again: the ticket itself, or all tickets in one PDF.
+     *
+     * @param   int    $ordercode
+     * @param   int[]  $newCodeIds  orderids of tickets that get a new QR code; the others keep theirs
+     */
+    function ticketprocessor($ordercode, array $newCodeIds = [])
     {
+        $orderids = ticketcreator::validOrderIds((int) $ordercode);
 
-        $db = Factory::getContainer()->get('DatabaseDriver');
+        ticketcreator::createOrderFile((int) $ordercode, $orderids, array_map('intval', $newCodeIds));
 
-        $query = $db->getQuery(true);
-
-        $query->select('*');
-        $query->from($db->quoteName('#__ticketstation_orders'));
-        $query->where($db->quoteName('ordercode') . ' = '. $db->quote($ordercode));
-        $query->where(Refund::validSql());
-
-        ## Do the query now
-        $db->setQuery($query);
-        $data = $db->loadObjectList();
-
-        for ($i = 0, $n = count($data); $i < $n; $i++)
-        {
-            $row = $data[$i];
-
-            if ($row->orderid)
-            {
-                $creator = new ticketcreator($row->orderid);
-                $creator->doPDF();
-            }
-        }
-
-        if (count($data)) {
+        ## Renewing codes logs for itself (renewTicketCodes())
+        if ($orderids && !$newCodeIds) {
             History::log($ordercode, 'tickets_generated', 'Tickets generated (QR codes unchanged)');
-        }
-
-        ## creating the combined ticket
-        $query = $db->getQuery(true);
-
-        $query->select(
-            array('a.*', 'c.name', 'c.emailaddress', 'c.firstname', 'e.eventname', 't.ticket_size', 't.ticket_orientation')
-        );
-        $query->from($db->quoteName('#__ticketstation_orders', 'a'));
-        $query->join('LEFT',$db->quoteName('#__ticketstation_clients', 'c') . ' ON ('.$db->quoteName('a.userid').' = '.$db->quoteName('c.clientid') .')');
-        $query->join('LEFT', $db->quoteName('#__ticketstation_events', 'e') . ' ON (' .$db->quoteName('e.eventid') . ' = ' . $db->quoteName('a.eventid') . ')');
-        $query->join('LEFT', $db->quoteName('#__ticketstation_tickets', 't') . ' ON (' .$db->quoteName('t.ticketid'). ' = ' .$db->quoteName('a.ticketid'). ')');
-        $query->join('LEFT OUTER', $db->quoteName('#__ticketstation_seatplancoords', 'ext') . ' ON (' . $db->quoteName('ext.orderid') . ' = ' . $db->quoteName('a.orderid') . ')');
-        $query->where($db->quoteName('a.ordercode') . ' = '. $db->quote($ordercode));
-        $query->where(Refund::validSql('a'));
-        Tickets::orderForPdf($query, 'a');
-
-        $db->setQuery($query);
-        $info = $db->loadObjectList();
-
-        if(count($info)>1)
-        {
-            $creator = new SendonPayment( $ordercode );
-            $creator->combinetickets($info);
         }
 
         return true;

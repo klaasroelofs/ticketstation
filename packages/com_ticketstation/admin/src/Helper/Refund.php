@@ -459,13 +459,7 @@ class Refund
             return;
         }
 
-        foreach ($rows as $row) {
-            (new ticketcreator((int) $row->orderid))->doPDF();
-        }
-
-        if (count($rows) > 1) {
-            (new SendonPayment($ordercode))->combinetickets($rows);
-        }
+        ticketcreator::createOrderFile($ordercode, array_map('intval', array_column($rows, 'orderid')));
 
         History::log($ordercode, 'tickets_generated', 'Tickets generated without the invalid ones (QR codes unchanged)');
     }

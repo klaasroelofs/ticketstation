@@ -45,8 +45,11 @@ class ticketcreator
      *                          code it got the first time, so making the file again (after
      *                          changing the Order Reference, removing another ticket, ...)
      *                          leaves the tickets the customer already has valid.
+     * @param   Pdf|null  $into  Draw the ticket as a new page of this document instead of making
+     *                          a file of its own; the caller saves the document. That is how the
+     *                          tickets of one order become a single PDF (see createOrderFile()).
      */
-    function doPDF($newCode = false)
+    function doPDF($newCode = false, $into = null)
     {
         ## Load Mollie config to determine testmode on/off
         $db = Factory::getContainer()->get('DatabaseDriver');
@@ -147,7 +150,7 @@ class ticketcreator
             $ticket_size = explode(",", '148,210');
         }
 
-        $pdf = new Pdf();
+        $pdf = $into ?? new Pdf();
 
         ## A ticket is exactly one page with fixed positions. Without this, FPDF starts a new page
         ## as soon as a field is written in the bottom 2 cm (or below the ticket), and every field
@@ -517,24 +520,10 @@ class ticketcreator
             }
         }
 
-        $file = basename(tempnam('.', 'tmp'));
-        rename($file, JPATH_SITE . '/tmp/' . $file . '.pdf');
-        $file .= '.pdf';
-
-        ## Save PDF to file now!!
-        $pdf->Output(JPATH_SITE . '/tmp/' . $file, 'F');
-
-        ## Now move the file away for security reasons
-        ## Copy the file to a new directory.
-        $src = JPATH_SITE . '/tmp/' . $file;
-
-        ## The new name for the ticket
-        $dest = JPATH_ADMINISTRATOR . '/components/com_ticketstation/tickets/eTicket-' . $order->orderid . '.pdf';
-
-        ## Copy the file now.
-        File::copy($src, $dest);
-        ## The old temporary file needs to be deleted.
-        File::delete($src);
+        if ($into === null)
+        {
+            self::savePdf($pdf, JPATH_ADMINISTRATOR . '/components/com_ticketstation/tickets/eTicket-' . $order->orderid . '.pdf');
+        }
 
         $query = $db->getQuery(true);
 
@@ -556,6 +545,92 @@ class ticketcreator
 
         return true;
 
+    }
+
+    /**
+     * The ids of an order's valid tickets, in the order of the pages of its combined PDF.
+     *
+     * @return  int[]
+     */
+    public static function validOrderIds(int $ordercode): array
+    {
+        $db    = Factory::getContainer()->get('DatabaseDriver');
+        $query = $db->getQuery(true)
+            ->select($db->quoteName('a.orderid'))
+            ->from($db->quoteName('#__ticketstation_orders', 'a'))
+            ->join('LEFT OUTER', $db->quoteName('#__ticketstation_seatplancoords', 'ext') . ' ON ' . $db->quoteName('ext.orderid') . ' = ' . $db->quoteName('a.orderid'))
+            ->where($db->quoteName('a.ordercode') . ' = ' . $db->quote($ordercode))
+            ->where(Refund::validSql('a'));
+        Tickets::orderForPdf($query, 'a');
+
+        $db->setQuery($query);
+
+        return array_map('intval', $db->loadColumn());
+    }
+
+    /**
+     * Makes the ticket file of an order: eTicket-<orderid>.pdf for a single ticket, or one
+     * eTickets-<ordercode>.pdf with all tickets for more.
+     *
+     * The tickets of an order are drawn into one document, not made one by one and glued together
+     * afterwards: a design that is used more than once in one PDF is stored once, while glued
+     * together every ticket would carry a full copy of its design (30 tickets with a 1 MB design
+     * would weigh over 30 MB).
+     *
+     * @param   int[]  $orderids    the valid tickets of the order, in page order (validOrderIds())
+     * @param   int[]  $newCodeIds  tickets that get a new QR code; the others keep theirs
+     *
+     * @return  bool
+     */
+    public static function createOrderFile(int $ordercode, array $orderids, array $newCodeIds = []): bool
+    {
+        $folder = JPATH_ADMINISTRATOR . '/components/com_ticketstation/tickets/';
+
+        if (count($orderids) === 1)
+        {
+            return (new self($orderids[0]))->doPDF(in_array($orderids[0], $newCodeIds, true)) !== false;
+        }
+
+        if (!$orderids)
+        {
+            return true;
+        }
+
+        $pdf = new Pdf();
+
+        foreach ($orderids as $orderid)
+        {
+            if ((new self($orderid))->doPDF(in_array($orderid, $newCodeIds, true), $pdf) === false)
+            {
+                return false;
+            }
+        }
+
+        self::savePdf($pdf, $folder . 'eTickets-' . $ordercode . '.pdf');
+
+        ## Separate files from before, or from a single ticket that has since been joined by others
+        foreach ($orderids as $orderid)
+        {
+            if (file_exists($folder . 'eTicket-' . $orderid . '.pdf'))
+            {
+                File::delete($folder . 'eTicket-' . $orderid . '.pdf');
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Saves a PDF document to its place in the tickets folder (not reachable from the web).
+     */
+    private static function savePdf($pdf, string $destination): void
+    {
+        $temp = tempnam(JPATH_SITE . '/tmp', 'tkt');
+
+        $pdf->Output($temp, 'F');
+
+        File::copy($temp, $destination);
+        File::delete($temp);
     }
 
     /**

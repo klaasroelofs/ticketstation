@@ -268,30 +268,12 @@ class PaymentAPI
     ## Create the tickets for this client, feeded by the ordercode.
     public function createTickets()
     {
-        $db = Factory::getContainer()->get('DatabaseDriver');
+        $orderids = ticketcreator::validOrderIds((int) $this->ordercode);
 
-        $query = $db->getQuery(true);
+        ## One file for the whole order: the ticket itself, or all tickets in one PDF
+        ticketcreator::createOrderFile((int) $this->ordercode, $orderids);
 
-        $query->select('*');
-        $query->from($db->quoteName('#__ticketstation_orders'));
-        $query->where($db->quoteName('ordercode') . ' = ' . $db->quote((int)$this->ordercode));
-        $query->where(Refund::validSql());
-
-        $db->setQuery($query);
-        $data = $db->loadObjectList();
-
-        ## Loop through the items to create the tickets:
-        for ($i = 0, $n = count($data); $i < $n; $i++) {
-            $row = $data[$i];
-
-            if (isset($row->orderid)) {
-                ## Create the tickets for this order:
-                $creator = new ticketcreator((int)$row->orderid);
-                $creator->doPDF();
-            }
-        }
-
-        if (count($data)) {
+        if ($orderids) {
             History::log($this->ordercode, 'tickets_generated', 'Tickets generated');
         }
 
