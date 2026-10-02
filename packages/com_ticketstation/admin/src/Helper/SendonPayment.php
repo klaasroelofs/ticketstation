@@ -106,7 +106,25 @@ class SendonPayment
 
         if(count($info)>1)
         {
-            $attachment = $this->combinetickets($info);
+            ## Combining removes the separate PDFs, so an order that was sent before only has
+            ## its combined file left (or nothing at all): then reuse or rebuild that one.
+            $folder = JPATH_ADMINISTRATOR . '/components/com_ticketstation/tickets/';
+            $single = true;
+
+            foreach ($info as $row)
+            {
+                $single = $single && file_exists($folder . 'eTicket-' . $row->orderid . '.pdf');
+            }
+
+            if ($single)
+            {
+                $attachment = $this->combinetickets($info);
+            }
+            else
+            {
+                Refund::refreshTicketFiles((int) $this->eid);
+                $attachment = $folder . 'eTickets-' . (int) $this->eid . '.pdf';
+            }
         } else {
             $attachment = JPATH_ADMINISTRATOR . '/components/com_ticketstation/tickets/eTicket-'.$info[0]->orderid.'.pdf';
         }
