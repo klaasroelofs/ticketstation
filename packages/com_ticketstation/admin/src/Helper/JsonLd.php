@@ -84,7 +84,8 @@ class JsonLd
                     $child->ticketprice,
                     $currency,
                     self::availability(Availability::forPurchase((int) $child->ticketid), (int) $child->ticketid, true),
-                    self::url($ticket)
+                    self::url($ticket),
+                    $child
                 );
             }
         } else {
@@ -145,6 +146,12 @@ class JsonLd
             $node['location'] = self::placeNode($row, $config);
         }
 
+        $organizer = self::organizer();
+
+        if ($organizer) {
+            $node['organizer'] = $organizer;
+        }
+
         $offers = array_values(array_filter($offers));
 
         if ($offers) {
@@ -152,6 +159,45 @@ class JsonLd
         }
 
         return $node;
+    }
+
+    /**
+     * The organiser: the company name and website of Configuration > Company, the same details
+     * the mails sign with. Nothing else of the company (address, phone) is given.
+     */
+    private static function organizer(): ?array
+    {
+        static $organizer = false;
+
+        if ($organizer === false) {
+            $db = Factory::getContainer()->get('DatabaseDriver');
+            $db->setQuery(
+                $db->getQuery(true)
+                    ->select($db->quoteName(['companyname', 'website']))
+                    ->from($db->quoteName('#__ticketstation_config'))
+                    ->where($db->quoteName('configid') . ' = 1')
+            );
+            $company = $db->loadObject();
+
+            $organizer = null;
+
+            if ($company && trim((string) $company->companyname) !== '') {
+                $organizer = ['@type' => 'Organization', 'name' => trim($company->companyname)];
+
+                // The website may be entered without a scheme; only a full address is valid here.
+                $website = trim((string) $company->website);
+
+                if ($website !== '' && !preg_match('#^[a-z][a-z0-9+.-]*://#i', $website)) {
+                    $website = 'https://' . $website;
+                }
+
+                if ($website !== '' && filter_var($website, FILTER_VALIDATE_URL)) {
+                    $organizer['url'] = $website;
+                }
+            }
+        }
+
+        return $organizer;
     }
 
     private static function placeNode(object $row, object $config): array
@@ -200,10 +246,10 @@ class JsonLd
         );
 
         if ($low == $high) {
-            return self::offerNode($row->ticketname, $low, $currency, $availability, self::url($row));
+            return self::offerNode($row->ticketname, $low, $currency, $availability, self::url($row), $row);
         }
 
-        return [
+        $offer = [
             '@type'         => 'AggregateOffer',
             'name'          => $row->ticketname,
             'lowPrice'      => self::price($low),
@@ -212,11 +258,13 @@ class JsonLd
             'availability'  => $availability,
             'url'           => self::url($row),
         ];
+
+        return self::withSalePeriod($offer, $row);
     }
 
-    private static function offerNode(string $name, $price, string $currency, string $availability, string $url): array
+    private static function offerNode(string $name, $price, string $currency, string $availability, string $url, ?object $ticket = null): array
     {
-        return [
+        $offer = [
             '@type'         => 'Offer',
             'name'          => $name,
             'price'         => self::price((float) $price),
@@ -224,6 +272,33 @@ class JsonLd
             'availability'  => $availability,
             'url'           => $url,
         ];
+
+        return self::withSalePeriod($offer, $ticket);
+    }
+
+    /**
+     * The period the offer is valid: from the automatic publish date and until the sale stop of
+     * the ticket, each only when switched on and filled in. A date that was never filled in is
+     * stored as 1970-01-01 and counts as empty.
+     */
+    private static function withSalePeriod(array $offer, ?object $ticket): array
+    {
+        if (!$ticket) {
+            return $offer;
+        }
+
+        $from = ($ticket->use_auto_publish ?? 0) == 1 ? self::isoDate($ticket->publish_date_time ?? null) : null;
+        $to   = ($ticket->use_sale_stop ?? 0) == 1 ? self::isoDate($ticket->sale_stop ?? null) : null;
+
+        if ($from) {
+            $offer['validFrom'] = $from;
+        }
+
+        if ($to) {
+            $offer['validThrough'] = $to;
+        }
+
+        return $offer;
     }
 
     /**
@@ -291,7 +366,8 @@ class JsonLd
      */
     private static function isoDate(?string $local): ?string
     {
-        if (!$local || str_starts_with($local, '0000-00-00')) {
+        // 0000-00-00 is an empty date; 1970-01-01 is what an empty form field turns into.
+        if (!$local || str_starts_with($local, '0000-00-00') || str_starts_with($local, '1970-01-01')) {
             return null;
         }
 

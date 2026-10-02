@@ -71,7 +71,7 @@ class UpcomingModel extends BaseDatabaseModel {
             ->select([
                 't.startdate', 't.ticketprice', 't.ticketid', 't.starting_total_tickets',
                 'e.eventname', 't.ticketname', 'e.eventdescription', 't.show_seatplans', 'v.venue', 'v.city', 't.eventid',
-                't.enddate', 'v.street', 'v.zipcode', 'v.website',
+                't.enddate', 't.use_auto_publish', 't.publish_date_time', 't.use_sale_stop', 't.sale_stop', 'v.street', 'v.zipcode', 'v.website',
             ])
             // Price range of the published variants (child tickets); NULL for a ticket without them.
             ->select('(SELECT MIN(c.ticketprice) FROM #__ticketstation_tickets AS c WHERE c.parent = t.ticketid AND c.published = 1) AS variant_min_price')
