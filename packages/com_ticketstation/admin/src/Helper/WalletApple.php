@@ -301,14 +301,19 @@ class WalletApple
         $secondary = [];
         $auxiliary = [];
 
+        // The date as text in the date and time format of the Configuration, like on the PDF
+        // ticket. Not as a date field (an ISO date with dateStyle/timeStyle): iPhones refused
+        // the whole pass for that field, while the same date in relevantDate was accepted
+        // (tested on iOS 26, 2026-10-02).
         if ($date !== '')
         {
+            $config = (new Config)->get(['dateformat', 'time_format']);
+            $format = trim(($config->dateformat ?: 'd-m-Y') . ' ' . ($config->time_format ?: 'H:i'));
+
             $secondary[] = [
-                'key'       => 'date',
-                'label'     => TicketLanguage::_('COM_TICKETSTATION_WALLET_FIELD_DATE'),
-                'value'     => $date,
-                'dateStyle' => 'PKDateStyleMedium',
-                'timeStyle' => 'PKTimeStyleShort',
+                'key'   => 'datetime',
+                'label' => TicketLanguage::_('COM_TICKETSTATION_WALLET_FIELD_DATE'),
+                'value' => date($format, strtotime((string) $ticket->startdate)),
             ];
         }
 
