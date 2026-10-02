@@ -18,6 +18,7 @@ use Joomla\CMS\Factory;
 use Joomla\CMS\Router\Route;
 use Joomla\CMS\Uri\Uri;
 use Mollie\Api\MollieApiClient;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\Config;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\History;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\MollieCurrencies;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\MolliePaymentMethods;
