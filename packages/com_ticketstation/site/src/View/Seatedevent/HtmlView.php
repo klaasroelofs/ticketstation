@@ -16,6 +16,7 @@ use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\View\HtmlView as BaseHtmlView;
 use Joomla\CMS\Router\Route;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Config;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\JsonLd;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\SeatplanSettings;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Shop;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\TicketstationFunctions;
@@ -56,6 +57,8 @@ class HtmlView extends BaseHtmlView {
             $itemid = TicketstationFunctions::getSiteItemid();
             $app->redirect(Route::_('index.php?option=com_ticketstation&view=upcoming' . ($itemid ? '&Itemid=' . $itemid : '')));
         }
+
+        JsonLd::single($ticketdetails, [], $config, JsonLd::currency());
 
         ## Every seat of the chart: free seats and section seats.
         $items	= $this->get('seats');

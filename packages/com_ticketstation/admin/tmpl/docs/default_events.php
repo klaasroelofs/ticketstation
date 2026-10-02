@@ -57,5 +57,15 @@ $gotchas = function (string $prefix, int $count) {
                 <?php $gotchas('COM_TICKETSTATION_EVENTS_DOCS_PARENTCHILD_GOTCHA_', 5); ?>
             </div>
         </details>
+
+        <details id="docs-events-search" class="border rounded p-3 mt-3">
+            <summary class="h5 mb-0"><span class="fa fa-search me-2" aria-hidden="true"></span><?= Text::_('COM_TICKETSTATION_EVENTS_DOCS_SEARCH_TITLE') ?></summary>
+            <div class="mt-3">
+                <p><?= Text::_('COM_TICKETSTATION_EVENTS_DOCS_SEARCH_WHAT') ?></p>
+
+                <h3 class="h6 mt-3"><?= Text::_('COM_TICKETSTATION_EVENTS_DOCS_PARENTCHILD_GOTCHAS_TITLE') ?></h3>
+                <?php $gotchas('COM_TICKETSTATION_EVENTS_DOCS_SEARCH_GOTCHA_', 4); ?>
+            </div>
+        </details>
     </div>
 </div>

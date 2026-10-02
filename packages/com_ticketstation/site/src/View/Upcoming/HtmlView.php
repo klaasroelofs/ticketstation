@@ -14,6 +14,7 @@ defined('_JEXEC') or die;
 use Joomla\CMS\Factory;
 use Joomla\CMS\MVC\View\HtmlView as BaseHtmlView;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Config;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\JsonLd;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Shop;
 
 class HtmlView extends BaseHtmlView {
@@ -31,7 +32,7 @@ class HtmlView extends BaseHtmlView {
         $app 	 = Factory::getApplication();
 
         $this->config = (new Config)->getPartialConfig([
-            'show_waitinglist', 'dateformat', 'priceformat', 'valuta', 'show_quantity_eventlist', 'show_price_eventlist', 'show_venue', 'transactioncosts', 'transcosts', 'variable_transcosts',
+            'show_waitinglist', 'dateformat', 'priceformat', 'valuta', 'show_quantity_eventlist', 'show_price_eventlist', 'show_venue', 'show_venue_address', 'show_venue_website', 'transactioncosts', 'transcosts', 'variable_transcosts',
         ]);
 
         $items      = $this->get('list');
@@ -48,6 +49,11 @@ class HtmlView extends BaseHtmlView {
         {
             $items  = [];
             $events = [];
+        }
+
+        if ($items)
+        {
+            JsonLd::listing($items, $this->config, JsonLd::currency());
         }
 
         ## Starting a session.
