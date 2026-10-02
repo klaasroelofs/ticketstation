@@ -480,7 +480,7 @@ class PaymentAPI
             . TicketstationFunctions::showprice($config->priceformat, $price, $config->valuta);
 
         if (!empty($row->seatid)) {
-            $line .= ' - ' . Text::_('COM_TICKETSTATION_SEAT_NR') . ' ' . htmlspecialchars($row->row_name . $row->seatid, ENT_QUOTES, 'UTF-8');
+            $line .= ' - ' . TicketLanguage::_('COM_TICKETSTATION_SEAT_NR') . ' ' . htmlspecialchars($row->row_name . $row->seatid, ENT_QUOTES, 'UTF-8');
         }
 
         return '<li>' . $line . '</li>';

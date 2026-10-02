@@ -136,11 +136,11 @@ class SendonPayment
 
         if ($status->total > 0)
         {
-            $paymentstatus = '<span style="font-color=#FF0000;">'.Text::_( 'COM_TICKETSTATION_ORDERSTATUS_UNPAID' ).'</span>';
+            $paymentstatus = '<span style="font-color=#FF0000;">'.TicketLanguage::_('COM_TICKETSTATION_ORDERSTATUS_UNPAID').'</span>';
         }
         else
         {
-            $paymentstatus = '<span style="font-color=#006600;">'.Text::_( 'COM_TICKETSTATION_ORDERSTATUS_PAID' ).'</span>';
+            $paymentstatus = '<span style="font-color=#006600;">'.TicketLanguage::_('COM_TICKETSTATION_ORDERSTATUS_PAID').'</span>';
         }
 
         require_once __DIR__ . '/eTicketsMessage.php';
