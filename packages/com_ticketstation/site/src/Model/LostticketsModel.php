@@ -16,6 +16,7 @@ use Joomla\CMS\MVC\Model\BaseDatabaseModel;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Date;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\History;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Refund;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\Tickets;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\SendTicketCopy;
 
 /**
@@ -86,8 +87,8 @@ class LostticketsModel extends BaseDatabaseModel
     }
 
     /**
-     * Whether the PDF that SendTicketCopy attaches exists (one ticket: eTicket-<orderid>.pdf,
-     * more: eTickets-<ordercode>.pdf), so a customer never gets the mail without tickets.
+     * Whether the PDF that SendTicketCopy attaches exists (one ticket: Ticket-<ordercode>.pdf,
+     * more: Tickets-<ordercode>.pdf), so a customer never gets the mail without tickets.
      */
     private function hasTicketFile(string $ordercode): bool
     {
@@ -103,7 +104,7 @@ class LostticketsModel extends BaseDatabaseModel
         $orderids = $db->loadColumn();
 
         $folder = JPATH_ADMINISTRATOR . '/components/com_ticketstation/tickets/';
-        $file   = count($orderids) > 1 ? 'eTickets-' . (int) $ordercode . '.pdf' : 'eTicket-' . (int) ($orderids[0] ?? 0) . '.pdf';
+        $file   = count($orderids) > 1 ? Tickets::combinedName($ordercode) : Tickets::singleName($ordercode);
 
         return is_file($folder . $file);
     }

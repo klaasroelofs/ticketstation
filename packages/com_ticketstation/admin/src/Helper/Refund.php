@@ -436,7 +436,7 @@ class Refund
     {
         $folder = JPATH_ADMINISTRATOR . '/components/com_ticketstation/tickets/';
 
-        if (file_exists($folder . 'eTickets-' . $ordercode . '.pdf')) {
+        if (file_exists(Tickets::combinedPath($ordercode))) {
             return;
         }
 
@@ -455,7 +455,7 @@ class Refund
         $rows = $db->loadObjectList();
 
         // A single ticket left whose own file still exists needs nothing.
-        if (!$rows || (count($rows) === 1 && file_exists($folder . 'eTicket-' . (int) $rows[0]->orderid . '.pdf'))) {
+        if (!$rows || (count($rows) === 1 && file_exists(Tickets::singlePath($ordercode)))) {
             return;
         }
 
@@ -549,7 +549,7 @@ class Refund
             $db->setQuery($query)->execute();
 
             if ($state >= self::TICKET_INVALID) {
-                $tickets->removeTicketFromServer($row->orderid, $row->barcode);
+                $tickets->removeTicketFromServer($ordercode, $row->barcode);
                 $result->invalidated = true;
             }
 

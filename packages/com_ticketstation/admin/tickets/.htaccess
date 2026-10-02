@@ -1,5 +1,5 @@
-# Deny direct web access to generated ticket PDFs and QR codes (eTicket-*.pdf,
-# eTickets-*.pdf, multi-*.pdf, qrcodes/*.png, confirmation/*.pdf). These are meant to be
+# Deny direct web access to generated ticket PDFs and QR codes (Ticket-*.pdf,
+# Tickets-*.pdf, multi-*.pdf, qrcodes/*.png, confirmation/*.pdf). These are meant to be
 # read server-side (email attachments, the download controller) only, never fetched
 # directly by URL - filenames are based on ordercode/orderid, which are sequential and
 # guessable. Applies to this folder and its subfolders (qrcodes/, confirmation/) unless

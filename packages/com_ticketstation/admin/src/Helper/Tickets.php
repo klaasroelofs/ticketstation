@@ -54,6 +54,36 @@ class Tickets
     }
 
     /**
+     * The file name of the PDF of an order with a single (valid) ticket, and where it is kept.
+     */
+    public static function singleName($ordercode): string
+    {
+        return 'Ticket-' . (int) $ordercode . '.pdf';
+    }
+
+    public static function singlePath($ordercode): string
+    {
+        return JPATH_ADMINISTRATOR . '/components/com_ticketstation/tickets/' . self::singleName($ordercode);
+    }
+
+    /**
+     * The file name of the PDF with all tickets of an order. The customer sees it as the name of
+     * the attachment and of the download.
+     */
+    public static function combinedName($ordercode): string
+    {
+        return 'Tickets-' . (int) $ordercode . '.pdf';
+    }
+
+    /**
+     * Where the PDF with all tickets of an order is kept (not reachable from the web).
+     */
+    public static function combinedPath($ordercode): string
+    {
+        return JPATH_ADMINISTRATOR . '/components/com_ticketstation/tickets/' . self::combinedName($ordercode);
+    }
+
+    /**
      * @param $ordercode
      *
      * @since 1.0.0
@@ -61,7 +91,7 @@ class Tickets
     public function removeCombinedTicketFromServer($ordercode)
     {
         ## Path to a combined ticket is as below:
-        $file = JPATH_SITE . '/administrator/components/com_ticketstation/tickets/eTickets-' . $ordercode . '.pdf';
+        $file = self::combinedPath($ordercode);
 
         if (file_exists( $file ))
         {
@@ -76,10 +106,10 @@ class Tickets
      *
      * @since 1.0.0
      */
-    public function removeTicketFromServer($orderid, $barcode)
+    public function removeTicketFromServer($ordercode, $barcode)
     {
         ## Path to a single ticket is as below:
-        $file = JPATH_SITE . '/administrator/components/com_ticketstation/tickets/eTicket-' . $orderid . '.pdf';
+        $file = self::singlePath($ordercode);
 
         if (file_exists( $file ))
         {

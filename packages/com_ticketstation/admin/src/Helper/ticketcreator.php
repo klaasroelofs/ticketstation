@@ -522,7 +522,7 @@ class ticketcreator
 
         if ($into === null)
         {
-            self::savePdf($pdf, JPATH_ADMINISTRATOR . '/components/com_ticketstation/tickets/eTicket-' . $order->orderid . '.pdf');
+            self::savePdf($pdf, Tickets::singlePath($order->ordercode));
         }
 
         $query = $db->getQuery(true);
@@ -569,8 +569,8 @@ class ticketcreator
     }
 
     /**
-     * Makes the ticket file of an order: eTicket-<orderid>.pdf for a single ticket, or one
-     * eTickets-<ordercode>.pdf with all tickets for more.
+     * Makes the ticket file of an order: Ticket-<ordercode>.pdf for a single ticket, or one
+     * Tickets-<ordercode>.pdf with all tickets for more.
      *
      * The tickets of an order are drawn into one document, not made one by one and glued together
      * afterwards: a design that is used more than once in one PDF is stored once, while glued
@@ -584,15 +584,21 @@ class ticketcreator
      */
     public static function createOrderFile(int $ordercode, array $orderids, array $newCodeIds = []): bool
     {
-        $folder = JPATH_ADMINISTRATOR . '/components/com_ticketstation/tickets/';
+        if (!$orderids)
+        {
+            return true;
+        }
 
         if (count($orderids) === 1)
         {
-            return (new self($orderids[0]))->doPDF(in_array($orderids[0], $newCodeIds, true)) !== false;
-        }
+            if ((new self($orderids[0]))->doPDF(in_array($orderids[0], $newCodeIds, true)) === false)
+            {
+                return false;
+            }
 
-        if (!$orderids)
-        {
+            ## Downloads prefer the file with all tickets, so one left over from before would win
+            self::deleteFile(Tickets::combinedPath($ordercode));
+
             return true;
         }
 
@@ -606,18 +612,20 @@ class ticketcreator
             }
         }
 
-        self::savePdf($pdf, $folder . 'eTickets-' . $ordercode . '.pdf');
+        self::savePdf($pdf, Tickets::combinedPath($ordercode));
 
-        ## Separate files from before, or from a single ticket that has since been joined by others
-        foreach ($orderids as $orderid)
-        {
-            if (file_exists($folder . 'eTicket-' . $orderid . '.pdf'))
-            {
-                File::delete($folder . 'eTicket-' . $orderid . '.pdf');
-            }
-        }
+        ## The file of the single ticket this order had before others joined it
+        self::deleteFile(Tickets::singlePath($ordercode));
 
         return true;
+    }
+
+    private static function deleteFile(string $path): void
+    {
+        if (file_exists($path))
+        {
+            File::delete($path);
+        }
     }
 
     /**

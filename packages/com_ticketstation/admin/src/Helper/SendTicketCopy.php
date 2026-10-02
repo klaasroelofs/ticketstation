@@ -34,61 +34,6 @@ class SendTicketCopy
         $this->eid = $eid;
     }
 
-    function combinetickets($info)
-    {
-
-        $initrow = $info[0];
-
-        if ($initrow->ticket_size == 'A4') {
-            $width = 210;
-        } else {
-            $width = 148;
-        }
-
-        $pdf = new Pdf();
-
-        $foutn = JPATH_ADMINISTRATOR . '/components/com_ticketstation/tickets/eTickets-'.$initrow->ordercode.'.pdf';
-
-        for ($i = 0, $n = count($info); $i < $n; $i++ ){
-
-            $row  = $info[$i];
-            $fn = JPATH_ADMINISTRATOR . '/components/com_ticketstation/tickets/eTicket-'.$row->orderid.'.pdf';
-            $pdf->setSourceFile($fn);
-            $tplIdx = $pdf->importPage(1);
-            $size   = $pdf->getTemplateSize($tplIdx);
-            $pdf->addPage();
-            $pdf->useTemplate($tplIdx, 0, 0, $size['width'], null, true);
-
-        }
-
-        $file = basename(tempnam('.', 'tmp'));
-        rename($file, JPATH_SITE . '/tmp/' . $file .'.pdf');
-        $file .= '.pdf';
-
-        //Save PDF to file now!!
-        $pdf->Output(JPATH_SITE . '/tmp/'. $file, 'F');
-
-        //Copy the file to a new directory.
-        $src  = JPATH_SITE . '/tmp/' . $file;
-
-        //The new name for the ticket
-        $dest = $foutn;
-
-        File::copy($src, $dest);
-        File::delete($src);
-
-        //Delete separate PDF's
-        for ($i = 0, $n = count($info); $i < $n; $i++ ){
-
-            $row  = $info[$i];
-            $src = JPATH_ADMINISTRATOR . '/components/com_ticketstation/tickets/eTicket-'.$row->orderid.'.pdf';
-            File::delete($src);
-
-        }
-
-        return $foutn;
-    }
-
     function send()
     {
         $db = Factory::getContainer()->get('DatabaseDriver');
@@ -119,12 +64,7 @@ class SendTicketCopy
         $db->setQuery($query);
         $info = $db->loadObjectList();
 
-        if(count($info)>1)
-        {
-            $attachment = JPATH_ADMINISTRATOR . '/components/com_ticketstation/tickets/eTickets-'.$this->eid.'.pdf';
-        } else {
-            $attachment = JPATH_ADMINISTRATOR . '/components/com_ticketstation/tickets/eTicket-'.$info[0]->orderid.'.pdf';
-        }
+        $attachment = count($info) > 1 ? Tickets::combinedPath($this->eid) : Tickets::singlePath($this->eid);
 
         $user = $payment_helper->getUserInformation();
 

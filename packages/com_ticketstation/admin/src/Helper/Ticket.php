@@ -104,7 +104,7 @@ class Ticket
     public function removeCombinedTicketFromServer($ordercode)
     {
         ## Path to a combined ticket is as below:
-        $file = JPATH_SITE . '/administrator/components/com_ticketstation/tickets/eTickets-' . $ordercode . '.pdf';
+        $file = Tickets::combinedPath($ordercode);
 
         if (file_exists($file))
         {
@@ -117,14 +117,14 @@ class Ticket
     /**
      * Removing a ticket from the server.
      *
-     * @param $orderid
+     * @param $ordercode
      *
      * @since 3.5.4
      */
-    public function removeTicketFromServer($orderid)
+    public function removeTicketFromServer($ordercode)
     {
-        ## Path to a combined ticket is as below:
-        $file = JPATH_SITE . '/administrator/components/com_ticketstation/tickets/eTicket-' . $orderid . '.pdf';
+        ## Path to a single ticket is as below:
+        $file = Tickets::singlePath($ordercode);
 
         if (file_exists($file))
         {

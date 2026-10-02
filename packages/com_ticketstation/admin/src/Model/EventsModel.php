@@ -18,6 +18,7 @@ use Joomla\CMS\MVC\Model\BaseDatabaseModel;
 use Joomla\CMS\MVC\Model\ListModel;
 use Joomla\CMS\Pagination\Pagination;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Refund;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\Tickets;
 use Ticketstation\Component\Ticketstation\Administrator\Model\Mixin\ListState;
 use Joomla\CMS\Uri\Uri;
 use Joomla\Utilities\ArrayHelper;
@@ -233,7 +234,7 @@ class EventsModel extends ListModel
 
         $query = $db->getQuery(true);
 
-        $query->select(array('orderid', 'ticketid'));
+        $query->select(array('orderid', 'ordercode', 'ticketid'));
         $query->from($db->quoteName('#__ticketstation_orders'));
         $query->where($db->quoteName('eventid') . ' IN ('.implode( ',', $cid ).')');
 
@@ -247,9 +248,12 @@ class EventsModel extends ListModel
         {
             $row  = $data[$i];
 
-            if(file_exists( $path . 'eTicket-' . $row->orderid . '.pdf' ))
+            foreach ([Tickets::singlePath($row->ordercode), Tickets::combinedPath($row->ordercode)] as $file)
             {
-                File::delete( $path . 'eTicket-' . $row->orderid . '.pdf' );
+                if (file_exists($file))
+                {
+                    File::delete($file);
+                }
             }
 
         }

@@ -30,55 +30,6 @@ class SendonPayment
         $this->eid = $eid;
     }
 
-    function combinetickets($info)
-    {
-
-        $initrow = $info[0];
-
-        $pdf = new Pdf();
-
-        $foutn = JPATH_ADMINISTRATOR . '/components/com_ticketstation/tickets/eTickets-'.$initrow->ordercode.'.pdf';
-
-        for ($i = 0, $n = count($info); $i < $n; $i++ ){
-
-            $row  = $info[$i];
-            $fn = JPATH_ADMINISTRATOR . '/components/com_ticketstation/tickets/eTicket-'.$row->orderid.'.pdf';
-            $pdf->setSourceFile($fn);
-            $tplIdx = $pdf->importPage(1);
-            $size   = $pdf->getTemplateSize($tplIdx);
-            $pdf->addPage();
-            $pdf->useTemplate($tplIdx, 0, 0, $size['width'], null, true);
-
-        }
-
-        $file = basename(tempnam('.', 'tmp'));
-        rename($file, JPATH_SITE . '/tmp/' . $file .'.pdf');
-        $file .= '.pdf';
-
-        //Save PDF to file now!!
-        $pdf->Output(JPATH_SITE . '/tmp/'. $file, 'F');
-
-        //Copy the file to a new directory.
-        $src  = JPATH_SITE . '/tmp/' . $file;
-
-        //The new name for the ticket
-        $dest = $foutn;
-
-        File::copy($src, $dest);
-        File::delete($src);
-
-        //Delete separate PDF's
-        for ($i = 0, $n = count($info); $i < $n; $i++ ){
-
-            $row  = $info[$i];
-            $src = JPATH_ADMINISTRATOR . '/components/com_ticketstation/tickets/eTicket-'.$row->orderid.'.pdf';
-            File::delete($src);
-
-        }
-
-        return $foutn;
-    }
-
     function send()
     {
 
@@ -104,30 +55,11 @@ class SendonPayment
         $db->setQuery($query);
         $info = $db->loadObjectList();
 
-        if(count($info)>1)
-        {
-            ## Combining removes the separate PDFs, so an order that was sent before only has
-            ## its combined file left (or nothing at all): then reuse or rebuild that one.
-            $folder = JPATH_ADMINISTRATOR . '/components/com_ticketstation/tickets/';
-            $single = true;
+        ## The file is made when the tickets are created; an order whose file is gone (or was never
+        ## made under the current name) gets it made again here. Does nothing when it exists.
+        Refund::refreshTicketFiles((int) $this->eid);
 
-            foreach ($info as $row)
-            {
-                $single = $single && file_exists($folder . 'eTicket-' . $row->orderid . '.pdf');
-            }
-
-            if ($single)
-            {
-                $attachment = $this->combinetickets($info);
-            }
-            else
-            {
-                Refund::refreshTicketFiles((int) $this->eid);
-                $attachment = $folder . 'eTickets-' . (int) $this->eid . '.pdf';
-            }
-        } else {
-            $attachment = JPATH_ADMINISTRATOR . '/components/com_ticketstation/tickets/eTicket-'.$info[0]->orderid.'.pdf';
-        }
+        $attachment = count($info) > 1 ? Tickets::combinedPath($this->eid) : Tickets::singlePath($this->eid);
 
         //get the payment status for this order:
         $status = $payment_helper->getPaymentStateForEmails();

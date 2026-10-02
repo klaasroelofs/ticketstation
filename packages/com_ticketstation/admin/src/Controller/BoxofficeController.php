@@ -24,6 +24,7 @@ use Joomla\Input\Input;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Date;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Order;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Refund;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\Tickets;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Shop;
 
 
@@ -955,15 +956,15 @@ class BoxofficeController extends BaseController {
         }
 
 
-        $multi_ticket = JPATH_ADMINISTRATOR . '/components/com_ticketstation/tickets/eTickets-' . (int)$ordercode . '.pdf';
-        $single_ticket = JPATH_ADMINISTRATOR . '/components/com_ticketstation/tickets/eTicket-' . $orderids[0]->orderid . '.pdf';
+        $multi_ticket = Tickets::combinedPath($ordercode);
+        $single_ticket = Tickets::singlePath($ordercode);
         $filepath = JPATH_ADMINISTRATOR . '/components/com_ticketstation/tickets/';
 
         if (file_exists($multi_ticket)) {
-            $filename = 'eTickets-' . (int)$ordercode . '.pdf';
+            $filename = Tickets::combinedName($ordercode);
         } else {
             if (file_exists($single_ticket)) {
-                $filename = 'eTicket-' . $orderids[0]->orderid . '.pdf';
+                $filename = Tickets::singleName($ordercode);
             } else {
                 $app->enqueueMessage(Text::_('COM_TICKETSTATION_TICKET_PDF_NOT_PRESENT'), 'error');
                 $app->redirect('index.php?option=com_ticketstation&controller=boxoffice&task=edit&cid=' . $ordercode);

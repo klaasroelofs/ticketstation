@@ -71,6 +71,7 @@ class com_ticketstationInstallerScript extends InstallerScript
         if ($type === 'update')
         {
             $this->moveSeatchartImages();
+            $this->renameTicketFiles();
             $this->removeFiles();
         }
 
@@ -147,6 +148,61 @@ class com_ticketstationInstallerScript extends InstallerScript
         catch (\Throwable $e)
         {
             // Not fatal: the permissions can still be set by hand under Options.
+        }
+    }
+
+    /**
+     * Until 2.17.0 the PDF with all tickets of an order was eTickets-<ordercode>.pdf and that of
+     * an order with one ticket eTicket-<orderid>.pdf; they are Tickets-<ordercode>.pdf and
+     * Ticket-<ordercode>.pdf now. Renames the files of existing orders, so their download and
+     * ticket mail keep working; a file that can't be renamed is made again when it is needed.
+     */
+    private function renameTicketFiles(): void
+    {
+        $folder = JPATH_ADMINISTRATOR . '/components/com_ticketstation/tickets/';
+
+        foreach ((array) glob($folder . 'eTickets-*.pdf') as $old)
+        {
+            $new = $folder . substr(basename($old), 1);
+
+            if (is_file($new))
+            {
+                // Made again under the new name already: the old one is outdated
+                @unlink($old);
+            }
+            else
+            {
+                @rename($old, $new);
+            }
+        }
+
+        try
+        {
+            $db = \Joomla\CMS\Factory::getContainer()->get('DatabaseDriver');
+
+            foreach ((array) glob($folder . 'eTicket-*.pdf') as $old)
+            {
+                $orderid = (int) substr(basename($old), 8);
+
+                $query = $db->getQuery(true)
+                    ->select($db->quoteName('ordercode'))
+                    ->from($db->quoteName('#__ticketstation_orders'))
+                    ->where($db->quoteName('orderid') . ' = ' . $orderid);
+
+                $ordercode = (int) $db->setQuery($query)->loadResult();
+                $new       = $folder . 'Ticket-' . $ordercode . '.pdf';
+
+                // No order, or a name that is taken (tickets of one order made one by one and not
+                // joined yet): leave the file alone, it is made again when it is needed
+                if ($ordercode && !is_file($new) && !is_file($folder . 'Tickets-' . $ordercode . '.pdf'))
+                {
+                    @rename($old, $new);
+                }
+            }
+        }
+        catch (\Throwable $e)
+        {
+            // Not fatal: see above
         }
     }
 

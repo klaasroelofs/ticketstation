@@ -1307,7 +1307,7 @@ class BoxofficeModel extends ListModel
             $row = $orderdata[$i];
 
             ## Path to a single ticket is as below:
-            $path_single = JPATH_SITE . '/administrator/components/com_ticketstation/tickets/eTicket-' . $row->orderid . '.pdf';
+            $path_single = Tickets::singlePath($row->ordercode);
 
             ## Remove single ticket
             if (file_exists($path_single))
@@ -1324,7 +1324,7 @@ class BoxofficeModel extends ListModel
             }
 
             ## Path to a multi ticket is as below:
-            $path_multi = JPATH_SITE . '/administrator/components/com_ticketstation/tickets/eTickets-' . $row->ordercode . '.pdf';
+            $path_multi = Tickets::combinedPath($row->ordercode);
 
             ## Remove single ticket
             if (file_exists($path_multi))
@@ -1918,7 +1918,7 @@ class BoxofficeModel extends ListModel
 
                 // Removing the ticket pysical:
                 $ticket_helper->removeCombinedTicketFromServer($row->ordercode);
-                $ticket_helper->removeTicketFromServer($row->orderid, $row->barcode);
+                $ticket_helper->removeTicketFromServer($row->ordercode, $row->barcode);
                 $ticket_helper->removeMultiTicketFromServer($row->ordercode);
 
                 // Check if there was a seat booked:

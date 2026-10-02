@@ -20,6 +20,7 @@ use Joomla\CMS\Uri\Uri;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Calendar;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Config;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\eTicketsMessage;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\Tickets;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\PaymentAPI;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\TicketstationFunctions;
 use Ticketstation\Component\Ticketstation\Site\View\Paymentresult\HtmlView;
@@ -84,16 +85,16 @@ class PaymentresultController extends BaseController
             //Mark downloaded
             $this->MarkDownloaded($ordercode);
 
-            $multi_ticket = JPATH_ADMINISTRATOR . '/components/com_ticketstation/tickets/eTickets-' . (int) $ordercode . '.pdf';
+            $multi_ticket = Tickets::combinedPath($ordercode);
             $filepath     = JPATH_ADMINISTRATOR . '/components/com_ticketstation/tickets/';
 
             if ( ! file_exists($multi_ticket))
             {
-                $filename = 'eTicket-' . $orderids[0]->orderid . '.pdf';
+                $filename = Tickets::singleName($ordercode);
             }
             else
             {
-                $filename = 'eTickets-' . (int) $ordercode . '.pdf';
+                $filename = Tickets::combinedName($ordercode);
             }
 
             // get the file mime type using the file extension

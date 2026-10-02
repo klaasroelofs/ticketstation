@@ -23,6 +23,7 @@ use Ticketstation\Component\Ticketstation\Administrator\Helper\Invoice;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\MolliePaymentMethods;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\OrderTotals;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Refund;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\Tickets;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Shop;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\ticketcreator;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Docs;
@@ -496,14 +497,12 @@ class HtmlView extends BaseHtmlView
      */
     private function ticketFileExists($ordercode, array $data)
     {
-        $folder = JPATH_ADMINISTRATOR . '/components/com_ticketstation/tickets/';
-
-        if (file_exists($folder . 'eTickets-' . (int) $ordercode . '.pdf'))
+        if (file_exists(Tickets::combinedPath($ordercode)))
         {
             return true;
         }
 
-        return isset($data[0]) && file_exists($folder . 'eTicket-' . (int) $data[0]->orderid . '.pdf');
+        return isset($data[0]) && file_exists(Tickets::singlePath($ordercode));
     }
 
 }
