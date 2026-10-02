@@ -16,6 +16,7 @@ use Joomla\CMS\MVC\View\HtmlView as BaseHtmlView;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Calendar;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Config;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\PaymentAPI;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\Wallet;
 
 
 
@@ -58,10 +59,16 @@ class HtmlView extends BaseHtmlView {
 
             // "Add to calendar" only when the order has dated events
             $this->hasCalendar = Calendar::events($ordercode) !== [];
+
+            // "Add to Apple/Google Wallet" once the order is paid and its tickets exist
+            $this->walletButtons = $this->unpaid->total > 0
+                ? ''
+                : Wallet::buttons($ordercode, false, Factory::getApplication()->getLanguage()->getTag());
         } else {
-            $this->data        = [];
-            $this->unpaid      = null;
-            $this->hasCalendar = false;
+            $this->data          = [];
+            $this->unpaid        = null;
+            $this->hasCalendar   = false;
+            $this->walletButtons = '';
         }
 
         parent::display($tpl);

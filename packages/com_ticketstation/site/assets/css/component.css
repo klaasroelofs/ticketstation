@@ -1396,6 +1396,35 @@
     }
 }
 
+/* "Add to Apple/Google Wallet": the official badges, kept at their own proportions */
+.ticketstation .ts-wallet__buttons {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .75rem;
+}
+
+.ticketstation .ts-wallet__link {
+    display: inline-block;
+    line-height: 0;
+}
+
+/* A text button (no official badge in the package) as high as the badges */
+.ticketstation .ts-wallet__link.ts-btn {
+    display: inline-flex;
+    align-items: center;
+    min-height: 48px;
+    line-height: inherit;
+}
+
+.ticketstation .ts-wallet__badge {
+    display: block;
+    width: auto;
+    max-width: none;
+    height: 48px;
+    border: 0;
+}
+
 @media (prefers-reduced-motion: reduce) {
     .ticketstation *,
     .ticketstation *::before,

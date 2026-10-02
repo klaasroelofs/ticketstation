@@ -43,8 +43,8 @@ class eTicketsMessage
      * The edit screen lists exactly these, so keep them in step with the senders.
      */
     private const TEMPLATE_FIELDS = [
-        1 => ['ordercode', 'orderdate', 'orderlist', 'price'],
-        2 => ['ordercode', 'orderdate', 'orderlist', 'price'],
+        1 => ['ordercode', 'orderdate', 'orderlist', 'price', 'walletbuttons'],
+        2 => ['ordercode', 'orderdate', 'orderlist', 'price', 'walletbuttons'],
         3 => ['ordercode', 'orderdate', 'orderlist', 'price', 'paymentlink'],
         4 => ['ordercode', 'orderdate', 'orderlist', 'confirmationlink'],
         5 => ['ordercode', 'orderdate', 'price', 'invoice_id'],
@@ -466,6 +466,23 @@ class eTicketsMessage
     public function showHeader()
     {
         return $this->getSubject();
+    }
+
+    /**
+     * Adds a placeholder at the end of the mail body when the template doesn't place it
+     * itself, so something new (like the wallet buttons) reaches customers without every site
+     * having to edit its templates first. Call after id().
+     */
+    public function appendPlaceholder(string $tag)
+    {
+        if (isset($this->template->mailbody)
+            && strpos($this->template->mailbody, '{' . $tag . '}') === false
+            && strpos($this->template->mailbody, '%%' . strtoupper($tag) . '%%') === false)
+        {
+            $this->template->mailbody .= '{' . $tag . '}';
+        }
+
+        return $this;
     }
 
     /**

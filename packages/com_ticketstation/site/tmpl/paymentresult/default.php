@@ -150,6 +150,13 @@ $contactLink  = '<a href="mailto:' . $contactEmail . '">' . $contactEmail . '</a
             <p class="ts-download__done"<?php echo $downloaded ? '' : ' hidden'; ?>><?php echo $lost_notice; ?></p>
         </section>
 
+        <?php if ($this->walletButtons !== '') { ?>
+            <section class="ts-card ts-wallet" id="ts-wallet">
+                <h2 class="ts-card__title"><?php echo Text::_('COM_TICKETSTATION_WALLET_PAGE_TITLE'); ?></h2>
+                <?php echo $this->walletButtons; ?>
+            </section>
+        <?php } ?>
+
         <?php if (!$downloaded) { ?>
             <script>
                 // The tickets can be downloaded once: after the click, say where to get them again.

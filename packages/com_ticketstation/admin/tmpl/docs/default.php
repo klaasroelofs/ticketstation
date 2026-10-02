@@ -57,6 +57,7 @@ $groups = [
         'mollie'      => 'fa-credit-card',
         'invoicing'   => 'fa-file-invoice',
         'templates'   => 'fa-envelope',
+        'wallet'      => 'fa-wallet',
     ],
     'EVENTDAY' => [
         'scanning' => 'fa-qrcode',

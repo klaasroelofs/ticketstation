@@ -80,6 +80,10 @@ class CsrfGate
         'payment'       => ['mollie', 'freeorder', 'ipnprocesspayment'],
         'paymentresult' => ['poll', 'return', 'calendar'],
 
+        // "Add to wallet" links in the ticket mail: read-only, authorised by the order's
+        // signed key in the link (Wallet::token()); the pass logo is public.
+        'wallet' => ['apple', 'google', 'logo'],
+
         // Ticket scanning hardware authenticates with its own API key
         // (checked in the constructor via hash_equals), not a browser session.
         'codescanner' => ['validation'],

@@ -24,6 +24,7 @@ $tabs = [
     'CHECKOUT'  => 'fa-cash-register',
     'DOCUMENTS' => 'fa-file-alt',
     'COMPANY'   => 'fa-building',
+    'WALLET'    => 'fa-wallet',
 ];
 
 $list = function (string $prefix, int $count) {
@@ -42,6 +43,7 @@ $counts = [
     'CHECKOUT'  => 3,
     'DOCUMENTS' => 3,
     'COMPANY'   => 5,
+    'WALLET'    => 1,
 ];
 
 ?>

@@ -15,9 +15,14 @@ use Joomla\CMS\Form\Form;
 use Joomla\CMS\HTML\HTMLHelper;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\View\HtmlView as BaseHtmlView;
+use Joomla\CMS\Router\Route;
+use Joomla\CMS\Session\Session;
 use Joomla\CMS\Toolbar\ToolbarHelper;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\AclGate;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Docs;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\Wallet;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\WalletApple;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\WalletGoogle;
 
 /**
  * Ticketstation Configuration Admin View
@@ -244,6 +249,29 @@ class HtmlView extends BaseHtmlView {
         // this page draws its own <label> for every field already, matching the surrounding
         // markup. FormField exposes getInput()'s result through this public magic property.
         $this->companyLogoField = $logoForm->getField('company_logo')->input;
+
+        // Wallet tab: the pass logo is a media picker of its own, like the company logo
+        $lists['wallet_apple'] = HTMLHelper::_('select.genericList', $yesno, 'wallet_apple', ' class="form-select" ',
+            'value', 'text', (int) ($config->wallet_apple ?? 0));
+
+        $lists['wallet_google'] = HTMLHelper::_('select.genericList', $yesno, 'wallet_google', ' class="form-select" ',
+            'value', 'text', (int) ($config->wallet_google ?? 0));
+
+        $walletLogoForm = new Form('com_ticketstation.configuration.walletlogo');
+        $walletLogoForm->load('<form><field name="wallet_logo" type="media" preview="true" /></form>');
+        $walletLogoForm->bind(['wallet_logo' => $config->wallet_logo ?? '']);
+        $this->walletLogoField = $walletLogoForm->getField('wallet_logo')->input;
+
+        // What is stored, without ever showing the keys themselves
+        $this->walletApple = WalletApple::certificateInfo($config->wallet_apple_cert ?? null);
+        $this->walletApplePending = ! empty($config->wallet_apple_pending_key);
+        $this->walletGoogle = WalletGoogle::serviceAccount($config->wallet_google_key ?? null);
+        $this->walletColors = [
+            Wallet::color($config->wallet_bg_color ?? '', Wallet::DEFAULT_BACKGROUND),
+            Wallet::color($config->wallet_fg_color ?? '', Wallet::DEFAULT_FOREGROUND),
+        ];
+        $this->walletLogoProblem = Wallet::logoProblem();
+        $this->walletCsrLink =Route::_('index.php?option=com_ticketstation&controller=configuration&task=walletcsr&' . Session::getFormToken() . '=1', false);
 
         $this->config = $config;
         $this->lists = $lists;

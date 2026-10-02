@@ -36,6 +36,7 @@ use Ticketstation\Component\Ticketstation\Administrator\Helper\ticketcreator;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Tickets;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Transaction;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\WaitingList;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\Wallet;
 
 /**
  * Ticketstation Box Office Model
@@ -1287,6 +1288,7 @@ class BoxofficeModel extends ListModel
                 (new CustomerNote)->remove($affected_ordercode);
                 OrderTotals::remove($affected_ordercode);
                 History::remove($affected_ordercode);
+                Wallet::forget($affected_ordercode);
             }
             else
             {
@@ -1874,6 +1876,9 @@ class BoxofficeModel extends ListModel
             foreach ($removed as $removed_ordercode) {
                 // The history holds email addresses and, for a ghost, the IP address.
                 History::remove($removed_ordercode);
+
+                // Nor the wallet passes handed out for its tickets.
+                Wallet::forget($removed_ordercode);
 
                 // An invoice for a deleted order shouldn't survive it.
                 (new Invoice)->remove($removed_ordercode);

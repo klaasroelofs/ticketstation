@@ -135,9 +135,17 @@ class SendTicketCopy
         ## The same order placeholders as the mail after payment (see eTicketsMessage::TEMPLATE_FIELDS).
         $variables = eTicketsMessage::orderVariables((int) $this->eid);
 
+        ## "Add to Apple/Google Wallet" (empty when no wallet is switched on)
+        $variables['walletbuttons'] = Wallet::buttons((int) $this->eid, true);
+
         $message->id('2')
             ->user($user->clientid)
             ->variables($variables);
+
+        if ($variables['walletbuttons'] !== '')
+        {
+            $message->appendPlaceholder('walletbuttons');
+        }
 
         $message->attachment($attachment);
 

@@ -59,10 +59,11 @@ class AclGate
             'controlpanel' => self::MANAGE,
         ],
         'configuration' => [
-            ''       => 'core.options',
-            'apply'  => 'core.options',
-            'save'   => 'core.options',
-            'cancel' => self::MANAGE,
+            ''          => 'core.options',
+            'apply'     => 'core.options',
+            'save'      => 'core.options',
+            'cancel'    => self::MANAGE,
+            'walletcsr' => 'core.options',
         ],
         'mollie' => [
             ''       => 'core.options',

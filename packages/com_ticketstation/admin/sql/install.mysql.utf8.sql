@@ -151,6 +151,16 @@ CREATE TABLE IF NOT EXISTS `#__ticketstation_config` (
   `terms_url` varchar(255) NOT NULL DEFAULT '',
   `privacy_url` varchar(255) NOT NULL DEFAULT '',
   `send_tickets_directly` tinyint(1) NOT NULL DEFAULT 1,
+  `wallet_apple` tinyint(1) NOT NULL DEFAULT 0,
+  `wallet_apple_cert` text DEFAULT NULL,
+  `wallet_apple_key` text DEFAULT NULL,
+  `wallet_apple_pending_key` text DEFAULT NULL,
+  `wallet_google` tinyint(1) NOT NULL DEFAULT 0,
+  `wallet_google_issuer_id` varchar(30) NOT NULL DEFAULT '',
+  `wallet_google_key` text DEFAULT NULL,
+  `wallet_logo` varchar(255) NOT NULL DEFAULT '',
+  `wallet_bg_color` varchar(7) NOT NULL DEFAULT '#1f2937',
+  `wallet_fg_color` varchar(7) NOT NULL DEFAULT '#ffffff',
   PRIMARY KEY (`configid`)
 )  ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 DEFAULT COLLATE=utf8mb4_unicode_ci;
 
@@ -469,6 +479,21 @@ CREATE TABLE IF NOT EXISTS `#__ticketstation_history` (
   `created` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   KEY `ordercode` (`ordercode`)
+)  ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 DEFAULT COLLATE=utf8mb4_unicode_ci;
+
+DROP TABLE IF EXISTS `#__ticketstation_wallet_passes`;
+CREATE TABLE IF NOT EXISTS `#__ticketstation_wallet_passes` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `ordercode` varchar(50) NOT NULL,
+  `orderid` int(11) NOT NULL,
+  `wallet` varchar(10) NOT NULL,
+  `pass_id` varchar(255) NOT NULL,
+  `class_id` varchar(255) NOT NULL DEFAULT '',
+  `created` datetime NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `idx_wallet_pass` (`wallet`, `pass_id`),
+  KEY `idx_orderid` (`orderid`),
+  KEY `idx_ordercode` (`ordercode`)
 )  ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 DEFAULT COLLATE=utf8mb4_unicode_ci;
 
 DROP TABLE IF EXISTS `#__ticketstation_refunds`;
@@ -923,4 +948,14 @@ INSERT IGNORE INTO `#__ticketstation_config` VALUES(
 "",
 "",
 "",
-"1");
+"1",
+"0",
+NULL,
+NULL,
+NULL,
+"0",
+"",
+NULL,
+"",
+"#1f2937",
+"#ffffff");

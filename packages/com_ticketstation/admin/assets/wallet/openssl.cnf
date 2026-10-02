@@ -1,0 +1,7 @@
+# Minimal OpenSSL configuration, only used by Ticketstation when PHP finds no openssl.cnf of
+# its own (common on Windows) while creating the Apple Wallet certificate request.
+[ req ]
+distinguished_name = req_distinguished_name
+prompt             = no
+
+[ req_distinguished_name ]
