@@ -146,6 +146,7 @@ CREATE TABLE IF NOT EXISTS `#__ticketstation_config` (
   `show_venue_address` tinyint(1) NOT NULL DEFAULT 0,
   `show_venue_description` tinyint(1) NOT NULL DEFAULT 0,
   `show_venue_website` tinyint(1) NOT NULL DEFAULT 0,
+  `show_jsonld` tinyint(1) NOT NULL DEFAULT 1,
   `from_name` varchar(255) NOT NULL DEFAULT '',
   `from_email` varchar(255) NOT NULL DEFAULT '',
   `terms_url` varchar(255) NOT NULL DEFAULT '',

@@ -109,6 +109,9 @@ class HtmlView extends BaseHtmlView {
         $lists['show_venue_website'] = HTMLHelper::_('select.genericList', $yesno, 'show_venue_website', ' class="form-select" ' . '',
             'value', 'text', $config->show_venue_website);
 
+        $lists['show_jsonld'] = HTMLHelper::_('select.genericList', $yesno, 'show_jsonld', ' class="form-select" ' . '',
+            'value', 'text', $config->show_jsonld);
+
         $lists['send_profile_mail'] = HTMLHelper::_('select.genericList', $yesno, 'send_profile_mail', ' class="form-select" ' . '',
             'value', 'text', $config->send_profile_mail);
 

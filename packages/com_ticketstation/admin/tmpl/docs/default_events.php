@@ -64,7 +64,7 @@ $gotchas = function (string $prefix, int $count) {
                 <p><?= Text::_('COM_TICKETSTATION_EVENTS_DOCS_SEARCH_WHAT') ?></p>
 
                 <h3 class="h6 mt-3"><?= Text::_('COM_TICKETSTATION_EVENTS_DOCS_PARENTCHILD_GOTCHAS_TITLE') ?></h3>
-                <?php $gotchas('COM_TICKETSTATION_EVENTS_DOCS_SEARCH_GOTCHA_', 4); ?>
+                <?php $gotchas('COM_TICKETSTATION_EVENTS_DOCS_SEARCH_GOTCHA_', 5); ?>
             </div>
         </details>
     </div>

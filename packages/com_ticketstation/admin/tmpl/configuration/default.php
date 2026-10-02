@@ -284,6 +284,19 @@ $document->getWebAssetManager()->addInlineScript("
                             </small>
                         </div>
                     </div>
+                    <div class="row mb-3">
+                        <label for="show_jsonld" class="col-sm-3 col-form-label"
+                               rel="popover"
+                               title="<?= Text::_('COM_TICKETSTATION_SHOW_JSONLD') ?>">
+                            <?= Text::_('COM_TICKETSTATION_SHOW_JSONLD') ?>
+                        </label>
+                        <div class="col-sm-9">
+                            <?= $this->lists['show_jsonld']; ?>
+                            <small class="form-text">
+                                <?= Text::_('COM_TICKETSTATION_SHOW_JSONLD_DESC') ?>
+                            </small>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

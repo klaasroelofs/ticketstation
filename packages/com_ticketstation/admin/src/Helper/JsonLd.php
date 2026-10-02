@@ -41,6 +41,10 @@ class JsonLd
      */
     public static function listing(array $rows, object $config, string $currency): void
     {
+        if (!self::enabled()) {
+            return;
+        }
+
         $groups = [];
 
         foreach ($rows as $row) {
@@ -74,6 +78,10 @@ class JsonLd
      */
     public static function single(object $ticket, array $children, object $config, string $currency): void
     {
+        if (!self::enabled()) {
+            return;
+        }
+
         $offers = [];
 
         if ($ticket->show_seatplans != 1 && $children) {
@@ -94,6 +102,35 @@ class JsonLd
         }
 
         self::render([self::eventNode($ticket, $config, $offers)]);
+    }
+
+    /**
+     * Whether the event data is switched on (Configuration > Display > Search engine data).
+     */
+    public static function enabled(): bool
+    {
+        static $enabled = null;
+
+        if ($enabled === null) {
+            $db = Factory::getContainer()->get('DatabaseDriver');
+
+            try {
+                $db->setQuery(
+                    $db->getQuery(true)
+                        ->select($db->quoteName('show_jsonld'))
+                        ->from($db->quoteName('#__ticketstation_config'))
+                        ->where($db->quoteName('configid') . ' = 1')
+                );
+                $value = $db->loadResult();
+            } catch (\RuntimeException $e) {
+                // Column not there yet (the database update hasn't run): the default, on.
+                $value = null;
+            }
+
+            $enabled = $value === null || (int) $value === 1;
+        }
+
+        return $enabled;
     }
 
     /**

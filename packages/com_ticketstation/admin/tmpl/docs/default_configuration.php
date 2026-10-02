@@ -38,7 +38,7 @@ $list = function (string $prefix, int $count) {
 // Number of bullet strings defined per tab (see language file).
 $counts = [
     'GENERAL'   => 6,
-    'DISPLAY'   => 3,
+    'DISPLAY'   => 4,
     'ORDERS'    => 2,
     'CHECKOUT'  => 3,
     'DOCUMENTS' => 3,
