@@ -84,9 +84,7 @@ $document->getWebAssetManager()->addInlineScript("
                         <?= Text::_('COM_TICKETSTATION_DATEFORMAT') ?>
                     </label>
                     <div class="col-sm-9">
-                        <input type="text" name="dateformat" id="dateformat"
-                               class="form-control"
-                               value="<?= isset($this->config->dateformat)?$this->config->dateformat:null; ?>"/>
+                        <?= $this->lists['dateformat']; ?>
                         <small class="form-text">
                             <?= Text::_('COM_TICKETSTATION_DATEFORMAT_DESC') ?>
                         </small>
@@ -99,9 +97,7 @@ $document->getWebAssetManager()->addInlineScript("
                         <?= Text::_('COM_TICKETSTATION_TIMEFORMAT') ?>
                     </label>
                     <div class="col-sm-9">
-                        <input type="text" name="time_format" id="time_format"
-                               class="form-control"
-                               value="<?= isset($this->config->time_format)?$this->config->time_format:null; ?>"/>
+                        <?= $this->lists['time_format']; ?>
                         <small class="form-text">
                             <?= Text::_('COM_TICKETSTATION_TIMEFORMAT_DESC') ?>
                         </small>
@@ -284,18 +280,26 @@ $document->getWebAssetManager()->addInlineScript("
                             </small>
                         </div>
                     </div>
-                    <div class="row mb-3">
-                        <label for="show_jsonld" class="col-sm-3 col-form-label"
-                               rel="popover"
-                               title="<?= Text::_('COM_TICKETSTATION_SHOW_JSONLD') ?>">
-                            <?= Text::_('COM_TICKETSTATION_SHOW_JSONLD') ?>
-                        </label>
-                        <div class="col-sm-9">
-                            <?= $this->lists['show_jsonld']; ?>
-                            <small class="form-text">
-                                <?= Text::_('COM_TICKETSTATION_SHOW_JSONLD_DESC') ?>
-                            </small>
-                        </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mt-3 rounded-to">
+            <h3 class="card-header">
+                <?= Text::_('COM_TICKETSTATION_SEARCH_ENGINE_SETTINGS') ?>
+            </h3>
+            <div class="card-body">
+                <div class="row mb-3">
+                    <label for="show_jsonld" class="col-sm-3 col-form-label"
+                           rel="popover"
+                           title="<?= Text::_('COM_TICKETSTATION_SHOW_JSONLD') ?>">
+                        <?= Text::_('COM_TICKETSTATION_SHOW_JSONLD') ?>
+                    </label>
+                    <div class="col-sm-9">
+                        <?= $this->lists['show_jsonld']; ?>
+                        <small class="form-text">
+                            <?= Text::_('COM_TICKETSTATION_SHOW_JSONLD_DESC') ?>
+                        </small>
                     </div>
                 </div>
             </div>

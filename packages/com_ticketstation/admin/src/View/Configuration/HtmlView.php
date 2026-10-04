@@ -206,6 +206,34 @@ class HtmlView extends BaseHtmlView {
         $lists['removal_days'] = HTMLHelper::_('select.genericList', $days, 'removal_days', 'class="form-select"', 'value',
             'text', $config->removal_days);
 
+        ## Date and time notations to pick from, shown with an example. The example dates are chosen
+        ## so every notation reads differently: day 14 can't be a month, and 09:05 shows leading zeros
+        ## and the 12-hour clock. A notation entered earlier that isn't in the list stays selectable
+        ## as it is, so saving the screen never changes it.
+        $sample = new \DateTime('2026-03-14 09:05:00');
+
+        $formatList = function (array $formats, string $current) use ($sample) {
+            $options = [];
+
+            if ($current !== '' && !in_array($current, $formats, true)) {
+                $options[] = ['value' => $current, 'text' => Text::sprintf('COM_TICKETSTATION_FORMAT_CURRENT', $sample->format($current))];
+            }
+
+            foreach ($formats as $format) {
+                $options[] = ['value' => $format, 'text' => $sample->format($format)];
+            }
+
+            return $options;
+        };
+
+        $dateformats = $formatList(['d-m-Y', 'd/m/Y', 'd.m.Y', 'j-n-Y', 'Y-m-d', 'm/d/Y'], (string) $config->dateformat);
+        $timeformats = $formatList(['H:i', 'H.i', 'G:i', 'g:i A'], (string) $config->time_format);
+
+        $lists['dateformat'] = HTMLHelper::_('select.genericList', $dateformats, 'dateformat', 'class="form-select"', 'value',
+            'text', $config->dateformat);
+        $lists['time_format'] = HTMLHelper::_('select.genericList', $timeformats, 'time_format', 'class="form-select"', 'value',
+            'text', $config->time_format);
+
         ## Filling the Array() for a dropdown list.
         $placeholder          = [
             '1'  => ['value' => '1', 'text' => '' . Text::_('COM_TICKETSTATION_PLACEHOLDER1')],
