@@ -51,7 +51,7 @@ $tileGroups = [
     'COM_TICKETSTATION_CPANEL_HEADER_TICKETMANAGEMENT' => [
         ['tickets', 'fa-ticket-alt', 'COM_TICKETSTATION_TICKETS'],
         ['events', 'fa-calendar-alt', 'COM_TICKETSTATION_EVENTS'],
-        ['venues', 'fa-hotel', 'COM_TICKETSTATION_VENUES'],
+        ['venues', 'fa-solid fa-hotel', 'COM_TICKETSTATION_VENUES'],
         ['seatplans', 'fa-chair', 'COM_TICKETSTATION_SEATPLANS'],
     ],
     'COM_TICKETSTATION_CPANEL_HEADER_CONFIGURATION' => [
@@ -331,7 +331,8 @@ $sum28     = array_sum(array_column($this->dailySales, 'tickets'));
                                     <img class="ticketstation-theme-light" src="components/com_ticketstation/assets/images/MollieMonogram23-Circle.png" alt="">
                                     <img class="ticketstation-theme-dark" src="components/com_ticketstation/assets/images/MollieMonogram23-CircleWhite.png" alt="">
                                 <?php } else { ?>
-                                    <span class="fa <?= $icon; ?>"></span>
+                                    <?php // "fa fa-hotel" would hit Joomla's FA4 compat rule (a bed); fa-solid alone gives the building ?>
+                                    <span class="<?= str_starts_with($icon, 'fa-solid ') ? '' : 'fa '; ?><?= $icon; ?>"></span>
                                 <?php } ?>
                             </span>
                             <span class="ticketstation-cpanel-tile-label"><?= Text::_($labelKey) ?></span>
