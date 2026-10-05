@@ -56,6 +56,15 @@
         />
 
         <field
+                name="coupon_events"
+                type="events"
+                label="COM_TICKETSTATION_COUPON_EVENTS"
+                description="COM_TICKETSTATION_COUPON_EVENTS_DESC"
+                layout="joomla.form.field.list-fancy-select"
+                multiple="true"
+                hint="COM_TICKETSTATION_COUPON_EVENTS_NONE"
+        />
+        <field
                 name="coupon_tickets"
                 type="tickets"
                 label="COM_TICKETSTATION_COUPON_TICKETS"

@@ -88,7 +88,7 @@ class CheckoutModel extends BaseDatabaseModel
         // Getting the configuration option.
         $config = (new Config)->get(['show_waitinglist']);
 
-        if ($config->show_waitinglist == 1)
+        if (WaitingList::anywhere())
         {
             $query = $db->getQuery(true);
 

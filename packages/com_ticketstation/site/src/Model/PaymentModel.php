@@ -61,7 +61,7 @@ class PaymentModel extends BaseDatabaseModel
         // Loading the configuration
         $config = (new Config)->get();
 
-        if ($config->show_waitinglist == 1)
+        if (WaitingList::anywhere())
         {
             $db = Factory::getContainer()->get('DatabaseDriver');
 

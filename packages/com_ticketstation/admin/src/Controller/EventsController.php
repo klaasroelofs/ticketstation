@@ -17,6 +17,7 @@ use Joomla\CMS\Uri\Uri;
 use Joomla\CMS\Date\Date;
 use Joomla\Utilities\ArrayHelper;
 use Ticketstation\Component\Ticketstation\Administrator\Controller\Mixin\RegisterControllerTasks;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\EventCopy;
 use Joomla\CMS\Application\CMSApplication;
 use Joomla\CMS\MVC\Controller\BaseController;
 use Joomla\CMS\MVC\Factory\MVCFactoryInterface;
@@ -95,6 +96,43 @@ class EventsController extends BaseController
 
         }
 
+    }
+
+    /**
+     * Copies one event with its tickets, seat charts and design files (see EventCopy) and opens
+     * the copy.
+     */
+    function duplicate()
+    {
+        $app = Factory::getApplication();
+
+        $cid = $this->input->get('cid', array(), 'array');
+        ArrayHelper::toInteger($cid);
+
+        if (count($cid) !== 1)
+        {
+            $app->enqueueMessage(Text::_('COM_TICKETSTATION_EVENTS_COPY_ONE'), 'error');
+            $this->setRedirect('index.php?option=com_ticketstation&view=events');
+
+            return;
+        }
+
+        try
+        {
+            $newEvent = EventCopy::copy((int) $cid[0]);
+        }
+        catch (\RuntimeException $e)
+        {
+            $app->enqueueMessage(Text::sprintf('COM_TICKETSTATION_EVENT_COPY_FAILED', $e->getMessage()), 'error');
+            $this->setRedirect('index.php?option=com_ticketstation&view=events');
+
+            return;
+        }
+
+        $this->setRedirect(
+            'index.php?option=com_ticketstation&view=event&layout=edit&cid=' . $newEvent,
+            Text::_('COM_TICKETSTATION_EVENTS_COPIED')
+        );
     }
 
     function remove()

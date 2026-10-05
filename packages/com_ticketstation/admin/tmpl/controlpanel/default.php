@@ -13,6 +13,7 @@ use Joomla\CMS\Language\Text;
 use Joomla\CMS\Uri\Uri;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\AclGate;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Price;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\WaitingList;
 
 // No direct access to this file
 defined('_JEXEC') or die('Restricted Access');
@@ -62,7 +63,7 @@ $tileGroups = [
         ['docs', 'fa-book', 'COM_TICKETSTATION_VIEW_DOCS_TITLE'],
     ],
 ];
-if ($this->config->show_waitinglist == 1) {
+if (WaitingList::anywhere()) {
     $tileGroups['COM_TICKETSTATION_CPANEL_HEADER_TRANSACTIONMANAGEMENT'][] = ['waitinglist', 'fa-hourglass-half', 'COM_TICKETSTATION_WAITINGLIST'];
 }
 

@@ -1360,10 +1360,7 @@ class BoxofficeModel extends ListModel
         }
 
         // The released tickets go to the waiting list first, as with a deleted order.
-        if ($this->getConfig()->show_waitinglist == 1)
-        {
-            (new WaitingList)->promote(array_column($orderdata, 'ticketid'));
-        }
+        (new WaitingList)->promote(array_column($orderdata, 'ticketid'));
 
         return true;
     }
@@ -1929,10 +1926,7 @@ class BoxofficeModel extends ListModel
             }
 
             // The released tickets go to the waiting list first.
-            if ($config->show_waitinglist == 1)
-            {
-                (new WaitingList)->promote(array_column($data, 'ticketid'));
-            }
+            (new WaitingList)->promote(array_column($data, 'ticketid'));
 
             return true;
         }

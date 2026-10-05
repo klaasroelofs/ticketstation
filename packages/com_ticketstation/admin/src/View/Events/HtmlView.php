@@ -64,6 +64,12 @@ class HtmlView extends BaseHtmlView
                 ->listCheck(true);
         }
 
+        if (AclGate::can('core.create')) {
+            $childBar->standardButton('duplicate', 'COM_TICKETSTATION_COPY', 'events.duplicate')
+                ->icon('fa fa-copy')
+                ->listCheck(true);
+        }
+
         if (AclGate::can('core.delete')) {
             $childBar->delete('events.remove')
                 ->message('JGLOBAL_CONFIRM_DELETE')

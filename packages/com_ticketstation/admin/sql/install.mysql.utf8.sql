@@ -207,6 +207,7 @@ CREATE TABLE IF NOT EXISTS `#__ticketstation_coupons` (
   `coupon_discount` int(11) NOT NULL DEFAULT '0',
   `coupon_used` int(11) NOT NULL DEFAULT '0',
   `coupon_tickets` varchar(2000) NOT NULL DEFAULT '',
+  `coupon_events` varchar(2000) NOT NULL DEFAULT '',
   `published` tinyint(1) NOT NULL DEFAULT '1',
   PRIMARY KEY (`coupon_id`)
 )  ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 DEFAULT COLLATE=utf8mb4_unicode_ci;
@@ -240,6 +241,7 @@ CREATE TABLE IF NOT EXISTS `#__ticketstation_events` (
   `automatic_change_state` tinyint(1) NOT NULL DEFAULT '0',
   `startdate` datetime DEFAULT NULL,
   `closingdate` datetime DEFAULT NULL,
+  `waitinglist` tinyint(1) NOT NULL DEFAULT '0',
   `created` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `modified` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`eventid`)
@@ -835,6 +837,7 @@ INSERT IGNORE INTO `#__ticketstation_templates` VALUES("2","resending Tickets","
 INSERT IGNORE INTO `#__ticketstation_templates` VALUES("3","Sending Payment Link","<p>Hi {firstname},</p><p>We are sending you the payment link for the tickets you ordered:</p><p>{paymentlink}</p><p>Click on the link (or copy and paste it into your browser) to make your payment.<br/>After successful payment, the tickets will be sent directly to this email address.</p><p>Please don't hesitate to contact us in case of any questions.</p><p>Kind regards,</p><p>{company_name}<br />{company_website}</p>","Payment link for your tickets");
 INSERT IGNORE INTO `#__ticketstation_templates` VALUES("4","Waiting list confirmation","<p>Hi {firstname},</p><p>You are on the waiting list for:</p><p>{orderlist}</p><p>Please confirm your spot on this waiting list. As soon as tickets become available, you will receive a separate email with a payment link — we cannot guarantee your spot on the waiting list without confirmation.</p><p>{confirmationlink}</p><p>Please don't hesitate to contact us in case of any questions.</p><p>Kind regards,</p><p>{company_name}<br />{company_website}</p>","Confirm your spot on the waiting list");
 INSERT IGNORE INTO `#__ticketstation_templates` VALUES("5","Invoice","<p>Hi {firstname},</p><p>Attached you will find the invoice for your order <strong>{ordercode}</strong>.</p><p>Invoice number: {invoice_id}<br />Amount: {price}</p><p>Please don't hesitate to contact us in case of any questions.</p><p>Kind regards,</p><p>{company_name}<br />{company_website}</p>","Invoice for your ordered tickets");
+INSERT IGNORE INTO `#__ticketstation_templates` VALUES("6","Waiting list payment link","<p>Hi {firstname},</p><p>Good news: tickets have become available for {eventname}, which you were waiting for:</p><p>{orderlist}</p><p>Use the link below to pay within {removal_days} days; after that the link expires and the tickets are released again:</p><p>{paymentlink}</p><p>After successful payment, the tickets will be sent directly to this email address.</p><p>Please don't hesitate to contact us in case of any questions.</p><p>Kind regards,</p><p>{company_name}<br />{company_website}</p>","Tickets are available: payment link");
 
 INSERT IGNORE INTO `#__ticketstation_mollie` VALUES(
 "1",

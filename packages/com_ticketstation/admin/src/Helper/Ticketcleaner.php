@@ -142,9 +142,7 @@ class Ticketcleaner
                 $this->logAutoRemoval($data, 'unfinished', 'Removed (unfinished order)');
 
                 // The released tickets go to the waiting list first.
-                if ($config->show_waitinglist == 1) {
-                    (new WaitingList)->promote(array_column($data, 'ticketid'));
-                }
+                (new WaitingList)->promote(array_column($data, 'ticketid'));
             }
         }
 
@@ -206,9 +204,7 @@ class Ticketcleaner
 
                 $this->logAutoRemoval($data_pending, 'pending', 'Removed (pending payment expired)');
 
-                if ($config->show_waitinglist == 1) {
-                    (new WaitingList)->promote(array_column($data_pending, 'ticketid'));
-                }
+                (new WaitingList)->promote(array_column($data_pending, 'ticketid'));
             }
         }
 

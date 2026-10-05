@@ -23,6 +23,7 @@ use Ticketstation\Component\Ticketstation\Administrator\Helper\Config;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\OrderTotals;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Order;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Shop;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\WaitingList;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Ticket;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\TicketstationFunctions;
 use Ticketstation\Component\Ticketstation\Site\Model\OrderModel;
@@ -122,7 +123,7 @@ class OrderController extends BaseController
 
         if ($this->amount > $available)
         {
-            $this->showMessage('ts-alert ts-alert--danger', Text::_($config->show_waitinglist ? 'COM_TICKETSTATION_ADD_TO_WAITINGLIST' : 'COM_TICKETSTATION_EVENT_SOLD_OUT'));
+            $this->showMessage('ts-alert ts-alert--danger', Text::_(WaitingList::enabled((int) $tickets->eventid) ? 'COM_TICKETSTATION_ADD_TO_WAITINGLIST' : 'COM_TICKETSTATION_EVENT_SOLD_OUT'));
         }
 
         $post  = Factory::getApplication()->getInput()->post->getArray();
@@ -166,6 +167,12 @@ class OrderController extends BaseController
 
         $config  = (new Config)->getPartialConfig(['pro_installed', 'show_waitinglist']);
         $tickets = (new Ticket)->getTicketDetailsById($this->id);
+
+        // Only for events that have the waiting list on (Configuration, or the event itself).
+        if (!WaitingList::enabled((int) $tickets->eventid))
+        {
+            $this->showMessage('ts-alert ts-alert--danger', Text::_('COM_TICKETSTATION_EVENT_SOLD_OUT'));
+        }
 
         $requires_seat = $this->checkSeatRequirement($config, $tickets);
         $ip_address    = $_SERVER['REMOTE_ADDR'];
@@ -355,12 +362,12 @@ class OrderController extends BaseController
 								<td><strong>' . $TicketstationFunctions->showprice($config->priceformat, $ordertotal, $config->valuta) . '</strong></td>
 							</tr>
 						</table>';
-        } elseif ($config->show_waitinglist != 1 || $waiting < 1) {
+        } elseif ($waiting < 1) {
             // Not "empty" when the customer only has tickets on the waiting list.
             $update .= '<p id="empty_cart" class="ticketstation-basket-empty">' . Text::_('COM_TICKETSTATION_EMPTY_CART') . '</p>';
         }
 
-        if ($config->show_waitinglist == 1 && $waiting > 0)
+        if ($waiting > 0)
         {
             $waitingtickets = ($waiting > 1) ? Text::_('COM_TICKETSTATION_TICKETS') : Text::_('COM_TICKETSTATION_TICKET');
 

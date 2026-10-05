@@ -584,7 +584,7 @@ class Refund
         }
 
         // The released tickets go to the waiting list first, as with a deleted order.
-        if ($released && (int) (new Config)->get(['show_waitinglist'])->show_waitinglist === 1) {
+        if ($released) {
             (new WaitingList)->promote($released);
         }
 

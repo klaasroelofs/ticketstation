@@ -165,8 +165,7 @@ class TicketModel extends AdminModel
 
         // A raised Capacity goes to the waiting list first, like the tickets of a removed order.
         if ($oldCapacity !== null && isset($data['starting_total_tickets'])
-            && (int) $data['starting_total_tickets'] > (int) $oldCapacity
-            && (new Config)->getPartialConfig(['show_waitinglist'])->show_waitinglist == 1) {
+            && (int) $data['starting_total_tickets'] > (int) $oldCapacity) {
             $promoted = (new WaitingList)->promote([(int) $this->ticketid]);
 
             if ($promoted > 0) {

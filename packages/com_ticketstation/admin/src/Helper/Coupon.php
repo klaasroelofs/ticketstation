@@ -84,7 +84,7 @@ class Coupon
         }
 
         // A coupon for certain tickets only: the cart must hold at least one of them.
-        $tickets = self::expandTickets((string) ($coupon->coupon_tickets ?? ''));
+        $tickets = self::couponTickets($coupon);
 
         if ($tickets)
         {
@@ -266,6 +266,37 @@ class Coupon
         $db->setQuery($query);
 
         $all = array_merge($ids, array_map('intval', $db->loadColumn()));
+        sort($all);
+
+        return array_values(array_unique($all));
+    }
+
+    /**
+     * The tickets a coupon counts for at this moment: the tickets selected by hand (see
+     * expandTickets()) plus every ticket of the events it is limited to, so tickets added to such
+     * an event later are included for new carts.
+     *
+     * @return  int[]  empty for a coupon that counts for the whole order
+     */
+    public static function couponTickets(object $coupon): array
+    {
+        $tickets = self::expandTickets((string) ($coupon->coupon_tickets ?? ''));
+        $events  = self::ticketIds($coupon->coupon_events ?? '');
+
+        if (!$events)
+        {
+            return $tickets;
+        }
+
+        $db    = Factory::getContainer()->get('DatabaseDriver');
+        $query = $db->getQuery(true)
+            ->select($db->quoteName('ticketid'))
+            ->from($db->quoteName('#__ticketstation_tickets'))
+            ->whereIn($db->quoteName('eventid'), $events);
+
+        $db->setQuery($query);
+
+        $all = array_merge($tickets, array_map('intval', $db->loadColumn()));
         sort($all);
 
         return array_values(array_unique($all));

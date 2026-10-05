@@ -83,6 +83,9 @@ if(isset($this->item->eventid))
                 <?= $this->form->renderField('backgroundupcomingfile'); ?>
             </div>
             <div class="row mb-3">
+                <?= $this->form->renderField('waitinglist'); ?>
+            </div>
+            <div class="row mb-3">
                 <?= $this->form->renderField('eventdescription'); ?>
             </div>
             <div>

@@ -17,6 +17,7 @@ use Joomla\CMS\Mail\MailHelper;
 use Joomla\CMS\MVC\Model\BaseDatabaseModel;
 use Joomla\CMS\Updater\Updater;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Availability;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\WaitingList;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Coupon;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Date;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\OrderTotals;
@@ -548,7 +549,7 @@ class ControlpanelModel extends BaseDatabaseModel
         }
 
         // Confirmed waitinglist entries that have not been processed yet.
-        if ($config->show_waitinglist == 1)
+        if (WaitingList::anywhere())
         {
             $query = $db->getQuery(true)
                 ->select('COUNT(id)')

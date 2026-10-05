@@ -14,6 +14,7 @@ use Joomla\CMS\Router\Route;
 use Joomla\Registry\Registry;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Availability;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Shop;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\WaitingList;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Ticket;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\TicketstationFunctions;
 
@@ -133,7 +134,7 @@ $backgroundStyle = [TicketstationFunctions::class, 'backgroundImageStyle'];
                             // A sold-out ticket stays clickable when the waiting list is on, so the
                             // customer can reach the event page to join it. Seated tickets are excluded:
                             // their seat-picker has no waiting list.
-                            $waitinglist_open = ($available_tickets < 1 && $this->config->show_waitinglist == 1 && $row->show_seatplans != 1);
+                            $waitinglist_open = ($available_tickets < 1 && WaitingList::enabled((int) $row->eventid) && $row->show_seatplans != 1);
 
                             // With online payments off, a ticket of which nothing is free is only sold at
                             // the box office; a seating chart as soon as one of its seats costs something.

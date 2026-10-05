@@ -61,6 +61,17 @@
                 filterformat="d-m-Y H:i"
         />
         <field
+                name="waitinglist"
+                type="list"
+                label="COM_TICKETSTATION_EVENT_WAITINGLIST"
+                description="COM_TICKETSTATION_EVENT_WAITINGLIST_DESC"
+                default="0"
+                >
+                <option value="0">COM_TICKETSTATION_EVENT_WAITINGLIST_DEFAULT</option>
+                <option value="1">COM_TICKETSTATION_EVENT_WAITINGLIST_ON</option>
+                <option value="2">COM_TICKETSTATION_EVENT_WAITINGLIST_OFF</option>
+        </field>
+        <field
                 name="eventdescription"
                 type="textarea"
                 label="COM_TICKETSTATION_VIEW_EVENT_DESCRIPTION"

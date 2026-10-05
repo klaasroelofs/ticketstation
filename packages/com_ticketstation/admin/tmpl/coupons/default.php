@@ -67,6 +67,9 @@ $wa->registerAndUseStyle('ticketstation', Uri::base() . 'components\com_ticketst
                             </td>
                             <td>
                                 <a href="<?php echo $link; ?>"><?php echo $row->coupon_name; ?></a>
+                                <?php if (trim((string) ($row->coupon_events ?? '')) !== '') { ?>
+                                    <div class="small text-muted"><?php echo Text::plural('COM_TICKETSTATION_COUPON_EVENTS_N', count(array_filter(explode(',', $row->coupon_events)))); ?></div>
+                                <?php } ?>
                                 <?php if (trim((string) ($row->coupon_tickets ?? '')) !== '') { ?>
                                     <div class="small text-muted"><?php echo Text::plural('COM_TICKETSTATION_COUPON_TICKETS_N', count(array_filter(explode(',', $row->coupon_tickets)))); ?></div>
                                 <?php } ?>

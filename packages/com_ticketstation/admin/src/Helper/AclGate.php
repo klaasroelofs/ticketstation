@@ -87,6 +87,7 @@ class AclGate
             'edit'         => self::FORM,
             'publish'      => 'core.edit.state',
             'unpublish'    => 'core.edit.state',
+            'duplicate'    => 'core.create',
             'remove'       => 'core.delete',
             'tickets'      => self::MANAGE,
             'controlpanel' => self::MANAGE,

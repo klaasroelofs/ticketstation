@@ -21,6 +21,81 @@ defined('_JEXEC') or die('Restricted access');
 
 class WaitingList
 {
+    /** The values of the Waiting list setting of an event. */
+    public const EVENT_DEFAULT = 0;
+    public const EVENT_ON      = 1;
+    public const EVENT_OFF     = 2;
+
+    /**
+     * Whether the waiting list is on for an event: its own setting, or the Configuration
+     * (Waiting list active) when the event follows the default.
+     */
+    public static function enabled(int $eventid): bool
+    {
+        $db = Factory::getContainer()->get('DatabaseDriver');
+
+        $db->setQuery($db->getQuery(true)
+            ->select($db->quoteName('waitinglist'))
+            ->from($db->quoteName('#__ticketstation_events'))
+            ->where($db->quoteName('eventid') . ' = ' . $eventid));
+
+        $setting = $db->loadResult();
+
+        if ($setting === null)
+        {
+            return false;
+        }
+
+        return self::resolve((int) $setting, self::globalOn());
+    }
+
+    /**
+     * Whether the waiting list is on for at least one event, for the screens and mails that
+     * only matter when it is in use at all.
+     */
+    public static function anywhere(): bool
+    {
+        if (self::globalOn())
+        {
+            return true;
+        }
+
+        $db = Factory::getContainer()->get('DatabaseDriver');
+
+        $db->setQuery('SELECT COUNT(*) FROM ' . $db->quoteName('#__ticketstation_events')
+            . ' WHERE ' . $db->quoteName('waitinglist') . ' = ' . self::EVENT_ON);
+
+        return (int) $db->loadResult() > 0;
+    }
+
+    /**
+     * enabled() as an SQL condition on the qualified column that holds the event's setting.
+     */
+    public static function enabledSql(string $column): string
+    {
+        $default = self::globalOn() ? ' OR ' . $column . ' = ' . self::EVENT_DEFAULT : '';
+
+        return '(' . $column . ' = ' . self::EVENT_ON . $default . ')';
+    }
+
+    /**
+     * The rule behind enabled(): an event's own on or off wins, the default follows the
+     * Configuration.
+     */
+    public static function resolve(int $setting, bool $global): bool
+    {
+        return match ($setting) {
+            self::EVENT_ON  => true,
+            self::EVENT_OFF => false,
+            default         => $global,
+        };
+    }
+
+    private static function globalOn(): bool
+    {
+        return (int) (new Config)->get(['show_waitinglist'])->show_waitinglist === 1;
+    }
+
     /**
      * Hands available tickets to the waiting list, after an order was deleted, the cleanup
      * removed unfinished or expired orders, or a ticket's Capacity was raised. Confirmed
@@ -62,7 +137,9 @@ class WaitingList
             ->join('INNER', $db->quoteName('#__ticketstation_tickets', 'top') . ' ON ' . $db->quoteName('top.ticketid')
                 . ' = IF(' . $db->quoteName('t.parent') . ' > 0, ' . $db->quoteName('t.parent') . ', ' . $db->quoteName('t.ticketid') . ')')
             ->whereIn($db->quoteName('top.ticketid'), $tops)
-            ->where($db->quoteName('top.show_seatplans') . ' != 1');
+            ->join('INNER', $db->quoteName('#__ticketstation_events', 'ev') . ' ON ' . $db->quoteName('ev.eventid') . ' = ' . $db->quoteName('top.eventid'))
+            ->where($db->quoteName('top.show_seatplans') . ' != 1')
+            ->where(self::enabledSql('ev.waitinglist'));
         $db->setQuery($query);
         $family = array_map('intval', $db->loadColumn());
 
@@ -266,8 +343,19 @@ class WaitingList
 
                 $variables = eTicketsMessage::orderVariables((int) $row->ordercode);
                 $variables['paymentlink'] = $payment_helper->generatePaymentLink($row->ordercode);
+                $variables['removal_days'] = (int) (new Config)->get(['removal_days'])->removal_days;
 
-                $message->id(3)
+                // The event(s) the customer was waiting for; an order can hold tickets of more than one.
+                $query = $db->getQuery(true)
+                    ->select('DISTINCT ' . $db->quoteName('e.eventname'))
+                    ->from($db->quoteName('#__ticketstation_orders', 'o'))
+                    ->join('INNER', $db->quoteName('#__ticketstation_events', 'e') . ' ON ' . $db->quoteName('e.eventid') . ' = ' . $db->quoteName('o.eventid'))
+                    ->where($db->quoteName('o.ordercode') . ' = ' . (int) $row->ordercode)
+                    ->order($db->quoteName('e.eventname'));
+                $db->setQuery($query);
+                $variables['eventname'] = implode(', ', $db->loadColumn());
+
+                $message->id(6)
                     ->user($item->userid)
                     ->variables($variables)
                     ->send();

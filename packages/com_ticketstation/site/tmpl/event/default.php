@@ -14,6 +14,7 @@ use Joomla\CMS\Layout\LayoutHelper;
 use Joomla\CMS\Router\Route;
 use Joomla\CMS\Uri\Uri;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Availability;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\WaitingList;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Date;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Ordercode;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\TicketstationFunctions;
@@ -76,7 +77,7 @@ if (count($this->childs) != 0) {
         $ticketRows[] = (object) [
             'ticket'      => $child,
             'available'   => Availability::forPurchase((int) $child->ticketid),
-            'waitinglist' => $this->config->show_waitinglist == 1,
+            'waitinglist' => WaitingList::enabled((int) $this->items->eventid),
             'fewLeft'     => false,
         ];
     }
@@ -84,7 +85,7 @@ if (count($this->childs) != 0) {
     $ticketRows[] = (object) [
         'ticket'      => $this->items,
         'available'   => $available_tickets,
-        'waitinglist' => $this->config->show_waitinglist == 1,
+        'waitinglist' => WaitingList::enabled((int) $this->items->eventid),
         'fewLeft'     => $availability_class === 'ts-availability--critical',
     ];
 }

@@ -45,6 +45,9 @@ $document->setTitle($add_edit .' '.Text::_('COM_TICKETSTATION_COUPON') . ' - ' .
                 <?= $this->form->renderField('coupon_discount'); ?>
             </div>
             <div class="row mb-3">
+                <?= $this->form->renderField('coupon_events'); ?>
+            </div>
+            <div class="row mb-3">
                 <?= $this->form->renderField('coupon_tickets'); ?>
             </div>
             <div>
