@@ -177,6 +177,11 @@ $backgroundStyle = [TicketstationFunctions::class, 'backgroundImageStyle'];
                                         <dt><?= Text::_('COM_TICKETSTATION_START_TIME'); ?></dt>
                                         <dd><?= Text::sprintf('COM_TICKETSTATION_TIME_OCLOCK', date('H:i', strtotime($row->startdate))); ?></dd>
 
+                                        <?php if (trim((string) $row->doors_open) !== '') { ?>
+                                            <dt><?= Text::_('COM_TICKETSTATION_DOORS_OPEN'); ?></dt>
+                                            <dd><?= Text::sprintf('COM_TICKETSTATION_TIME_OCLOCK', htmlspecialchars($row->doors_open, ENT_QUOTES, 'UTF-8')); ?></dd>
+                                        <?php } ?>
+
                                         <?php if ($this->config->show_venue == 1) { ?>
                                             <dt><?= Text::_('COM_TICKETSTATION_VENUE'); ?></dt>
                                             <dd><?= $row->venue; ?> - <?= $row->city; ?></dd>

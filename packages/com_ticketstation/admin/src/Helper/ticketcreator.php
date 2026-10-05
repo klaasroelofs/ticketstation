@@ -298,6 +298,18 @@ class ticketcreator
             $pdf->Write(0, TicketLanguage::_('COM_TICKETSTATION_PDF_DATE') . ' ' . date("d-m-Y", strtotime($order->startdate)) . ' || ' . TicketLanguage::_('COM_TICKETSTATION_PDF_START') . ' ' . TicketLanguage::sprintf('COM_TICKETSTATION_PDF_TIME', date("H:i", strtotime($order->startdate))));
         }
 
+        ## DOORS OPEN
+        if(strpos((string) $order->doors_open_position, '-') !== false && trim((string) $order->doors_open) !== '')
+        {
+            $position = explode("-", $order->doors_open_position);
+            $pdf->SetFont($this->font, 'B', $order->doors_open_fontsize);
+            $rgb = $this->hexToRgb($order->doors_open_fontcolor);
+            $pdf->SetTextColor($rgb['r'], $rgb['g'], $rgb['b']);
+            $pdf->SetXY($position[0], $position[1]);
+
+            $pdf->Write(0, PdfEncoding::toLatin1(TicketLanguage::_('COM_TICKETSTATION_PDF_DOORS_OPEN') . ' ' . TicketLanguage::sprintf('COM_TICKETSTATION_PDF_TIME', $order->doors_open)));
+        }
+
         ## VENUE
         if(strpos((string) $order->venue_position, '-') !== false && $venue)
         {

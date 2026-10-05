@@ -105,6 +105,54 @@ class Date
         return $withTime ? Text::sprintf('COM_TICKETSTATION_DATE_AT_TIME', $day, date('H:i', $timestamp)) : $day;
     }
 
+    /**
+     * A time typed by an admin ("20:00", "20.00", "2000", "8:30") as "HH:MM", or '' when empty
+     * or not a valid time.
+     */
+    public static function normalizeTime($value): string
+    {
+        $value = trim((string) $value);
+
+        if (!preg_match('/^(\d{1,2})(?:[:.]?(\d{2}))?(?::\d{2})?$/', $value, $match)) {
+            return '';
+        }
+
+        $hours   = (int) $match[1];
+        $minutes = (int) ($match[2] ?? 0);
+
+        if ($hours > 23 || $minutes > 59) {
+            return '';
+        }
+
+        return sprintf('%02d:%02d', $hours, $minutes);
+    }
+
+    /**
+     * The moment the doors open, in the same site-local format as the start date: the time of
+     * "Doors open" on the date of the ticket. Doors that would open after the start (a late show
+     * starting just after midnight) open the evening before. '' without a valid doors time.
+     *
+     * @param   string  $startdate  date as stored, e.g. '2026-10-03 20:00:00'
+     * @param   string  $doors      time as stored, e.g. '19:00'
+     */
+    public static function doorsOpen($startdate, $doors): string
+    {
+        $doors = self::normalizeTime($doors);
+        $start = $startdate && !str_starts_with((string) $startdate, '0000-00-00') ? strtotime((string) $startdate) : false;
+
+        if ($doors === '' || $start === false) {
+            return '';
+        }
+
+        $opens = strtotime(date('Y-m-d', $start) . ' ' . $doors . ':00');
+
+        if ($opens > $start) {
+            $opens = strtotime('-1 day', $opens);
+        }
+
+        return date('Y-m-d H:i:s', $opens);
+    }
+
     public static function getDateFormat()
     {
         $config = new Config;

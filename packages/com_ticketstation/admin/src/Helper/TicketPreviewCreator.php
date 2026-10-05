@@ -104,6 +104,9 @@ class TicketPreviewCreator
             $pdf->Write(0, $texts['ticketdate']);
         }
 
+        ## DOORS OPEN
+        $this->writeField($pdf, $creator, $data, 'doors_open', $texts['doors_open']);
+
         ## VENUE
         $this->writeField($pdf, $creator, $data, 'venue', $texts['venue']);
 
@@ -258,6 +261,13 @@ class TicketPreviewCreator
             $dummy['startdate'] = $data['startdate'];
         }
 
+        ## Doors open: the time of the form, or a sample when it is empty (the field is optional on a ticket).
+        $doors = Date::normalizeTime($data['doors_open'] ?? '');
+
+        if ($doors !== '') {
+            $dummy['doors_open'] = $doors;
+        }
+
         $price = str_replace(',', '.', trim((string) ($data['ticketprice'] ?? '')));
 
         if (is_numeric($price)) {
@@ -307,6 +317,7 @@ class TicketPreviewCreator
             'freetext_1'       => $dummy['freetext_1'],
             'orderreference'   => $dummy['remarks'],
             'ticketdate'       => TicketLanguage::_('COM_TICKETSTATION_PDF_DATE') . ' ' . date("d-m-Y", strtotime($dummy['startdate'])) . ' || ' . TicketLanguage::_('COM_TICKETSTATION_PDF_START') . ' ' . TicketLanguage::sprintf('COM_TICKETSTATION_PDF_TIME', date("H:i", strtotime($dummy['startdate']))),
+            'doors_open'       => TicketLanguage::_('COM_TICKETSTATION_PDF_DOORS_OPEN') . ' ' . TicketLanguage::sprintf('COM_TICKETSTATION_PDF_TIME', $dummy['doors_open']),
             'venue'            => $venueText,
             'ticketprice'      => TicketLanguage::_('COM_TICKETSTATION_PDF_PRICE') . ' ' . $price,
             'orderdate'        => Date::_($dummy['orderdate'], $config->dateformat ?: 'd-m-Y'),
@@ -325,6 +336,7 @@ class TicketPreviewCreator
             'ticketname'        => Text::_('COM_TICKETSTATION_PREVIEW_SAMPLE_TICKET'),
             'freetext_1'        => Text::_('COM_TICKETSTATION_PREVIEW_SAMPLE_FREETEXT'),
             'startdate'         => date('Y-m-d H:i:s'),
+            'doors_open'        => '19:00',
             'venue'             => Text::_('COM_TICKETSTATION_PREVIEW_SAMPLE_VENUE'),
             'ticketprice'       => 25,
             'orderdate'         => date('Y-m-d H:i:s'),

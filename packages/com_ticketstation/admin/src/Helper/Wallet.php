@@ -140,7 +140,7 @@ class Wallet
      * already created, so they have their QR code. In the order of the PDF tickets.
      *
      * @return  object[]  orderid, ordercode, barcode, eventid, ticketid, eventname, ticketname,
-     *                    startdate, enddate, venue, street, zipcode, city, firstname, name,
+     *                    startdate, enddate, doors_open, venue, street, zipcode, city, firstname, name,
      *                    row_name, seatid
      */
     public static function tickets(int $ordercode): array
@@ -153,6 +153,7 @@ class Wallet
             ->select([
                 'o.orderid', 'o.ordercode', 'o.barcode', 'o.eventid', 'o.ticketid',
                 'e.eventname', 't.startdate', 't.enddate',
+                "COALESCE(NULLIF(t.doors_open, ''), NULLIF(p.doors_open, ''), '') AS doors_open",
                 "IF(p.ticketid IS NULL, t.ticketname, CONCAT(p.ticketname, ' - ', t.ticketname)) AS ticketname",
                 'v.venue', 'v.street', 'v.zipcode', 'v.city',
                 'c.firstname', 'c.name',

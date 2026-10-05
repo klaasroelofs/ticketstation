@@ -17,6 +17,7 @@ use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\Controller\FormController;
 use Joomla\CMS\Uri\Uri;
 use Ticketstation\Component\Ticketstation\Administrator\Controller\Mixin\RegisterControllerTasks;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\Date;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\DefaultTicketLayout;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Pdf;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\TicketDesign;
@@ -65,6 +66,7 @@ class TicketController extends FormController
 
         $data['startdate'] = date('Y-m-d H:i:s', strtotime($data['startdate']));
         $data['enddate'] = date('Y-m-d H:i:s', strtotime($data['enddate']));
+        $data['doors_open'] = Date::normalizeTime($data['doors_open'] ?? '');
         $data['publish_date_time'] = date('Y-m-d H:i:s', strtotime($data['publish_date_time']));
         $data['sale_stop'] = date('Y-m-d H:i:s', strtotime($data['sale_stop']));
         $data['parent'] = intval($data['parent']);

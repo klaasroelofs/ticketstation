@@ -36,7 +36,7 @@ class DefaultTicketLayout
      * of these filled in gets the default set from defaultFields().
      */
     const POSITION_FIELDS = [
-        'eventname', 'ticketname', 'freetext_1', 'ticketdate', 'venue', 'ticketprice', 'orderdate',
+        'eventname', 'ticketname', 'freetext_1', 'ticketdate', 'doors_open', 'venue', 'ticketprice', 'orderdate',
         'client', 'orderticketindex', 'ordernumber', 'seatnumber', 'orderreference', 'qrcode',
     ];
 

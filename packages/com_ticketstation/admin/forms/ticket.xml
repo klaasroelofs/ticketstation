@@ -136,6 +136,16 @@
                 filterformat="d-m-Y H:i"
         />
         <field
+                name="doors_open"
+                type="text"
+                label="COM_TICKETSTATION_TICKET_DOORS_OPEN"
+                description="COM_TICKETSTATION_TICKET_DOORS_OPEN_DESC"
+                hint="19:30"
+                maxlength="5"
+                inputmode="numeric"
+                class="w-auto"
+        />
+        <field
                 name="scans_on"
                 type="radio"
                 layout="joomla.form.field.radio.switcher"
@@ -330,6 +340,26 @@
         />
         <field
                 name="ticketdate_position"
+                type="text"
+                label="COM_TICKETSTATION_POSITION"
+        />
+    </fieldset>
+    <fieldset name="ticket_layout_doors_open">
+        <field
+                name="doors_open_fontcolor"
+                type="text"
+                maxlength="6"
+                label="COM_TICKETSTATION_FONTCOLOR"
+                addonBefore="#"
+        />
+        <field
+                name="doors_open_fontsize"
+                type="text"
+                label="COM_TICKETSTATION_FONTSIZE"
+                addonAfter="px"
+        />
+        <field
+                name="doors_open_position"
                 type="text"
                 label="COM_TICKETSTATION_POSITION"
         />

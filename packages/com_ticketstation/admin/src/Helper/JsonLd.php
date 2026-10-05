@@ -160,6 +160,12 @@ class JsonLd
             'url'                 => self::url($row),
         ];
 
+        $doors = self::isoDate(Date::doorsOpen($row->startdate, $row->doors_open ?? ''));
+
+        if ($doors) {
+            $node['doorTime'] = $doors;
+        }
+
         $end = self::isoDate($row->enddate ?? null);
 
         if ($end && $end > $node['startDate']) {

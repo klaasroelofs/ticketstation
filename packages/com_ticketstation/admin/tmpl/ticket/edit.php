@@ -245,6 +245,12 @@ if(isset($this->item->ticketid))
                     <?= $this->form->renderFieldset('ticket_layout_ticketdate'); ?>
 
                     <h3>
+                        <?= Text::_('COM_TICKETSTATION_DOORS_OPEN'); ?>
+                    </h3>
+                    <hr />
+                    <?= $this->form->renderFieldset('ticket_layout_doors_open'); ?>
+
+                    <h3>
                         <?= Text::_('COM_TICKETSTATION_VENUE'); ?>
                     </h3>
                     <hr />
@@ -466,7 +472,7 @@ if(isset($this->item->ticketid))
                     return;
                 }
 
-                var fields = ['eventname', 'ticketname', 'freetext_1', 'ticketdate', 'venue', 'ticketprice', 'orderdate',
+                var fields = ['eventname', 'ticketname', 'freetext_1', 'ticketdate', 'doors_open', 'venue', 'ticketprice', 'orderdate',
                     'client', 'orderticketindex', 'ordernumber', 'seatnumber', 'orderreference'];
                 var names = [];
 

@@ -113,6 +113,11 @@ if (count($this->childs) != 0) {
             <dt><?php echo Text::_('COM_TICKETSTATION_DATE'); ?></dt>
             <dd><?php echo Date::long($this->items->startdate, true); ?></dd>
 
+            <?php if (trim((string) $this->items->doors_open) !== '') { ?>
+                <dt><?php echo Text::_('COM_TICKETSTATION_DOORS_OPEN'); ?></dt>
+                <dd><?php echo Text::sprintf('COM_TICKETSTATION_TIME_OCLOCK', htmlspecialchars($this->items->doors_open, ENT_QUOTES, 'UTF-8')); ?></dd>
+            <?php } ?>
+
             <?php if ($this->config->show_venue == 1) { ?>
                 <dt><?php echo Text::_('COM_TICKETSTATION_VENUE'); ?></dt>
                 <dd><?php echo $this->items->venue; ?> - <?php echo $this->items->city; ?></dd>

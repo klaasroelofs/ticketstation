@@ -39,6 +39,7 @@ class TicketLayoutFields
         'ticketname'       => ['label' => 'COM_TICKETSTATION_TICKETNAME', 'bold' => true, 'kind' => 'text'],
         'freetext_1'       => ['label' => 'COM_TICKETSTATION_FREETEXT_1', 'bold' => true, 'kind' => 'text'],
         'ticketdate'       => ['label' => 'COM_TICKETSTATION_TICKETDATE', 'bold' => true, 'kind' => 'text'],
+        'doors_open'       => ['label' => 'COM_TICKETSTATION_DOORS_OPEN', 'bold' => true, 'kind' => 'text', 'condition' => 'COM_TICKETSTATION_TLE_ONLY_DOORS_OPEN'],
         'venue'            => ['label' => 'COM_TICKETSTATION_VENUE', 'bold' => true, 'kind' => 'text'],
         'ticketprice'      => ['label' => 'COM_TICKETSTATION_TICKETPRICE', 'bold' => true, 'kind' => 'text'],
         'orderdate'        => ['label' => 'COM_TICKETSTATION_ORDERDATE', 'bold' => true, 'kind' => 'text'],

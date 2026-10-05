@@ -124,6 +124,7 @@ class WalletGoogle
         $address   = Wallet::address($ticket);
         $start     = Wallet::isoDate($ticket->startdate);
         $end       = Wallet::isoDate($ticket->enddate);
+        $doors     = Wallet::isoDate(Date::doorsOpen($ticket->startdate, $ticket->doors_open ?? ''));
         $eventname = trim(strip_tags((string) $ticket->eventname));
 
         $class = [
@@ -153,6 +154,11 @@ class WalletGoogle
             if ($end !== '' && $end > $start)
             {
                 $class['dateTime']['end'] = $end;
+            }
+
+            if ($doors !== '')
+            {
+                $class['dateTime']['doorsOpen'] = $doors;
             }
         }
 

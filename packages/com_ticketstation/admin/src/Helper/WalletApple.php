@@ -317,6 +317,13 @@ class WalletApple
             ];
         }
 
+        $doors = trim((string) ($ticket->doors_open ?? ''));
+
+        if ($date !== '' && $doors !== '')
+        {
+            $secondary[] = ['key' => 'doors', 'label' => TicketLanguage::_('COM_TICKETSTATION_WALLET_FIELD_DOORS'), 'value' => $doors];
+        }
+
         if ($venue !== '')
         {
             $secondary[] = ['key' => 'venue', 'label' => TicketLanguage::_('COM_TICKETSTATION_WALLET_FIELD_VENUE'), 'value' => $venue];

@@ -1245,7 +1245,7 @@
         var name = event.target.name.replace(/^jform\[|\]$/g, '');
 
         if (['ticket_size', 'ticket_orientation', 'override_ticketsize', 'venue', 'eventid', 'ticketname',
-            'ticketcode', 'freetext_1', 'startdate', 'ticketprice'].indexOf(name) !== -1) {
+            'ticketcode', 'freetext_1', 'startdate', 'doors_open', 'ticketprice'].indexOf(name) !== -1) {
             scheduleLoad();
         }
 

@@ -96,6 +96,11 @@ $bannerStyle = TicketstationFunctions::backgroundImageStyle('ticket' . (int) $th
             <dt><?php echo Text::_('COM_TICKETSTATION_DATE'); ?></dt>
             <dd><?php echo Date::long($this->ticketdetails->startdate, true); ?></dd>
 
+            <?php if (trim((string) $this->ticketdetails->doors_open) !== '') { ?>
+                <dt><?php echo Text::_('COM_TICKETSTATION_DOORS_OPEN'); ?></dt>
+                <dd><?php echo Text::sprintf('COM_TICKETSTATION_TIME_OCLOCK', htmlspecialchars($this->ticketdetails->doors_open, ENT_QUOTES, 'UTF-8')); ?></dd>
+            <?php } ?>
+
             <?php if ($this->config->show_venue == 1) { ?>
                 <dt><?php echo Text::_('COM_TICKETSTATION_VENUE'); ?></dt>
                 <dd><?php echo $this->ticketdetails->venue; ?> - <?php echo $this->ticketdetails->city; ?></dd>
