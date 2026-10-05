@@ -583,6 +583,9 @@ class Refund
             }
         }
 
+        // Passes already in a wallet become inactive (Google Wallet live updates)
+        WalletUpdate::orderChanged($ordercode);
+
         // The released tickets go to the waiting list first, as with a deleted order.
         if ($released) {
             (new WaitingList)->promote($released);

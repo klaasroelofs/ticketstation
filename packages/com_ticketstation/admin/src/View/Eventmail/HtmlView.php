@@ -17,6 +17,7 @@ use Joomla\CMS\MVC\View\HtmlView as BaseHtmlView;
 use Joomla\CMS\Toolbar\ToolbarHelper;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Docs;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\EventMail;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\WalletUpdate;
 
 /**
  * The "Mail the buyers" screen of an event.
@@ -26,6 +27,8 @@ class HtmlView extends BaseHtmlView
     public $event;
     public $buyers = 0;
     public $draft  = [];
+    public $walletOn = false;
+    public $walletPasses = 0;
 
     function display($tpl = null)
     {
@@ -46,6 +49,8 @@ class HtmlView extends BaseHtmlView
         }
 
         $this->buyers = count(EventMail::audience($eventid));
+        $this->walletOn     = WalletUpdate::enabled();
+        $this->walletPasses = $this->walletOn ? WalletUpdate::passesOfEvent($eventid) : 0;
         $this->draft  = (array) $app->getUserState('com_ticketstation.eventmail', []);
         $app->setUserState('com_ticketstation.eventmail', null);
 

@@ -297,6 +297,9 @@ class HtmlView extends BaseHtmlView {
         $lists['wallet_apple'] = HTMLHelper::_('select.genericList', $yesno, 'wallet_apple', ' class="form-select" ',
             'value', 'text', (int) ($config->wallet_apple ?? 0));
 
+        $lists['wallet_google_updates'] = HTMLHelper::_('select.genericList', $yesno, 'wallet_google_updates', ' class="form-select" ',
+            'value', 'text', (int) ($config->wallet_google_updates ?? 0));
+
         $lists['wallet_google'] = HTMLHelper::_('select.genericList', $yesno, 'wallet_google', ' class="form-select" ',
             'value', 'text', (int) ($config->wallet_google ?? 0));
 

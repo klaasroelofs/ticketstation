@@ -50,7 +50,7 @@ class Wallet
         {
             self::$config = (new Config)->get([
                 'wallet_apple', 'wallet_apple_cert', 'wallet_apple_key', 'wallet_apple_pending_key',
-                'wallet_google', 'wallet_google_issuer_id', 'wallet_google_key',
+                'wallet_google', 'wallet_google_issuer_id', 'wallet_google_key', 'wallet_google_updates',
                 'wallet_logo', 'wallet_bg_color', 'wallet_fg_color',
                 'companyname', 'website', 'email', 'phone',
             ]) ?: (object) [];
@@ -137,13 +137,15 @@ class Wallet
 
     /**
      * The tickets of an order that can go into a wallet: valid (not refunded or blocked) and
-     * already created, so they have their QR code. In the order of the PDF tickets.
+     * already created, so they have their QR code. In the order of the PDF tickets. With
+     * $validOnly false every ticket of the order, also the invalid ones (for updating passes that
+     * are already in a wallet).
      *
-     * @return  object[]  orderid, ordercode, barcode, eventid, ticketid, eventname, ticketname,
-     *                    startdate, enddate, doors_open, venue, street, zipcode, city, firstname, name,
-     *                    row_name, seatid
+     * @return  object[]  orderid, ordercode, barcode, eventid, ticketid, refund_state, blacklisted,
+     *                    eventname, ticketname, startdate, enddate, doors_open, venue, street, zipcode,
+     *                    city, firstname, name, row_name, seatid
      */
-    public static function tickets(int $ordercode): array
+    public static function tickets(int $ordercode, bool $validOnly = true): array
     {
         $db = Factory::getContainer()->get('DatabaseDriver');
 
@@ -151,7 +153,7 @@ class Wallet
         // has none of its own (the same as the calendar file, see Calendar::events()).
         $query = $db->getQuery(true)
             ->select([
-                'o.orderid', 'o.ordercode', 'o.barcode', 'o.eventid', 'o.ticketid',
+                'o.orderid', 'o.ordercode', 'o.barcode', 'o.eventid', 'o.ticketid', 'o.refund_state', 'o.blacklisted',
                 'e.eventname', 't.startdate', 't.enddate',
                 "COALESCE(NULLIF(t.doors_open, ''), NULLIF(p.doors_open, ''), '') AS doors_open",
                 "IF(p.ticketid IS NULL, t.ticketname, CONCAT(p.ticketname, ' - ', t.ticketname)) AS ticketname",
@@ -170,9 +172,9 @@ class Wallet
             // Only for the sort order of the PDF tickets
             ->join('LEFT OUTER', $db->quoteName('#__ticketstation_seatplancoords', 'ext') . ' ON ' . $db->quoteName('ext.orderid') . ' = ' . $db->quoteName('o.orderid'))
             ->where($db->quoteName('o.ordercode') . ' = ' . $db->quote((string) $ordercode))
-            ->where(Refund::validSql('o'))
-            ->where($db->quoteName('o.barcode') . ' NOT IN (' . $db->quote('') . ', ' . $db->quote('0') . ')')
-            ->where('(' . $db->quoteName('o.blacklisted') . ' IS NULL OR ' . $db->quoteName('o.blacklisted') . ' = 0)');
+            ->where($validOnly ? Refund::validSql('o') : '1 = 1')
+            ->where($validOnly ? $db->quoteName('o.barcode') . ' NOT IN (' . $db->quote('') . ', ' . $db->quote('0') . ')' : '1 = 1')
+            ->where($validOnly ? '(' . $db->quoteName('o.blacklisted') . ' IS NULL OR ' . $db->quoteName('o.blacklisted') . ' = 0)' : '1 = 1');
 
         Tickets::orderForPdf($query, 'o', 'ext');
 

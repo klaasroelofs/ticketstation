@@ -68,6 +68,27 @@ foreach ($presets as $key => $suffix) {
                 <div class="form-text"><?php echo Text::_('COM_TICKETSTATION_EVENTMAIL_MESSAGE_DESC'); ?></div>
             </div>
 
+            <div class="mb-3">
+                <span class="form-label d-block"><?php echo Text::_('COM_TICKETSTATION_EVENTMAIL_SEND_WHAT'); ?></span>
+                <?php // An unchecked box sends nothing; this makes "off" arrive as 0 ?>
+                <input type="hidden" name="send_mail" value="0">
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" name="send_mail" id="send_mail" value="1" checked>
+                    <label class="form-check-label" for="send_mail"><?php echo Text::_('COM_TICKETSTATION_EVENTMAIL_SEND_MAIL'); ?></label>
+                </div>
+                <?php if ($this->walletOn) { ?>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="wallet_update" id="wallet_update" value="1" <?php echo $this->walletPasses ? 'checked' : 'disabled'; ?>>
+                        <label class="form-check-label" for="wallet_update"><?php echo Text::plural('COM_TICKETSTATION_EVENTMAIL_WALLET_UPDATE', $this->walletPasses); ?></label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="wallet_message" id="wallet_message" value="1" <?php echo $this->walletPasses ? '' : 'disabled'; ?>>
+                        <label class="form-check-label" for="wallet_message"><?php echo Text::plural('COM_TICKETSTATION_EVENTMAIL_WALLET_MESSAGE', $this->walletPasses); ?></label>
+                    </div>
+                    <div class="form-text"><?php echo Text::_('COM_TICKETSTATION_EVENTMAIL_WALLET_DESC'); ?></div>
+                <?php } ?>
+            </div>
+
             <p class="mb-0 small text-muted">
                 <?php echo Text::sprintf('COM_TICKETSTATION_EVENTMAIL_TEMPLATE_HINT', Route::_('index.php?option=com_ticketstation&controller=templates&task=edit&cid=7')); ?>
                 <?php echo Text::sprintf('COM_TICKETSTATION_EVENTMAIL_REFUND_HINT', Route::_('index.php?option=com_ticketstation&view=boxoffice')); ?>

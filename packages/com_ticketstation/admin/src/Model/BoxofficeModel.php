@@ -36,6 +36,7 @@ use Ticketstation\Component\Ticketstation\Administrator\Helper\Tickets;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Transaction;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\WaitingList;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Wallet;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\WalletUpdate;
 
 /**
  * Ticketstation Box Office Model
@@ -1633,6 +1634,7 @@ class BoxofficeModel extends ListModel
             $event_type = $block ? 'ticket_blacklisted' : 'ticket_unblocked';
             $message    = $block ? 'ticket(s) blacklisted' : 'ticket(s) unblocked';
             History::log($row->ordercode, $event_type, $row->total . ' ' . $message);
+            WalletUpdate::orderChanged($row->ordercode);
         }
 
         return true;
@@ -1967,6 +1969,9 @@ class BoxofficeModel extends ListModel
         $result = $this->ticketprocessor($ordercode, $orderids);
 
         History::log($ordercode, 'tickets_generated', 'New QR code for ' . count($orderids) . ' ticket(s)');
+
+        // Passes already in a wallet get the new QR code (Google Wallet live updates)
+        WalletUpdate::orderChanged($ordercode);
 
         return $result;
     }

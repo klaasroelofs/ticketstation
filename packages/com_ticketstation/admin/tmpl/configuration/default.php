@@ -1005,6 +1005,17 @@ $document->getWebAssetManager()->addInlineScript("
                         </small>
                     </div>
                 </div>
+                <div class="row mb-3">
+                    <label for="wallet_google_updates" class="col-sm-3 col-form-label">
+                        <?= Text::_('COM_TICKETSTATION_WALLET_GOOGLE_UPDATES') ?>
+                    </label>
+                    <div class="col-sm-9">
+                        <?= $this->lists['wallet_google_updates']; ?>
+                        <small class="form-text">
+                            <?= Text::_('COM_TICKETSTATION_WALLET_GOOGLE_UPDATES_DESC') ?>
+                        </small>
+                    </div>
+                </div>
                 <?php if ($this->walletGoogle !== null) { ?>
                     <div class="form-check">
                         <input class="form-check-input" type="checkbox" name="wallet_google_remove" id="wallet_google_remove" value="1" />

@@ -17,6 +17,7 @@ use Joomla\Component\Scheduler\Administrator\Task\Status;
 use Joomla\Component\Scheduler\Administrator\Traits\TaskPluginTrait;
 use Joomla\Event\SubscriberInterface;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\EventMail;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\WalletUpdate;
 
 /**
  * Scheduled Tasks of Ticketstation. Run "Ticketstation reminders" regularly (hourly is fine): it
@@ -35,6 +36,10 @@ final class Ticketstation extends CMSPlugin implements SubscriberInterface
             'langConstPrefix' => 'PLG_TASK_TICKETSTATION_REMINDERS',
             'method'          => 'sendReminders',
         ],
+        'ticketstation.walletupdates' => [
+            'langConstPrefix' => 'PLG_TASK_TICKETSTATION_WALLETUPDATES',
+            'method'          => 'sendWalletUpdates',
+        ],
     ];
 
     protected $autoloadLanguage = true;
@@ -46,6 +51,26 @@ final class Ticketstation extends CMSPlugin implements SubscriberInterface
             'onExecuteTask'        => 'standardRoutineHandler',
             'onContentPrepareForm' => 'enhanceTaskItemForm',
         ];
+    }
+
+    /**
+     * Sends the pending changes and messages to the passes in Google Wallet (see WalletUpdate).
+     */
+    private function sendWalletUpdates(ExecuteTaskEvent $event): int
+    {
+        if (!class_exists(WalletUpdate::class)) {
+            $this->logTask('The Ticketstation component is not installed.', 'error');
+
+            return Status::KNOCKOUT;
+        }
+
+        $this->getApplication()->getLanguage()->load('com_ticketstation', JPATH_ADMINISTRATOR);
+
+        $result = WalletUpdate::process(200, 50);
+
+        $this->logTask(sprintf('Wallet passes updated: %d, failed: %d, still waiting: %d', $result['done'], $result['failed'], $result['remaining']));
+
+        return Status::OK;
     }
 
     private function sendReminders(ExecuteTaskEvent $event): int

@@ -115,7 +115,7 @@ class WalletGoogle
     /**
      * The pass class of a ticket type: what all its tickets share.
      */
-    private static function passClass(object $ticket, string $issuerId): array
+    public static function passClass(object $ticket, string $issuerId): array
     {
         [$background] = Wallet::colors();
 
@@ -186,7 +186,7 @@ class WalletGoogle
     /**
      * The pass object of one ticket.
      */
-    private static function passObject(object $ticket, string $classId, string $issuerId, int $number, int $total): array
+    public static function passObject(object $ticket, string $classId, string $issuerId, int $number, int $total): array
     {
         [$background] = Wallet::colors();
 
@@ -244,7 +244,7 @@ class WalletGoogle
     /**
      * A JWT signed with RS256.
      */
-    private static function jwt(array $claims, string $privateKey): string
+    public static function jwt(array $claims, string $privateKey): string
     {
         $encode = fn (string $data) => rtrim(strtr(base64_encode($data), '+/', '-_'), '=');
 

@@ -161,6 +161,7 @@ CREATE TABLE IF NOT EXISTS `#__ticketstation_config` (
   `wallet_google` tinyint(1) NOT NULL DEFAULT 0,
   `wallet_google_issuer_id` varchar(30) NOT NULL DEFAULT '',
   `wallet_google_key` text DEFAULT NULL,
+  `wallet_google_updates` tinyint(1) NOT NULL DEFAULT 0,
   `wallet_logo` varchar(255) NOT NULL DEFAULT '',
   `wallet_bg_color` varchar(7) NOT NULL DEFAULT '#1f2937',
   `wallet_fg_color` varchar(7) NOT NULL DEFAULT '#ffffff',
@@ -511,11 +512,26 @@ CREATE TABLE IF NOT EXISTS `#__ticketstation_wallet_passes` (
   `pass_id` varchar(255) NOT NULL,
   `class_id` varchar(255) NOT NULL DEFAULT '',
   `created` datetime NOT NULL,
+  `update_pending` tinyint(1) NOT NULL DEFAULT 0,
+  `message_pending` int(11) NOT NULL DEFAULT 0,
+  `updated` datetime DEFAULT NULL,
+  `update_error` varchar(255) NOT NULL DEFAULT '',
   PRIMARY KEY (`id`),
   UNIQUE KEY `idx_wallet_pass` (`wallet`, `pass_id`),
   KEY `idx_orderid` (`orderid`),
-  KEY `idx_ordercode` (`ordercode`)
+  KEY `idx_ordercode` (`ordercode`),
+  KEY `idx_pending` (`update_pending`, `message_pending`)
 )  ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 DEFAULT COLLATE=utf8mb4_unicode_ci;
+
+DROP TABLE IF EXISTS `#__ticketstation_wallet_messages`;
+CREATE TABLE IF NOT EXISTS `#__ticketstation_wallet_messages` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `eventid` int(11) NOT NULL,
+  `header` varchar(100) NOT NULL DEFAULT '',
+  `body` text NOT NULL,
+  `created` datetime NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 DEFAULT COLLATE=utf8mb4_unicode_ci;
 
 DROP TABLE IF EXISTS `#__ticketstation_refunds`;
 CREATE TABLE IF NOT EXISTS `#__ticketstation_refunds` (

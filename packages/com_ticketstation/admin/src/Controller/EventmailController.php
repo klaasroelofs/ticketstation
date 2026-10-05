@@ -20,6 +20,7 @@ use Joomla\CMS\Uri\Uri;
 use Joomla\Input\Input;
 use Ticketstation\Component\Ticketstation\Administrator\Controller\Mixin\RegisterControllerTasks;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\EventMail;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\WalletUpdate;
 
 /**
  * The screen that mails the buyers of one event (see EventMail): a new start time, another
@@ -83,33 +84,88 @@ class EventmailController extends BaseController
             return;
         }
 
-        $result = EventMail::sendUpdate($eventid, $subject, $message, $test ? $app->getIdentity()->email : null);
+        // What goes out: the mail (on by default), the wallets' copies of the tickets brought in
+        // line with the event, and the text as a message on the passes.
+        $sendMail      = $input->getInt('send_mail', 1) === 1;
+        $walletUpdate  = $input->getInt('wallet_update') === 1 && WalletUpdate::enabled();
+        $walletMessage = $input->getInt('wallet_message') === 1 && WalletUpdate::enabled();
+        $draft         = ['subject' => $subject, 'message' => $message];
 
-        if ($result['total'] === 0)
+        if ($test && !$sendMail)
         {
-            $app->enqueueMessage(Text::_('COM_TICKETSTATION_EVENTMAIL_NO_BUYERS'), 'warning');
+            $app->enqueueMessage(Text::_('COM_TICKETSTATION_EVENTMAIL_NO_TEST'), 'warning');
+            $app->setUserState('com_ticketstation.eventmail', $draft);
             $this->setRedirect($back);
 
             return;
         }
 
-        if ($result['failed'])
+        if ($sendMail)
         {
-            $app->enqueueMessage(Text::sprintf('COM_TICKETSTATION_EVENTMAIL_FAILED', count($result['failed']), implode(', ', $result['failed'])), 'error');
+            $result = EventMail::sendUpdate($eventid, $subject, $message, $test ? $app->getIdentity()->email : null);
+
+            if ($result['total'] === 0)
+            {
+                $app->enqueueMessage(Text::_('COM_TICKETSTATION_EVENTMAIL_NO_BUYERS'), 'warning');
+                $this->setRedirect($back);
+
+                return;
+            }
+
+            if ($result['failed'])
+            {
+                $app->enqueueMessage(Text::sprintf('COM_TICKETSTATION_EVENTMAIL_FAILED', count($result['failed']), implode(', ', $result['failed'])), 'error');
+            }
+
+            if ($test)
+            {
+                // A test leaves the text in the form, so it can be sent for real next.
+                $app->setUserState('com_ticketstation.eventmail', $draft);
+                $app->enqueueMessage(Text::sprintf('COM_TICKETSTATION_EVENTMAIL_TEST_SENT', $app->getIdentity()->email));
+                $this->setRedirect($back);
+
+                return;
+            }
+
+            $app->enqueueMessage(Text::sprintf('COM_TICKETSTATION_EVENTMAIL_SENT', $result['sent'], $result['total']));
         }
 
-        if ($test)
+        if ($walletUpdate)
         {
-            // A test leaves the text in the form, so it can be sent for real next.
-            $app->setUserState('com_ticketstation.eventmail', ['subject' => $subject, 'message' => $message]);
-            $app->enqueueMessage(Text::sprintf('COM_TICKETSTATION_EVENTMAIL_TEST_SENT', $app->getIdentity()->email));
-            $this->setRedirect($back);
+            $marked = WalletUpdate::markEvent($eventid);
+            $app->enqueueMessage(Text::plural('COM_TICKETSTATION_WALLET_UPDATE_MARKED', $marked));
+        }
 
-            return;
+        if ($walletMessage)
+        {
+            $reached = WalletUpdate::queueMessage($eventid, $subject, trim(html_entity_decode(strip_tags(str_replace(['</p>', '<br>', '<br />', '<br/>'], "\n", $message)), ENT_QUOTES, 'UTF-8')));
+            $app->enqueueMessage(Text::plural('COM_TICKETSTATION_WALLET_MESSAGE_QUEUED', $reached));
+        }
+
+        if ($walletUpdate || $walletMessage)
+        {
+            // A first portion right away; the Scheduled Task sends the rest
+            $sent = WalletUpdate::process();
+
+            $app->enqueueMessage(Text::sprintf('COM_TICKETSTATION_WALLET_UPDATE_RESULT', $sent['done'], $sent['notfound']), $sent['done'] ? 'message' : 'warning');
+
+            if ($sent['review'])
+            {
+                $app->enqueueMessage(Text::sprintf('COM_TICKETSTATION_WALLET_UPDATE_REVIEW', $sent['review']), 'warning');
+            }
+
+            if ($sent['failed'])
+            {
+                $app->enqueueMessage(Text::sprintf('COM_TICKETSTATION_WALLET_UPDATE_FAILED', $sent['failed'], WalletUpdate::lastError()), 'error');
+            }
+
+            if ($sent['remaining'])
+            {
+                $app->enqueueMessage(Text::sprintf('COM_TICKETSTATION_WALLET_UPDATE_REMAINING', $sent['remaining']), 'info');
+            }
         }
 
         $app->setUserState('com_ticketstation.eventmail', null);
-        $app->enqueueMessage(Text::sprintf('COM_TICKETSTATION_EVENTMAIL_SENT', $result['sent'], $result['total']));
         $this->setRedirect(Uri::base() . 'index.php?option=com_ticketstation&view=events');
     }
 }
