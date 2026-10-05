@@ -15,8 +15,8 @@ use Joomla\CMS\Installer\InstallerScript;
 /**
  * Installer script for the Ticketstation package.
  *
- * After a successful install or update it shows the release notes of the installed version on
- * Joomla's installer result page. build\build.ps1 puts them in the package as release-notes.md,
+ * After a successful install or update it shows the release notes of the installed version as a
+ * system message on the page Joomla returns to. build\build.ps1 puts them in the package as release-notes.md,
  * taken from release-notes\<version>.md in the repository; the same file is the text of the
  * GitHub release. A package without that file (e.g. a release candidate) shows nothing extra.
  */
@@ -43,7 +43,13 @@ class pkg_ticketstationInstallerScript extends InstallerScript
         $file = $parent->getParent()->getPath('source') . '/release-notes.md';
 
         if (is_file($file)) {
-            echo '<div class="ticketstation-release-notes text-start">' . $this->markdownToHtml(file_get_contents($file)) . '</div>';
+            // As a system message, not as echoed output: Joomla keeps echoed output for the Update page's
+            // message block, but when this was the last pending update that page shows its empty state,
+            // which has no such block, so the notes were dropped.
+            Factory::getApplication()->enqueueMessage(
+                '<div class="ticketstation-release-notes text-start">' . $this->markdownToHtml(file_get_contents($file)) . '</div>',
+                'notice'
+            );
         }
 
         return true;
