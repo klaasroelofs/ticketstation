@@ -1,0 +1,63 @@
+name: Download report
+
+# Mails a daily summary when release assets were downloaded since the previous run.
+# Needs the repository secrets SMTP_SERVER, SMTP_PORT, SMTP_USERNAME, SMTP_PASSWORD and MAIL_TO.
+
+on:
+  schedule:
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  report:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Restore previous counts
+        uses: actions/cache@v4
+        with:
+          path: counts
+          key: download-counts-${{ github.run_id }}
+          restore-keys: download-counts-
+
+      - name: Compare download counts
+        id: diff
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p counts
+          gh api --paginate "repos/${{ github.repository }}/releases" \
+            --jq '.[] | .tag_name as $t | .assets[] | {key: ($t + " / " + .name), value: .download_count}' \
+            | jq -s 'from_entries' > counts/current.json
+
+          if [ ! -f counts/previous.json ]; then
+            echo "First run, storing baseline."
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            jq -r --slurpfile old counts/previous.json '
+              to_entries[]
+              | select(.value > (($old[0][.key]) // 0))
+              | "\(.key): +\(.value - (($old[0][.key]) // 0)) (total \(.value))"
+            ' counts/current.json > counts/report.txt
+            if [ -s counts/report.txt ]; then
+              echo "changed=true" >> "$GITHUB_OUTPUT"
+            else
+              echo "changed=false" >> "$GITHUB_OUTPUT"
+            fi
+          fi
+          cp counts/current.json counts/previous.json
+
+      - name: Send mail
+        if: steps.diff.outputs.changed == 'true'
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: ${{ secrets.SMTP_SERVER }}
+          server_port: ${{ secrets.SMTP_PORT }}
+          username: ${{ secrets.SMTP_USERNAME }}
+          password: ${{ secrets.SMTP_PASSWORD }}
+          subject: Ticketstation downloads
+          to: ${{ secrets.MAIL_TO }}
+          from: Ticketstation GitHub <${{ secrets.SMTP_USERNAME }}>
+          body: file://counts/report.txt
