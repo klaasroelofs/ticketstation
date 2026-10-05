@@ -76,6 +76,10 @@ class HtmlView extends BaseHtmlView
                 ->listCheck(true);
         }
 
+        if (AclGate::can('core.edit')) {
+            ToolbarHelper::custom('events.mailbuyers', 'fa fa-envelope', '', 'COM_TICKETSTATION_EVENTMAIL_BUTTON', true);
+        }
+
         ToolbarHelper::custom('tickets', 'fa fa-ticket-alt', '', 'COM_TICKETSTATION_TICKETS', false);
 
         ToolbarHelper::custom('','spacer');

@@ -135,6 +135,25 @@ class EventsController extends BaseController
         );
     }
 
+    /**
+     * Opens the screen that mails the buyers of the selected event.
+     */
+    function mailbuyers()
+    {
+        $cid = $this->input->get('cid', array(), 'array');
+        ArrayHelper::toInteger($cid);
+
+        if (count($cid) !== 1)
+        {
+            Factory::getApplication()->enqueueMessage(Text::_('COM_TICKETSTATION_EVENTMAIL_SELECT_ONE'), 'error');
+            $this->setRedirect('index.php?option=com_ticketstation&view=events');
+
+            return;
+        }
+
+        $this->setRedirect('index.php?option=com_ticketstation&controller=eventmail&task=display&eventid=' . (int) $cid[0]);
+    }
+
     function remove()
     {
 

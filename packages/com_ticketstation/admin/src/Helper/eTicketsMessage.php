@@ -49,6 +49,8 @@ class eTicketsMessage
         4 => ['ordercode', 'orderdate', 'orderlist', 'confirmationlink'],
         5 => ['ordercode', 'orderdate', 'price', 'invoice_id'],
         6 => ['ordercode', 'orderdate', 'orderlist', 'price', 'paymentlink', 'removal_days', 'eventname'],
+        7 => ['ordercode', 'orderdate', 'orderlist', 'price', 'subject', 'message', 'eventname', 'eventdate', 'eventtime', 'location'],
+        8 => ['ordercode', 'orderdate', 'orderlist', 'price', 'eventname', 'eventdate', 'eventtime', 'doorsopen', 'location', 'ticketlink'],
     ];
 
     /**
@@ -57,6 +59,7 @@ class eTicketsMessage
     private const REQUIRED_FIELDS = [
         3 => ['paymentlink'],
         6 => ['paymentlink'],
+        7 => ['message'],
         4 => ['confirmationlink'],
     ];
 

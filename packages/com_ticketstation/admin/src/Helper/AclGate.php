@@ -88,6 +88,7 @@ class AclGate
             'publish'      => 'core.edit.state',
             'unpublish'    => 'core.edit.state',
             'duplicate'    => 'core.create',
+            'mailbuyers'   => 'core.edit',
             'remove'       => 'core.delete',
             'tickets'      => self::MANAGE,
             'controlpanel' => self::MANAGE,
@@ -98,6 +99,13 @@ class AclGate
             'save'             => self::SAVE,
             'cancel'           => self::MANAGE,
             'removebackground' => 'core.edit',
+        ],
+        'eventmail' => [
+            ''         => 'core.edit',
+            'display'  => 'core.edit',
+            'send'     => 'core.edit',
+            'sendtest' => 'core.edit',
+            'cancel'   => self::MANAGE,
         ],
         'tickets' => [
             ''               => self::MANAGE,

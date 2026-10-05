@@ -379,6 +379,40 @@ $document->getWebAssetManager()->addInlineScript("
             </div>
         </div>
 
+        <div class="card mt-3 rounded-to">
+            <h3 class="card-header">
+                <?= Text::_('COM_TICKETSTATION_REMINDER_SETTINGS') ?>
+            </h3>
+            <div class="card-body">
+                <div class="row mb-3">
+                    <label for="reminder_on" class="col-sm-3 col-form-label"
+                           rel="popover"
+                           title="<?= Text::_('COM_TICKETSTATION_REMINDER_ON') ?>">
+                        <?= Text::_('COM_TICKETSTATION_REMINDER_ON') ?>
+                    </label>
+                    <div class="col-sm-9">
+                        <?= $this->lists['reminder_on']; ?>
+                        <small class="form-text">
+                            <?= Text::_('COM_TICKETSTATION_REMINDER_ON_DESC') ?>
+                        </small>
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <label for="reminder_hours" class="col-sm-3 col-form-label"
+                           rel="popover"
+                           title="<?= Text::_('COM_TICKETSTATION_REMINDER_HOURS') ?>">
+                        <?= Text::_('COM_TICKETSTATION_REMINDER_HOURS') ?>
+                    </label>
+                    <div class="col-sm-9">
+                        <?= $this->lists['reminder_hours']; ?>
+                        <small class="form-text">
+                            <?= Text::_('COM_TICKETSTATION_REMINDER_HOURS_DESC') ?>
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
     <?= HTMLHelper::_('uitab.endTab'); ?>
 
     <?= HTMLHelper::_('uitab.addTab', 'configTabs', 'checkout', Text::_('COM_TICKETSTATION_CONFIG_TAB_CHECKOUT')); ?>

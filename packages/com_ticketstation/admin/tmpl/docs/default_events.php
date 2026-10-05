@@ -43,7 +43,7 @@ $gotchas = function (string $prefix, int $count) {
         <details id="docs-events-walkthrough" class="mb-3 border rounded p-3">
             <summary class="h5 mb-0"><span class="fa fa-list-ol me-2" aria-hidden="true"></span><?= Text::_('COM_TICKETSTATION_EVENTS_DOCS_WALKTHROUGH_TITLE') ?></summary>
             <div class="mt-3">
-                <?php $steps('COM_TICKETSTATION_EVENTS_DOCS_WALKTHROUGH_', 6); ?>
+                <?php $steps('COM_TICKETSTATION_EVENTS_DOCS_WALKTHROUGH_', 7); ?>
             </div>
         </details>
 

@@ -147,6 +147,8 @@ CREATE TABLE IF NOT EXISTS `#__ticketstation_config` (
   `show_venue_description` tinyint(1) NOT NULL DEFAULT 0,
   `show_venue_website` tinyint(1) NOT NULL DEFAULT 0,
   `show_jsonld` tinyint(1) NOT NULL DEFAULT 1,
+  `reminder_on` tinyint(1) NOT NULL DEFAULT 0,
+  `reminder_hours` smallint(4) NOT NULL DEFAULT 24,
   `from_name` varchar(255) NOT NULL DEFAULT '',
   `from_email` varchar(255) NOT NULL DEFAULT '',
   `terms_url` varchar(255) NOT NULL DEFAULT '',
@@ -487,6 +489,18 @@ CREATE TABLE IF NOT EXISTS `#__ticketstation_history` (
   PRIMARY KEY (`id`),
   KEY `ordercode` (`ordercode`)
 )  ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 DEFAULT COLLATE=utf8mb4_unicode_ci;
+
+DROP TABLE IF EXISTS `#__ticketstation_event_mails`;
+CREATE TABLE IF NOT EXISTS `#__ticketstation_event_mails` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `eventid` int(11) NOT NULL,
+  `ordercode` int(11) NOT NULL,
+  `kind` varchar(20) NOT NULL,
+  `startdate` datetime DEFAULT NULL,
+  `sent` datetime NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_event_mails` (`ordercode`, `eventid`, `kind`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 DEFAULT COLLATE=utf8mb4_unicode_ci;
 
 DROP TABLE IF EXISTS `#__ticketstation_wallet_passes`;
 CREATE TABLE IF NOT EXISTS `#__ticketstation_wallet_passes` (
@@ -838,6 +852,8 @@ INSERT IGNORE INTO `#__ticketstation_templates` VALUES("3","Sending Payment Link
 INSERT IGNORE INTO `#__ticketstation_templates` VALUES("4","Waiting list confirmation","<p>Hi {firstname},</p><p>You are on the waiting list for:</p><p>{orderlist}</p><p>Please confirm your spot on this waiting list. As soon as tickets become available, you will receive a separate email with a payment link — we cannot guarantee your spot on the waiting list without confirmation.</p><p>{confirmationlink}</p><p>Please don't hesitate to contact us in case of any questions.</p><p>Kind regards,</p><p>{company_name}<br />{company_website}</p>","Confirm your spot on the waiting list");
 INSERT IGNORE INTO `#__ticketstation_templates` VALUES("5","Invoice","<p>Hi {firstname},</p><p>Attached you will find the invoice for your order <strong>{ordercode}</strong>.</p><p>Invoice number: {invoice_id}<br />Amount: {price}</p><p>Please don't hesitate to contact us in case of any questions.</p><p>Kind regards,</p><p>{company_name}<br />{company_website}</p>","Invoice for your ordered tickets");
 INSERT IGNORE INTO `#__ticketstation_templates` VALUES("6","Waiting list payment link","<p>Hi {firstname},</p><p>Good news: tickets have become available for {eventname}, which you were waiting for:</p><p>{orderlist}</p><p>Use the link below to pay within {removal_days} days; after that the link expires and the tickets are released again:</p><p>{paymentlink}</p><p>After successful payment, the tickets will be sent directly to this email address.</p><p>Please don't hesitate to contact us in case of any questions.</p><p>Kind regards,</p><p>{company_name}<br />{company_website}</p>","Tickets are available: payment link");
+INSERT IGNORE INTO `#__ticketstation_templates` VALUES("7","Message to buyers of an event","<p>Hi {firstname},</p><p>{message}</p><p>Your order: <strong>{ordercode}</strong></p><p>{orderlist}</p><p>Please don't hesitate to contact us in case of any questions.</p><p>Kind regards,</p><p>{company_name}<br />{company_website}</p>","{subject}");
+INSERT IGNORE INTO `#__ticketstation_templates` VALUES("8","Event reminder","<p>Hi {firstname},</p><p>This is a reminder that you have tickets for <strong>{eventname}</strong>.</p><p>When: {eventdate}, {eventtime}<br />Doors open: {doorsopen}<br />Where: {location}</p><p>{orderlist}</p><p>The tickets were sent to you earlier. Can't find them? Request them again here: <a href=\"{ticketlink}\">{ticketlink}</a>. The attached calendar file adds the event to your calendar.</p><p>We look forward to seeing you!</p><p>Kind regards,</p><p>{company_name}<br />{company_website}</p>","Reminder: {eventname}");
 
 INSERT IGNORE INTO `#__ticketstation_mollie` VALUES(
 "1",

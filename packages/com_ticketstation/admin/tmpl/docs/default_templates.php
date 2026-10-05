@@ -8,7 +8,7 @@
  */
 
 /**
- * Email templates topic on the central documentation page: the five mails, when each is
+ * Email templates topic on the central documentation page: the eight mails, when each is
  * sent and how their placeholders work (eTicketsMessage and its senders).
  */
 
@@ -35,7 +35,7 @@ $bullets = function (string $prefix, int $count) {
         <details id="docs-templates-mails" class="mb-3 border rounded p-3">
             <summary class="h5 mb-0"><span class="fa fa-paper-plane me-2" aria-hidden="true"></span><?= Text::_('COM_TICKETSTATION_TEMPLATES_DOCS_MAILS_TITLE') ?></summary>
             <div class="mt-3">
-                <?php $bullets('COM_TICKETSTATION_TEMPLATES_DOCS_MAIL_', 6); ?>
+                <?php $bullets('COM_TICKETSTATION_TEMPLATES_DOCS_MAIL_', 8); ?>
             </div>
         </details>
 

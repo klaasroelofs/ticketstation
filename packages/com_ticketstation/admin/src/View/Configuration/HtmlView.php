@@ -109,7 +109,19 @@ class HtmlView extends BaseHtmlView {
         $lists['show_venue_website'] = HTMLHelper::_('select.genericList', $yesno, 'show_venue_website', ' class="form-select" ' . '',
             'value', 'text', $config->show_venue_website);
 
-        $lists['show_jsonld'] = HTMLHelper::_('select.genericList', $yesno, 'show_jsonld', ' class="form-select" ' . '',
+        $lists['reminder_on'] = HTMLHelper::_('select.genericList', $yesno, 'reminder_on', ' class="form-select" ' . '',
+            'value', 'text', $config->reminder_on);
+
+        $reminderHours = [];
+
+        foreach ([6, 12, 24, 36, 48, 72] as $hours) {
+            $reminderHours[] = ['value' => (string) $hours, 'text' => $hours . ' ' . Text::_('COM_TICKETSTATION_HOURS')];
+        }
+
+        $lists['reminder_hours'] = HTMLHelper::_('select.genericList', $reminderHours, 'reminder_hours', 'class="form-select"', 'value',
+            'text', (string) $config->reminder_hours);
+
+        $lists['show_jsonld'] =HTMLHelper::_('select.genericList', $yesno, 'show_jsonld', ' class="form-select" ' . '',
             'value', 'text', $config->show_jsonld);
 
         $lists['send_profile_mail'] = HTMLHelper::_('select.genericList', $yesno, 'send_profile_mail', ' class="form-select" ' . '',
