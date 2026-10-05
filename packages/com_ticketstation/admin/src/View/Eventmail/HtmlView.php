@@ -17,18 +17,27 @@ use Joomla\CMS\MVC\View\HtmlView as BaseHtmlView;
 use Joomla\CMS\Toolbar\ToolbarHelper;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Docs;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\EventMail;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\Wallet;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\WalletUpdate;
 
 /**
- * The "Mail the buyers" screen of an event.
+ * The Communication screen of an event: a message to the buyers, bringing the passes in the
+ * wallets in line with the event, and what has been sent so far.
  */
 class HtmlView extends BaseHtmlView
 {
     public $event;
     public $buyers = 0;
     public $draft  = [];
+
+    /** Live updates are on for at least one wallet. */
     public $walletOn = false;
-    public $walletPasses = 0;
+
+    /** The passes live updates reach: total, Google, Apple. */
+    public $passes = ['total' => 0, 'google' => 0, 'apple' => 0];
+
+    public $summary      = [];
+    public $walletStatus = ['pending' => 0, 'failed' => 0, 'error' => ''];
 
     function display($tpl = null)
     {
@@ -48,16 +57,25 @@ class HtmlView extends BaseHtmlView
             $app->redirect('index.php?option=com_ticketstation&view=events');
         }
 
-        $this->buyers = count(EventMail::audience($eventid));
-        $this->walletOn     = WalletUpdate::enabled();
-        $this->walletPasses = $this->walletOn ? WalletUpdate::passesOfEvent($eventid) : 0;
-        $this->draft  = (array) $app->getUserState('com_ticketstation.eventmail', []);
+        $this->buyers   = count(EventMail::audience($eventid));
+        $this->summary  = EventMail::summary($eventid);
+        $this->walletOn = WalletUpdate::enabled();
+
+        if ($this->walletOn)
+        {
+            $this->passes = [
+                'total'  => WalletUpdate::passesOfEvent($eventid),
+                'google' => WalletUpdate::passesOfEvent($eventid, Wallet::GOOGLE),
+                'apple'  => WalletUpdate::passesOfEvent($eventid, Wallet::APPLE),
+            ];
+            $this->walletStatus = WalletUpdate::statusOfEvent($eventid);
+        }
+
+        $this->draft = (array) $app->getUserState('com_ticketstation.eventmail', []);
         $app->setUserState('com_ticketstation.eventmail', null);
 
-        ToolbarHelper::title(Text::sprintf('COM_TICKETSTATION_EVENTMAIL_TITLE', $this->event->eventname), 'fa fa-envelope');
-        ToolbarHelper::custom('sendtest', 'fa fa-vial', '', 'COM_TICKETSTATION_EVENTMAIL_SEND_TEST', false);
-        ToolbarHelper::custom('send', 'fa fa-paper-plane', '', 'COM_TICKETSTATION_EVENTMAIL_SEND', false);
-        ToolbarHelper::cancel('cancel');
+        ToolbarHelper::title(Text::sprintf('COM_TICKETSTATION_COMMUNICATION_TITLE', $this->event->eventname), 'fa fa-envelope');
+        ToolbarHelper::cancel('cancel', 'COM_TICKETSTATION_COMMUNICATION_BACK');
         Docs::toolbarButton('events');
 
         parent::display($tpl);

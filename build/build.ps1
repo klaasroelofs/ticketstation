@@ -8,6 +8,7 @@
             packages\com_ticketstation.zip
             packages\mod_ticketstation_basket.zip
             packages\plg_task_ticketstation.zip
+            packages\plg_system_ticketstation.zip
         dist\pkg_ticketstation_update.xml
 
     The update feed points at the zip as a GitHub release asset of tag v<version> and carries
@@ -33,6 +34,7 @@ $RepoRoot     = (Resolve-Path $RepoRoot).Path
 $ComponentDir = Join-Path $RepoRoot 'packages\com_ticketstation'
 $ModuleDir    = Join-Path $RepoRoot 'packages\mod_ticketstation_basket'
 $PluginDir    = Join-Path $RepoRoot 'packages\plg_task_ticketstation'
+$SystemPluginDir = Join-Path $RepoRoot 'packages\plg_system_ticketstation'
 $DistDir      = Join-Path $RepoRoot 'dist'
 
 if (-not (Test-Path (Join-Path $ComponentDir 'site\vendor\autoload.php'))) {
@@ -56,6 +58,7 @@ $versions = [ordered] @{
     'ticketstation.xml'            = Get-ManifestVersion (Join-Path $ComponentDir 'ticketstation.xml')
     'mod_ticketstation_basket.xml' = Get-ManifestVersion (Join-Path $ModuleDir 'mod_ticketstation_basket.xml')
     'task/ticketstation.xml'      = Get-ManifestVersion (Join-Path $PluginDir 'ticketstation.xml')
+    'system/ticketstation.xml'    = Get-ManifestVersion (Join-Path $SystemPluginDir 'ticketstation.xml')
 }
 if (@($versions.Values | Select-Object -Unique).Count -ne 1) {
     $list = ($versions.GetEnumerator() | ForEach-Object { "$($_.Key) $($_.Value)" }) -join ', '
@@ -170,6 +173,12 @@ try {
     $plgVersion = Get-ManifestVersion (Join-Path $plgStage 'ticketstation.xml')
     New-Zip $plgStage (Join-Path $pkgRoot 'packages\plg_task_ticketstation.zip')
 
+    # System plugin (the web service of Apple Wallet)
+    $sysStage = Join-Path $staging 'plg_system_ticketstation'
+    Copy-Tree $SystemPluginDir $sysStage
+    $sysVersion = Get-ManifestVersion (Join-Path $sysStage 'ticketstation.xml')
+    New-Zip $sysStage (Join-Path $pkgRoot 'packages\plg_system_ticketstation.zip')
+
     # Package
     Copy-Item (Join-Path $RepoRoot 'pkg_ticketstation.xml'), (Join-Path $RepoRoot 'pkg_script.php') $pkgRoot
     Copy-Tree (Join-Path $RepoRoot 'language') (Join-Path $pkgRoot 'language')
@@ -239,6 +248,7 @@ try {
     Write-Host "  component $comVersion"
     Write-Host "  module    $modVersion"
     Write-Host "  plugin    $plgVersion"
+    Write-Host "  system    $sysVersion"
     Write-Host "  stability $stability"
     Write-Host "  sha256    $sha256"
     if (Test-Path -LiteralPath $notes) { Write-Host "  notes     release-notes\$pkgVersion.md" } else { Write-Host "  notes     none (release-notes\$pkgVersion.md not found)" }

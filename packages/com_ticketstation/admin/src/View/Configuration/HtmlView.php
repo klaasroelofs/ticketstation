@@ -22,6 +22,8 @@ use Ticketstation\Component\Ticketstation\Administrator\Helper\AclGate;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Docs;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Wallet;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\WalletApple;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\WalletApplePush;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\WalletAppleService;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\WalletGoogle;
 
 /**
@@ -294,6 +296,9 @@ class HtmlView extends BaseHtmlView {
         $this->companyLogoField = $logoForm->getField('company_logo')->input;
 
         // Wallet tab: the pass logo is a media picker of its own, like the company logo
+        $lists['wallet_apple_updates'] = HTMLHelper::_('select.genericList', $yesno, 'wallet_apple_updates', ' class="form-select" ',
+            'value', 'text', (int) ($config->wallet_apple_updates ?? 0));
+
         $lists['wallet_apple'] = HTMLHelper::_('select.genericList', $yesno, 'wallet_apple', ' class="form-select" ',
             'value', 'text', (int) ($config->wallet_apple ?? 0));
 
@@ -311,6 +316,8 @@ class HtmlView extends BaseHtmlView {
         // What is stored, without ever showing the keys themselves
         $this->walletApple = WalletApple::certificateInfo($config->wallet_apple_cert ?? null);
         $this->walletApplePending = ! empty($config->wallet_apple_pending_key);
+        $this->appleServer  = WalletApplePush::describe();
+        $this->appleService = WalletAppleService::url();
         $this->walletGoogle = WalletGoogle::serviceAccount($config->wallet_google_key ?? null);
         $this->walletColors = [
             Wallet::color($config->wallet_bg_color ?? '', Wallet::DEFAULT_BACKGROUND),

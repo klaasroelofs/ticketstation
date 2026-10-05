@@ -59,6 +59,105 @@ class EventMail
     }
 
     /**
+     * What the Communication screen shows about an event: how many orders got a message from an
+     * admin and a reminder, and when each was last sent.
+     *
+     * @return  array{messages: int, lastMessage: ?string, reminders: int, lastReminder: ?string}
+     */
+    public static function summary(int $eventid): array
+    {
+        $db = Factory::getContainer()->get('DatabaseDriver');
+
+        $db->setQuery('SELECT kind, COUNT(*) AS total, MAX(sent) AS last FROM ' . $db->quoteName('#__ticketstation_event_mails')
+            . ' WHERE eventid = ' . $eventid . ' GROUP BY kind');
+        $rows = $db->loadObjectList('kind');
+
+        return [
+            'messages'     => (int) ($rows[self::KIND_UPDATE]->total ?? 0),
+            'lastMessage'  => $rows[self::KIND_UPDATE]->last ?? null,
+            'reminders'    => (int) ($rows[self::KIND_REMINDER]->total ?? 0),
+            'lastReminder' => $rows[self::KIND_REMINDER]->last ?? null,
+        ];
+    }
+
+    /**
+     * The details of an event or ticket that buyers care about, as stored now. Call it before
+     * saving and give the result to announceChange() after.
+     *
+     * @param   string  $table  'event' or 'ticket'
+     *
+     * @return  array  empty for a new record
+     */
+    public static function watch(string $table, int $id): array
+    {
+        if ($id <= 0)
+        {
+            return [];
+        }
+
+        $db      = Factory::getContainer()->get('DatabaseDriver');
+        $columns = $table === 'event'
+            ? ['eventid', 'eventname', 'eventdate']
+            : ['eventid', 'ticketname', 'startdate', 'enddate', 'venue', 'doors_open'];
+
+        $db->setQuery($db->getQuery(true)
+            ->select($db->quoteName($columns))
+            ->from($db->quoteName($table === 'event' ? '#__ticketstation_events' : '#__ticketstation_tickets'))
+            ->where($db->quoteName($table === 'event' ? 'eventid' : 'ticketid') . ' = ' . $id));
+
+        return (array) $db->loadAssoc();
+    }
+
+    /**
+     * After saving an event or ticket: when something buyers care about changed (the date, the
+     * time, the venue or a name) and the event has buyers, points to the Communication screen.
+     *
+     * @param   array  $before  From watch()
+     * @param   array  $data    What was saved
+     */
+    public static function announceChange(array $before, array $data): void
+    {
+        if (!$before)
+        {
+            return;
+        }
+
+        $changed = false;
+
+        foreach ($before as $field => $old)
+        {
+            if ($field === 'eventid' || !array_key_exists($field, $data))
+            {
+                continue;
+            }
+
+            // The event date is a date; a stored date and time compares by its date
+            $length = $field === 'eventdate' ? 10 : null;
+            $a      = substr((string) $old, 0, $length ?? 1000);
+            $b      = substr((string) $data[$field], 0, $length ?? 1000);
+
+            if ($a !== $b)
+            {
+                $changed = true;
+            }
+        }
+
+        $eventid = (int) ($before['eventid'] ?? 0);
+
+        if (!$changed || !$eventid || !self::audience($eventid))
+        {
+            return;
+        }
+
+        $link = 'index.php?option=com_ticketstation&controller=eventmail&task=display&eventid=' . $eventid;
+
+        Factory::getApplication()->enqueueMessage(
+            \Joomla\CMS\Language\Text::sprintf('COM_TICKETSTATION_COMMUNICATION_CHANGED_NOTICE', \Joomla\CMS\Router\Route::_($link)),
+            'info'
+        );
+    }
+
+    /**
      * Sends the message of an admin to every buyer of an event.
      *
      * @param   int          $eventid  The event.

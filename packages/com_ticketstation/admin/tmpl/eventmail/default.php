@@ -34,12 +34,18 @@ foreach ($presets as $key => $suffix) {
     ];
 }
 
+$summary = $this->summary;
+$status  = $this->walletStatus;
+
 ?>
 
 <form action="<?php echo Route::_('index.php?option=com_ticketstation&controller=eventmail'); ?>" method="post" name="adminForm" id="adminForm">
 
-    <div class="card">
+    <div class="card mb-3">
+        <h3 class="card-header"><span class="fa fa-envelope me-2" aria-hidden="true"></span><?php echo Text::_('COM_TICKETSTATION_COMMUNICATION_MESSAGE_TITLE'); ?></h3>
         <div class="card-body">
+            <p><?php echo Text::_('COM_TICKETSTATION_COMMUNICATION_MESSAGE_INTRO'); ?></p>
+
             <?php if ($this->buyers === 0) { ?>
                 <div class="alert alert-warning"><?php echo Text::_('COM_TICKETSTATION_EVENTMAIL_NO_BUYERS'); ?></div>
             <?php } else { ?>
@@ -69,30 +75,92 @@ foreach ($presets as $key => $suffix) {
             </div>
 
             <div class="mb-3">
-                <span class="form-label d-block"><?php echo Text::_('COM_TICKETSTATION_EVENTMAIL_SEND_WHAT'); ?></span>
+                <span class="form-label d-block"><?php echo Text::_('COM_TICKETSTATION_COMMUNICATION_VIA'); ?></span>
                 <?php // An unchecked box sends nothing; this makes "off" arrive as 0 ?>
                 <input type="hidden" name="send_mail" value="0">
                 <div class="form-check">
                     <input class="form-check-input" type="checkbox" name="send_mail" id="send_mail" value="1" checked>
-                    <label class="form-check-label" for="send_mail"><?php echo Text::_('COM_TICKETSTATION_EVENTMAIL_SEND_MAIL'); ?></label>
+                    <label class="form-check-label" for="send_mail"><?php echo Text::_('COM_TICKETSTATION_COMMUNICATION_VIA_MAIL'); ?></label>
                 </div>
                 <?php if ($this->walletOn) { ?>
                     <div class="form-check">
-                        <input class="form-check-input" type="checkbox" name="wallet_update" id="wallet_update" value="1" <?php echo $this->walletPasses ? 'checked' : 'disabled'; ?>>
-                        <label class="form-check-label" for="wallet_update"><?php echo Text::plural('COM_TICKETSTATION_EVENTMAIL_WALLET_UPDATE', $this->walletPasses); ?></label>
+                        <input class="form-check-input" type="checkbox" name="send_wallet" id="send_wallet" value="1" <?php echo $this->passes['total'] ? '' : 'disabled'; ?>>
+                        <label class="form-check-label" for="send_wallet"><?php echo Text::plural('COM_TICKETSTATION_COMMUNICATION_VIA_WALLET', $this->passes['total']); ?></label>
                     </div>
-                    <div class="form-check">
-                        <input class="form-check-input" type="checkbox" name="wallet_message" id="wallet_message" value="1" <?php echo $this->walletPasses ? '' : 'disabled'; ?>>
-                        <label class="form-check-label" for="wallet_message"><?php echo Text::plural('COM_TICKETSTATION_EVENTMAIL_WALLET_MESSAGE', $this->walletPasses); ?></label>
-                    </div>
-                    <div class="form-text"><?php echo Text::_('COM_TICKETSTATION_EVENTMAIL_WALLET_DESC'); ?></div>
+                    <div class="form-text"><?php echo Text::_('COM_TICKETSTATION_COMMUNICATION_VIA_WALLET_DESC'); ?></div>
                 <?php } ?>
             </div>
 
-            <p class="mb-0 small text-muted">
+            <button type="button" class="btn btn-outline-primary me-2" onclick="Joomla.submitbutton('sendtest')">
+                <span class="fa fa-vial me-1" aria-hidden="true"></span><?php echo Text::_('COM_TICKETSTATION_EVENTMAIL_SEND_TEST'); ?>
+            </button>
+            <button type="button" class="btn btn-primary" onclick="Joomla.submitbutton('send')">
+                <span class="fa fa-paper-plane me-1" aria-hidden="true"></span><?php echo Text::_('COM_TICKETSTATION_EVENTMAIL_SEND'); ?>
+            </button>
+
+            <p class="mt-3 mb-0 small text-muted">
                 <?php echo Text::sprintf('COM_TICKETSTATION_EVENTMAIL_TEMPLATE_HINT', Route::_('index.php?option=com_ticketstation&controller=templates&task=edit&cid=7')); ?>
                 <?php echo Text::sprintf('COM_TICKETSTATION_EVENTMAIL_REFUND_HINT', Route::_('index.php?option=com_ticketstation&view=boxoffice')); ?>
             </p>
+        </div>
+    </div>
+
+    <div class="card mb-3">
+        <h3 class="card-header"><span class="fa fa-wallet me-2" aria-hidden="true"></span><?php echo Text::_('COM_TICKETSTATION_COMMUNICATION_WALLETS_TITLE'); ?></h3>
+        <div class="card-body">
+            <p><?php echo Text::_('COM_TICKETSTATION_COMMUNICATION_WALLETS_INTRO'); ?></p>
+
+            <?php if (!$this->walletOn) { ?>
+                <div class="alert alert-secondary mb-0">
+                    <?php echo Text::sprintf('COM_TICKETSTATION_COMMUNICATION_WALLETS_OFF_HINT', Route::_('index.php?option=com_ticketstation&view=configuration')); ?>
+                </div>
+            <?php } else { ?>
+                <?php if ($this->passes['total'] === 0) { ?>
+                    <div class="alert alert-warning"><?php echo Text::_('COM_TICKETSTATION_COMMUNICATION_NO_PASSES'); ?></div>
+                <?php } else { ?>
+                    <div class="alert alert-info">
+                        <?php echo Text::sprintf('COM_TICKETSTATION_COMMUNICATION_PASSES', $this->passes['total'], $this->passes['google'], $this->passes['apple']); ?>
+                    </div>
+                <?php } ?>
+
+                <button type="button" class="btn btn-primary" onclick="Joomla.submitbutton('updatewallets')" <?php echo $this->passes['total'] ? '' : 'disabled'; ?>>
+                    <span class="fa fa-sync-alt me-1" aria-hidden="true"></span><?php echo Text::_('COM_TICKETSTATION_COMMUNICATION_WALLETS_BUTTON'); ?>
+                </button>
+            <?php } ?>
+        </div>
+    </div>
+
+    <div class="card mb-3">
+        <h3 class="card-header"><span class="fa fa-history me-2" aria-hidden="true"></span><?php echo Text::_('COM_TICKETSTATION_COMMUNICATION_STATUS_TITLE'); ?></h3>
+        <div class="card-body">
+            <ul class="mb-0">
+                <li>
+                    <?php if ($summary['messages'] > 0) { ?>
+                        <?php echo Text::sprintf('COM_TICKETSTATION_COMMUNICATION_STATUS_MESSAGES', $summary['messages'], $summary['lastMessage']); ?>
+                    <?php } else { ?>
+                        <?php echo Text::_('COM_TICKETSTATION_COMMUNICATION_STATUS_NO_MESSAGES'); ?>
+                    <?php } ?>
+                </li>
+                <li>
+                    <?php if ($summary['reminders'] > 0) { ?>
+                        <?php echo Text::sprintf('COM_TICKETSTATION_COMMUNICATION_STATUS_REMINDERS', $summary['reminders'], $summary['lastReminder']); ?>
+                    <?php } else { ?>
+                        <?php echo Text::_('COM_TICKETSTATION_COMMUNICATION_STATUS_NO_REMINDERS'); ?>
+                    <?php } ?>
+                </li>
+                <?php if ($this->walletOn) { ?>
+                    <li>
+                        <?php if ($status['pending'] === 0) { ?>
+                            <?php echo Text::_('COM_TICKETSTATION_COMMUNICATION_STATUS_WALLET_DONE'); ?>
+                        <?php } else { ?>
+                            <?php echo Text::sprintf('COM_TICKETSTATION_COMMUNICATION_STATUS_WALLET_PENDING', $status['pending']); ?>
+                            <?php if ($status['failed'] > 0) { ?>
+                                <span class="text-danger"><?php echo Text::sprintf('COM_TICKETSTATION_COMMUNICATION_STATUS_WALLET_FAILED', $status['failed'], htmlspecialchars($status['error'], ENT_QUOTES, 'UTF-8')); ?></span>
+                            <?php } ?>
+                        <?php } ?>
+                    </li>
+                <?php } ?>
+            </ul>
         </div>
     </div>
 

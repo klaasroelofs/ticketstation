@@ -19,6 +19,7 @@ use Joomla\CMS\Uri\Uri;
 use Ticketstation\Component\Ticketstation\Administrator\Controller\Mixin\RegisterControllerTasks;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Date;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\DefaultTicketLayout;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\EventMail;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Pdf;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\TicketDesign;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\TicketPreviewCreator;
@@ -97,7 +98,12 @@ class TicketController extends FormController
 
         } else {
 
+            $before = EventMail::watch('ticket', (int) ($data['ticketid'] ?? 0));
+
             if ($model->store($data)) {
+                // Date, time or venue changed and the event has buyers: point to the Communication screen
+                EventMail::announceChange($before, $data);
+
                 $this->setRedirect(Uri::base() . 'index.php?option=com_ticketstation&controller=tickets&task=edit&cid=' . $model->getTicketID(), Text::_('COM_TICKETSTATION_TICKET_SAVED'));
                 return true;
 

@@ -70,7 +70,7 @@ $bullets = function (string $prefix, int $count) {
         <details id="docs-wallet-live" class="mb-3 border rounded p-3">
             <summary class="h5 mb-0"><span class="fa fa-sync-alt me-2" aria-hidden="true"></span><?= Text::_('COM_TICKETSTATION_WALLET_DOCS_LIVE_TITLE') ?></summary>
             <div class="mt-3">
-                <?php $bullets('COM_TICKETSTATION_WALLET_DOCS_LIVE_', 5); ?>
+                <?php $bullets('COM_TICKETSTATION_WALLET_DOCS_LIVE_', 7); ?>
             </div>
         </details>
 

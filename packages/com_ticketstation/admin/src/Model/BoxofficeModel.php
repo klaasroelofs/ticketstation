@@ -1238,6 +1238,9 @@ class BoxofficeModel extends ListModel
         $db->setQuery($query);
         $orderdata = $db->loadObjectList();
 
+        // Passes in the customers' wallets are told while the tickets still exist
+        WalletUpdate::ticketsRemoved(array_column($orderdata, 'orderid'));
+
         $query = $db->getQuery(true);
 
         $conditions = [
@@ -1845,6 +1848,9 @@ class BoxofficeModel extends ListModel
 
             $db->setQuery($query);
             $data = $db->loadObjectList();
+
+            // Passes in the customers' wallets are told while the tickets still exist
+            WalletUpdate::ticketsRemoved(array_column($data, 'orderid'));
 
             $query = $db->getQuery(true);
 

@@ -28,14 +28,15 @@ class pkg_ticketstationInstallerScript extends InstallerScript
             return true;
         }
 
-        // The task plugin is installed disabled; the Scheduled Task that uses it needs it on.
+        // The plugins are installed disabled; the Scheduled Tasks (task plugin) and the Apple Wallet
+        // web service (system plugin) need them on.
         $db = Factory::getContainer()->get('DatabaseDriver');
         $db->setQuery(
             $db->getQuery(true)
                 ->update($db->quoteName('#__extensions'))
                 ->set($db->quoteName('enabled') . ' = 1')
                 ->where($db->quoteName('type') . ' = ' . $db->quote('plugin'))
-                ->where($db->quoteName('folder') . ' = ' . $db->quote('task'))
+                ->where($db->quoteName('folder') . ' IN (' . $db->quote('task') . ', ' . $db->quote('system') . ')')
                 ->where($db->quoteName('element') . ' = ' . $db->quote('ticketstation'))
         )->execute();
 

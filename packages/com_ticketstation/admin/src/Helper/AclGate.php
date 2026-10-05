@@ -105,6 +105,7 @@ class AclGate
             'display'  => 'core.edit',
             'send'     => 'core.edit',
             'sendtest' => 'core.edit',
+            'updatewallets' => 'core.edit',
             'cancel'   => self::MANAGE,
         ],
         'tickets' => [

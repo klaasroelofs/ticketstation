@@ -49,7 +49,7 @@ class Wallet
         if (self::$config === null)
         {
             self::$config = (new Config)->get([
-                'wallet_apple', 'wallet_apple_cert', 'wallet_apple_key', 'wallet_apple_pending_key',
+                'wallet_apple', 'wallet_apple_cert', 'wallet_apple_key', 'wallet_apple_pending_key', 'wallet_apple_updates',
                 'wallet_google', 'wallet_google_issuer_id', 'wallet_google_key', 'wallet_google_updates',
                 'wallet_logo', 'wallet_bg_color', 'wallet_fg_color',
                 'companyname', 'website', 'email', 'phone',
@@ -118,6 +118,18 @@ class Wallet
         $secret = (string) Factory::getApplication()->get('secret');
 
         return substr(hash_hmac('sha256', 'ticketstation-wallet:' . $ordercode, $secret), 0, 32);
+    }
+
+    /**
+     * The token an Apple pass carries (authenticationToken) and the device sends back to the web
+     * service: derived from the site's secret and the pass's serial number, so it can't be made
+     * for another pass.
+     */
+    public static function appleToken(string $serial): string
+    {
+        $secret = (string) Factory::getApplication()->get('secret');
+
+        return substr(hash_hmac('sha256', 'ticketstation-apple-pass:' . $serial, $secret), 0, 32);
     }
 
     public static function checkToken(int $ordercode, string $token): bool
@@ -226,7 +238,9 @@ class Wallet
     }
 
     /**
-     * Forgets the passes of an order, when the order itself is removed.
+     * Forgets the passes of an order, when the order itself is removed. Passes marked removed stay
+     * until the wallet has been told (see WalletUpdate::ticketsRemoved()): Google's are deleted
+     * then, Apple's are kept for the iPhones that still have the pass.
      */
     public static function forget($ordercode): void
     {
@@ -234,7 +248,8 @@ class Wallet
 
         $query = $db->getQuery(true)
             ->delete($db->quoteName('#__ticketstation_wallet_passes'))
-            ->where($db->quoteName('ordercode') . ' = ' . $db->quote((string) $ordercode));
+            ->where($db->quoteName('ordercode') . ' = ' . $db->quote((string) $ordercode))
+            ->where($db->quoteName('removed') . ' = 0');
 
         $db->setQuery($query)->execute();
     }

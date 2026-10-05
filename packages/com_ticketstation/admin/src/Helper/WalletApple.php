@@ -254,7 +254,7 @@ class WalletApple
      *
      * @throws  \RuntimeException
      */
-    public static function pass(object $ticket, int $number, int $total, array $images): string
+    public static function pass(object $ticket, int $number, int $total, array $images, ?string $message = null, bool $valid = true): string
     {
         $config = Wallet::config();
         $info   = self::certificateInfo($config->wallet_apple_cert ?? null);
@@ -264,7 +264,27 @@ class WalletApple
             throw new \RuntimeException('Apple Wallet has no certificate.');
         }
 
-        $json  = self::passJson($ticket, $number, $total, $info, isset($images['logo.png']));
+        $json = self::passJson($ticket, $number, $total, $info, isset($images['logo.png']), $message, $valid);
+
+        Wallet::record(Wallet::APPLE, $ticket, $json['passTypeIdentifier'] . '/' . $json['serialNumber']);
+
+        return self::package($json, $images);
+    }
+
+    /**
+     * Signs a pass.json with the images and zips it into a .pkpass.
+     *
+     * @throws  \RuntimeException
+     */
+    public static function package(array $json, array $images): string
+    {
+        $config = Wallet::config();
+
+        if (empty($config->wallet_apple_key) || self::certificateInfo($config->wallet_apple_cert ?? null) === null)
+        {
+            throw new \RuntimeException('Apple Wallet has no certificate.');
+        }
+
         $files = ['pass.json' => json_encode($json, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)] + $images;
 
         $manifest = [];
@@ -277,15 +297,45 @@ class WalletApple
         $files['manifest.json'] = json_encode($manifest, JSON_UNESCAPED_SLASHES);
         $files['signature']     = self::sign($files['manifest.json'], $config->wallet_apple_cert, $config->wallet_apple_key);
 
-        Wallet::record(Wallet::APPLE, $ticket, $json['passTypeIdentifier'] . '/' . $json['serialNumber']);
-
         return self::zip($files);
+    }
+
+    /**
+     * The pass of a ticket that is being removed, to be served to the iPhones that still have it
+     * after the ticket is gone: marked void and expired, and without the QR code and without
+     * anything about the customer or the order, as nothing of those may outlive the order.
+     * Apple can't take a pass out of a wallet from outside; a void, expired pass is as far as it goes.
+     */
+    public static function removedJson(object $ticket): ?array
+    {
+        $info = self::certificateInfo(Wallet::config()->wallet_apple_cert ?? null);
+
+        if ($info === null)
+        {
+            return null;
+        }
+
+        $json = self::passJson($ticket, 1, 1, $info, isset(self::images()['logo.png']), null, false);
+
+        unset($json['barcodes'], $json['barcode'], $json['relevantDate']);
+
+        $json['eventTicket']['backFields'] = array_values(array_filter(
+            $json['eventTicket']['backFields'],
+            fn ($field) => !in_array($field['key'], ['order', 'ticketnumber', 'holder', 'message'], true)
+        ));
+        $json['eventTicket']['auxiliaryFields'] = array_values(array_filter(
+            $json['eventTicket']['auxiliaryFields'],
+            fn ($field) => !in_array($field['key'], ['seat', 'number'], true)
+        ));
+        $json['expirationDate'] = gmdate('Y-m-d\TH:i:sP', time() - 86400);
+
+        return $json;
     }
 
     /**
      * The pass.json of a ticket.
      */
-    private static function passJson(object $ticket, int $number, int $total, array $info, bool $hasLogo): array
+    private static function passJson(object $ticket, int $number, int $total, array $info, bool $hasLogo, ?string $message = null, bool $valid = true): array
     {
         [$background, $foreground] = Wallet::colors();
 
@@ -365,12 +415,25 @@ class WalletApple
 
         $back[] = ['key' => 'organiser', 'label' => TicketLanguage::_('COM_TICKETSTATION_WALLET_FIELD_ORGANISER'), 'value' => $contact];
 
+        // A message from the organiser: the device shows it as a notification when the text of
+        // this field changes (changeMessage), so every message is a new value
+        if ($message !== null && $message !== '')
+        {
+            array_unshift($back, [
+                'key'           => 'message',
+                'label'         => TicketLanguage::_('COM_TICKETSTATION_WALLET_FIELD_MESSAGE'),
+                'value'         => $message,
+                'changeMessage' => '%@',
+            ]);
+        }
+
         $pass = [
             'formatVersion'      => 1,
             'passTypeIdentifier' => $info['passTypeId'],
             'teamIdentifier'     => $info['teamId'],
-            // Changes with the QR code, so a ticket with a new code is a new pass
-            'serialNumber'       => 'ts-' . (int) $ticket->orderid . '-' . substr(sha1((string) $ticket->barcode), 0, 10),
+            // One pass per ticket, also after a new QR code: a pass the customer adds again, or that
+            // is updated, replaces the one in the wallet (before 2.23 a new code made a new pass).
+            'serialNumber'       => 'ts-' . (int) $ticket->orderid,
             'organizationName'   => $organisation,
             'description'        => TicketLanguage::sprintf('COM_TICKETSTATION_WALLET_DESCRIPTION', $eventname),
             'backgroundColor'    => self::rgb($background),
@@ -405,6 +468,19 @@ class WalletApple
         if ($date !== '')
         {
             $pass['relevantDate'] = $date;
+        }
+
+        // Live updates: where the device asks for a changed pass (see WalletAppleService)
+        if (WalletUpdate::appleEnabled() && WalletAppleService::url() !== '')
+        {
+            $pass['webServiceURL']       = WalletAppleService::url();
+            $pass['authenticationToken'] = Wallet::appleToken($pass['serialNumber']);
+        }
+
+        // A refunded or blocked ticket: the pass stays in the wallet, marked as void
+        if (!$valid)
+        {
+            $pass['voided'] = true;
         }
 
         return $pass;

@@ -17,6 +17,7 @@ use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\Controller\FormController;
 use Joomla\CMS\Uri\Uri;
 use Ticketstation\Component\Ticketstation\Administrator\Controller\Mixin\RegisterControllerTasks;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\EventMail;
 use Joomla\CMS\Application\CMSApplication;
 use Joomla\CMS\MVC\Factory\MVCFactoryInterface;
 use Joomla\Input\Input;
@@ -74,7 +75,12 @@ class EventController extends FormController
             $data['eventdate'] = null;
         }
 
+        $before = EventMail::watch('event', (int) ($data['eventid'] ?? 0));
+
         if ($model->store($data)) {
+            // Date or name changed and the event has buyers: point to the Communication screen
+            EventMail::announceChange($before, $data);
+
             $this->setRedirect(Uri::base() . 'index.php?option=com_ticketstation&view=event&layout=edit&cid=' . $model->getEventID(), Text::_('COM_TICKETSTATION_EVENT_SAVED'));
         } else {
             $this->setRedirect(Uri::base() . 'index.php?option=com_ticketstation&view=events', Text::_('COM_TICKETSTATION_EVENT_SAVED_FAILED'));

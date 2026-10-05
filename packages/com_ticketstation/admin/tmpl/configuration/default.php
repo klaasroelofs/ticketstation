@@ -875,6 +875,26 @@ $document->getWebAssetManager()->addInlineScript("
                     </div>
                 </div>
                 <div class="row mb-3">
+                    <label for="wallet_apple_updates" class="col-sm-3 col-form-label">
+                        <?= Text::_('COM_TICKETSTATION_WALLET_APPLE_UPDATES') ?>
+                    </label>
+                    <div class="col-sm-9">
+                        <?= $this->lists['wallet_apple_updates']; ?>
+                        <small class="form-text">
+                            <?= Text::_('COM_TICKETSTATION_WALLET_APPLE_UPDATES_DESC') ?>
+                        </small>
+                        <p class="form-text mb-0 mt-2">
+                            <?= Text::_('COM_TICKETSTATION_WALLET_APPLE_SERVER') ?>: <code><?= $this->escape($this->appleServer) ?></code><br>
+                            <?= Text::_('COM_TICKETSTATION_WALLET_APPLE_SERVICE') ?>:
+                            <?php if ($this->appleService !== '') { ?>
+                                <code><?= $this->escape($this->appleService) ?></code>
+                            <?php } else { ?>
+                                <?= Text::_('COM_TICKETSTATION_WALLET_APPLE_SERVICE_NONE') ?>
+                            <?php } ?>
+                        </p>
+                    </div>
+                </div>
+                <div class="row mb-3">
                     <div class="col-sm-3 col-form-label">
                         <?= Text::_('COM_TICKETSTATION_WALLET_APPLE_CERTIFICATE') ?>
                     </div>
@@ -975,6 +995,17 @@ $document->getWebAssetManager()->addInlineScript("
                     </div>
                 </div>
                 <div class="row mb-3">
+                    <label for="wallet_google_updates" class="col-sm-3 col-form-label">
+                        <?= Text::_('COM_TICKETSTATION_WALLET_GOOGLE_UPDATES') ?>
+                    </label>
+                    <div class="col-sm-9">
+                        <?= $this->lists['wallet_google_updates']; ?>
+                        <small class="form-text">
+                            <?= Text::_('COM_TICKETSTATION_WALLET_GOOGLE_UPDATES_DESC') ?>
+                        </small>
+                    </div>
+                </div>
+                <div class="row mb-3">
                     <label for="wallet_google_issuer_id" class="col-sm-3 col-form-label">
                         <?= Text::_('COM_TICKETSTATION_WALLET_GOOGLE_ISSUER_ID') ?>
                     </label>
@@ -1002,17 +1033,6 @@ $document->getWebAssetManager()->addInlineScript("
                         <input type="file" name="wallet_google_json" id="wallet_google_json" class="form-control" accept=".json,application/json" />
                         <small class="form-text">
                             <?= Text::_('COM_TICKETSTATION_WALLET_GOOGLE_KEY_DESC') ?>
-                        </small>
-                    </div>
-                </div>
-                <div class="row mb-3">
-                    <label for="wallet_google_updates" class="col-sm-3 col-form-label">
-                        <?= Text::_('COM_TICKETSTATION_WALLET_GOOGLE_UPDATES') ?>
-                    </label>
-                    <div class="col-sm-9">
-                        <?= $this->lists['wallet_google_updates']; ?>
-                        <small class="form-text">
-                            <?= Text::_('COM_TICKETSTATION_WALLET_GOOGLE_UPDATES_DESC') ?>
                         </small>
                     </div>
                 </div>
