@@ -75,8 +75,12 @@ jobs:
         run: |
           flags=()
           case "$GITHUB_REF_NAME" in *-*) flags+=(--prerelease) ;; esac
+          # A second copy without the version in its name gives the JED listing (Install from Web)
+          # a permanent link: releases/latest/download/pkg_ticketstation.zip
+          cp "dist/pkg_ticketstation_${VERSION}.zip" dist/pkg_ticketstation.zip
           gh release create "$GITHUB_REF_NAME" \
             "dist/pkg_ticketstation_${VERSION}.zip" \
+            dist/pkg_ticketstation.zip \
             dist/pkg_ticketstation_update.xml \
             --title "Ticketstation $VERSION" \
             --notes-file notes.md \
