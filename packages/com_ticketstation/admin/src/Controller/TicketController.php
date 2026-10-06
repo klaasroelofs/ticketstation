@@ -71,7 +71,7 @@ class TicketController extends FormController
         $data['publish_date_time'] = date('Y-m-d H:i:s', strtotime($data['publish_date_time']));
         $data['sale_stop'] = date('Y-m-d H:i:s', strtotime($data['sale_stop']));
         $data['parent'] = intval($data['parent']);
-        $data['ticketprice'] = floatval($data['ticketprice']);
+        $data['ticketprice'] = floatval(str_replace(',', '.', (string) $data['ticketprice']));
         $data['vat_percentage'] = floatval($data['vat_percentage']);
 
         if ((empty($data['ticketname'])) || (empty($data['ticketcode'])) || (empty($data['eventid'])) || (empty($data['venue']))) {
