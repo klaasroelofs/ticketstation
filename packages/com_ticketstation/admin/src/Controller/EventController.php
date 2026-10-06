@@ -35,7 +35,7 @@ class EventController extends FormController
      */
     protected $default_view = 'Event';
 
-    function __construct($config = array(), MVCFactoryInterface $factory = null, CMSApplication $app = null, Input $input = null)
+    function __construct($config = array(), ?MVCFactoryInterface $factory = null, ?CMSApplication $app = null, ?Input $input = null)
     {
         parent::__construct($config, $factory, $app, $input);
 

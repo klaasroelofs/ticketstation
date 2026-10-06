@@ -91,7 +91,7 @@
                 type="text"
                 label="COM_TICKETSTATION_TICKET_PRICE"
                 description="COM_TICKETSTATION_TICKET_PRICE_DESC"
-                maxlength="5"
+                maxlength="12"
                 addonBefore="€"
         />
         <field

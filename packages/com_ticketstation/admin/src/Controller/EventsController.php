@@ -36,7 +36,7 @@ class EventsController extends BaseController
      */
     protected $default_view = 'Events';
 
-    function __construct($config = array(), MVCFactoryInterface $factory = null, CMSApplication $app = null, Input $input = null)
+    function __construct($config = array(), ?MVCFactoryInterface $factory = null, ?CMSApplication $app = null, ?Input $input = null)
     {
         parent::__construct($config, $factory, $app, $input);
 

@@ -39,7 +39,7 @@ class BoxofficeController extends BaseController {
      */
     protected $default_view = 'Transactions';
 
-    function __construct($config = array(), MVCFactoryInterface $factory = null, CMSApplication $app = null, Input $input = null)
+    function __construct($config = array(), ?MVCFactoryInterface $factory = null, ?CMSApplication $app = null, ?Input $input = null)
     {
         parent::__construct($config, $factory, $app, $input);
 
