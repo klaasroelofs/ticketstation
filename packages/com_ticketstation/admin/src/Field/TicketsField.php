@@ -14,6 +14,7 @@ defined('_JEXEC') or die;
 use Joomla\CMS\Factory;
 use Joomla\CMS\Form\Field\GroupedlistField;
 use Joomla\CMS\HTML\HTMLHelper;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\Date;
 
 /**
  * The tickets of all events, grouped per event (latest event first), a child ticket under its
@@ -55,7 +56,7 @@ class TicketsField extends GroupedlistField
                 continue;
             }
 
-            $label = $ticket->eventname . ' (' . date('d-m-Y', strtotime((string) $ticket->eventdate)) . ')';
+            $label = $ticket->eventname . ' (' . Date::display($ticket->eventdate, 'd-m-Y') . ')';
 
             $groups[$label][] = HTMLHelper::_('select.option', (string) $ticket->ticketid, $ticket->ticketname);
 

@@ -74,7 +74,7 @@ $wa->registerAndUseStyle('ticketstation', Uri::base() . 'components\com_ticketst
                                     <span class="badge bg-warning"><?php echo Text::_( 'JNO' ); ?></span>
                                 <?php } ?>
                             </td>
-                            <td class="small d-none d-lg-table-cell text-center"><?php echo Date::_($row->date_added, $this->config->dateformat . ' H:i'); ?></td>
+                            <td class="small d-none d-lg-table-cell text-center"><?php echo Date::screen($row->date_added, $this->config->dateformat . ' H:i'); ?></td>
                         </tr>
                     <?php }  ?>
                 </table>

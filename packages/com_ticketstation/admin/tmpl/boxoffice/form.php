@@ -52,7 +52,7 @@ foreach ($this->data as $orderRow) {
 
 // Event and ticket dates are stored in local time, as entered.
 $eventDate = function ($date) {
-    return $date ? date($this->config->dateformat, strtotime($date)) : '';
+    return $date ? Date::display($date, $this->config->dateformat) : '';
 };
 
 // A count of the tickets of the order, e.g. "2 / 4", coloured by how far along it is.
@@ -82,7 +82,7 @@ $progress = function (int $done) use ($status) {
                     </tr>
                     <tr>
                         <th scope="row" class="fw-normal"><?= Text::_('COM_TICKETSTATION_ORDERDATE') ?></th>
-                        <td><?= Date::_($this->items->orderdate, $datetime); ?></td>
+                        <td><?= Date::screen($this->items->orderdate, $datetime); ?></td>
                     </tr>
                     <tr>
                         <th scope="row" class="fw-normal"><?= Text::_(count($this->events) > 1 ? 'COM_TICKETSTATION_BOXOFFICE_EVENTS' : 'COM_TICKETSTATION_BOXOFFICE_EVENT'); ?></th>
@@ -285,7 +285,7 @@ $progress = function (int $done) use ($status) {
                             $counts = Refund::counts($refund->status);
                             ?>
                             <tr>
-                                <td class="text-nowrap"><?= Date::_($refund->created, $datetime); ?></td>
+                                <td class="text-nowrap"><?= Date::screen($refund->created, $datetime); ?></td>
                                 <td>
                                     <?= Text::_($refund->type === 'chargeback' ? 'COM_TICKETSTATION_REFUND_TYPE_CHARGEBACK' : 'COM_TICKETSTATION_REFUND_TYPE_REFUND'); ?>
                                     <br /><small class="text-muted">
@@ -321,7 +321,7 @@ $progress = function (int $done) use ($status) {
                                             </button>
                                         <?php } ?>
                                     <?php } elseif ($refund->decided) { ?>
-                                        <small><?= Date::_($refund->decided, $datetime); ?><?php if ($refund->decided_by_name) { ?><br /><?= $this->escape($refund->decided_by_name); ?><?php } ?></small>
+                                        <small><?= Date::screen($refund->decided, $datetime); ?><?php if ($refund->decided_by_name) { ?><br /><?= $this->escape($refund->decided_by_name); ?><?php } ?></small>
                                         <?php if (Refund::isWaiting($refund)) { ?>
                                             <br /><span class="badge bg-warning text-dark" title="<?= $this->escape(Text::_('COM_TICKETSTATION_REFUND_WAITING_DESC')); ?>"><span class="fa fa-hourglass-half" aria-hidden="true"></span> <?= Text::_('COM_TICKETSTATION_REFUND_WAITING'); ?></span>
                                         <?php } ?>
@@ -443,7 +443,7 @@ $progress = function (int $done) use ($status) {
                             <?php if ($row->scanned == 0) { ?>
                                 <span class="text-muted">&ndash;</span>
                             <?php } else { ?>
-                                <span class="badge bg-success"><?= $row->scandate ? date($this->config->dateformat . ' H:i', strtotime($row->scandate)) : Text::_('COM_TICKETSTATION_YES'); ?></span>
+                                <span class="badge bg-success"><?= $row->scandate ? Date::display($row->scandate, $this->config->dateformat . ' H:i') : Text::_('COM_TICKETSTATION_YES'); ?></span>
                                 <?php if ($row->scanner_name) { ?>
                                     <br /><small class="text-muted"><?= $this->escape($row->scanner_name); ?></small>
                                 <?php } ?>

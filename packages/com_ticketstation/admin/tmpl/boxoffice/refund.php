@@ -95,7 +95,7 @@ $treatments = [
                         </tr>
                         <tr>
                             <th scope="row" class="fw-normal"><?= Text::_('COM_TICKETSTATION_DATE') ?></th>
-                            <td><?= Date::_($refund->created, $datetime); ?></td>
+                            <td><?= Date::screen($refund->created, $datetime); ?></td>
                         </tr>
                         <?php if ($refund->description !== '') { ?>
                             <tr>

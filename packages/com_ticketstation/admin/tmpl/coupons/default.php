@@ -15,6 +15,7 @@ use Joomla\CMS\Language\Text;
 use Joomla\CMS\Router\Route;
 use Joomla\CMS\Uri\Uri;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Price;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\Date;
 
 // No direct access to this file
 defined('_JEXEC') or die('Restricted Access');
@@ -84,7 +85,7 @@ $wa->registerAndUseStyle('ticketstation', Uri::base() . 'components\com_ticketst
                                 } ?>
                             </td>
                             <td class="small d-none d-lg-table-cell text-center"><?php echo date ($this->config->dateformat, strtotime($row->coupon_added)); ?></td>
-                            <td class="small d-none d-lg-table-cell text-center"><?php echo $row->coupon_valid_to ? date($this->config->dateformat, strtotime($row->coupon_valid_to)) : '-'; ?></td>
+                            <td class="small d-none d-lg-table-cell text-center"><?php echo $row->coupon_valid_to ? Date::display($row->coupon_valid_to, $this->config->dateformat) : '-'; ?></td>
                             <td class="small d-none d-lg-table-cell text-center">
                                 <?php echo (int) $row->coupon_used . ' / ' . ($row->coupon_limit == 0 ? Text::_( 'COM_TICKETSTATION_UNLIMITED' ) : $row->coupon_limit); ?>
                             </td>

@@ -12,6 +12,7 @@ use Joomla\CMS\Language\Text;
 use Joomla\CMS\Plugin\PluginHelper;
 use Joomla\CMS\Router\Route;
 use Joomla\Registry\Registry;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\Date;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Availability;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Shop;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\WaitingList;
@@ -36,14 +37,7 @@ foreach (['DAY', 'DAYS', 'HOUR', 'HOURS', 'MINUTE', 'MINUTES', 'SECOND', 'SECOND
 }
 
 ## Day and month names follow the active site language (e.g. "zaterdag 3 oktober 2026" / "Saturday 3 October 2026")
-$fmt = datefmt_create(
-    str_replace('-', '_', $app->getLanguage()->getTag()),
-    IntlDateFormatter::NONE,
-    IntlDateFormatter::NONE,
-    date_default_timezone_get(),
-    IntlDateFormatter::GREGORIAN,
-    'EEEE d MMMM yyyy'
-);
+$fmt = Date::formatter('EEEE d MMMM yyyy');
 
 ## Without online payments only free tickets are sold on the website: no transaction costs.
 $show_transaction_costs = $this->config->variable_transcosts != 2 && Shop::paymentsOn();

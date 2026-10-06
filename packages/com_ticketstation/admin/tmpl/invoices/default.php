@@ -60,7 +60,7 @@ $wa->registerAndUseStyle('ticketstation', Uri::base() . 'components\com_ticketst
                             <td><a href="<?php echo $orderlink; ?>"><?php echo (int) $row->ordercode; ?></a></td>
                             <td><a href="<?php echo $clientlink; ?>"><?= $row->client_firstname ?> <?= $row->client_name ?></a><br/><small><?= $row->client_email ?></small></td>
                             <td class="d-none d-md-table-cell text-center"><?php echo TicketstationFunctions::showprice($this->config->priceformat, $row->netto + $row->fees, $this->config->valuta); ?></td>
-                            <td class="d-none d-md-table-cell text-center small"><?php echo Date::_($row->invoicedate, $this->config->dateformat . ' H:i'); ?></td>
+                            <td class="d-none d-md-table-cell text-center small"><?php echo Date::screen($row->invoicedate, $this->config->dateformat . ' H:i'); ?></td>
                             <td class="text-center">
                                 <?php if ($row->sent == 1) { ?>
                                     <span class="badge bg-success"><?php echo Text::_( 'JYES' ); ?></span>

@@ -69,7 +69,7 @@ $history_icons = [
         foreach (array_reverse($history) as $entry) {
 
             // $entry->created is stored in UTC (History::log()); convert to the site/user timezone for display.
-            $day = Date::_($entry->created, 'l d F Y', true);
+            $day = Date::screen($entry->created, 'l d F Y', true);
 
             if ($day !== $current_day) {
                 $current_day = $day;
@@ -81,7 +81,7 @@ $history_icons = [
             [$icon, $color] = $history_icons[$entry->event_type] ?? ['fa-circle', 'secondary'];
             ?>
             <div class="ts-history-row">
-                <div class="ts-history-time"><?= Date::_($entry->created, 'H:i'); ?></div>
+                <div class="ts-history-time"><?= Date::screen($entry->created, 'H:i'); ?></div>
                 <div class="ts-history-icon text-<?= $color; ?>"><span class="fa <?= $icon; ?>" aria-hidden="true"></span></div>
                 <div class="ts-history-message">
                     <?= htmlspecialchars($entry->message, ENT_QUOTES, 'UTF-8'); ?>

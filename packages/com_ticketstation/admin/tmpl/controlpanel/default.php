@@ -14,6 +14,7 @@ use Joomla\CMS\Uri\Uri;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\AclGate;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Price;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\WaitingList;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\Date;
 
 // No direct access to this file
 defined('_JEXEC') or die('Restricted Access');
@@ -263,7 +264,7 @@ $sum28     = array_sum(array_column($this->dailySales, 'tickets'));
                                             <span class="fa fa-chair text-muted small" title="<?= Text::_('COM_TICKETSTATION_SEATPLANS') ?>"></span>
                                         <?php } ?>
                                     </td>
-                                    <td class="small d-none d-md-table-cell text-nowrap"><?= date($this->config->dateformat . ' ' . $this->config->time_format, strtotime($row->startdate)); ?></td>
+                                    <td class="small d-none d-md-table-cell text-nowrap"><?= Date::display($row->startdate, $this->config->dateformat . ' ' . $this->config->time_format); ?></td>
                                     <td>
                                         <div class="progress" role="progressbar" aria-valuenow="<?= $row->percentage_sold; ?>" aria-valuemin="0" aria-valuemax="100"
                                              title="<?= $row->sold; ?> / <?= $row->total; ?>">

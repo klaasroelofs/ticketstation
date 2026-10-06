@@ -24,6 +24,7 @@ use Ticketstation\Component\Ticketstation\Administrator\Helper\MolliePaymentMeth
 use Ticketstation\Component\Ticketstation\Administrator\Helper\OrderTotals;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Refund;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Tickets;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\Date;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Shop;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\ticketcreator;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Docs;
@@ -74,7 +75,7 @@ class HtmlView extends BaseHtmlView
 
         foreach ($model->getEventOptions() as $event)
         {
-            $date     = $event->eventdate ? date($config->dateformat, strtotime($event->eventdate)) : '';
+            $date     = $event->eventdate ? Date::display($event->eventdate, $config->dateformat) : '';
             $events[] = HTMLHelper::_('select.option', $event->eventid, $event->eventname . ($date !== '' ? ' (' . $date . ')' : ''));
         }
 

@@ -374,7 +374,7 @@ class EventMail
 
         return [
             'eventname' => (string) $row->eventname,
-            'eventdate' => Date::long($start),
+            'eventdate' => Date::long($start, false, true),
             'eventtime' => $start ? date('H:i', strtotime($start)) : '',
             'doorsopen' => $opens !== '' ? date('H:i', strtotime($opens)) : '',
             'location'  => implode(', ', array_filter([trim((string) $row->venue), $address])),

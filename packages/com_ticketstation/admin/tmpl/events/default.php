@@ -13,6 +13,7 @@ use Joomla\CMS\Factory;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\Router\Route;
 use Joomla\CMS\Uri\Uri;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\Date;
 
 // No direct access to this file
 defined('_JEXEC') or die('Restricted Access');
@@ -125,7 +126,7 @@ for ($i = 0; $i < count($this->unfinished); $i++)
                                 <a href="<?php echo $link; ?>"><?php echo $row->eventname; ?></a> <small>(<?= $row->eventcode; ?>)</small>
                             </td>
                             <td>
-                                <?php echo date($this->config->dateformat, strtotime($row->eventdate)); ?>
+                                <?php echo Date::display($row->eventdate, $this->config->dateformat); ?>
                             </td>
                             <td class="small d-none d-md-table-cell text-center">
                                 <?php if($row->automatic_change_state == 1)
@@ -140,13 +141,13 @@ for ($i = 0; $i < count($this->unfinished); $i++)
                             <td class="small d-none d-md-table-cell text-center">
                                 <?php if($row->automatic_change_state == 1)
                                 {
-                                    echo date($this->config->dateformat . ' ' . $this->config->time_format, strtotime($row->startdate));
+                                    echo Date::display($row->startdate, $this->config->dateformat . ' ' . $this->config->time_format);
                                 } ?>
                             </td>
                             <td class="small d-none d-md-table-cell text-center">
                                 <?php if($row->automatic_change_state == 1)
                                 {
-                                    echo date($this->config->dateformat . ' ' . $this->config->time_format, strtotime($row->closingdate));
+                                    echo Date::display($row->closingdate, $this->config->dateformat . ' ' . $this->config->time_format);
                                 } ?>
                             </td>
                             <td class="small d-none d-lg-table-cell text-center">

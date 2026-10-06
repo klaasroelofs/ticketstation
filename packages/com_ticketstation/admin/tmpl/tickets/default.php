@@ -15,6 +15,7 @@ use Joomla\CMS\Router\Route;
 use Joomla\CMS\Uri\Uri;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Availability;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\TicketstationFunctions;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\Date;
 
 
 // No direct access to this file
@@ -100,7 +101,7 @@ $availabilityBadge = function (object $availability) {
                     ## over all published variants, for a seated ticket the free seats.
                     $availability = Availability::summary((int) $row->ticketid);
 
-                    $start_time = date($this->config->time_format, strtotime($row->startdate));
+                    $start_time = Date::display($row->startdate, $this->config->time_format);
 
                     ?>
                     <tr class="row<?= $i;?>">
@@ -118,7 +119,7 @@ $availabilityBadge = function (object $availability) {
                             <a href="<?= $link;?>"> <?= $row->ticketname; ?></a> <small>(<?= $row->ticketcode; ?>)</small>
                         </td>
                         <td class="d-none d-md-table-cell">
-                            <?= date($this->config->dateformat, strtotime($row->startdate)); ?>
+                            <?= Date::display($row->startdate, $this->config->dateformat); ?>
                         </td>
                         <td class="d-none d-lg-table-cell">
                             <?= $start_time; ?>
@@ -180,7 +181,7 @@ $availabilityBadge = function (object $availability) {
                                 <span class="d-inline-block ms-3">&ndash; <a href="<?= $link;?>"><?= $second->ticketname; ?></a> <small>(<?= $second->ticketcode; ?>)</small></span>
                             </td>
                             <td class="d-none d-md-table-cell">
-                                <?= date($this->config->dateformat, strtotime($second->startdate)); ?>
+                                <?= Date::display($second->startdate, $this->config->dateformat); ?>
                             </td>
                             <td class="d-none d-lg-table-cell">
                                 <?= $start_time; ?>

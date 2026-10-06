@@ -45,7 +45,7 @@ $reason_key = $ghost->reason === 'unfinished'
     <small>
         <?= Text::_($reason_key) ?>
         &middot;
-        <?= Date::_($ghost->removed_at, $datetime) ?>
+        <?= Date::screen($ghost->removed_at, $datetime) ?>
     </small>
 </div>
 
@@ -65,7 +65,7 @@ $reason_key = $ghost->reason === 'unfinished'
                     </tr>
                     <tr>
                         <th scope="row" class="fw-normal"><?= Text::_('COM_TICKETSTATION_ORDERDATE') ?></th>
-                        <td><?= Date::_($ghost->orderdate, $datetime); ?></td>
+                        <td><?= Date::screen($ghost->orderdate, $datetime); ?></td>
                     </tr>
                     <tr>
                         <th scope="row" class="fw-normal"><?= Text::_(count($ghost->eventnames) > 1 ? 'COM_TICKETSTATION_BOXOFFICE_EVENTS' : 'COM_TICKETSTATION_BOXOFFICE_EVENT'); ?></th>

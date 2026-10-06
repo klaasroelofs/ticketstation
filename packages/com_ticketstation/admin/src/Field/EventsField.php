@@ -14,6 +14,7 @@ defined('_JEXEC') or die;
 use Joomla\CMS\Factory;
 use Joomla\CMS\Form\Field\ListField;
 use Joomla\CMS\HTML\HTMLHelper;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\Date;
 
 /**
  * All events, latest first, with their date. Used to limit a coupon to whole events.
@@ -36,7 +37,7 @@ class EventsField extends ListField
 
         foreach ($db->loadObjectList() as $event)
         {
-            $options[] = HTMLHelper::_('select.option', (string) $event->eventid, $event->eventname . ' (' . date('d-m-Y', strtotime((string) $event->eventdate)) . ')');
+            $options[] = HTMLHelper::_('select.option', (string) $event->eventid, $event->eventname . ' (' . Date::display($event->eventdate, 'd-m-Y') . ')');
         }
 
         return $options;

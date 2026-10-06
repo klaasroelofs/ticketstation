@@ -80,10 +80,11 @@ class Date
      *
      * @param   string   $localDate  date as stored, e.g. '2026-10-03 20:00:00'
      * @param   boolean  $withTime   append the time
+     * @param   boolean  $gregorian  keep the Gregorian calendar, for mails and other text that leaves the screen
      *
      * @return  string
      */
-    public static function long($localDate, $withTime = false)
+    public static function long($localDate, $withTime = false, $gregorian = false)
     {
         if (!$localDate || str_starts_with((string) $localDate, '0000-00-00')) {
             return '';
@@ -91,18 +92,151 @@ class Date
 
         // Stored and formatted in the same (PHP) timezone, so the date is never shifted.
         $timestamp = strtotime($localDate);
-        $formatter = datefmt_create(
-            str_replace('-', '_', Factory::getApplication()->getLanguage()->getTag()),
-            \IntlDateFormatter::NONE,
-            \IntlDateFormatter::NONE,
-            date_default_timezone_get(),
-            \IntlDateFormatter::GREGORIAN,
-            'EEEE d MMMM yyyy'
-        );
-
-        $day = datefmt_format($formatter, $timestamp);
+        $day       = datefmt_format(self::formatter('EEEE d MMMM yyyy', null, $gregorian), $timestamp);
 
         return $withTime ? Text::sprintf('COM_TICKETSTATION_DATE_AT_TIME', $day, date('H:i', $timestamp)) : $day;
+    }
+
+    /**
+     * The calendar of the site language: 'gregorian', or 'jalali' for a language pack that
+     * declares it (Persian), the same setting Joomla's own date picker follows.
+     */
+    public static function calendarType(): string
+    {
+        try {
+            return strtolower((string) Factory::getApplication()->getLanguage()->getCalendar()) ?: 'gregorian';
+        } catch (\Throwable $e) {
+            return 'gregorian';
+        }
+    }
+
+    /**
+     * Whether dates are shown in another calendar than the Gregorian one. Only for what people
+     * read on screen: tickets, invoices, mails, wallet passes and data for other systems keep
+     * the Gregorian calendar.
+     */
+    public static function isLocalCalendar(): bool
+    {
+        return self::calendarType() === 'jalali' && class_exists(\IntlDateFormatter::class);
+    }
+
+    /**
+     * An ICU formatter for the language of the site, in the calendar of that language.
+     *
+     * @param   string       $pattern   ICU date pattern, e.g. 'EEEE d MMMM yyyy'
+     * @param   string|null  $timezone  defaults to PHP's timezone, which stored local dates are read in
+     * @param   boolean      $gregorian keep the Gregorian calendar whatever the language says
+     */
+    public static function formatter(string $pattern, ?string $timezone = null, bool $gregorian = false): \IntlDateFormatter
+    {
+        $locale = str_replace('-', '_', Factory::getApplication()->getLanguage()->getTag());
+        $local  = !$gregorian && self::isLocalCalendar();
+
+        return new \IntlDateFormatter(
+            $local ? $locale . '@calendar=persian' : $locale,
+            \IntlDateFormatter::NONE,
+            \IntlDateFormatter::NONE,
+            $timezone ?: date_default_timezone_get(),
+            $local ? \IntlDateFormatter::TRADITIONAL : \IntlDateFormatter::GREGORIAN,
+            $pattern
+        );
+    }
+
+    /**
+     * A date for the screen, written in a PHP date() format and in the calendar of the site
+     * language. For a Gregorian site this is exactly date() / DateTime::format().
+     *
+     * @param   mixed    $value      a stored date string, a timestamp or a date object
+     * @param   string   $format     PHP date() format, e.g. the date format of the Configuration
+     * @param   boolean  $translate  translate day and month names (Gregorian only)
+     */
+    public static function display($value, string $format, bool $translate = false): string
+    {
+        if ($value === null || $value === '' || str_starts_with((string) $value, '0000-00-00')) {
+            return '';
+        }
+
+        $object = $value instanceof \DateTimeInterface;
+        $stamp  = $object ? $value->getTimestamp() : (is_int($value) ? $value : strtotime((string) $value));
+
+        if ($stamp === false) {
+            return '';
+        }
+
+        if (!self::isLocalCalendar()) {
+            if ($value instanceof \Joomla\CMS\Date\Date) {
+                return $value->format($format, true, $translate);
+            }
+
+            return $object ? $value->format($format) : date($format, $stamp);
+        }
+
+        $timezone = $object ? $value->getTimezone()->getName() : null;
+
+        return (string) self::formatter(self::icuPattern($format), $timezone)->format($stamp);
+    }
+
+    /**
+     * A UTC date in the user's (or site's) timezone for the screen, in the calendar of the
+     * site language. The counterpart of _() for what people read on screen.
+     */
+    public static function screen($date, string $format = '', bool $translate = false): string
+    {
+        if (!$date || $date == '0000-00-00' || $date == 'NOW' || $date == 'now') {
+            return '';
+        }
+
+        $config = Factory::getConfig();
+        $user   = Factory::getApplication()->getIdentity();
+        $object = Factory::getDate($date, 'UTC');
+        $object->setTimezone(new \DateTimeZone($user->getParam('timezone', $config->get('offset'))));
+
+        return self::display($object, $format ?: self::getDateFormat(), $translate);
+    }
+
+    /**
+     * A PHP date() format as an ICU pattern. Characters without a meaning in the map stay
+     * literal text.
+     */
+    private static function icuPattern(string $format): string
+    {
+        $map = [
+            'd' => 'dd', 'j' => 'd', 'D' => 'EEE', 'l' => 'EEEE', 'm' => 'MM', 'n' => 'M', 'M' => 'MMM', 'F' => 'MMMM',
+            'Y' => 'yyyy', 'y' => 'yy', 'H' => 'HH', 'G' => 'H', 'h' => 'hh', 'g' => 'h', 'i' => 'mm', 's' => 'ss',
+            'A' => 'a', 'a' => 'a',
+        ];
+
+        $pattern = '';
+        $literal = '';
+        $length  = strlen($format);
+
+        // Literal text goes between single quotes in an ICU pattern, a quote itself is doubled
+        $flush = function () use (&$pattern, &$literal) {
+            if ($literal !== '') {
+                $pattern .= "'" . str_replace("'", "''", $literal) . "'";
+                $literal  = '';
+            }
+        };
+
+        for ($i = 0; $i < $length; $i++) {
+            $char = $format[$i];
+
+            if ($char === '\\' && $i + 1 < $length) {
+                $literal .= $format[++$i];
+            } elseif (isset($map[$char])) {
+                $flush();
+                $pattern .= $map[$char];
+            } elseif (ctype_alpha($char) || $char === "'") {
+                $literal .= $char;
+            } else {
+                $flush();
+                $pattern .= $char;
+            }
+        }
+
+        $flush();
+
+        return $pattern;
     }
 
     /**
