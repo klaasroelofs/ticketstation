@@ -15,6 +15,7 @@ use Joomla\Input\Input;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Config;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\History;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\OrderTotals;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\PaymentCurrencies;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\PaymentAPI;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Refund;
 
@@ -65,8 +66,8 @@ final class PaymentService
     {
         $db = \Joomla\CMS\Factory::getContainer()->get('DatabaseDriver');
 
-        ## Force total of the order in this format:
-        $ordertotal = number_format($orderamount, 2, '.', '');
+        ## Force total of the order in this format: the decimals of the currency, a point.
+        $ordertotal = PaymentCurrencies::format($orderamount, ProviderRegistry::currency());
 
         ## Start the API to process everything.
         $newPayment = new PaymentAPI($ordercode);
@@ -152,10 +153,16 @@ final class PaymentService
 
         try {
             $update = $provider->handleWebhook($input, $rawBody);
+        } catch (WebhookRejectedException $e) {
+            // Not genuine or incomplete: repeating it can't help.
+            PaymentLog::add($provider->getTitle() . ' webhook rejected: ' . $e->getMessage());
+
+            return [400, 'The report was not accepted.'];
         } catch (\RuntimeException $e) {
+            // The service can't be reached, or has an error: answering with an error makes it call again.
             PaymentLog::add($provider->getTitle() . ' error while fetching payment: ' . $e->getMessage());
 
-            return [200, 'Unable to retrieve payment from ' . $provider->getTitle() . '.'];
+            return [503, 'Unable to retrieve payment from ' . $provider->getTitle() . '.'];
         }
 
         $order_id = $update->ordercode;
@@ -212,13 +219,20 @@ final class PaymentService
                 ## Getting the amounts for this order.
                 $amount = OrderTotals::get($order_id, true)->total;
 
-                $netto_price = number_format($amount, 2, '.', '');
+                $currency    = ProviderRegistry::currency();
+                $digits      = PaymentCurrencies::digits($currency);
+                $netto_price = PaymentCurrencies::format((float) $amount, $currency);
                 $paid_price  = $update->amount;
 
-                PaymentLog::add('Amount to be paid:' . $netto_price);
-                PaymentLog::add('Amount paid by customer:' . $paid_price);
+                PaymentLog::add('Amount to be paid:' . $netto_price . ' ' . $currency);
+                PaymentLog::add('Amount paid by customer:' . $paid_price . ' ' . $update->currency);
 
-                if ($netto_price == $paid_price) {
+                ## The same amount, in the currency of the shop. A provider that doesn't say which
+                ## currency was paid (empty) isn't held to it.
+                $sameAmount   = abs(round((float) $paid_price, $digits) - round((float) $netto_price, $digits)) < 0.0001;
+                $sameCurrency = $update->currency === '' || strtoupper($update->currency) === $currency;
+
+                if ($sameAmount && $sameCurrency) {
                     ## Update the order state in the order table:
                     $payment_state = $newPayment->updateOrder();
 

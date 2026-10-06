@@ -186,7 +186,7 @@ class Refund
      */
     public static function isFull(float $refunded, float $paid): bool
     {
-        return $refunded > 0 && $refunded >= round($paid, 2) - 0.004;
+        return $refunded > 0 && $refunded >= round($paid, PaymentCurrencies::decimals()) - 0.004;
     }
 
     /**
@@ -279,7 +279,7 @@ class Refund
      */
     public static function create(int $ordercode, float $amount, string $description, array $treatments): int
     {
-        $amount = round($amount, 2);
+        $amount = round($amount, PaymentCurrencies::decimals());
 
         if ($amount <= 0) {
             throw new \RuntimeException(Text::_('COM_TICKETSTATION_REFUND_ERROR_AMOUNT'));
@@ -324,7 +324,7 @@ class Refund
             }
 
             if ($amount > $check->amountRemaining + 0.004) {
-                throw new \RuntimeException(Text::sprintf('COM_TICKETSTATION_REFUND_ERROR_TOO_MUCH', number_format($check->amountRemaining, 2, ',', '')));
+                throw new \RuntimeException(Text::sprintf('COM_TICKETSTATION_REFUND_ERROR_TOO_MUCH', number_format($check->amountRemaining, PaymentCurrencies::decimals(), ',', '')));
             }
 
             try {
@@ -351,7 +351,7 @@ class Refund
         $id = self::store($refund);
 
         History::log($ordercode, 'refund_created', ($provider !== null ? 'Refund of ' : 'Manual refund of ')
-            . number_format($amount, 2, '.', '') . ' ' . $refund->currency . ($provider !== null ? ' made at ' . $provider->getTitle() . ' (' . $refund->provider_refund_id . ')' : ' registered'),
+            . number_format($amount, PaymentCurrencies::decimals(), '.', '') . ' ' . $refund->currency . ($provider !== null ? ' made at ' . $provider->getTitle() . ' (' . $refund->provider_refund_id . ')' : ' registered'),
             ['amount' => $amount, 'refund' => $id, ($provider !== null ? $provider->getId() . '_id' : 'refund_id') => $refund->provider_refund_id]);
 
         self::applyPending($id);
@@ -865,7 +865,7 @@ class Refund
                 'provider'          => $provider->getId(),
                 'provider_refund_id' => $mollieId,
                 'provider_payment_id' => $paymentId,
-                'amount'            => round($amount, 2),
+                'amount'            => round($amount, PaymentCurrencies::decimals()),
                 'currency'          => $currency,
                 'description'       => mb_substr($description, 0, 255),
                 'status'            => $status,
@@ -878,7 +878,7 @@ class Refund
 
             if (!$fromTicketstation) {
                 History::log($ordercode, $type === 'chargeback' ? 'chargeback_reported' : 'refund_reported',
-                    $label . ' of ' . number_format($amount, 2, '.', '') . ' ' . $currency . ' reported by ' . $provider->getTitle() . ' (' . $mollieId . ')'
+                    $label . ' of ' . number_format($amount, PaymentCurrencies::decimals(), '.', '') . ' ' . $currency . ' reported by ' . $provider->getTitle() . ' (' . $mollieId . ')'
                     . ($refund->attention ? '; a decision about the tickets is needed' : ''),
                     ['amount' => $amount, $provider->getId() . '_id' => $mollieId, 'status' => $status], $provider->getTitle());
             }

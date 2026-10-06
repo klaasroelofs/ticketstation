@@ -23,6 +23,8 @@ class MollieCurrencies
     public const SUPPORTED = [
         'EUR', 'GBP', 'USD', 'CHF', 'DKK', 'SEK', 'NOK', 'PLN', 'CZK', 'HUF', 'RON', 'BGN', 'ILS', 'AED',
         'ZAR', 'CAD', 'AUD', 'NZD', 'HKD', 'SGD', 'MYR', 'PHP', 'THB', 'TWD', 'BRL', 'MXN',
+        // Without decimals: the amount is written without them ("1250"), see PaymentCurrencies::format().
+        'JPY',
     ];
 
     /**

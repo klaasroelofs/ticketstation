@@ -77,6 +77,11 @@ $off = $this->config->payment_provider === '';
                             <?= Text::sprintf('COM_TICKETSTATION_PAYMENTS_CURRENCY_NOT_SUPPORTED_NOW', $this->escape($this->config->payment_currency)) ?>
                         </div>
                     <?php endif; ?>
+                    <?php if ($this->decimalsHint) : ?>
+                        <div class="alert alert-info mt-2 mb-0">
+                            <?= Text::sprintf('COM_TICKETSTATION_PAYMENTS_CURRENCY_NO_DECIMALS_HINT', $this->escape($this->config->payment_currency)) ?>
+                        </div>
+                    <?php endif; ?>
                     <div id="ts-currency-note" class="alert alert-info mt-2 mb-0" hidden></div>
                 </div>
             </div>

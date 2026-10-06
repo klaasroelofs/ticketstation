@@ -19,6 +19,7 @@ use Ticketstation\Component\Ticketstation\Administrator\Payment\PaymentRedirect;
 use Ticketstation\Component\Ticketstation\Administrator\Payment\PaymentRequest;
 use Ticketstation\Component\Ticketstation\Administrator\Payment\PaymentUpdate;
 use Ticketstation\Component\Ticketstation\Administrator\Payment\ProviderNotConfiguredException;
+use Ticketstation\Component\Ticketstation\Administrator\Payment\WebhookRejectedException;
 
 /**
  * An example provider that shows the whole contract without a real payment service.
@@ -114,6 +115,9 @@ final class ExampleProvider implements PaymentProviderInterface
 
     /**
      * A report from the payment service. Prove it is genuine first: anyone can call this address.
+     * Throw WebhookRejectedException for a report that is not genuine or incomplete (answered with
+     * HTTP 400: no use repeating it), and PaymentException when you can't check it right now (HTTP 503:
+     * the service calls again later).
      * Then say what it is about, in the neutral form of PaymentUpdate; Ticketstation decides what
      * it means for the order (amount check, tickets, mail).
      */
@@ -123,13 +127,13 @@ final class ExampleProvider implements PaymentProviderInterface
         $signature = (string) ($_SERVER['HTTP_X_SIGNATURE'] ?? '');
 
         if ($secret === '' || !hash_equals(hash_hmac('sha256', $rawBody, $secret), $signature)) {
-            throw new PaymentException('The signature does not match.');
+            throw new WebhookRejectedException('The signature does not match.');
         }
 
         $data = json_decode($rawBody, true);
 
         if (!is_array($data) || empty($data['id']) || empty($data['order'])) {
-            throw new PaymentException('The report is incomplete.');
+            throw new WebhookRejectedException('The report is incomplete.');
         }
 
         $states = [

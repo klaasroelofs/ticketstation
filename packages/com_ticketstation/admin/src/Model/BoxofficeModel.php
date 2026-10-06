@@ -29,6 +29,7 @@ use Ticketstation\Component\Ticketstation\Administrator\Helper\Invoice;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Coupon;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\OrderTotals;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\PaymentAPI;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\PaymentCurrencies;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Refund;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\SendTicketCopy;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\ticketcreator;
@@ -592,7 +593,7 @@ class BoxofficeModel extends ListModel
                 $discount = Coupon::discountFor($tickets, $kept->discount_type, $kept->discount_amount);
             }
 
-            $subtotal    = round($tickets - $discount, 2);
+            $subtotal    = round($tickets - $discount, PaymentCurrencies::decimals());
             $total       = round($subtotal + OrderTotals::feesFor($subtotal, $terms), 2);
 
             $row->firstname       = $client->firstname ?? null;
@@ -789,7 +790,7 @@ class BoxofficeModel extends ListModel
                 'downloaded'      => $count('downloaded') > 0 ? 1 : 0,
                 'published'       => $candidate->first->published,
                 'coupon'          => $candidate->first->coupon ?? null,
-                'orderprice'      => $transaction && (float) $transaction->amount > 0 ? (float) $transaction->amount : round($tickets, 2),
+                'orderprice'      => $transaction && (float) $transaction->amount > 0 ? (float) $transaction->amount : round($tickets, PaymentCurrencies::decimals()),
                 'transaction_pid' => $transaction->pid ?? null,
                 'remarks'         => $remarks[$ordercode] ?? '',
                 'customer_note'   => $notes[$ordercode] ?? '',

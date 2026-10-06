@@ -15,7 +15,11 @@ use Joomla\CMS\Language\Text;
 use Joomla\Input\Input;
 use Joomla\Registry\Registry;
 use Mollie\Api\Exceptions\MollieException;
+use Mollie\Api\Exceptions\NotFoundException;
+use Mollie\Api\Exceptions\ValidationException;
 use Mollie\Api\MollieApiClient;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\PaymentCurrencies;
+use Ticketstation\Component\Ticketstation\Administrator\Payment\WebhookRejectedException;
 use Ticketstation\Component\Ticketstation\Administrator\Payment\CurrencyAwareInterface;
 use Ticketstation\Component\Ticketstation\Administrator\Payment\MethodAwareInterface;
 use Ticketstation\Component\Ticketstation\Administrator\Payment\PaymentException;
@@ -166,14 +170,18 @@ final class MollieProvider implements PaymentProviderInterface, RefundCapableInt
         $id = $input->post->getString('id', '');
 
         if ($id === '') {
-            throw new PaymentException('No payment id was sent.');
+            throw new WebhookRejectedException('No payment id was sent.');
         }
 
         $mollie = $this->client();
 
         try {
             $payment = $mollie->payments->get($id);
+        } catch (NotFoundException | ValidationException $e) {
+            // Mollie doesn't know this payment: the call is not genuine. Repeating it is pointless.
+            throw new WebhookRejectedException($this->plainMessage($e), 0, $e);
         } catch (MollieException $e) {
+            // Mollie can't be reached or has an error: it should call again later.
             throw new PaymentException($this->plainMessage($e), 0, $e);
         }
 
@@ -227,7 +235,7 @@ final class MollieProvider implements PaymentProviderInterface, RefundCapableInt
             $currency = (string) $payment->amount->currency;
 
             $refund = $payment->refund([
-                'amount'      => ['currency' => $currency, 'value' => number_format($amount, 2, '.', '')],
+                'amount'      => ['currency' => $currency, 'value' => PaymentCurrencies::format($amount, $currency)],
                 'description' => $description,
                 'metadata'    => $meta,
             ]);

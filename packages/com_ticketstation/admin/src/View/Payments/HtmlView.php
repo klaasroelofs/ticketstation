@@ -15,6 +15,7 @@ use Joomla\CMS\HTML\HTMLHelper;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\View\HtmlView as BaseHtmlView;
 use Joomla\CMS\Toolbar\ToolbarHelper;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\Config;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Docs;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\PaymentCurrencies;
 use Ticketstation\Component\Ticketstation\Administrator\Payment\ProviderRegistry;
@@ -39,6 +40,9 @@ class HtmlView extends BaseHtmlView
     /** @var bool  Whether the chosen provider's plugin is off or gone. */
     public $providerMissing = false;
 
+    /** @var bool  Whether to advise the admin to show prices without decimals. */
+    public $decimalsHint = false;
+
     /** @var array  Provider id => the currencies it allows (ISO code => name); the empty id is Off. */
     public $currencyMap = [];
 
@@ -56,6 +60,10 @@ class HtmlView extends BaseHtmlView
         $this->config  = $model->getData();
         $this->plugins = $model->getPlugins();
         $this->pending = $model->getPending();
+
+        // A currency without decimals shows prices without them only when Configuration > Prices says so.
+        $this->decimalsHint = PaymentCurrencies::digits($this->config->payment_currency) === 0
+            && (int) ((new Config)->getPartialConfig(['price_decimals'])->price_decimals ?? 2) === 2;
 
         // Only providers that are available can be chosen; a chosen one that isn't stays in the
         // list, flagged, so the screen doesn't silently turn online payments off.

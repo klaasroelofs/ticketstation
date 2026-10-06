@@ -102,9 +102,9 @@ class OrderTotals
         $type     = $coupon->discount_type ?? null;
         $amount   = $coupon->discount_amount ?? null;
         $coupon   = $coupon->coupon ?? '';
-        $tickets  = round($tickets, 2);
-        $discount = $coupon !== '' ? Coupon::discountFor(round($eligible, 2), $type, $amount) : 0.0;
-        $subtotal = round($tickets - $discount, 2);
+        $tickets  = round($tickets, PaymentCurrencies::decimals());
+        $discount = $coupon !== '' ? Coupon::discountFor(round($eligible, PaymentCurrencies::decimals()), $type, $amount) : 0.0;
+        $subtotal = round($tickets - $discount, PaymentCurrencies::decimals());
         $fees     = self::feesFor($subtotal, $terms);
         $vat      = self::vatByRate($rates, $tickets, $discount, $fees, $limited ? $eligibleRates : null);
 
@@ -121,9 +121,9 @@ class OrderTotals
             'fee_rate'        => $terms->fee_rate,
             'fee_fixed'       => $terms->fee_fixed,
             'fees'            => $fees,
-            'total'           => round($subtotal + $fees, 2),
+            'total'           => round($subtotal + $fees, PaymentCurrencies::decimals()),
             'vat_rates'       => $vat,
-            'vat'             => round(array_sum(array_column($vat, 'vat')), 2),
+            'vat'             => round(array_sum(array_column($vat, 'vat')), PaymentCurrencies::decimals()),
         ];
     }
 
@@ -158,19 +158,19 @@ class OrderTotals
             $share         = $tickets > 0 ? $amount / $tickets : 0.0;
             $discountShare = $discountBase > 0 ? ($discountRates !== null ? ($discountRates[$rate] ?? 0.0) : $amount) / $discountBase : 0.0;
 
-            $rateDiscount = $rate === $discountLast ? $discountLeft : round($discount * $discountShare, 2);
-            $discountLeft = round($discountLeft - $rateDiscount, 2);
+            $rateDiscount = $rate === $discountLast ? $discountLeft : round($discount * $discountShare, PaymentCurrencies::decimals());
+            $discountLeft = round($discountLeft - $rateDiscount, PaymentCurrencies::decimals());
 
-            $incl = round($amount - $rateDiscount, 2);
+            $incl = round($amount - $rateDiscount, PaymentCurrencies::decimals());
 
-            $rateFees = $rate === $last ? $feesLeft : round($fees * $share, 2);
-            $feesLeft = round($feesLeft - $rateFees, 2);
+            $rateFees = $rate === $last ? $feesLeft : round($fees * $share, PaymentCurrencies::decimals());
+            $feesLeft = round($feesLeft - $rateFees, PaymentCurrencies::decimals());
 
-            $total = round($incl + $rateFees, 2);
+            $total = round($incl + $rateFees, PaymentCurrencies::decimals());
 
             $result[$rate] = (object) [
                 'rate'     => (float) $rate,
-                'tickets'  => round($amount, 2),
+                'tickets'  => round($amount, PaymentCurrencies::decimals()),
                 'discount' => $rateDiscount,
                 'fees'     => $rateFees,
                 'total'    => $total,
@@ -186,7 +186,7 @@ class OrderTotals
      */
     public static function vatIn(float $amount, float $rate): float
     {
-        return $rate > 0 ? round($amount - $amount / (100 + $rate) * 100, 2) : 0.0;
+        return $rate > 0 ? round($amount - $amount / (100 + $rate) * 100, PaymentCurrencies::decimals()) : 0.0;
     }
 
     /**
@@ -196,7 +196,7 @@ class OrderTotals
      */
     public static function feesFor(float $subtotal, object $terms): float
     {
-        if (round($subtotal, 2) <= 0)
+        if (round($subtotal, PaymentCurrencies::decimals()) <= 0)
         {
             return 0.0;
         }
@@ -204,13 +204,13 @@ class OrderTotals
         switch ((int) $terms->fee_type)
         {
             case self::FEE_FIXED:
-                return round((float) $terms->fee_rate, 2);
+                return round((float) $terms->fee_rate, PaymentCurrencies::decimals());
 
             case self::FEE_VARIABLE:
-                return round($subtotal / 100 * (float) $terms->fee_rate, 2);
+                return round($subtotal / 100 * (float) $terms->fee_rate, PaymentCurrencies::decimals());
 
             case self::FEE_BOTH:
-                return round($subtotal / 100 * (float) $terms->fee_rate + (float) ($terms->fee_fixed ?? 0), 2);
+                return round($subtotal / 100 * (float) $terms->fee_rate + (float) ($terms->fee_fixed ?? 0), PaymentCurrencies::decimals());
 
             default:
                 return 0.0;

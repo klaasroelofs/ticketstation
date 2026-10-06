@@ -94,8 +94,15 @@ under *Transactions*) and `hasRefunds`.
 
 Reports can arrive more than once, out of order, and long after the payment (refunds, chargebacks).
 Ticketstation handles that: a second report for a paid order never creates tickets twice, and a
-second payment for an order that was already paid is logged as a duplicate. The webhook answers 200
-with an empty body when everything went well.
+second payment for an order that was already paid is logged as a duplicate.
+
+What the webhook answers decides whether the service calls again, so choose the exception well:
+
+| You throw | Ticketstation answers | Meaning |
+|---|---|---|
+| nothing | 200, empty | Handled (also a repeat of a report that was handled before) |
+| `WebhookRejectedException` | 400 | Not genuine or incomplete: a wrong signature, a payment the service doesn't know. Repeating it can't help. |
+| any other `PaymentException` (or `ProviderNotConfiguredException`) | 503 | You couldn't check it now: the service can't be reached or has an error. A service that retries on 5xx gets it again later. |
 
 ### Optional: refunds and chargebacks
 
@@ -119,11 +126,20 @@ service's own page doesn't ask again (and a cancelled payment returns to the sit
 The payment currency is one setting of Ticketstation (prices, invoices and the structured data use it
 too), set on the Payments screen, and passed to you as `PaymentRequest::$currency`. By default your
 provider can be chosen for every currency Ticketstation offers (`Helper\PaymentCurrencies::CURRENCIES`:
-currencies with two decimals, such as EUR, USD, GBP, SAR, TRY and AED; JPY and KWD are not offered
-because amounts are always formatted with two decimals). Implement `CurrencyAwareInterface` and return
-the ISO codes you can collect from `getSupportedCurrencies()`: the Payments screen then only offers
-those currencies for your provider, refuses to save any other, and the control panel warns when the
-saved currency isn't one of them.
+EUR, USD, GBP, SAR, TRY, AED and more). Implement `CurrencyAwareInterface` and return the ISO codes you
+can collect from `getSupportedCurrencies()`: the Payments screen then only offers those currencies for
+your provider, refuses to save any other, and the control panel warns when the saved currency isn't
+one of them.
+
+**Decimals.** Most currencies have two decimals; JPY, ISK, KRW, VND and CLP have none
+(`PaymentCurrencies::NO_DECIMALS`). Ticketstation rounds every amount of an order (tickets,
+discount, service fee, VAT, total) to the decimals of the currency, and writes
+`PaymentRequest::$amount` accordingly: `"12.50"` in euros, `"1250"` in yen. Use
+`PaymentCurrencies::format($amount, $currency)` for any amount you send yourself (a refund), and
+`PaymentCurrencies::digits($currency)` when you need the number. The amount in your `PaymentUpdate`
+is compared numerically with the order total, and its `currency` with the currency of the shop (leave
+it empty if your service doesn't report one). Currencies with three decimals (KWD, BHD, OMR) are not
+supported: prices are stored with two decimals.
 
 ## Things to know
 

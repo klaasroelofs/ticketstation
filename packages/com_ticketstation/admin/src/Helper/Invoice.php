@@ -312,7 +312,7 @@ class Invoice
 
         $query = $db->getQuery(true)
             ->update($db->quoteName('#__ticketstation_invoices'))
-            ->set($db->quoteName('vat') . ' = ' . round($vat, 2))
+            ->set($db->quoteName('vat') . ' = ' . round($vat, PaymentCurrencies::decimals()))
             ->where($db->quoteName('invoiceid') . ' = ' . (int) $invoiceid);
 
         $db->setQuery($query)->execute();
@@ -689,7 +689,7 @@ class Invoice
         $incl = round((float) $line->netto_ticketprice - (float) $line->discount, 2);
         $excl = $this->excludingVat($incl, (float) $line->vat_percentage);
 
-        return (object) ['incl' => $incl, 'excl' => $excl, 'vat' => round($incl - $excl, 2)];
+        return (object) ['incl' => $incl, 'excl' => $excl, 'vat' => round($incl - $excl, PaymentCurrencies::decimals())];
     }
 
     private function excludingVat(float $amount, float $rate): float

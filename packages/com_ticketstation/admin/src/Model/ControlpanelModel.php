@@ -262,7 +262,7 @@ class ControlpanelModel extends BaseDatabaseModel
             $fees += OrderTotals::feesFor((float) $order->subtotal, $terms);
         }
 
-        return round($fees, 2);
+        return round($fees, PaymentCurrencies::decimals());
     }
 
     /**

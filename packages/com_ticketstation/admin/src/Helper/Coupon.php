@@ -155,7 +155,7 @@ class Coupon
 
         $discount = (int) $type === 1 ? $total / 100 * (float) $amount : min((float) $amount, $total);
 
-        return round($discount, 2);
+        return round($discount, PaymentCurrencies::decimals());
     }
 
     /**
@@ -204,11 +204,11 @@ class Coupon
             }
             else
             {
-                $share = (int) $row->orderid === $last ? $left : ($total > 0 ? round($discount * (float) $row->price / $total, 2) : 0.0);
+                $share = (int) $row->orderid === $last ? $left : ($total > 0 ? round($discount * (float) $row->price / $total, PaymentCurrencies::decimals()) : 0.0);
             }
 
             $share = min(max($share, 0.0), (float) $row->price);
-            $left  = round($left - $share, 2);
+            $left  = round($left - $share, PaymentCurrencies::decimals());
             $vat   = (new Amount)->calculateVatFromPrice((float) $row->price - $share, (float) $row->vat_percentage);
 
             $query = $db->getQuery(true)

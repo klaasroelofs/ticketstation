@@ -418,7 +418,7 @@ class JsonLd
 
     private static function price(float $price): string
     {
-        return number_format($price, 2, '.', '');
+        return number_format($price, PaymentCurrencies::decimals(), '.', '');
     }
 
     /**

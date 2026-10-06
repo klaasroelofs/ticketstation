@@ -20,6 +20,7 @@ use Joomla\CMS\Toolbar\ToolbarHelper;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\AclGate;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\CustomerNote;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Invoice;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\PaymentCurrencies;
 use Ticketstation\Component\Ticketstation\Administrator\Payment\ProviderRegistry;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\OrderTotals;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Refund;
@@ -395,7 +396,7 @@ class HtmlView extends BaseHtmlView
         $this->proposal      = $proposal;
         $this->paidAmount    = $paidAmount;
         $this->refunded      = $refunded;
-        $this->remaining     = max(0.0, round($paidAmount - $refunded, 2));
+        $this->remaining     = max(0.0, round($paidAmount - $refunded, PaymentCurrencies::decimals()));
         $this->providerPayment = Refund::paymentId($ordercode);
         $this->waitingTreatments = [];
 
