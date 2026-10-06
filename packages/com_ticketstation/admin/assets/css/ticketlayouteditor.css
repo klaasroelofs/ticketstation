@@ -67,7 +67,7 @@
 }
 
 .ts-tle__status {
-    margin-left: auto;
+    margin-inline-start: auto;
     font-size: .875rem;
     color: inherit;
     opacity: .75;
@@ -98,7 +98,11 @@
     background: var(--ts-tle-stage);
 }
 
+/* The paper is a physical page: positions and text run from the left, as in the PDF, whatever the
+   direction of the backend language. The text itself still follows its own script (bidi), so
+   Persian and Arabic read correctly. In an RTL page SVG text-anchor "start" would mean the right edge. */
 .ts-tle__paper {
+    direction: ltr;
     position: relative;
     margin: 0 auto;
     background: #fff;
@@ -179,7 +183,7 @@
 .ts-tle__side {
     flex: 0 0 17rem;
     padding: .75rem;
-    border-left: 1px solid var(--ts-tle-border);
+    border-inline-start: 1px solid var(--ts-tle-border);
 }
 
 .ts-tle__heading {
@@ -215,7 +219,7 @@
     border: 0;
     background: none;
     color: inherit;
-    text-align: left;
+    text-align: start;
 }
 
 .ts-tle__pick:disabled {
@@ -224,7 +228,7 @@
 
 .ts-tle__cond {
     flex-basis: 100%;
-    padding-left: 1.5rem;
+    padding-inline-start: 1.5rem;
     color: inherit;
     opacity: .75;
     font-size: .75rem;
@@ -282,7 +286,7 @@
 
     .ts-tle__side {
         flex-basis: auto;
-        border-left: 0;
+        border-inline-start: 0;
         border-top: 1px solid var(--ts-tle-border);
     }
 }

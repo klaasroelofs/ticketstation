@@ -16,6 +16,7 @@ use Joomla\Filesystem\File;
 use Joomla\CMS\Form\Form;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\Model\AdminModel;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\Date;
 
 
 /**
@@ -76,6 +77,11 @@ class EventModel extends AdminModel
                 $input      	= $app->getInput()->get('cid', array(0), 'array');
                 $this->eventid 	= (int)$input[0];
                 $data 			= $this->getItem($this->eventid);
+
+                // A new event starts on today's date, not with the blank date of the table default
+                if (!$this->eventid && is_object($data) && !Date::isDate($data->eventdate ?? null)) {
+                    $data->eventdate = Date::localNow('Y-m-d');
+                }
             }
         }
 

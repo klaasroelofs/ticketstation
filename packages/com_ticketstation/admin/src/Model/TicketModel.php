@@ -17,6 +17,7 @@ use Joomla\CMS\Form\Form;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\Model\AdminModel;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Config;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\Date;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Ticket;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\TicketDesign;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\WaitingList;
@@ -105,6 +106,15 @@ class TicketModel extends AdminModel
                 $input      	= $app->getInput()->get('cid', array(0), 'array');
                 $this->ticketid	= (int)$input[0];
                 $data 			= $this->getItem($this->ticketid);
+
+                // A new ticket starts at the current time, not with the blank dates of the table defaults
+                if (!$this->ticketid && is_object($data)) {
+                    foreach (['startdate', 'enddate', 'publish_date_time', 'sale_stop'] as $field) {
+                        if (!Date::isDate($data->$field ?? null)) {
+                            $data->$field = Date::localNow();
+                        }
+                    }
+                }
             }
         }
 

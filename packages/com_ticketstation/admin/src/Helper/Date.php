@@ -98,6 +98,27 @@ class Date
     }
 
     /**
+     * A date typed or picked in a form as the 'Y-m-d H:i:s' that is stored. An empty or
+     * unreadable value becomes $default (now in the site's timezone when that is null), never
+     * 1970-01-01, which is what date() makes of strtotime()'s false.
+     */
+    public static function fromForm($value, ?string $default = null): string
+    {
+        $stamp = self::isDate($value) ? strtotime((string) $value) : false;
+
+        return $stamp === false ? ($default ?? self::localNow()) : date('Y-m-d H:i:s', $stamp);
+    }
+
+    /**
+     * Whether a form value holds a date, so the database default 'CURRENT_TIMESTAMP' that a
+     * new record carries doesn't count.
+     */
+    public static function isDate($value): bool
+    {
+        return is_string($value) && trim($value) !== '' && !str_starts_with($value, '0000-00-00') && strtotime($value) !== false;
+    }
+
+    /**
      * The calendar of the site language: 'gregorian', or 'jalali' for a language pack that
      * declares it (Persian), the same setting Joomla's own date picker follows.
      */

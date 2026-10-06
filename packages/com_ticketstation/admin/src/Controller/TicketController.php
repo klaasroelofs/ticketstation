@@ -65,11 +65,11 @@ class TicketController extends FormController
         $model	    = $this->getModel('ticket');
         $data       = $this->input->post->get('jform', array(), 'array');
 
-        $data['startdate'] = date('Y-m-d H:i:s', strtotime($data['startdate']));
-        $data['enddate'] = date('Y-m-d H:i:s', strtotime($data['enddate']));
+        $data['startdate'] = Date::fromForm($data['startdate'] ?? '');
+        $data['enddate'] = Date::fromForm($data['enddate'] ?? '', $data['startdate']);
         $data['doors_open'] = Date::normalizeTime($data['doors_open'] ?? '');
-        $data['publish_date_time'] = date('Y-m-d H:i:s', strtotime($data['publish_date_time']));
-        $data['sale_stop'] = date('Y-m-d H:i:s', strtotime($data['sale_stop']));
+        $data['publish_date_time'] = Date::fromForm($data['publish_date_time'] ?? '');
+        $data['sale_stop'] = Date::fromForm($data['sale_stop'] ?? '', $data['enddate']);
         $data['parent'] = intval($data['parent']);
         $data['ticketprice'] = floatval(str_replace(',', '.', (string) $data['ticketprice']));
         $data['vat_percentage'] = floatval($data['vat_percentage']);
