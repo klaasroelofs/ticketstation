@@ -5,13 +5,13 @@
 	<packagename>ticketstation</packagename>
 	<!-- Joomla takes the element from packagename; tools such as the JED Checker read it here. -->
 	<element>pkg_ticketstation</element>
-	<creationDate>2026-10-05</creationDate>
+	<creationDate>2026-10-06</creationDate>
 	<author>Klaas Roelofs</author>
 	<authorEmail>klaasroelofs@huibuuke.nl</authorEmail>
 	<authorUrl>https://www.huibuuke.nl</authorUrl>
 	<copyright>© 2026 Klaas Roelofs</copyright>
 	<license>GPL v3</license>
-	<version>2.23.0</version>
+	<version>2.23.1</version>
 	<description>PKG_TICKETSTATION_XML_DESCRIPTION</description>
 
 	<scriptfile>pkg_script.php</scriptfile>
