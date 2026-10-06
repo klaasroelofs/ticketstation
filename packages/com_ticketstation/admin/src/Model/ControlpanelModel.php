@@ -22,6 +22,7 @@ use Ticketstation\Component\Ticketstation\Administrator\Helper\Coupon;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Date;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\OrderTotals;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Refund;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\PaymentCurrencies;
 use Ticketstation\Component\Ticketstation\Administrator\Payment\ProviderRegistry;
 
 /**
@@ -463,6 +464,11 @@ class ControlpanelModel extends BaseDatabaseModel
 
         // A provider is chosen, but its plugin is switched off or removed: nobody can pay.
         $add('COM_TICKETSTATION_CPANEL_ATTENTION_PROVIDER_MISSING', ProviderRegistry::activeId() !== '' && $provider === null ? 1 : 0,
+            $paymentsLink, 'fa-exclamation-circle', 'danger');
+
+        // The provider can't collect the payment currency: every payment would be refused.
+        $add('COM_TICKETSTATION_CPANEL_ATTENTION_CURRENCY_UNSUPPORTED',
+            $provider !== null && !isset(PaymentCurrencies::forProvider($provider)[ProviderRegistry::currency()]) ? 1 : 0,
             $paymentsLink, 'fa-exclamation-circle', 'danger');
 
         foreach ($provider ? $provider->getHealthWarnings() : [] as $warning)

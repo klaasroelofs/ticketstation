@@ -72,6 +72,12 @@ $off = $this->config->payment_provider === '';
                     <small class="form-text">
                         <?= Text::_('COM_TICKETSTATION_PAYMENTS_CURRENCY_DESC') ?>
                     </small>
+                    <?php if (!isset(($this->currencyMap[$this->config->payment_provider] ?? [])[$this->config->payment_currency])) : ?>
+                        <div class="alert alert-warning mt-2 mb-0">
+                            <?= Text::sprintf('COM_TICKETSTATION_PAYMENTS_CURRENCY_NOT_SUPPORTED_NOW', $this->escape($this->config->payment_currency)) ?>
+                        </div>
+                    <?php endif; ?>
+                    <div id="ts-currency-note" class="alert alert-info mt-2 mb-0" hidden></div>
                 </div>
             </div>
 
@@ -162,15 +168,46 @@ $off = $this->config->payment_provider === '';
         form.submit();
     }
 
-    // The orders that wait for payment can't be paid while online payments are off.
     (function () {
         var select = document.getElementById('payment_provider');
         var pending = document.getElementById('ts-payments-pending');
+        var currency = document.getElementById('payment_currency');
+        var note = document.getElementById('ts-currency-note');
+        var currencies = <?= json_encode($this->currencyMap, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP); ?>;
+        var changedText = <?= json_encode(Text::_('COM_TICKETSTATION_PAYMENTS_CURRENCY_CHANGED'), JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP); ?>;
 
-        if (select && pending) {
-            select.addEventListener('change', function () {
-                pending.hidden = this.value !== '';
-            });
+        if (!select) {
+            return;
         }
+
+        select.addEventListener('change', function () {
+            // The orders that wait for payment can't be paid while online payments are off.
+            if (pending) {
+                pending.hidden = this.value !== '';
+            }
+
+            // Only the currencies the chosen provider can collect; keep the chosen one when it is among them.
+            var allowed = currencies[this.value] || currencies[''];
+            var codes = Object.keys(allowed);
+            var before = currency.value;
+
+            currency.innerHTML = '';
+
+            codes.forEach(function (code) {
+                var option = document.createElement('option');
+                option.value = code;
+                option.textContent = code + ' - ' + allowed[code];
+                currency.appendChild(option);
+            });
+
+            if (codes.indexOf(before) !== -1) {
+                currency.value = before;
+                note.hidden = true;
+            } else if (codes.length) {
+                currency.value = codes[0];
+                note.textContent = changedText.replace('%s', codes[0]).replace('%s', before);
+                note.hidden = false;
+            }
+        });
     })();
 </script>

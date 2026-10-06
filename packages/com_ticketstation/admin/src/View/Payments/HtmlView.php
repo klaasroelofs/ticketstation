@@ -39,6 +39,9 @@ class HtmlView extends BaseHtmlView
     /** @var bool  Whether the chosen provider's plugin is off or gone. */
     public $providerMissing = false;
 
+    /** @var array  Provider id => the currencies it allows (ISO code => name); the empty id is Off. */
+    public $currencyMap = [];
+
     public function display($tpl = null)
     {
         ToolbarHelper::title(Text::_('COM_TICKETSTATION_VIEW_PAYMENTS_TITLE'), 'fa-regular fa-money-bill-wave');
@@ -71,10 +74,26 @@ class HtmlView extends BaseHtmlView
         $this->lists['payment_provider'] = HTMLHelper::_('select.genericList', $options, 'payment_provider', ' class="form-select"',
             'value', 'text', $this->config->payment_provider);
 
+        // The currencies each choice of provider allows, for the list and for the script that
+        // refreshes it when another provider is chosen ('' = Off: every currency).
+        $this->currencyMap = ['' => PaymentCurrencies::CURRENCIES];
+
+        foreach (ProviderRegistry::all() as $id => $provider) {
+            $this->currencyMap[$id] = PaymentCurrencies::forProvider($provider);
+        }
+
+        $allowed    = $this->currencyMap[$this->config->payment_provider] ?? PaymentCurrencies::CURRENCIES;
         $currencies = [];
 
-        foreach (PaymentCurrencies::CURRENCIES as $code => $name) {
+        foreach ($allowed as $code => $name) {
             $currencies[] = ['value' => $code, 'text' => $code . ' - ' . $name];
+        }
+
+        // A stored currency the provider can't collect stays in the list, flagged, so the screen
+        // doesn't silently change it.
+        if (!isset($allowed[$this->config->payment_currency])) {
+            $currencies[] = ['value' => $this->config->payment_currency,
+                'text'  => Text::sprintf('COM_TICKETSTATION_PAYMENTS_CURRENCY_UNSUPPORTED_OPTION', $this->config->payment_currency)];
         }
 
         $this->lists['payment_currency'] = HTMLHelper::_('select.genericList', $currencies, 'payment_currency', ' class="form-select"',

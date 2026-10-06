@@ -16,6 +16,7 @@ use Joomla\Input\Input;
 use Joomla\Registry\Registry;
 use Mollie\Api\Exceptions\MollieException;
 use Mollie\Api\MollieApiClient;
+use Ticketstation\Component\Ticketstation\Administrator\Payment\CurrencyAwareInterface;
 use Ticketstation\Component\Ticketstation\Administrator\Payment\MethodAwareInterface;
 use Ticketstation\Component\Ticketstation\Administrator\Payment\PaymentException;
 use Ticketstation\Component\Ticketstation\Administrator\Payment\PaymentMethodOption;
@@ -33,7 +34,7 @@ use Ticketstation\Plugin\TicketstationPayment\Mollie\Helper\MolliePaymentMethods
 /**
  * Mollie, through Mollie's PHP library. Its settings are the parameters of the plugin.
  */
-final class MollieProvider implements PaymentProviderInterface, RefundCapableInterface, MethodAwareInterface
+final class MollieProvider implements PaymentProviderInterface, RefundCapableInterface, MethodAwareInterface, CurrencyAwareInterface
 {
     public const ID = 'mollie';
 
@@ -100,6 +101,11 @@ final class MollieProvider implements PaymentProviderInterface, RefundCapableInt
     public function getAllowedMethods(): array
     {
         return MolliePaymentMethods::fromConfig($this->params->get('payment_methods', 'ideal'));
+    }
+
+    public function getSupportedCurrencies(): array
+    {
+        return MollieCurrencies::SUPPORTED;
     }
 
     public function getCheckoutMethods(string $currency): array

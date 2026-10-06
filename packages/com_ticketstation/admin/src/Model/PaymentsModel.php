@@ -110,7 +110,9 @@ class PaymentsModel extends BaseDatabaseModel
     {
         $provider = trim($provider);
 
-        if ($provider !== '' && ProviderRegistry::get($provider) === null) {
+        $chosen = $provider !== '' ? ProviderRegistry::get($provider) : null;
+
+        if ($provider !== '' && $chosen === null) {
             throw new \RuntimeException(Text::_('COM_TICKETSTATION_PAYMENTS_PROVIDER_NOT_AVAILABLE'));
         }
 
@@ -118,6 +120,11 @@ class PaymentsModel extends BaseDatabaseModel
 
         if (!isset(PaymentCurrencies::CURRENCIES[$currency])) {
             $currency = ProviderRegistry::currency();
+        }
+
+        // The provider must be able to collect in this currency.
+        if ($chosen !== null && !isset(PaymentCurrencies::forProvider($chosen)[$currency])) {
+            throw new \RuntimeException(Text::sprintf('COM_TICKETSTATION_PAYMENTS_CURRENCY_NOT_SUPPORTED', $chosen->getTitle(), $currency));
         }
 
         $db    = $this->getDatabase();

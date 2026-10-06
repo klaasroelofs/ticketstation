@@ -114,6 +114,17 @@ chooses on Ticketstation's payment page and the id comes back in `PaymentRequest
 service's own page doesn't ask again (and a cancelled payment returns to the site).
 `methodLabel($stored)` names a stored method for invoices and the Box Office.
 
+### Optional: currencies
+
+The payment currency is one setting of Ticketstation (prices, invoices and the structured data use it
+too), set on the Payments screen, and passed to you as `PaymentRequest::$currency`. By default your
+provider can be chosen for every currency Ticketstation offers (`Helper\PaymentCurrencies::CURRENCIES`:
+currencies with two decimals, such as EUR, USD, GBP, SAR, TRY and AED; JPY and KWD are not offered
+because amounts are always formatted with two decimals). Implement `CurrencyAwareInterface` and return
+the ISO codes you can collect from `getSupportedCurrencies()`: the Payments screen then only offers
+those currencies for your provider, refuses to save any other, and the control panel warns when the
+saved currency isn't one of them.
+
 ## Things to know
 
 - A payment records the provider it went through, so refunds and webhooks of earlier orders keep

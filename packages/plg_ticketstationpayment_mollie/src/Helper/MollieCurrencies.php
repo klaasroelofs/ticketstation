@@ -17,6 +17,15 @@ defined('_JEXEC') or die;
 class MollieCurrencies
 {
     /**
+     * The currencies with two decimals that Mollie accepts for payments. Each must also be enabled
+     * for the Mollie account.
+     */
+    public const SUPPORTED = [
+        'EUR', 'GBP', 'USD', 'CHF', 'DKK', 'SEK', 'NOK', 'PLN', 'CZK', 'HUF', 'RON', 'BGN', 'ILS', 'AED',
+        'ZAR', 'CAD', 'AUD', 'NZD', 'HKD', 'SGD', 'MYR', 'PHP', 'THB', 'TWD', 'BRL', 'MXN',
+    ];
+
+    /**
      * Payment methods Mollie only offers for payments in euros.
      */
     public const EURO_ONLY_METHODS = ['ideal', 'bancontact', 'kbc', 'belfius', 'giftcard'];
