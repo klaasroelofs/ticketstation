@@ -128,7 +128,8 @@ final class MollieProvider implements PaymentProviderInterface, RefundCapableInt
 
     public function createPayment(PaymentRequest $request): PaymentRedirect
     {
-        $mollie = $this->client();
+        $mollie  = $this->client();
+        $methods = MollieCurrencies::filterMethods($request->currency, $this->getAllowedMethods());
 
         try {
             $payment = $mollie->payments->create([
@@ -136,7 +137,10 @@ final class MollieProvider implements PaymentProviderInterface, RefundCapableInt
                     'value'    => $request->amount,
                     'currency' => $request->currency,
                 ],
-                'method'      => MollieCurrencies::filterMethods($request->currency, $this->getAllowedMethods()),
+                // One method is passed as that method, as before methods could be chosen: Mollie then
+                // skips its method screen, so a cancelled or failed payment returns to the site.
+                // With a list Mollie keeps the customer on its own method screen.
+                'method'      => count($methods) === 1 ? reset($methods) : $methods,
                 'description' => $this->setting('description') . ' ' . $request->ordercode,
                 'redirectUrl' => $request->returnUrl,
                 'webhookUrl'  => $request->webhookUrl,
