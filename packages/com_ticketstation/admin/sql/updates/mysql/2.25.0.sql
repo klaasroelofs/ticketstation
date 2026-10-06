@@ -1,0 +1,2 @@
+-- No schema changes in 2.25.0 itself: the changes are in 2.25.0-rc3.sql. This file only brings the recorded
+-- database version in line with the version of the extension, which Joomla's Database check compares.
