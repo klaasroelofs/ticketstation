@@ -59,7 +59,7 @@ CREATE TABLE IF NOT EXISTS `#__ticketstation_config` (
   `transactioncosts` float NOT NULL,
   `priceformat` tinyint(2) NOT NULL,
   `persending` int(11) NOT NULL,
-  `dateformat` varchar(8) NOT NULL,
+  `dateformat` varchar(32) NOT NULL,
   `transcosts` double NOT NULL,
   `variable_transcosts` double NOT NULL,
   `man_payment` tinyint(1) NOT NULL,
@@ -138,7 +138,7 @@ CREATE TABLE IF NOT EXISTS `#__ticketstation_config` (
   `invoice_prefix` varchar(10) NOT NULL,
   `invoice_eid` varchar(11) NOT NULL,
   `hide_invoice_msg_cpanel` tinyint(1) NOT NULL,
-  `time_format` varchar(10) NOT NULL DEFAULT 'H:i',
+  `time_format` varchar(32) NOT NULL DEFAULT 'H:i',
   `show_downoad_button_in_myorders` tinyint(1) NOT NULL,
   `next_ordercode` varchar(20) NOT NULL DEFAULT '',
   `invoice_logo` varchar(255) NOT NULL DEFAULT '',
@@ -166,6 +166,10 @@ CREATE TABLE IF NOT EXISTS `#__ticketstation_config` (
   `wallet_logo` varchar(255) NOT NULL DEFAULT '',
   `wallet_bg_color` varchar(7) NOT NULL DEFAULT '#1f2937',
   `wallet_fg_color` varchar(7) NOT NULL DEFAULT '#ffffff',
+  `price_decimals` tinyint(2) NOT NULL DEFAULT 2,
+  `price_decimal_sep` varchar(4) NOT NULL DEFAULT ',',
+  `price_thousands_sep` varchar(4) NOT NULL DEFAULT '',
+  `price_symbol_after` tinyint(1) NOT NULL DEFAULT 0,
   PRIMARY KEY (`configid`)
 )  ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 DEFAULT COLLATE=utf8mb4_unicode_ci;
 
@@ -1019,4 +1023,8 @@ NULL,
 "0",
 "",
 "#1f2937",
-"#ffffff");
+"#ffffff",
+"2",
+",",
+"",
+"0");

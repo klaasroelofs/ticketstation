@@ -11,6 +11,7 @@ use Joomla\CMS\Factory;
 use \Joomla\CMS\HTML\HTMLHelper;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\Router\Route;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\Price;
 
 // No direct access to this file
 defined('_JEXEC') or die('Restricted Access');
@@ -81,7 +82,7 @@ $document->setTitle(Text::_('COM_TICKETSTATION_VIEW_TRANSACTION_DETAILS') . ' - 
                 <div class="col-sm-9">
                     <input type="text" name="amount" id="amount"
                            class="form-control" disabled
-                           value="<?= isset($this->data->amount)?$this->config->valuta.' '.number_format($this->data->amount, 2, ',', ' '):null; ?>"/>
+                           value="<?= isset($this->data->amount)?Price::format($this->data->amount, $this->config->valuta):null; ?>"/>
                 </div>
             </div>
             <div class="row mb-3">

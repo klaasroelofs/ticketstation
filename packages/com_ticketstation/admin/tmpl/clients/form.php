@@ -11,6 +11,7 @@ use Joomla\CMS\Factory;
 use \Joomla\CMS\HTML\HTMLHelper;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\Router\Route;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\Price;
 
 // No direct access to this file
 defined('_JEXEC') or die('Restricted Access');
@@ -70,7 +71,7 @@ $document->setTitle(Text::_('COM_TICKETSTATION_VIEW_CUSTOMER_DETAILS') . ' - ' .
                             </td>
                             <td class="w-3 text-center" style="text-align: center;"><small><?= date ("d-m-Y", strtotime($row->orderdate)); ?></small></td>
                             <td class="w-3 d-none d-md-table-cell text-center" style="text-align: center;"><?= $row->totaltickets; ?></td>
-                            <td class="w-3 d-none d-lg-table-cell text-center" style="text-align: center;"><?= $this->config->valuta; ?> <?= number_format($row->orderprice, 2, ',', ''); ?></td>
+                            <td class="w-3 d-none d-lg-table-cell text-center" style="text-align: center;"><?= Price::format($row->orderprice, $this->config->valuta); ?></td>
                             <td class="w-3 d-none d-md-table-cell text-center" style="text-align: center;">
                                 <?php if ($row->paid == 1){ ?>
                                     <span class="badge bg-success"><?= Text::_( 'COM_TICKETSTATION_PAID' ); ?></span>

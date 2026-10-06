@@ -14,6 +14,7 @@ use Joomla\CMS\Router\Route;
 use Joomla\CMS\Uri\Uri;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Date;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Refund;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\Price;
 
 // No direct access to this file
 defined('_JEXEC') or die('Restricted Access');
@@ -181,7 +182,7 @@ $progress = function (int $done, int $total, string $title, string $complete = '
                                 <?php } ?>
                             </td>
                             <td class="d-none d-md-table-cell text-end text-nowrap">
-                                <?= ((float) $row->orderprice == 0) ? '-' : $this->escape($this->config->valuta) . ' ' . number_format((float) $row->orderprice, 2, ',', ''); ?>
+                                <?= ((float) $row->orderprice == 0) ? '-' : Price::format((float) $row->orderprice, $this->config->valuta); ?>
                             </td>
                             <td class="small text-center">
                                 <?php if ($row->paid == 1) { ?>
@@ -194,7 +195,7 @@ $progress = function (int $done, int $total, string $title, string $complete = '
                                     <span class="badge bg-danger"><?= Text::_('COM_TICKETSTATION_UNPAID_OVERVIEW'); ?></span>
                                 <?php } ?>
                                 <?php if (($row->refunded ?? 0) > 0) { ?>
-                                    <br /><span class="badge bg-info mt-1" title="<?= $this->escape($this->config->valuta) . ' ' . number_format((float) $row->refunded, 2, ',', ''); ?>"><?= Text::_(Refund::isFull((float) $row->refunded, (float) $row->orderprice) ? 'COM_TICKETSTATION_REFUND_BADGE_FULL' : 'COM_TICKETSTATION_REFUND_BADGE_PARTIAL'); ?></span>
+                                    <br /><span class="badge bg-info mt-1" title="<?= Price::format((float) $row->refunded, $this->config->valuta); ?>"><?= Text::_(Refund::isFull((float) $row->refunded, (float) $row->orderprice) ? 'COM_TICKETSTATION_REFUND_BADGE_FULL' : 'COM_TICKETSTATION_REFUND_BADGE_PARTIAL'); ?></span>
                                 <?php } ?>
                                 <?php if (($row->refund_attention ?? 0) > 0) { ?>
                                     <br /><span class="badge bg-warning text-dark mt-1"><span class="fa fa-exclamation-triangle" aria-hidden="true"></span> <?= Text::_((int) $row->refund_attention === Refund::ATTENTION_DECISION ? 'COM_TICKETSTATION_REFUND_DECISION_NEEDED' : 'COM_TICKETSTATION_REFUND_FAILED_SHORT'); ?></span>

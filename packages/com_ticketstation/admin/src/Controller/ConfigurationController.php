@@ -62,6 +62,31 @@ class ConfigurationController extends BaseController {
 
         $post['valuta'] = $app->getInput()->get('valuta', null, 'raw');
 
+        // Notation of prices: a choice of decimals, decimal point and thousands separator
+        if (isset($post['price_decimals']))
+        {
+            $post['price_decimals']      = in_array((int) $post['price_decimals'], [-1, 0, 2], true) ? (int) $post['price_decimals'] : 2;
+            $post['price_decimal_sep']   = ($post['price_decimal_sep'] ?? ',') === '.' ? '.' : ',';
+            $thousands                   = (string) $app->getInput()->get('price_thousands_sep', '', 'raw');
+            $post['price_thousands_sep'] = $thousands === 'nbsp' ? "\u{00A0}" : (in_array($thousands, ['.', ',', "'"], true) ? $thousands : '');
+            $post['price_symbol_after']  = empty($post['price_symbol_after']) ? 0 : 1;
+
+            if ($post['price_thousands_sep'] === $post['price_decimal_sep'])
+            {
+                $this->setRedirect(Uri::base() . 'index.php?option=com_ticketstation&view=Configuration', Text::_('COM_TICKETSTATION_PRICE_SEPARATORS_EQUAL'), 'error');
+
+                return false;
+            }
+        }
+
+        // Date and time notations are PHP date formats typed in by hand
+        foreach (['dateformat' => 'd-m-Y', 'time_format' => 'H:i'] as $name => $default)
+        {
+            if (isset($post[$name]))
+            {
+                $post[$name] = mb_substr(trim((string) $app->getInput()->get($name, '', 'raw')), 0, 32) ?: $default;
+            }
+        }
         // Next order number: empty (default) or a whole number of at most 6 digits. Longer
         // numbers would run into the legacy 7-digit and temporary 9-digit ordercodes.
         if (isset($post['next_ordercode']))

@@ -14,6 +14,7 @@ use Joomla\CMS\Layout\LayoutHelper;
 use Joomla\CMS\Router\Route;
 use Joomla\CMS\Uri\Uri;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Date;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\Price;
 
 // No direct access to this file
 defined('_JEXEC') or die('Restricted Access');
@@ -76,7 +77,7 @@ $reason_key = $ghost->reason === 'unfinished'
                     </tr>
                     <tr>
                         <th scope="row" class="fw-normal"><?= Text::_('COM_TICKETSTATION_BOXOFFICE_TOTAL_REGULAR_PRICE') ?></th>
-                        <td><?= $valuta; ?> <?= number_format($ghost->total, 2, ',', ''); ?></td>
+                        <td><?= Price::format($ghost->total, $valuta); ?></td>
                     </tr>
                     <tr>
                         <th scope="row" class="fw-normal"><?= Text::_('COM_TICKETSTATION_BOXOFFICE_PAYMENT_STATUS') ?></th>
@@ -156,7 +157,7 @@ $reason_key = $ghost->reason === 'unfinished'
                                 &middot; <?= Text::_('COM_TICKETSTATION_SEAT') ?>: <?= $this->escape($line->row_name . $line->seatid); ?>
                             <?php } ?>
                         </td>
-                        <td class="text-end text-nowrap"><?= $valuta; ?> <?= number_format((float) $line->price, 2, ',', ''); ?></td>
+                        <td class="text-end text-nowrap"><?= Price::format((float) $line->price, $valuta); ?></td>
                         <td class="text-center">
                             <?php if ($line->scanned == 1) { ?>
                                 <span class="badge bg-success"><?= Text::_('COM_TICKETSTATION_YES'); ?></span>

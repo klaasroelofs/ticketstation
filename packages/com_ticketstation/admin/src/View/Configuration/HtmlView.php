@@ -226,12 +226,8 @@ class HtmlView extends BaseHtmlView {
         ## as it is, so saving the screen never changes it.
         $sample = new \DateTime('2026-03-14 09:05:00');
 
-        $formatList = function (array $formats, string $current) use ($sample) {
+        $formatList = function (array $formats) use ($sample) {
             $options = [];
-
-            if ($current !== '' && !in_array($current, $formats, true)) {
-                $options[] = ['value' => $current, 'text' => Text::sprintf('COM_TICKETSTATION_FORMAT_CURRENT', $sample->format($current))];
-            }
 
             foreach ($formats as $format) {
                 $options[] = ['value' => $format, 'text' => $sample->format($format)];
@@ -240,32 +236,24 @@ class HtmlView extends BaseHtmlView {
             return $options;
         };
 
-        $dateformats = $formatList(['d-m-Y', 'd/m/Y', 'd.m.Y', 'j-n-Y', 'Y-m-d', 'm/d/Y'], (string) $config->dateformat);
-        $timeformats = $formatList(['H:i', 'H.i', 'G:i', 'g:i A'], (string) $config->time_format);
+        // A notation is typed in as a PHP date format; the presets come along as suggestions
+        $formatInput = function (string $name, array $options, string $current, string $default) {
+            $list = '<datalist id="' . $name . '_list">';
 
-        $lists['dateformat'] = HTMLHelper::_('select.genericList', $dateformats, 'dateformat', 'class="form-select"', 'value',
-            'text', $config->dateformat);
-        $lists['time_format'] = HTMLHelper::_('select.genericList', $timeformats, 'time_format', 'class="form-select"', 'value',
-            'text', $config->time_format);
+            foreach ($options as $option) {
+                $list .= '<option value="' . htmlspecialchars($option['value'], ENT_QUOTES, 'UTF-8') . '">'
+                    . htmlspecialchars($option['text'], ENT_QUOTES, 'UTF-8') . '</option>';
+            }
 
-        ## Filling the Array() for a dropdown list.
-        $placeholder          = [
-            '1'  => ['value' => '1', 'text' => '' . Text::_('COM_TICKETSTATION_PLACEHOLDER1')],
-            '2'  => ['value' => '2', 'text' => '' . Text::_('COM_TICKETSTATION_PLACEHOLDER2')],
-            '3'  => ['value' => '3', 'text' => '' . Text::_('COM_TICKETSTATION_PLACEHOLDER3')],
-            '4'  => ['value' => '4', 'text' => '' . Text::_('COM_TICKETSTATION_PLACEHOLDER4')],
-            '5'  => ['value' => '5', 'text' => '' . Text::_('COM_TICKETSTATION_PLACEHOLDER5')],
-            '6'  => ['value' => '6', 'text' => '' . Text::_('COM_TICKETSTATION_PLACEHOLDER6')],
-            '7'  => ['value' => '7', 'text' => '' . Text::_('COM_TICKETSTATION_PLACEHOLDER7')],
-            '8'  => ['value' => '8', 'text' => '' . Text::_('COM_TICKETSTATION_PLACEHOLDER8')],
-            '9'  => ['value' => '9', 'text' => '' . Text::_('COM_TICKETSTATION_PLACEHOLDER9')],
-            '10' => ['value' => '10', 'text' => '' . Text::_('COM_TICKETSTATION_PLACEHOLDER10')],
-            '11' => ['value' => '11', 'text' => '' . Text::_('COM_TICKETSTATION_PLACEHOLDER11')],
-            '12' => ['value' => '12', 'text' => '' . Text::_('COM_TICKETSTATION_PLACEHOLDER12')],
-        ];
-        $lists['placeholder'] = HTMLHelper::_('select.genericList', $placeholder, 'priceformat', 'class="form-select" ="1"' . '', 'value',
-            'text', $config->priceformat);
+            return '<input type="text" class="form-control" name="' . $name . '" id="' . $name . '" list="' . $name . '_list"'
+                . ' maxlength="32" value="' . htmlspecialchars($current !== '' ? $current : $default, ENT_QUOTES, 'UTF-8') . '">' . $list . '</datalist>';
+        };
 
+        $dateformats = $formatList(['d-m-Y', 'd/m/Y', 'd.m.Y', 'j-n-Y', 'Y-m-d', 'm/d/Y']);
+        $timeformats = $formatList(['H:i', 'H.i', 'G:i', 'g:i A']);
+
+        $lists['dateformat']   = $formatInput('dateformat', $dateformats, (string) $config->dateformat, 'd-m-Y');
+        $lists['time_format']  = $formatInput('time_format', $timeformats, (string) $config->time_format, 'H:i');
         /*
         $db = Factory::getContainer()->get('DatabaseDriver');
 

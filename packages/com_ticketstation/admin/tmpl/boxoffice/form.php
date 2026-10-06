@@ -17,6 +17,7 @@ use Ticketstation\Component\Ticketstation\Administrator\Helper\AclGate;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Date;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\OrderTotals;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Refund;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\Price;
 
 // No direct access to this file
 defined('_JEXEC') or die('Restricted Access');
@@ -98,9 +99,9 @@ $progress = function (int $done) use ($status) {
                         <th scope="row" class="fw-normal"><?= Text::_('COM_TICKETSTATION_BOXOFFICE_TOTAL_REGULAR_PRICE') ?></th>
                         <td>
                             <?php if ($this->transaction && (float) $this->transaction->amount > 0 && AclGate::can('ticketstation.finance')) { ?>
-                                <a href="index.php?option=com_ticketstation&controller=transactions&task=edit&cid=<?= (int) $this->transaction->pid; ?>"><?= $valuta; ?> <?= number_format($this->orderprice, 2, ',', ''); ?></a>
+                                <a href="index.php?option=com_ticketstation&controller=transactions&task=edit&cid=<?= (int) $this->transaction->pid; ?>"><?= Price::format($this->orderprice, $valuta); ?></a>
                             <?php } else { ?>
-                                <?= $valuta; ?> <?= number_format($this->orderprice, 2, ',', ''); ?>
+                                <?= Price::format($this->orderprice, $valuta); ?>
                             <?php } ?>
                         </td>
                     </tr>
@@ -117,7 +118,7 @@ $progress = function (int $done) use ($status) {
                                 <span class="badge bg-danger"><?= Text::_('COM_TICKETSTATION_UNPAID_OVERVIEW'); ?></span>
                             <?php } ?>
                             <?php if ($this->refunded > 0) { ?>
-                                <span class="badge bg-info"><?= Text::_(Refund::isFull($this->refunded, $this->paidAmount) ? 'COM_TICKETSTATION_REFUND_BADGE_FULL' : 'COM_TICKETSTATION_REFUND_BADGE_PARTIAL'); ?>: <?= $valuta; ?> <?= number_format($this->refunded, 2, ',', ''); ?></span>
+                                <span class="badge bg-info"><?= Text::_(Refund::isFull($this->refunded, $this->paidAmount) ? 'COM_TICKETSTATION_REFUND_BADGE_FULL' : 'COM_TICKETSTATION_REFUND_BADGE_PARTIAL'); ?>: <?= Price::format($this->refunded, $valuta); ?></span>
                             <?php } ?>
                         </td>
                     </tr>
@@ -150,24 +151,24 @@ $progress = function (int $done) use ($status) {
                         </tr>
                         <tr>
                             <th scope="row" class="fw-normal"><?= Text::_('COM_TICKETSTATION_DISCOUNT'); ?> <?= $discount_text; ?></th>
-                            <td><?= $valuta; ?> <?= number_format($discount, 2, ',', ''); ?></td>
+                            <td><?= Price::format($discount, $valuta); ?></td>
                         </tr>
                     <?php } ?>
 
                     <?php // The service fee with the terms kept for this order (see OrderTotals). ?>
                     <tr>
-                        <th scope="row" class="fw-normal"><?= Text::_('COM_TICKETSTATION_SERVICE_FEE'); ?><?= OrderTotals::feeLabel($this->totals, fn ($amount) => $valuta . ' ' . number_format($amount, 2, ',', '')); ?></th>
+                        <th scope="row" class="fw-normal"><?= Text::_('COM_TICKETSTATION_SERVICE_FEE'); ?><?= OrderTotals::feeLabel($this->totals, fn ($amount) => Price::format($amount, $valuta)); ?></th>
                         <td>
                             <?php if ($this->totals->fee_type == OrderTotals::FEE_NONE) { ?>
                                 <?= Text::_('COM_TICKETSTATION_NONE'); ?>
                             <?php } else { ?>
-                                <?= $valuta; ?> <?= number_format($this->totals->fees, 2, ',', ''); ?>
+                                <?= Price::format($this->totals->fees, $valuta); ?>
                             <?php } ?>
                         </td>
                     </tr>
                     <tr>
                         <th scope="row" class="fw-normal"><?= Text::_('COM_TICKETSTATION_VAT_TOTAL'); ?></th>
-                        <td><?= $valuta; ?> <?= number_format($this->totals->vat, 2, ',', ''); ?></td>
+                        <td><?= Price::format($this->totals->vat, $valuta); ?></td>
                     </tr>
                     <tr>
                         <th scope="row" class="fw-normal"><label for="newremark"><?= Text::_('COM_TICKETSTATION_ORDERREFERENCE') ?></label></th>
@@ -295,7 +296,7 @@ $progress = function (int $done) use ($status) {
                                         <br /><small><?= $this->escape($refund->description); ?></small>
                                     <?php } ?>
                                 </td>
-                                <td class="text-end text-nowrap<?= $counts ? '' : ' text-decoration-line-through text-muted'; ?>"><?= $valuta; ?> <?= number_format((float) $refund->amount, 2, ',', ''); ?></td>
+                                <td class="text-end text-nowrap<?= $counts ? '' : ' text-decoration-line-through text-muted'; ?>"><?= Price::format((float) $refund->amount, $valuta); ?></td>
                                 <td>
                                     <span class="badge <?= $counts ? 'bg-info' : 'bg-danger'; ?>"><?= Text::_('COM_TICKETSTATION_REFUND_STATUS_' . strtoupper($refund->status)); ?></span>
                                     <?php if ($refund->mollie_id) { ?>

@@ -103,19 +103,75 @@ $document->getWebAssetManager()->addInlineScript("
                         </small>
                     </div>
                 </div>
+                <?php
+                $decimals    = (int) ($this->config->price_decimals ?? 2);
+                $decimalSep  = (string) ($this->config->price_decimal_sep ?? ',');
+                $thousands   = (string) ($this->config->price_thousands_sep ?? '');
+                $symbolAfter = (int) ($this->config->price_symbol_after ?? 0);
+                $nbsp        = "\u{00A0}";
+                $thousandsOptions = ['' => 'COM_TICKETSTATION_PRICE_SEP_NONE', '.' => 'COM_TICKETSTATION_PRICE_SEP_DOT', ',' => 'COM_TICKETSTATION_PRICE_SEP_COMMA', $nbsp => 'COM_TICKETSTATION_PRICE_SEP_SPACE', "'" => 'COM_TICKETSTATION_PRICE_SEP_APOSTROPHE'];
+                ?>
                 <div class="row mb-3">
-                    <label for="priceformat" class="col-sm-3 col-form-label"
-                           rel="popover"
-                           title="<?= Text::_('COM_TICKETSTATION_PRICES') ?>">
+                    <label for="price_decimals" class="col-sm-3 col-form-label">
                         <?= Text::_('COM_TICKETSTATION_PRICES') ?>
                     </label>
                     <div class="col-sm-9">
-                        <?= $this->lists['placeholder']; ?>
-                        <small class="form-text">
+                        <div class="row g-2">
+                            <div class="col-md-3">
+                                <label for="price_decimals" class="form-label small"><?= Text::_('COM_TICKETSTATION_PRICE_DECIMALS') ?></label>
+                                <select class="form-select" name="price_decimals" id="price_decimals">
+                                    <option value="2"<?= $decimals === 2 ? ' selected' : ''; ?>>12<?= $decimalSep; ?>50</option>
+                                    <option value="0"<?= $decimals === 0 ? ' selected' : ''; ?>>13 (<?= Text::_('COM_TICKETSTATION_PRICE_DECIMALS_NONE') ?>)</option>
+                                    <option value="-1"<?= $decimals < 0 ? ' selected' : ''; ?>><?= Text::_('COM_TICKETSTATION_PRICE_DECIMALS_AUTO') ?></option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label for="price_decimal_sep" class="form-label small"><?= Text::_('COM_TICKETSTATION_PRICE_DECIMAL_SEP') ?></label>
+                                <select class="form-select" name="price_decimal_sep" id="price_decimal_sep">
+                                    <option value=","<?= $decimalSep === ',' ? ' selected' : ''; ?>><?= Text::_('COM_TICKETSTATION_PRICE_SEP_COMMA') ?></option>
+                                    <option value="."<?= $decimalSep === '.' ? ' selected' : ''; ?>><?= Text::_('COM_TICKETSTATION_PRICE_SEP_DOT') ?></option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label for="price_thousands_sep" class="form-label small"><?= Text::_('COM_TICKETSTATION_PRICE_THOUSANDS_SEP') ?></label>
+                                <select class="form-select" name="price_thousands_sep" id="price_thousands_sep">
+                                    <?php foreach ($thousandsOptions as $value => $label) : ?>
+                                        <option value="<?= $value === $nbsp ? 'nbsp' : htmlspecialchars($value, ENT_QUOTES, 'UTF-8'); ?>"<?= $thousands === $value ? ' selected' : ''; ?>><?= Text::_($label) ?></option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label for="price_symbol_after" class="form-label small"><?= Text::_('COM_TICKETSTATION_PRICE_SYMBOL') ?></label>
+                                <select class="form-select" name="price_symbol_after" id="price_symbol_after">
+                                    <option value="0"<?= $symbolAfter ? '' : ' selected'; ?>><?= Text::_('COM_TICKETSTATION_PRICE_SYMBOL_BEFORE') ?></option>
+                                    <option value="1"<?= $symbolAfter ? ' selected' : ''; ?>><?= Text::_('COM_TICKETSTATION_PRICE_SYMBOL_AFTER') ?></option>
+                                </select>
+                            </div>
+                        </div>
+                        <small class="form-text d-block mt-1">
                             <?= Text::_('COM_TICKETSTATION_PRICES_DESC') ?>
+                            <strong><?= Text::_('COM_TICKETSTATION_PRICE_EXAMPLE') ?>: <span id="price-example"></span></strong>
                         </small>
                     </div>
                 </div>
+                <script>
+                    document.addEventListener('DOMContentLoaded', function () {
+                        var symbol = <?= json_encode((string) ($this->config->valuta ?? '')); ?>;
+                        var fields = ['price_decimals', 'price_decimal_sep', 'price_thousands_sep', 'price_symbol_after', 'valuta'].map(function (id) { return document.getElementById(id); });
+                        var example = document.getElementById('price-example');
+                        var render = function () {
+                            var decimals = parseInt(fields[0].value, 10), amount = 1234567.5;
+                            var thousands = fields[2].value === 'nbsp' ? ' ' : fields[2].value;
+                            if (decimals < 0) { decimals = 2; }
+                            var parts = amount.toFixed(decimals).split('.');
+                            var number = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, thousands) + (parts[1] ? fields[1].value + parts[1] : '');
+                            var currency = fields[4] ? fields[4].value : symbol;
+                            example.textContent = fields[3].value === '1' ? number + ' ' + currency : currency + ' ' + number;
+                        };
+                        fields.forEach(function (field) { if (field) { field.addEventListener('input', render); field.addEventListener('change', render); } });
+                        render();
+                    });
+                </script>
             </div>
         </div>
 

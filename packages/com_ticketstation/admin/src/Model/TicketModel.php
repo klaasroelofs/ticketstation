@@ -53,6 +53,14 @@ class TicketModel extends AdminModel
             return false;
         }
 
+        // The price is entered in the currency of the configuration
+        $valuta = trim((string) ((new Config)->getPartialConfig(['valuta'])->valuta ?? ''));
+
+        if ($valuta !== '')
+        {
+            $form->setFieldAttribute('ticketprice', 'addonBefore', $valuta);
+        }
+
         // How capacity is split between a parent and its child tickets is chosen on the
         // parent; a child that shares the parent's capacity has none of its own to enter.
         $parentId = (int) $form->getValue('parent');

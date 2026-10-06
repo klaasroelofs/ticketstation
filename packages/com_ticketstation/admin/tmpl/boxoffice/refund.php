@@ -20,6 +20,7 @@ use Joomla\CMS\Router\Route;
 use Joomla\CMS\Uri\Uri;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Date;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Refund;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\Price;
 
 // No direct access to this file
 defined('_JEXEC') or die('Restricted Access');
@@ -29,7 +30,7 @@ $app->getDocument()->setTitle(Text::_($this->refund ? 'COM_TICKETSTATION_REFUND_
 $app->getDocument()->getWebAssetManager()->registerAndUseStyle('ticketstation', Uri::base() . 'components/com_ticketstation/assets/css/ticketstation.css');
 
 $valuta   = $this->escape($this->config->valuta);
-$money    = static fn ($amount) => number_format((float) $amount, 2, ',', '');
+$money    = static fn ($amount) => Price::format((float) $amount, '');
 $refund   = $this->refund;
 $datetime = $this->config->dateformat . ' ' . $this->config->time_format;
 
@@ -60,21 +61,21 @@ $treatments = [
                     </tr>
                     <tr>
                         <th scope="row" class="fw-normal"><?= Text::_('COM_TICKETSTATION_REFUND_PAID') ?></th>
-                        <td><?= $valuta; ?> <?= $money($this->paidAmount); ?></td>
+                        <td><?= Price::format($this->paidAmount, $valuta); ?></td>
                     </tr>
                     <tr>
                         <th scope="row" class="fw-normal"><?= Text::_('COM_TICKETSTATION_REFUND_REFUNDED') ?></th>
-                        <td><?= $valuta; ?> <?= $money($this->refunded); ?></td>
+                        <td><?= Price::format($this->refunded, $valuta); ?></td>
                     </tr>
                     <?php if (!$refund) { ?>
                         <tr>
                             <th scope="row" class="fw-normal"><?= Text::_('COM_TICKETSTATION_REFUND_REMAINING') ?></th>
-                            <td><strong><?= $valuta; ?> <?= $money($this->remaining); ?></strong></td>
+                            <td><strong><?= Price::format($this->remaining, $valuta); ?></strong></td>
                         </tr>
                     <?php } ?>
                     <tr>
                         <th scope="row" class="fw-normal"><?= Text::_('COM_TICKETSTATION_SERVICE_FEE') ?></th>
-                        <td><?= $valuta; ?> <?= $money($this->totals->fees); ?></td>
+                        <td><?= Price::format($this->totals->fees, $valuta); ?></td>
                     </tr>
                 </table>
             </div>
@@ -90,7 +91,7 @@ $treatments = [
                     <table class="table mb-0">
                         <tr>
                             <th scope="row" class="w-50 fw-normal"><?= Text::_('COM_TICKETSTATION_REFUND_AMOUNT') ?></th>
-                            <td><strong><?= $valuta; ?> <?= $money($refund->amount); ?></strong></td>
+                            <td><strong><?= Price::format($refund->amount, $valuta); ?></strong></td>
                         </tr>
                         <tr>
                             <th scope="row" class="fw-normal"><?= Text::_('COM_TICKETSTATION_DATE') ?></th>
@@ -197,7 +198,7 @@ $treatments = [
                                 <?= Text::sprintf('COM_TICKETSTATION_REFUND_WAITING_TICKET', Text::_('COM_TICKETSTATION_REFUND_STATE_' . $this->waitingTreatments[(int) $row->orderid])); ?></span>
                         <?php } ?>
                     </td>
-                    <td class="text-end text-nowrap"><?= $valuta; ?> <?= $money($price); ?></td>
+                    <td class="text-end text-nowrap"><?= Price::format($price, $valuta); ?></td>
                     <td>
                         <?php if ($state === Refund::TICKET_RELEASED) { ?>
                             <span class="text-muted"><?= Text::_('COM_TICKETSTATION_REFUND_RELEASED_FINAL'); ?></span>

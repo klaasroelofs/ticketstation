@@ -69,45 +69,8 @@ class TicketstationFunctions
      */
     public static function showprice($holder, $price, $currency)
     {
-
-        if ($holder == 1) {
-            $price = $currency . ' ' . number_format($price, 2, ',', '.');
-        }
-        if ($holder == 2) {
-            $price = number_format($price, 2, ',', '.') . ' ' . $currency;
-        }
-        if ($holder == 3) {
-            $price = $currency . ' ' . number_format($price, 2, ',', '');
-        }
-        if ($holder == 4) {
-            $price = number_format($price, 2, ',', '') . ' ' . $currency;
-        }
-        if ($holder == 5) {
-            $price = $currency . ' ' . number_format($price, 2, '.', '');
-        }
-        if ($holder == 6) {
-            $price = number_format($price, 2, '.', '') . ' ' . $currency;
-        }
-        if ($holder == 7) {
-            $price = number_format($price, '2', '.', ',') . ' ' . $currency;
-        }
-        if ($holder == 8) {
-            $price = $currency . ' ' . number_format($price, '2', '.', ',');
-        }
-        if ($holder == 9) {
-            $price = number_format($price, '0', '', ',') . ' ' . $currency;
-        }
-        if ($holder == 10) {
-            $price = $currency . ' ' . number_format($price, '0', '', ',');
-        }
-        if ($holder == 11) {
-            $price = number_format($price, '0', '', '.') . ' ' . $currency;
-        }
-        if ($holder == 12) {
-            $price = $currency . ' ' . number_format($price, '0', '', '.');
-        }
-
-        return $price;
+        // $holder is the legacy notation number; the notation now comes from the configuration
+        return Price::format($price, $currency);
     }
 
     public static function showmonth($holder)

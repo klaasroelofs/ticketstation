@@ -14,6 +14,7 @@ use Joomla\CMS\Factory;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\Router\Route;
 use Joomla\CMS\Uri\Uri;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\Price;
 
 // No direct access to this file
 defined('_JEXEC') or die('Restricted Access');
@@ -79,7 +80,7 @@ $wa->registerAndUseStyle('ticketstation', Uri::base() . 'components\com_ticketst
                                 <?php if ($row->coupon_type == 1){
                                     echo $row->coupon_discount.'%';
                                 }else{
-                                    echo $this->config->valuta; ?> <?php echo number_format($row->coupon_discount, 2, ',', '');
+                                    echo Price::format($row->coupon_discount, $this->config->valuta);
                                 } ?>
                             </td>
                             <td class="small d-none d-lg-table-cell text-center"><?php echo date ($this->config->dateformat, strtotime($row->coupon_added)); ?></td>
