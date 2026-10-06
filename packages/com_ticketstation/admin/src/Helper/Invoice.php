@@ -550,7 +550,7 @@ class Invoice
             $pdf->SetFont($font_name, '', $font_size);
             $pdf->SetXY(120, $height);
             $pdf->Write(0, PdfEncoding::toLatin1(Text::sprintf('COM_TICKETSTATION_INVOICE_PAID_VIA',
-                ProviderRegistry::methodLabel(strtolower($invoice->payment_provider)))));
+                ProviderRegistry::methodLabel(strtolower($invoice->payment_provider), (string) ((new Transaction)->getTransactionDetails($invoice->ordercode)->provider ?? '')))));
         }
 
         $dir = JPATH_ADMINISTRATOR . '/components/com_ticketstation/invoices';

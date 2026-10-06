@@ -1,6 +1,6 @@
 # Third-party software
 
-Ticketstation bundles the libraries below in `vendor/`, unmodified apart from one added comment line that
+Ticketstation bundles the libraries below in `vendor/` (those of the Mollie plugin in its own `vendor/`), unmodified apart from one added comment line that
 names the license (see "Source files" below). Ticketstation itself is licensed under the GNU General
 Public License version 3 or later; every library below is released under a license that is compatible
 with the GPL.

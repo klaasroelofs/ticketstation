@@ -1,0 +1,20 @@
+{
+  "name": "ticketstation/plg-ticketstationpayment-mollie",
+  "description": "Bundled runtime dependencies of the Mollie payment plugin. This vendor folder is installed as part of the plugin.",
+  "type": "project",
+  "license": "GPL-3.0-or-later",
+  "require": {
+    "php": ">=8.3",
+    "mollie/mollie-api-php": "^4.0"
+  },
+  "replace": {
+    "psr/http-client": "*",
+    "psr/http-factory": "*",
+    "psr/http-message": "*",
+    "symfony/var-dumper": "*"
+  },
+  "config": {
+    "optimize-autoloader": true,
+    "sort-packages": true
+  }
+}

@@ -22,6 +22,36 @@ use Joomla\CMS\Installer\InstallerScript;
  */
 class pkg_ticketstationInstallerScript extends InstallerScript
 {
+    /**
+     * The version of the package that is being replaced, null when there was none.
+     *
+     * @var string|null
+     */
+    private $oldVersion = null;
+
+    public function preflight($type, $parent)
+    {
+        if ($type === 'update') {
+            $db = Factory::getContainer()->get('DatabaseDriver');
+
+            try {
+                $manifest = $db->setQuery(
+                    $db->getQuery(true)
+                        ->select($db->quoteName('manifest_cache'))
+                        ->from($db->quoteName('#__extensions'))
+                        ->where($db->quoteName('type') . ' = ' . $db->quote('package'))
+                        ->where($db->quoteName('element') . ' = ' . $db->quote('pkg_ticketstation'))
+                )->loadResult();
+
+                $this->oldVersion = (string) (json_decode((string) $manifest)->version ?? '') ?: null;
+            } catch (\Throwable $e) {
+                $this->oldVersion = null;
+            }
+        }
+
+        return true;
+    }
+
     public function postflight($type, $parent)
     {
         if ($type !== 'install' && $type !== 'update') {
@@ -40,6 +70,11 @@ class pkg_ticketstationInstallerScript extends InstallerScript
                 ->where($db->quoteName('element') . ' = ' . $db->quote('ticketstation'))
         )->execute();
 
+        // The first install of a version with payment plugins, or an update from one before: bring the Mollie settings along.
+        if ($type === 'install' || $this->oldVersion === null || version_compare($this->oldVersion, '2.25.0-rc3', '<')) {
+            $this->setUpMolliePlugin($db);
+        }
+
         $file = $parent->getParent()->getPath('source') . '/release-notes.md';
 
         if (is_file($file)) {
@@ -53,6 +88,96 @@ class pkg_ticketstationInstallerScript extends InstallerScript
         }
 
         return true;
+    }
+
+    /**
+     * Sets up the Mollie payment plugin the first time, and only then (an admin who switched it
+     * off, or changed its settings, keeps that). Sites that had Mollie before payment providers
+     * were plugins bring their settings along: the API keys, test mode, methods, description and
+     * language go to the plugin, the currency and the choice to take online payments through
+     * Mollie (or not at all, when "Online payments" was off) to the Ticketstation settings. The
+     * old settings table stays where it is, unused. A new installation gets the plugin's defaults
+     * and Mollie as the provider, as the plugin is installed disabled.
+     */
+    private function setUpMolliePlugin($db)
+    {
+        try {
+            $plugin = $db->setQuery(
+                $db->getQuery(true)
+                    ->select($db->quoteName(['extension_id', 'params']))
+                    ->from($db->quoteName('#__extensions'))
+                    ->where($db->quoteName('type') . ' = ' . $db->quote('plugin'))
+                    ->where($db->quoteName('folder') . ' = ' . $db->quote('ticketstationpayment'))
+                    ->where($db->quoteName('element') . ' = ' . $db->quote('mollie'))
+            )->loadObject();
+
+            if (!$plugin) {
+                return;
+            }
+
+            $stored = json_decode((string) $plugin->params, true);
+
+            // Keys were entered in the plugin already: leave them alone.
+            if (!empty($stored['api_key']) || !empty($stored['api_key_test'])) {
+                return;
+            }
+
+            $params = [
+                'api_key'         => '',
+                'api_key_test'    => '',
+                'test_mode'       => 0,
+                'payment_methods' => ['ideal'],
+                'description'     => 'Ordernumber:',
+                'locale'          => 'en_GB',
+                'mark_pending'    => 1,
+            ];
+
+            try {
+                $old = $db->setQuery(
+                    $db->getQuery(true)
+                        ->select('*')
+                        ->from($db->quoteName('#__ticketstation_mollie'))
+                        ->where($db->quoteName('configid') . ' = 1')
+                )->loadObject();
+            } catch (\Throwable $e) {
+                $old = null;
+            }
+
+            if ($old) {
+                $params = [
+                    'api_key'         => (string) $old->api_key,
+                    'api_key_test'    => (string) $old->api_key_test,
+                    'test_mode'       => (int) $old->test_mode,
+                    'payment_methods' => array_values(array_filter(explode(',', (string) $old->payment_methods))) ?: ['ideal'],
+                    'description'     => (string) $old->description,
+                    'locale'          => (string) ($old->mollie_language ?: 'en_GB'),
+                    'mark_pending'    => (int) $old->change_payment_state,
+                ];
+
+                $db->setQuery(
+                    $db->getQuery(true)
+                        ->update($db->quoteName('#__ticketstation_config'))
+                        ->set($db->quoteName('payment_provider') . ' = ' . $db->quote($old->enabled == 1 ? 'mollie' : ''))
+                        ->set($db->quoteName('payment_currency') . ' = ' . $db->quote(strtoupper((string) ($old->currency ?: 'EUR'))))
+                        ->where($db->quoteName('configid') . ' = 1')
+                )->execute();
+            }
+
+            $db->setQuery(
+                $db->getQuery(true)
+                    ->update($db->quoteName('#__extensions'))
+                    ->set($db->quoteName('params') . ' = ' . $db->quote(json_encode($params)))
+                    ->set($db->quoteName('enabled') . ' = 1')
+                    ->where($db->quoteName('extension_id') . ' = ' . (int) $plugin->extension_id)
+            )->execute();
+
+            // The list of enabled plugins may be cached.
+            Factory::getContainer()->get(\Joomla\CMS\Cache\CacheControllerFactoryInterface::class)
+                ->createCacheController('callback', ['defaultgroup' => 'com_plugins'])
+                ->clean();
+        } catch (\Throwable $e) {
+            Factory::getApplication()->enqueueMessage('The Mollie settings could not be moved to the Mollie plugin: ' . $e->getMessage(), 'warning');
+        }
     }
 
     /**

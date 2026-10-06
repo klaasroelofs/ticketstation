@@ -14,11 +14,14 @@ use Joomla\Input\Input;
 defined('_JEXEC') or die;
 
 /**
- * A payment provider. The core owns the order: it decides what a payment means for an order,
- * its tickets and its mails. A provider only talks to the payment service and reports back in
- * the value objects of this namespace.
+ * A payment provider, offered to Ticketstation by a plugin of the group "ticketstationpayment"
+ * (see CollectProvidersEvent). The core owns the order: it decides what a payment means for an
+ * order, its tickets and its mails. A provider only talks to the payment service and reports back
+ * in the value objects of this namespace.
  *
  * Optional abilities are separate interfaces (RefundCapableInterface, MethodAwareInterface).
+ * Whether a provider exists is the plugin's published state; which provider takes new payments is
+ * a setting of the core. A provider keeps its own settings in the parameters of its plugin.
  */
 interface PaymentProviderInterface
 {
@@ -29,7 +32,8 @@ interface PaymentProviderInterface
     public const API_VERSION = 1;
 
     /**
-     * Machine name, stored with payments: lower case letters, digits and underscores.
+     * Machine name, stored with payments: lower case letters, digits and underscores. Use the
+     * element name of the plugin.
      */
     public function getId(): string;
 
@@ -37,11 +41,6 @@ interface PaymentProviderInterface
      * Name for the admin.
      */
     public function getTitle(): string;
-
-    /**
-     * The "Online payments" switch: whether customers can pay through this provider.
-     */
-    public function isEnabled(): bool;
 
     /**
      * Whether the provider has what it needs to take real payments (live credentials), for the
@@ -55,24 +54,14 @@ interface PaymentProviderInterface
     public function isTestMode(): bool;
 
     /**
-     * ISO 4217 code of the currency payments are made in.
-     */
-    public function getCurrency(): string;
-
-    /**
      * Whether an order is marked as waiting for payment (paid = 3) as soon as the customer is
      * sent to the provider.
      */
     public function marksOrderPendingOnStart(): bool;
 
     /**
-     * The screen where the admin sets the provider up, as a Joomla route.
-     */
-    public function getSettingsLink(): string;
-
-    /**
-     * Problems the admin should know about, for "Needs attention" on the control panel.
-     * Only while the provider is enabled.
+     * Problems the admin should know about, for "Needs attention" on the control panel. Only
+     * asked of the provider that takes new payments. The plugin loads its own language files.
      *
      * @return  array  Items of ['key' => language key, 'level' => 'danger'|'warning'].
      */

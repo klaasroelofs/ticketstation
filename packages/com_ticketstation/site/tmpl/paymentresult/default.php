@@ -63,7 +63,12 @@ $contactLink  = '<a href="mailto:' . $contactEmail . '">' . $contactEmail . '</a
             $itemid = TicketstationFunctions::getSiteItemid(); ?>
 
             <section class="ts-card ts-result ts-result--failed">
-                <p class="ts-lead"><?php echo Text::_('COM_TICKETSTATION_PAYMENTRESULT_NOT_COMPLETED'); ?></p>
+                <?php if ($this->notFinished) { ?>
+                    <p class="ts-lead"><?php echo Text::_('COM_TICKETSTATION_PAYMENTRESULT_NOT_FINISHED'); ?></p>
+                    <p><?php echo Text::_('COM_TICKETSTATION_PAYMENTRESULT_NOT_FINISHED_DONT_PAY_TWICE'); ?></p>
+                <?php } else { ?>
+                    <p class="ts-lead"><?php echo Text::_('COM_TICKETSTATION_PAYMENTRESULT_NOT_COMPLETED'); ?></p>
+                <?php } ?>
                 <p><?php echo Text::sprintf('COM_TICKETSTATION_PAYMENTRESULT_ORDER_NUMBER', '<strong class="ts-order-code">' . $this->ordercode . '</strong>'); ?></p>
 
                 <form class="ts-actions" method="post" action="<?php echo Route::_('index.php?option=com_ticketstation' . ($itemid ? '&Itemid=' . $itemid : '')); ?>">

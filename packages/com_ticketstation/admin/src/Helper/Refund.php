@@ -208,38 +208,60 @@ class Refund
     }
 
     /**
-     * The payment provider's id of the payment the order was paid with, or '' when it was paid
-     * outside a provider (Box Office, reservation). The webhook stores the payment id on the
-     * processed attempt. Payments don't record their provider yet; all went through Mollie,
-     * whose ids start with "tr_".
+     * The attempt that paid the order: its provider and the provider's id of the payment. Null
+     * when the order was paid outside a provider (Box Office, reservation). The webhook stores
+     * the payment id on the processed attempt.
      */
-    public static function paymentId(int $ordercode): string
+    private static function paidAttempt(int $ordercode): ?object
     {
         $db    = Factory::getContainer()->get('DatabaseDriver');
         $query = $db->getQuery(true)
-            ->select($db->quoteName('message'))
+            ->select($db->quoteName(['provider', 'provider_payment_id']))
             ->from($db->quoteName('#__ticketstation_transactions_temp'))
             ->where($db->quoteName('ordercode') . ' = ' . $ordercode)
             ->where($db->quoteName('processed') . ' = 1')
-            ->where($db->quoteName('message') . ' LIKE ' . $db->quote('tr\_%'))
+            ->where($db->quoteName('provider_payment_id') . " <> ''")
             ->order($db->quoteName('id') . ' DESC');
 
         $db->setQuery($query, 0, 1);
 
-        return (string) $db->loadResult();
+        return $db->loadObject() ?: null;
     }
 
     /**
-     * The provider that made the payment with the given id, when it can refund payments. Null for
-     * a payment of a provider without refunds, which can only be refunded by hand.
-     *
-     * @return  PaymentProviderInterface|null  Always also a RefundCapableInterface.
+     * The payment provider's id of the payment the order was paid with, or '' when it was paid
+     * outside a provider (Box Office, reservation).
      */
-    private static function refunder(string $paymentId): ?PaymentProviderInterface
+    public static function paymentId(int $ordercode): string
     {
-        $provider = ProviderRegistry::forPayment($paymentId);
+        $attempt = self::paidAttempt($ordercode);
 
-        return $provider instanceof RefundCapableInterface ? $provider : null;
+        return $attempt ? (string) $attempt->provider_payment_id : '';
+    }
+
+    /**
+     * The provider an order was paid through.
+     *
+     * @return  PaymentProviderInterface|null  Null for an order paid outside a provider.
+     *
+     * @throws  \RuntimeException  when that provider isn't available (its plugin is switched off or removed):
+     *                             refunding by hand would register a refund that never reached the customer.
+     */
+    private static function providerOf(int $ordercode): ?PaymentProviderInterface
+    {
+        $attempt = self::paidAttempt($ordercode);
+
+        if ($attempt === null) {
+            return null;
+        }
+
+        $provider = ProviderRegistry::get((string) $attempt->provider);
+
+        if ($provider === null) {
+            throw new \RuntimeException(Text::sprintf('COM_TICKETSTATION_REFUND_ERROR_PROVIDER_UNAVAILABLE', (string) $attempt->provider));
+        }
+
+        return $provider;
     }
 
     /**
@@ -270,13 +292,15 @@ class Refund
         $description = trim($description) !== '' ? trim($description) : Text::sprintf('COM_TICKETSTATION_REFUND_DEFAULT_DESCRIPTION', $ordercode);
         $description = mb_substr($description, 0, 255);
         $paymentId   = self::paymentId($ordercode);
-        $provider    = $paymentId !== '' ? self::refunder($paymentId) : null;
+        $owner       = self::providerOf($ordercode);
+        $provider    = $owner instanceof RefundCapableInterface ? $owner : null;
         $userId      = (int) Factory::getApplication()->getIdentity()->id;
 
         $refund = (object) [
             'ordercode'         => $ordercode,
             'type'              => 'refund',
-            'mollie_payment_id' => $paymentId,
+            'provider'          => $owner ? $owner->getId() : '',
+            'provider_payment_id' => $paymentId,
             'amount'            => $amount,
             'description'       => $description,
             'source'            => 'ticketstation',
@@ -309,7 +333,7 @@ class Refund
                 throw new \RuntimeException(Text::sprintf('COM_TICKETSTATION_REFUND_ERROR_MOLLIE', $e->getMessage()));
             }
 
-            $refund->mollie_id = $made->id;
+            $refund->provider_refund_id = $made->id;
             $refund->currency  = $made->currency;
             $refund->status    = $made->status;
         } else {
@@ -319,7 +343,7 @@ class Refund
                 throw new \RuntimeException(Text::sprintf('COM_TICKETSTATION_REFUND_ERROR_TOO_MUCH', number_format(max(0, $remaining), 2, ',', '')));
             }
 
-            $refund->mollie_id = null;
+            $refund->provider_refund_id = null;
             $refund->currency  = self::currency();
             $refund->status    = 'manual';
         }
@@ -327,8 +351,8 @@ class Refund
         $id = self::store($refund);
 
         History::log($ordercode, 'refund_created', ($provider !== null ? 'Refund of ' : 'Manual refund of ')
-            . number_format($amount, 2, '.', '') . ' ' . $refund->currency . ($provider !== null ? ' made at ' . $provider->getTitle() . ' (' . $refund->mollie_id . ')' : ' registered'),
-            ['amount' => $amount, 'refund' => $id, 'mollie_id' => $refund->mollie_id]);
+            . number_format($amount, 2, '.', '') . ' ' . $refund->currency . ($provider !== null ? ' made at ' . $provider->getTitle() . ' (' . $refund->provider_refund_id . ')' : ' registered'),
+            ['amount' => $amount, 'refund' => $id, ($provider !== null ? $provider->getId() . '_id' : 'refund_id') => $refund->provider_refund_id]);
 
         self::applyPending($id);
 
@@ -612,9 +636,9 @@ class Refund
     public static function sync(int $ordercode): int
     {
         $paymentId = self::paymentId($ordercode);
-        $provider  = $paymentId !== '' ? self::refunder($paymentId) : null;
+        $provider  = $paymentId !== '' ? self::providerOf($ordercode) : null;
 
-        if ($provider === null) {
+        if (!$provider instanceof RefundCapableInterface) {
             throw new \RuntimeException(Text::_('COM_TICKETSTATION_REFUND_ERROR_NO_PAYMENT'));
         }
 
@@ -696,14 +720,14 @@ class Refund
 
         $db    = Factory::getContainer()->get('DatabaseDriver');
         $query = $db->getQuery(true)
-            ->select([$db->quoteName('message'), $db->quoteName('ordercode')])
+            ->select([$db->quoteName('provider_payment_id'), $db->quoteName('ordercode')])
             ->from($db->quoteName('#__ticketstation_transactions_temp'))
             ->where($db->quoteName('processed') . ' = 1')
-            ->where($db->quoteName('message') . ' IN (' . implode(',', array_map([$db, 'quote'], $paymentIds)) . ')');
+            ->where($db->quoteName('provider_payment_id') . ' IN (' . implode(',', array_map([$db, 'quote'], $paymentIds)) . ')');
 
         $db->setQuery($query);
 
-        return array_map('intval', $db->loadAssocList('message', 'ordercode'));
+        return array_map('intval', $db->loadAssocList('provider_payment_id', 'ordercode'));
     }
 
     /**
@@ -828,7 +852,7 @@ class Refund
         $query = $db->getQuery(true)
             ->select('*')
             ->from($db->quoteName('#__ticketstation_refunds'))
-            ->where($db->quoteName('mollie_id') . ' = ' . $db->quote($mollieId));
+            ->where($db->quoteName('provider_refund_id') . ' = ' . $db->quote($mollieId));
 
         $db->setQuery($query);
         $existing = $db->loadObject();
@@ -838,8 +862,9 @@ class Refund
             $refund = (object) [
                 'ordercode'         => $ordercode,
                 'type'              => $type,
-                'mollie_id'         => $mollieId,
-                'mollie_payment_id' => $paymentId,
+                'provider'          => $provider->getId(),
+                'provider_refund_id' => $mollieId,
+                'provider_payment_id' => $paymentId,
                 'amount'            => round($amount, 2),
                 'currency'          => $currency,
                 'description'       => mb_substr($description, 0, 255),
@@ -855,7 +880,7 @@ class Refund
                 History::log($ordercode, $type === 'chargeback' ? 'chargeback_reported' : 'refund_reported',
                     $label . ' of ' . number_format($amount, 2, '.', '') . ' ' . $currency . ' reported by ' . $provider->getTitle() . ' (' . $mollieId . ')'
                     . ($refund->attention ? '; a decision about the tickets is needed' : ''),
-                    ['amount' => $amount, 'mollie_id' => $mollieId, 'status' => $status], $provider->getTitle());
+                    ['amount' => $amount, $provider->getId() . '_id' => $mollieId, 'status' => $status], $provider->getTitle());
             }
 
             return $fromTicketstation ? 0 : 1;
@@ -876,7 +901,7 @@ class Refund
 
             History::log($ordercode, 'refund_failed', $label . ' ' . $mollieId . ' is now ' . $status . ' at ' . $provider->getTitle() . '; no money went back'
                 . (self::isWaiting($existing) ? '. The tickets were left unchanged' : ''),
-                ['mollie_id' => $mollieId, 'status' => $status], $provider->getTitle());
+                [$provider->getId() . '_id' => $mollieId, 'status' => $status], $provider->getTitle());
 
             if (self::isWaiting($existing)) {
                 $treatments = null;
@@ -908,11 +933,11 @@ class Refund
     {
         $db = Factory::getContainer()->get('DatabaseDriver');
 
-        if (!empty($refund->mollie_id)) {
+        if (!empty($refund->provider_refund_id)) {
             $query = $db->getQuery(true)
                 ->select($db->quoteName('id'))
                 ->from($db->quoteName('#__ticketstation_refunds'))
-                ->where($db->quoteName('mollie_id') . ' = ' . $db->quote($refund->mollie_id));
+                ->where($db->quoteName('provider_refund_id') . ' = ' . $db->quote($refund->provider_refund_id));
 
             $db->setQuery($query);
             $id = (int) $db->loadResult();
@@ -945,8 +970,6 @@ class Refund
 
     private static function currency(): string
     {
-        $provider = ProviderRegistry::active();
-
-        return $provider !== null ? $provider->getCurrency() : 'EUR';
+        return ProviderRegistry::currency();
     }
 }

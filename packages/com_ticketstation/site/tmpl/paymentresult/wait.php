@@ -62,6 +62,13 @@ $contactLink  = '<a href="mailto:' . $contactEmail . '">' . $contactEmail . '</a
         }
 
         function nextPoll(delay) {
+            // After 90 seconds without a result (a customer who went back from the payment page without
+            // paying, or a payment that stays open) go on to the result page, which offers a new try
+            if (Date.now() - startedAt > 90000) {
+                window.location.href = resultUrl + (resultUrl.indexOf('?') === -1 ? '?' : '&') + 'notfinished=1';
+                return;
+            }
+
             // After 20 seconds, reassure the customer and poll a bit less often
             if (Date.now() - startedAt > 20000) {
                 document.getElementById('ts-wait-slow').hidden = false;

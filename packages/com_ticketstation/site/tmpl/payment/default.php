@@ -234,6 +234,22 @@ foreach (['terms_url' => 'COM_TICKETSTATION_TERMS_AND_CONDITIONS', 'privacy_url'
 
         <form action="<?= Route::_('index.php?option=com_ticketstation' . ($itemid ? '&Itemid=' . $itemid : '')); ?>" method="POST" name="adminForm" id="adminForm" class="ts-actions">
 
+            <?php ## More than one payment method: the customer chooses here, so the provider's own pages don't ask again. ?>
+            <?php if ($this->methods && $this->paymentsOn && $ordertotal > 0) { ?>
+                <fieldset class="ts-methods">
+                    <legend class="ts-methods__title"><?= Text::_('COM_TICKETSTATION_CHOOSE_PAYMENT_METHOD'); ?></legend>
+                    <?php foreach ($this->methods as $i => $method) { ?>
+                        <label class="ts-method">
+                            <input class="ts-method__input" type="radio" name="method" value="<?= $this->escape($method->id); ?>"<?= $i === 0 ? ' checked' : ''; ?> required />
+                            <?php if ($method->iconUrl !== '') { ?>
+                                <img class="ts-method__icon" src="<?= $this->escape($method->iconUrl); ?>" alt="" width="32" height="24" loading="lazy" onerror="this.style.display='none'" />
+                            <?php } ?>
+                            <span class="ts-method__label"><?= $this->escape($method->label); ?></span>
+                        </label>
+                    <?php } ?>
+                </fieldset>
+            <?php } ?>
+
             <a class="ts-btn ts-btn--secondary ts-btn--back" href="<?php echo $gotocheckout; ?>">
                 <?= Text::_('COM_TICKETSTATION_BACK'); ?>
             </a>

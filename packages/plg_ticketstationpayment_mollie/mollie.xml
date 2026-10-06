@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="utf-8"?>
+<extension type="plugin" group="ticketstationpayment" method="upgrade">
+
+	<name>plg_ticketstationpayment_mollie</name>
+	<creationDate>2026-10-06</creationDate>
+	<author>Klaas Roelofs</author>
+	<authorEmail>klaasroelofs@huibuuke.nl</authorEmail>
+	<authorUrl>https://www.huibuuke.nl</authorUrl>
+	<copyright>© 2026 Klaas Roelofs</copyright>
+	<license>GPL v3</license>
+	<version>2.25.0-rc3</version>
+	<description>PLG_TICKETSTATIONPAYMENT_MOLLIE_XML_DESCRIPTION</description>
+
+	<namespace path="src">Ticketstation\Plugin\TicketstationPayment\Mollie</namespace>
+
+	<files>
+		<folder plugin="mollie">services</folder>
+		<folder>src</folder>
+		<folder>vendor</folder>
+	</files>
+
+	<media destination="plg_ticketstationpayment_mollie" folder="media">
+		<folder>images</folder>
+	</media>
+
+	<languages>
+		<language tag="en-GB">language/en-GB/plg_ticketstationpayment_mollie.ini</language>
+		<language tag="en-GB">language/en-GB/plg_ticketstationpayment_mollie.sys.ini</language>
+		<language tag="nl-NL">language/nl-NL/plg_ticketstationpayment_mollie.ini</language>
+		<language tag="nl-NL">language/nl-NL/plg_ticketstationpayment_mollie.sys.ini</language>
+	</languages>
+
+	<config>
+		<fields name="params">
+			<fieldset name="basic" addfieldprefix="Ticketstation\Plugin\TicketstationPayment\Mollie\Field">
+
+				<field
+					name="api_key"
+					type="password"
+					label="PLG_TICKETSTATIONPAYMENT_MOLLIE_API_KEY"
+					description="PLG_TICKETSTATIONPAYMENT_MOLLIE_API_KEY_DESC"
+					autocomplete="off"
+					size="60"
+				/>
+
+				<field
+					name="api_key_test"
+					type="text"
+					label="PLG_TICKETSTATIONPAYMENT_MOLLIE_API_KEY_TEST"
+					description="PLG_TICKETSTATIONPAYMENT_MOLLIE_API_KEY_TEST_DESC"
+					autocomplete="off"
+					size="60"
+				/>
+
+				<field
+					name="test_mode"
+					type="radio"
+					label="PLG_TICKETSTATIONPAYMENT_MOLLIE_TEST_MODE"
+					description="PLG_TICKETSTATIONPAYMENT_MOLLIE_TEST_MODE_DESC"
+					layout="joomla.form.field.radio.switcher"
+					default="0"
+					>
+					<option value="0">JOFF</option>
+					<option value="1">JON</option>
+				</field>
+
+				<field
+					name="payment_methods"
+					type="methods"
+					label="PLG_TICKETSTATIONPAYMENT_MOLLIE_PAYMENT_METHODS"
+					description="PLG_TICKETSTATIONPAYMENT_MOLLIE_PAYMENT_METHODS_DESC"
+					default="ideal"
+				/>
+
+				<field
+					name="description"
+					type="text"
+					label="PLG_TICKETSTATIONPAYMENT_MOLLIE_DESCRIPTION"
+					description="PLG_TICKETSTATIONPAYMENT_MOLLIE_DESCRIPTION_DESC"
+					default="Ordernumber:"
+					size="40"
+				/>
+
+				<field
+					name="locale"
+					type="list"
+					label="PLG_TICKETSTATIONPAYMENT_MOLLIE_LANGUAGE"
+					description="PLG_TICKETSTATIONPAYMENT_MOLLIE_LANGUAGE_DESC"
+					default="en_GB"
+					>
+					<option value="nl_NL">Nederlands</option>
+					<option value="en_GB">English</option>
+					<option value="fr_FR">Français</option>
+					<option value="de_DE">Deutsch</option>
+				</field>
+
+				<field
+					name="mark_pending"
+					type="radio"
+					label="PLG_TICKETSTATIONPAYMENT_MOLLIE_MARK_PENDING"
+					description="PLG_TICKETSTATIONPAYMENT_MOLLIE_MARK_PENDING_DESC"
+					layout="joomla.form.field.radio.switcher"
+					default="1"
+					>
+					<option value="0">JNO</option>
+					<option value="1">JYES</option>
+				</field>
+
+			</fieldset>
+		</fields>
+	</config>
+
+</extension>

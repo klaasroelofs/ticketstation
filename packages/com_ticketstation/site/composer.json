@@ -6,7 +6,6 @@
   "require": {
     "php": ">=8.3",
     "endroid/qr-code": "^6.0",
-    "mollie/mollie-api-php": "^4.0",
     "setasign/fpdf": "^1.8.6",
     "setasign/fpdi": "^2.6.7"
   },

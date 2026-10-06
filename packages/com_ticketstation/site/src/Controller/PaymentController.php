@@ -19,6 +19,7 @@ use Ticketstation\Component\Ticketstation\Administrator\Helper\OrderTotals;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\PaymentAPI;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Shop;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\TicketstationFunctions;
+use Ticketstation\Component\Ticketstation\Administrator\Payment\MethodAwareInterface;
 use Ticketstation\Component\Ticketstation\Administrator\Payment\PaymentLog;
 use Ticketstation\Component\Ticketstation\Administrator\Payment\PaymentService;
 use Ticketstation\Component\Ticketstation\Administrator\Payment\ProviderRegistry;
@@ -92,7 +93,8 @@ class PaymentController extends BaseController
             ## Only set up the provider when the order actually goes there: a provider without
             ## credentials would break free orders on a site without them.
             try {
-                $checkoutUrl = PaymentService::start(ProviderRegistry::active(), (int) $this->ordercode, (float) $orderamount);
+                $provider    = ProviderRegistry::active();
+                $checkoutUrl = PaymentService::start($provider, (int) $this->ordercode, (float) $orderamount, $this->chosenMethod($provider));
             } catch (\RuntimeException $e) {
                 PaymentLog::add('Error while creating payment: ' . $e->getMessage());
                 exit(Text::_('COM_TICKETSTATION_MOLLIE_ERROR_1000'));
@@ -279,6 +281,28 @@ class PaymentController extends BaseController
     function IPNProcessPayment()
     {
         $this->processWebhook(ProviderRegistry::get('mollie'));
+    }
+
+    /**
+     * The payment method the customer chose on the payment page, when it is one the provider
+     * offers; null otherwise (a form without a choice, or a method that isn't offered), which
+     * leaves the choice to the provider.
+     */
+    private function chosenMethod($provider): ?string
+    {
+        $method = Factory::getApplication()->getInput()->post->getCmd('method', '');
+
+        if ($method === '' || !$provider instanceof MethodAwareInterface) {
+            return null;
+        }
+
+        foreach ($provider->getCheckoutMethods(ProviderRegistry::currency()) as $option) {
+            if ($option->id === $method) {
+                return $method;
+            }
+        }
+
+        return null;
     }
 
     private function processWebhook($provider)

@@ -65,10 +65,12 @@ class AclGate
             'cancel'    => self::MANAGE,
             'walletcsr' => 'core.options',
         ],
-        'mollie' => [
+        'payments' => [
             ''       => 'core.options',
             'apply'  => 'core.options',
             'save'   => 'core.options',
+            'publish'   => 'core.options',
+            'unpublish' => 'core.options',
             'cancel' => self::MANAGE,
         ],
         'templates' => [

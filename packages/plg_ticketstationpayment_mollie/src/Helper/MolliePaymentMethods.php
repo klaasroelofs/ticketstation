@@ -1,25 +1,24 @@
 <?php
 /**
  * @package     Ticketstation
- * @subpackage  com_ticketstation
+ * @subpackage  plg_ticketstationpayment_mollie
  *
  * @copyright   Copyright (C) 2026 Klaas Roelofs. All rights reserved.
  * @license     GNU General Public License version 3; see LICENSE
  */
 
-namespace Ticketstation\Component\Ticketstation\Administrator\Helper;
+namespace Ticketstation\Plugin\TicketstationPayment\Mollie\Helper;
 
 use Joomla\CMS\Language\Text;
 use Mollie\Api\MollieApiClient;
 
-defined('_JEXEC') or die('Restricted access');
+defined('_JEXEC') or die;
 
 /**
- * The Mollie payment methods an admin may offer at checkout, stored comma-separated in
- * #__ticketstation_mollie.payment_methods and passed as the "method" list when a payment
- * is created. Only methods that settle straight away are offered: bank transfer stays
- * "open" for days while the seats are held, and pay-later methods use the "authorized"
- * status, which the webhook does not handle.
+ * The Mollie payment methods an admin may offer at checkout, stored as a list in the parameters of
+ * the plugin ("payment_methods"). Only methods that settle straight away are offered: bank
+ * transfer stays "open" for days while the seats are held, and pay-later methods use the
+ * "authorized" status, which the webhook does not handle.
  */
 class MolliePaymentMethods
 {
@@ -29,17 +28,17 @@ class MolliePaymentMethods
     public const METHODS = [
         'ideal'      => 'iDEAL | Wero',
         'bancontact' => 'Bancontact',
-        'creditcard' => 'COM_TICKETSTATION_MOLLIE_METHOD_CREDITCARD',
+        'creditcard' => 'PLG_TICKETSTATIONPAYMENT_MOLLIE_METHOD_CREDITCARD',
         'applepay'   => 'Apple Pay',
         'paypal'     => 'PayPal',
         'kbc'        => 'KBC/CBC',
         'belfius'    => 'Belfius',
-        'giftcard'   => 'COM_TICKETSTATION_MOLLIE_METHOD_GIFTCARD',
+        'giftcard'   => 'PLG_TICKETSTATIONPAYMENT_MOLLIE_METHOD_GIFTCARD',
     ];
 
     /**
-     * Used when nothing valid is stored, which is how the site worked before methods
-     * could be chosen.
+     * Used when nothing valid is stored, which is how the site worked before methods could be
+     * chosen.
      */
     public const DEFAULT = ['ideal'];
 
@@ -47,7 +46,7 @@ class MolliePaymentMethods
     {
         $label = self::METHODS[$method] ?? $method;
 
-        return str_starts_with($label, 'COM_TICKETSTATION_') ? Text::_($label) : $label;
+        return str_starts_with($label, 'PLG_') ? Text::_($label) : $label;
     }
 
     /**
@@ -59,8 +58,8 @@ class MolliePaymentMethods
     }
 
     /**
-     * Whether a list lets every customer pay: Apple Pay only shows on Apple devices,
-     * so it cannot be the only method.
+     * Whether a list lets every customer pay: Apple Pay only shows on Apple devices, so it
+     * cannot be the only method.
      */
     public static function isUsable(array $methods): bool
     {
@@ -68,18 +67,21 @@ class MolliePaymentMethods
     }
 
     /**
-     * The methods to offer, from the stored comma-separated value.
+     * The methods to offer, from the stored value: a list, or a comma-separated string.
+     *
+     * @param   array|string|null  $stored
      */
-    public static function fromConfig(?string $stored): array
+    public static function fromConfig($stored): array
     {
-        $methods = self::filter(explode(',', (string) $stored));
+        $stored  = is_array($stored) ? $stored : explode(',', (string) $stored);
+        $methods = self::filter(array_map('strval', $stored));
 
         return self::isUsable($methods) ? $methods : self::DEFAULT;
     }
 
     /**
-     * The method ids that are active in the Mollie account behind this API key, or null
-     * when Mollie cannot be asked (no key, no connection, invalid key).
+     * The method ids that are active in the Mollie account behind this API key, or null when
+     * Mollie cannot be asked (no key, no connection, invalid key).
      */
     public static function activeInMollie(?string $apiKey): ?array
     {
@@ -87,7 +89,7 @@ class MolliePaymentMethods
             return null;
         }
 
-        require_once JPATH_SITE . '/components/com_ticketstation/vendor/autoload.php';
+        require_once dirname(__DIR__, 2) . '/vendor/autoload.php';
 
         try {
             $mollie = new MollieApiClient();

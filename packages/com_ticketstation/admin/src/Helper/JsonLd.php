@@ -139,9 +139,7 @@ class JsonLd
      */
     public static function currency(): string
     {
-        $provider = ProviderRegistry::active();
-
-        return $provider !== null ? $provider->getCurrency() : MollieCurrencies::DEFAULT;
+        return ProviderRegistry::currency();
     }
 
     private static function eventNode(object $row, object $config, array $offers): array

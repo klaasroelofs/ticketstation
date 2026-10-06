@@ -30,10 +30,11 @@ class PaymentAPI
 
     ## inserting the temporary transaction to the temporary transaction tbale.
     ## Now generates and returns a cryptographically random return_token for secure authorization.
-    public function insertTempTransaction($userid, $transid)
+    public function insertTempTransaction($userid, $transid, string $provider = '')
     {
         $transaction = new stdClass();
         $transaction->transaction_number = $transid;
+        $transaction->provider = $provider;
         $transaction->userid = (int)$userid;
         $transaction->ordercode = (int)$this->ordercode;
         $transaction->processed = 0;
@@ -55,7 +56,7 @@ class PaymentAPI
 
     ## update the temporary transaction to "processed"
     ## Now uses return_token (cryptographically random) instead of transaction_number (was md5(ordercode))
-    public function updateTempTransaction($token, $state = 1, $message = 1)
+    public function updateTempTransaction($token, $state = 1, $message = 1, string $providerPaymentId = '')
     {
         $db = Factory::getContainer()->get('DatabaseDriver');
 
@@ -65,6 +66,11 @@ class PaymentAPI
             $db->quoteName('processed') . ' = ' . $db->quote((int)$state),
             $db->quoteName('message') . ' = ' . $db->quote($message)
         );
+
+        ## The provider's id of the payment, once there is one (a paid attempt).
+        if ($providerPaymentId !== '') {
+            $fields[] = $db->quoteName('provider_payment_id') . ' = ' . $db->quote($providerPaymentId);
+        }
 
         $conditions = array(
             $db->quoteName('return_token') . ' = ' . $db->quote($token)
@@ -83,6 +89,21 @@ class PaymentAPI
         else {
             return true;
         }
+    }
+
+    ## Records which payment provider a payment attempt is made through.
+    public function setTempProvider(int $id, string $provider)
+    {
+        $db = Factory::getContainer()->get('DatabaseDriver');
+
+        $query = $db->getQuery(true)
+            ->update($db->quoteName('#__ticketstation_transactions_temp'))
+            ->set($db->quoteName('provider') . ' = ' . $db->quote($provider))
+            ->where($db->quoteName('id') . ' = ' . $id);
+
+        $db->setQuery($query);
+
+        return (bool) $db->execute();
     }
 
     ## Check the count of the temporary transactions for this ordercode
@@ -181,7 +202,7 @@ class PaymentAPI
     ## type 			= VARCHAR(50) --> type transaction information (EG: PayPal, IDEAL, Sofort)
     ## details 			= TEXT (may have unlimited transaction and must be sanitized by yourself!)
 
-    public function saveTransaction($transid, $userid, $details, $amount, $type)
+    public function saveTransaction($transid, $userid, $details, $amount, $type, string $provider = '')
     {
         $transaction = new stdClass();
         $transaction->transid = $transid;
@@ -189,6 +210,7 @@ class PaymentAPI
         $transaction->details = $details;
         $transaction->amount = $amount;
         $transaction->type = $type;
+        $transaction->provider = $provider;
         $transaction->orderid = (int)$this->ordercode;
 
         $result = Factory::getContainer()->get('DatabaseDriver')

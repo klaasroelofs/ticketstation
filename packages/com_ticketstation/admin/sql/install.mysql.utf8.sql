@@ -10,24 +10,6 @@ CREATE TABLE IF NOT EXISTS `#__ticketstation_scannermap` (
   PRIMARY KEY (`id`)
 )  ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 DEFAULT COLLATE=utf8mb4_unicode_ci;
 
-DROP TABLE IF EXISTS `#__ticketstation_mollie`;
-CREATE TABLE IF NOT EXISTS `#__ticketstation_mollie` (
-  `configid` int(1) NOT NULL AUTO_INCREMENT,
-  `test_mode` tinyint(1) DEFAULT '0',
-  `api_key_test` varchar(255) NOT NULL DEFAULT '',
-  `api_key` varchar(255) NOT NULL DEFAULT '',
-  `description` varchar(255) DEFAULT '',
-  `show_methods` tinyint(1) DEFAULT '0',
-  `send_confirmation` tinyint(1) DEFAULT '0',
-  `mollie_language` varchar(255) DEFAULT 'en',
-  `change_payment_state` tinyint(1) DEFAULT '1',
-  `send_mail_after_return` tinyint(1) DEFAULT '0',
-  `payment_methods` varchar(255) NOT NULL DEFAULT 'ideal',
-  `currency` varchar(3) NOT NULL DEFAULT 'EUR',
-  `enabled` tinyint(1) NOT NULL DEFAULT 1,
-  PRIMARY KEY (`configid`)
-)  ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 DEFAULT COLLATE=utf8mb4_unicode_ci;
-
 DROP TABLE IF EXISTS `#__ticketstation_clients`;
 CREATE TABLE IF NOT EXISTS `#__ticketstation_clients` (
   `clientid` int(10) NOT NULL AUTO_INCREMENT,
@@ -170,6 +152,8 @@ CREATE TABLE IF NOT EXISTS `#__ticketstation_config` (
   `price_decimal_sep` varchar(4) NOT NULL DEFAULT ',',
   `price_thousands_sep` varchar(4) NOT NULL DEFAULT '',
   `price_symbol_after` tinyint(1) NOT NULL DEFAULT 0,
+  `payment_provider` varchar(50) NOT NULL DEFAULT '',
+  `payment_currency` varchar(3) NOT NULL DEFAULT 'EUR',
   PRIMARY KEY (`configid`)
 )  ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 DEFAULT COLLATE=utf8mb4_unicode_ci;
 
@@ -178,10 +162,11 @@ CREATE TABLE IF NOT EXISTS `#__ticketstation_transactions` (
   `pid` int(10) NOT NULL AUTO_INCREMENT,
   `transid` int(10) NOT NULL,
   `userid` int(10) NOT NULL,
-  `details` varchar(2500) NOT NULL,
+  `details` text NOT NULL,
   `amount` double NOT NULL,
   `date` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `type` varchar(50) NOT NULL,
+  `provider` varchar(50) NOT NULL DEFAULT '',
   `orderid` int(10) NOT NULL DEFAULT '0',
   PRIMARY KEY (`pid`)
 )  ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 DEFAULT COLLATE=utf8mb4_unicode_ci;
@@ -191,6 +176,8 @@ CREATE TABLE IF NOT EXISTS `#__ticketstation_transactions_temp` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `userid` int(11) NOT NULL,
   `transaction_number` varchar(50) NOT NULL,
+  `provider` varchar(50) NOT NULL DEFAULT '',
+  `provider_payment_id` varchar(100) NOT NULL DEFAULT '',
   `ordercode` int(10) NOT NULL,
   `return_token` varchar(64) DEFAULT NULL,
   `create_date` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -559,8 +546,9 @@ CREATE TABLE IF NOT EXISTS `#__ticketstation_refunds` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `ordercode` int(11) NOT NULL,
   `type` varchar(20) NOT NULL DEFAULT 'refund',
-  `mollie_id` varchar(50) DEFAULT NULL,
-  `mollie_payment_id` varchar(50) NOT NULL DEFAULT '',
+  `provider` varchar(50) NOT NULL DEFAULT '',
+  `provider_refund_id` varchar(50) DEFAULT NULL,
+  `provider_payment_id` varchar(50) NOT NULL DEFAULT '',
   `amount` decimal(10,2) NOT NULL DEFAULT '0.00',
   `currency` varchar(3) NOT NULL DEFAULT 'EUR',
   `description` varchar(255) NOT NULL DEFAULT '',
@@ -574,7 +562,7 @@ CREATE TABLE IF NOT EXISTS `#__ticketstation_refunds` (
   `treatments` text DEFAULT NULL,
   `applied` datetime DEFAULT NULL,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `idx_mollie_id` (`mollie_id`),
+  UNIQUE KEY `idx_provider_refund_id` (`provider_refund_id`),
   KEY `ordercode` (`ordercode`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 DEFAULT COLLATE=utf8mb4_unicode_ci;
 
@@ -892,20 +880,6 @@ INSERT IGNORE INTO `#__ticketstation_templates` VALUES("6","Waiting list payment
 INSERT IGNORE INTO `#__ticketstation_templates` VALUES("7","Message to buyers of an event","<p>Hi {firstname},</p><p>{message}</p><p>Your order: <strong>{ordercode}</strong></p><p>{orderlist}</p><p>Please don't hesitate to contact us in case of any questions.</p><p>Kind regards,</p><p>{company_name}<br />{company_website}</p>","{subject}");
 INSERT IGNORE INTO `#__ticketstation_templates` VALUES("8","Event reminder","<p>Hi {firstname},</p><p>This is a reminder that you have tickets for <strong>{eventname}</strong>.</p><p>When: {eventdate}, {eventtime}<br />Doors open: {doorsopen}<br />Where: {location}</p><p>{orderlist}</p><p>The tickets were sent to you earlier. Can't find them? Request them again here: <a href=\"{ticketlink}\">{ticketlink}</a>. The attached calendar file adds the event to your calendar.</p><p>We look forward to seeing you!</p><p>Kind regards,</p><p>{company_name}<br />{company_website}</p>","Reminder: {eventname}");
 
-INSERT IGNORE INTO `#__ticketstation_mollie` VALUES(
-"1",
-"0",
-"",
-"",
-"Ordernumber:",
-"0",
-"0",
-"en_GB",
-"1",
-"0",
-"ideal",
-"EUR",
-"1");
 
 INSERT IGNORE INTO `#__ticketstation_config` VALUES(
 "1",
@@ -1027,4 +1001,6 @@ NULL,
 "2",
 ",",
 "",
-"0");
+"0",
+"mollie",
+"EUR");

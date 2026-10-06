@@ -9,6 +9,7 @@
             packages\mod_ticketstation_basket.zip
             packages\plg_task_ticketstation.zip
             packages\plg_system_ticketstation.zip
+            packages\plg_ticketstationpayment_mollie.zip
         dist\pkg_ticketstation_update.xml
 
     The update feed points at the zip as a GitHub release asset of tag v<version> and carries
@@ -16,8 +17,8 @@
     (.github\workflows\release.yml) attaches both files to the release; the package manifest's
     <updateservers> reads the feed from the latest release.
 
-    Requires packages\com_ticketstation\site\vendor (git-ignored); create it with
-    `composer install --no-dev` in packages\com_ticketstation\site.
+    Requires the git-ignored vendor folders of packages\com_ticketstation\site and
+    packages\plg_ticketstationpayment_mollie; create each with `composer install --no-dev` in that folder.
 
     Usage:  powershell -ExecutionPolicy Bypass -File build\build.ps1
 #>
@@ -35,10 +36,14 @@ $ComponentDir = Join-Path $RepoRoot 'packages\com_ticketstation'
 $ModuleDir    = Join-Path $RepoRoot 'packages\mod_ticketstation_basket'
 $PluginDir    = Join-Path $RepoRoot 'packages\plg_task_ticketstation'
 $SystemPluginDir = Join-Path $RepoRoot 'packages\plg_system_ticketstation'
+$MolliePluginDir = Join-Path $RepoRoot 'packages\plg_ticketstationpayment_mollie'
 $DistDir      = Join-Path $RepoRoot 'dist'
 
 if (-not (Test-Path (Join-Path $ComponentDir 'site\vendor\autoload.php'))) {
     throw "site\vendor is missing: run 'composer install --no-dev' in packages\com_ticketstation\site first."
+}
+if (-not (Test-Path (Join-Path $MolliePluginDir 'vendor\autoload.php'))) {
+    throw "The Mollie plugin's vendor is missing: run 'composer install --no-dev' in packages\plg_ticketstationpayment_mollie first."
 }
 
 function Get-Manifest([string] $path) {
@@ -59,6 +64,7 @@ $versions = [ordered] @{
     'mod_ticketstation_basket.xml' = Get-ManifestVersion (Join-Path $ModuleDir 'mod_ticketstation_basket.xml')
     'task/ticketstation.xml'      = Get-ManifestVersion (Join-Path $PluginDir 'ticketstation.xml')
     'system/ticketstation.xml'    = Get-ManifestVersion (Join-Path $SystemPluginDir 'ticketstation.xml')
+    'ticketstationpayment/mollie.xml' = Get-ManifestVersion (Join-Path $MolliePluginDir 'mollie.xml')
 }
 if (@($versions.Values | Select-Object -Unique).Count -ne 1) {
     $list = ($versions.GetEnumerator() | ForEach-Object { "$($_.Key) $($_.Value)" }) -join ', '
@@ -96,33 +102,11 @@ $staging = Join-Path ([System.IO.Path]::GetTempPath()) ('pkg_ticketstation_' + [
 $pkgRoot = Join-Path $staging 'package'
 New-Item -ItemType Directory -Path (Join-Path $pkgRoot 'packages') -Force | Out-Null
 
-try {
-    # Component: the site\composer.* files only describe site\vendor and are not installed.
-    $comStage = Join-Path $staging 'com_ticketstation'
-    Copy-Tree $ComponentDir $comStage
-    Remove-Item (Join-Path $comStage 'site\composer.json'), (Join-Path $comStage 'site\composer.lock') -ErrorAction SilentlyContinue
-    # Composer installs the Mollie library with its example scripts and dev tooling config. They are
-    # not used at runtime, and the examples would be directly web-reachable PHP files on the site.
-    $mollieDir = Join-Path $comStage 'site\vendor\mollie\mollie-api-php'
-    Remove-Item (Join-Path $mollieDir 'examples') -Recurse -Force -ErrorAction SilentlyContinue
-    Remove-Item (Join-Path $mollieDir 'phpstan.neon'), (Join-Path $mollieDir 'phpstan-baseline.neon'), (Join-Path $mollieDir '.php-cs-fixer.dist.php') -ErrorAction SilentlyContinue
-    # The same for FPDF's tutorials, documentation and font converter (tutorial\makefont.php even
-    # writes files); only fpdf.php and its core fonts are used.
-    $fpdfDir = Join-Path $comStage 'site\vendor\setasign\fpdf'
-    foreach ($dir in 'tutorial', 'doc', 'makefont') {
-        Remove-Item (Join-Path $fpdfDir $dir) -Recurse -Force -ErrorAction SilentlyContinue
-    }
-    # Mollie's CLI release script, code generator, docs and agent notes are not used at runtime either.
-    foreach ($item in 'bin', 'tools', 'docs', 'CLAUDE.md') {
-        Remove-Item (Join-Path $mollieDir $item) -Recurse -Force -ErrorAction SilentlyContinue
-    }
-    Remove-Item (Join-Path $comStage 'site\vendor\bin') -Recurse -Force -ErrorAction SilentlyContinue
 
-    # Most bundled libraries carry no license notice in each PHP file, which the JED checker reports
-    # as "PHP Headers missing GPL License Notice". Add one comment line naming the library's license
-    # (all of them MIT or BSD-2-Clause, see THIRD-PARTY-NOTICES.md) to every file that has none.
-    $vendorStage = Join-Path $comStage 'site\vendor'
-    Copy-Item -LiteralPath (Join-Path $RepoRoot 'THIRD-PARTY-NOTICES.md') $vendorStage
+# Most bundled libraries carry no license notice in each PHP file, which the JED checker reports
+# as "PHP Headers missing GPL License Notice". Add one comment line naming the library's license
+# (all of them MIT or BSD-2-Clause, see THIRD-PARTY-NOTICES.md) to every file that has none.
+function Add-VendorLicenseLines([string] $vendorStage) {
     $vendorLicenses = @{
         'bacon\bacon-qr-code'   = 'BSD-2-Clause'
         'dasprid\enum'          = 'BSD-2-Clause'
@@ -157,7 +141,25 @@ try {
         [System.IO.File]::WriteAllText($_.FullName, $content, $utf8)
         $tagged++
     }
-    Write-Host "Added a license line to $tagged vendor PHP files."
+    Write-Host "Added a license line to $tagged vendor PHP files in $vendorStage."
+}
+
+try {
+    # Component: the site\composer.* files only describe site\vendor and are not installed.
+    $comStage = Join-Path $staging 'com_ticketstation'
+    Copy-Tree $ComponentDir $comStage
+    Remove-Item (Join-Path $comStage 'site\composer.json'), (Join-Path $comStage 'site\composer.lock') -ErrorAction SilentlyContinue
+    # FPDF's tutorials, documentation and font converter (tutorial\makefont.php even writes files) are
+    # not used at runtime: only fpdf.php and its core fonts are. Neither is Composer's bin folder.
+    $fpdfDir = Join-Path $comStage 'site\vendor\setasign\fpdf'
+    foreach ($dir in 'tutorial', 'doc', 'makefont') {
+        Remove-Item (Join-Path $fpdfDir $dir) -Recurse -Force -ErrorAction SilentlyContinue
+    }
+    Remove-Item (Join-Path $comStage 'site\vendor\bin') -Recurse -Force -ErrorAction SilentlyContinue
+
+    $vendorStage = Join-Path $comStage 'site\vendor'
+    Copy-Item -LiteralPath (Join-Path $RepoRoot 'THIRD-PARTY-NOTICES.md') $vendorStage
+    Add-VendorLicenseLines $vendorStage
     $comVersion = Get-ManifestVersion (Join-Path $comStage 'ticketstation.xml')
     New-Zip $comStage (Join-Path $pkgRoot 'packages\com_ticketstation.zip')
 
@@ -178,6 +180,26 @@ try {
     Copy-Tree $SystemPluginDir $sysStage
     $sysVersion = Get-ManifestVersion (Join-Path $sysStage 'ticketstation.xml')
     New-Zip $sysStage (Join-Path $pkgRoot 'packages\plg_system_ticketstation.zip')
+
+    # Mollie payment plugin: its vendor folder holds the Mollie library (composer install --no-dev in
+    # the plugin folder). The composer files only describe it and are not installed.
+    $mollieStage = Join-Path $staging 'plg_ticketstationpayment_mollie'
+    Copy-Tree $MolliePluginDir $mollieStage
+    Remove-Item (Join-Path $mollieStage 'composer.json'), (Join-Path $mollieStage 'composer.lock') -ErrorAction SilentlyContinue
+    # Composer installs the Mollie library with its example scripts and dev tooling config. They are
+    # not used at runtime, and the examples would be directly web-reachable PHP files on the site.
+    # Its CLI release script, code generator, docs and agent notes are not used either.
+    $mollieDir = Join-Path $mollieStage 'vendor\mollie\mollie-api-php'
+    Remove-Item (Join-Path $mollieDir 'examples') -Recurse -Force -ErrorAction SilentlyContinue
+    Remove-Item (Join-Path $mollieDir 'phpstan.neon'), (Join-Path $mollieDir 'phpstan-baseline.neon'), (Join-Path $mollieDir '.php-cs-fixer.dist.php') -ErrorAction SilentlyContinue
+    foreach ($item in 'bin', 'tools', 'docs', 'CLAUDE.md') {
+        Remove-Item (Join-Path $mollieDir $item) -Recurse -Force -ErrorAction SilentlyContinue
+    }
+    Remove-Item (Join-Path $mollieStage 'vendor\bin') -Recurse -Force -ErrorAction SilentlyContinue
+    Copy-Item -LiteralPath (Join-Path $RepoRoot 'THIRD-PARTY-NOTICES.md') (Join-Path $mollieStage 'vendor')
+    Add-VendorLicenseLines (Join-Path $mollieStage 'vendor')
+    $mollieVersion = Get-ManifestVersion (Join-Path $mollieStage 'mollie.xml')
+    New-Zip $mollieStage (Join-Path $pkgRoot 'packages\plg_ticketstationpayment_mollie.zip')
 
     # Package
     Copy-Item (Join-Path $RepoRoot 'pkg_ticketstation.xml'), (Join-Path $RepoRoot 'pkg_script.php') $pkgRoot
@@ -249,6 +271,7 @@ try {
     Write-Host "  module    $modVersion"
     Write-Host "  plugin    $plgVersion"
     Write-Host "  system    $sysVersion"
+    Write-Host "  mollie    $mollieVersion"
     Write-Host "  stability $stability"
     Write-Host "  sha256    $sha256"
     if (Test-Path -LiteralPath $notes) { Write-Host "  notes     release-notes\$pkgVersion.md" } else { Write-Host "  notes     none (release-notes\$pkgVersion.md not found)" }

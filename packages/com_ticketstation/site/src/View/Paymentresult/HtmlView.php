@@ -43,7 +43,8 @@ class HtmlView extends BaseHtmlView {
         $this->authorized       = $authorized;
         $this->contactEmail     = (new Config)->getContactEmail();
 
-        $this->canRetry = false;
+        $this->canRetry    = false;
+        $this->notFinished = false;
 
         if ($authorized) {
             $this->data   = $this->get('data');
@@ -53,8 +54,14 @@ class HtmlView extends BaseHtmlView {
             // expired (5): an attempt that is still open could otherwise be paid twice.
             $attempt = (new PaymentAPI($ordercode))->getTempTransactionByOrdercode($ordercode);
 
+            // The wait page gives up after a while (&notfinished=1): a customer who went back from
+            // the provider's page without paying leaves an attempt that stays open, and is offered
+            // a new try too, with a warning not to pay twice.
+            $this->notFinished = Factory::getApplication()->getInput()->getInt('notfinished', 0) === 1
+                && $attempt && in_array((int) $attempt->processed, [0, 3, 4], true);
+
             $this->canRetry = $this->unpaid->total > 0
-                && $attempt && (int) $attempt->processed === 5;
+                && $attempt && ((int) $attempt->processed === 5 || $this->notFinished);
 
             // "Add to calendar" only when the order has dated events
             $this->hasCalendar = Calendar::events($ordercode) !== [];

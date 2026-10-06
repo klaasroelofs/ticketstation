@@ -375,7 +375,7 @@ class ControlpanelModel extends BaseDatabaseModel
         $steps = [
             ['COM_TICKETSTATION_CPANEL_START_COMPANY', !$this->isCompanyIncomplete($config), 'index.php?option=com_ticketstation&view=configuration#company'],
             // With online payments switched off there is no payment account to set up.
-            ['COM_TICKETSTATION_CPANEL_START_MOLLIE', $provider === null || !$provider->isEnabled() || $provider->isConfigured(), $provider ? $provider->getSettingsLink() : 'index.php?option=com_ticketstation&view=mollie'],
+            ['COM_TICKETSTATION_CPANEL_START_PAYMENTS', ProviderRegistry::activeId() === '' || ($provider !== null && $provider->isConfigured()), 'index.php?option=com_ticketstation&view=payments'],
             ['COM_TICKETSTATION_CPANEL_START_VENUE', $has('#__ticketstation_venues'), 'index.php?option=com_ticketstation&view=venues'],
             ['COM_TICKETSTATION_CPANEL_START_EVENT', $has('#__ticketstation_events'), 'index.php?option=com_ticketstation&view=events'],
             ['COM_TICKETSTATION_CPANEL_START_TICKET', $has('#__ticketstation_tickets', $db->quoteName('parent') . ' = 0'), 'index.php?option=com_ticketstation&view=tickets'],
@@ -458,11 +458,16 @@ class ControlpanelModel extends BaseDatabaseModel
 
         // The payment provider's own warnings (test mode, a missing or wrong API key). None while
         // online payments are switched off: the site may have no payment account.
-        $provider = ProviderRegistry::active();
+        $provider     = ProviderRegistry::active();
+        $paymentsLink = 'index.php?option=com_ticketstation&view=payments';
+
+        // A provider is chosen, but its plugin is switched off or removed: nobody can pay.
+        $add('COM_TICKETSTATION_CPANEL_ATTENTION_PROVIDER_MISSING', ProviderRegistry::activeId() !== '' && $provider === null ? 1 : 0,
+            $paymentsLink, 'fa-exclamation-circle', 'danger');
 
         foreach ($provider ? $provider->getHealthWarnings() : [] as $warning)
         {
-            $add($warning['key'], 1, $provider->getSettingsLink(), 'fa-exclamation-circle', $warning['level']);
+            $add($warning['key'], 1, $paymentsLink, 'fa-exclamation-circle', $warning['level']);
         }
 
         // Company details and mail sender, both on the Company tab of the Configuration.

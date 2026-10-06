@@ -34,7 +34,7 @@ class Shop
     {
         $provider = ProviderRegistry::active();
 
-        return $provider !== null && $provider->isEnabled();
+        return $provider !== null;
     }
 
     /**

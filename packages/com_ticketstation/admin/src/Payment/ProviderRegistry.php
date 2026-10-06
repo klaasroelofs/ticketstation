@@ -9,20 +9,30 @@
 
 namespace Ticketstation\Component\Ticketstation\Administrator\Payment;
 
-use Ticketstation\Component\Ticketstation\Administrator\Payment\Provider\MollieProvider;
+use Joomla\CMS\Factory;
+use Joomla\CMS\Plugin\PluginHelper;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\PaymentCurrencies;
 
 defined('_JEXEC') or die;
 
 /**
- * The payment providers the core knows about, and which one takes new payments.
+ * The payment providers Ticketstation knows about, and which one takes new payments.
  *
- * For now Mollie is the only provider and is built in. The registry is the one place that changes
- * when providers come from plugins.
+ * Providers come from the enabled plugins of the group "ticketstationpayment": each one adds its
+ * provider to the CollectProvidersEvent. A plugin that is switched off or uninstalled offers no
+ * provider. Which provider takes new payments, and the currency, are settings of Ticketstation
+ * (#__ticketstation_config.payment_provider and payment_currency).
  */
 final class ProviderRegistry
 {
+    /** The plugin group providers live in. */
+    public const GROUP = 'ticketstationpayment';
+
     /** @var PaymentProviderInterface[]|null  id => provider */
     private static ?array $providers = null;
+
+    /** @var object|null  payment_provider and payment_currency */
+    private static ?object $settings = null;
 
     /**
      * All providers, by id.
@@ -32,9 +42,16 @@ final class ProviderRegistry
     public static function all(): array
     {
         if (self::$providers === null) {
-            $mollie = new MollieProvider();
+            self::$providers = [];
 
-            self::$providers = [$mollie->getId() => $mollie];
+            PluginHelper::importPlugin(self::GROUP);
+
+            $event = new CollectProvidersEvent();
+            Factory::getApplication()->getDispatcher()->dispatch(CollectProvidersEvent::NAME, $event);
+
+            foreach ($event->getProviders() as $provider) {
+                self::$providers[$provider->getId()] = $provider;
+            }
         }
 
         return self::$providers;
@@ -46,30 +63,68 @@ final class ProviderRegistry
     }
 
     /**
-     * The provider that takes new payments, null when there is none.
+     * The id of the provider chosen to take new payments, '' when online payments are off. The
+     * provider itself may be missing (its plugin switched off or removed).
      */
-    public static function active(): ?PaymentProviderInterface
+    public static function activeId(): string
     {
-        return self::all()[MollieProvider::ID] ?? null;
+        return (string) self::settings()->payment_provider;
     }
 
     /**
-     * The provider a payment was made through, from the provider's own payment id. Payments don't
-     * record their provider yet; everything so far went through Mollie.
+     * The provider that takes new payments, null when online payments are off or the chosen
+     * provider is not available.
      */
-    public static function forPayment(string $providerPaymentId): ?PaymentProviderInterface
+    public static function active(): ?PaymentProviderInterface
     {
-        return $providerPaymentId !== '' ? self::get(MollieProvider::ID) : null;
+        $id = self::activeId();
+
+        return $id !== '' ? self::get($id) : null;
+    }
+
+    /**
+     * The currency payments are made in, an ISO 4217 code.
+     */
+    public static function currency(): string
+    {
+        return PaymentCurrencies::fromConfig(self::settings()->payment_currency);
     }
 
     /**
      * The name of a payment method for the invoice and the Box Office, from the value stored with
-     * the transaction. A provider without method names gives the stored value back.
+     * the transaction. A provider without method names, or one that is no longer available, gives
+     * the stored value back with a capital.
      */
-    public static function methodLabel(string $storedMethod): string
+    public static function methodLabel(string $storedMethod, string $providerId): string
     {
-        $provider = self::active();
+        $provider = $providerId !== '' ? self::get($providerId) : null;
 
-        return $provider instanceof MethodAwareInterface ? $provider->methodLabel($storedMethod) : $storedMethod;
+        return $provider instanceof MethodAwareInterface ? $provider->methodLabel($storedMethod) : ucfirst($storedMethod);
+    }
+
+    /**
+     * Forgets what was loaded, so the next call looks again. For tests and for after a setting changed.
+     */
+    public static function reset(): void
+    {
+        self::$providers = null;
+        self::$settings  = null;
+    }
+
+    private static function settings(): object
+    {
+        if (self::$settings === null) {
+            $db    = Factory::getContainer()->get('DatabaseDriver');
+            $query = $db->getQuery(true)
+                ->select($db->quoteName(['payment_provider', 'payment_currency']))
+                ->from($db->quoteName('#__ticketstation_config'))
+                ->where($db->quoteName('configid') . ' = 1');
+
+            $db->setQuery($query);
+
+            self::$settings = $db->loadObject() ?: (object) ['payment_provider' => '', 'payment_currency' => PaymentCurrencies::DEFAULT];
+        }
+
+        return self::$settings;
     }
 }

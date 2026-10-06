@@ -1,22 +1,24 @@
 <?php
 /**
  * @package     Ticketstation
- * @subpackage  com_ticketstation
+ * @subpackage  plg_ticketstationpayment_mollie
  *
  * @copyright   Copyright (C) 2026 Klaas Roelofs. All rights reserved.
  * @license     GNU General Public License version 3; see LICENSE
  */
 
-namespace Ticketstation\Component\Ticketstation\Administrator\Payment\Provider;
+namespace Ticketstation\Plugin\TicketstationPayment\Mollie\Provider;
 
-use Joomla\CMS\Factory;
+defined('_JEXEC') or die;
+
+use Joomla\CMS\Language\Text;
 use Joomla\Input\Input;
+use Joomla\Registry\Registry;
 use Mollie\Api\Exceptions\MollieException;
 use Mollie\Api\MollieApiClient;
-use Ticketstation\Component\Ticketstation\Administrator\Helper\MollieCurrencies;
-use Ticketstation\Component\Ticketstation\Administrator\Helper\MolliePaymentMethods;
 use Ticketstation\Component\Ticketstation\Administrator\Payment\MethodAwareInterface;
 use Ticketstation\Component\Ticketstation\Administrator\Payment\PaymentException;
+use Ticketstation\Component\Ticketstation\Administrator\Payment\PaymentMethodOption;
 use Ticketstation\Component\Ticketstation\Administrator\Payment\PaymentProviderInterface;
 use Ticketstation\Component\Ticketstation\Administrator\Payment\PaymentRedirect;
 use Ticketstation\Component\Ticketstation\Administrator\Payment\PaymentRequest;
@@ -25,31 +27,25 @@ use Ticketstation\Component\Ticketstation\Administrator\Payment\ProviderNotConfi
 use Ticketstation\Component\Ticketstation\Administrator\Payment\ProviderRefund;
 use Ticketstation\Component\Ticketstation\Administrator\Payment\RefundCapableInterface;
 use Ticketstation\Component\Ticketstation\Administrator\Payment\RefundCheck;
-use Joomla\CMS\Language\Text;
-
-defined('_JEXEC') or die;
+use Ticketstation\Plugin\TicketstationPayment\Mollie\Helper\MollieCurrencies;
+use Ticketstation\Plugin\TicketstationPayment\Mollie\Helper\MolliePaymentMethods;
 
 /**
- * Mollie, through Mollie's PHP library. Its settings are the one row of #__ticketstation_mollie.
+ * Mollie, through Mollie's PHP library. Its settings are the parameters of the plugin.
  */
 final class MollieProvider implements PaymentProviderInterface, RefundCapableInterface, MethodAwareInterface
 {
     public const ID = 'mollie';
 
-    /** What a missing settings row, or a missing column, falls back to. */
-    private const DEFAULTS = [
-        'enabled'              => '1',
-        'test_mode'            => '0',
-        'api_key'              => '',
-        'api_key_test'         => '',
-        'description'          => '',
-        'mollie_language'      => 'en',
-        'change_payment_state' => '1',
-        'payment_methods'      => 'ideal',
-        'currency'             => 'EUR',
-    ];
+    /** Where Mollie keeps the logos of its methods. */
+    private const ICON_URL = 'https://www.mollie.com/external/icons/payment-methods/%s.svg';
 
-    private ?object $settings = null;
+    private Registry $params;
+
+    public function __construct(Registry $params)
+    {
+        $this->params = $params;
+    }
 
     public function getId(): string
     {
@@ -61,64 +57,60 @@ final class MollieProvider implements PaymentProviderInterface, RefundCapableInt
         return 'Mollie';
     }
 
-    public function isEnabled(): bool
-    {
-        return $this->setting('enabled') == '1';
-    }
-
     public function isConfigured(): bool
     {
-        return trim((string) $this->setting('api_key')) !== '';
+        return trim((string) $this->params->get('api_key', '')) !== '';
     }
 
     public function isTestMode(): bool
     {
-        return $this->setting('test_mode') == '1';
-    }
-
-    public function getCurrency(): string
-    {
-        return MollieCurrencies::fromConfig((string) $this->setting('currency'));
+        return $this->params->get('test_mode', 0) == 1;
     }
 
     public function marksOrderPendingOnStart(): bool
     {
-        return $this->setting('change_payment_state') == 1;
-    }
-
-    public function getSettingsLink(): string
-    {
-        return 'index.php?option=com_ticketstation&view=mollie';
+        return $this->params->get('mark_pending', 1) == 1;
     }
 
     public function getHealthWarnings(): array
     {
-        // None while online payments are switched off: the site may have no Mollie account.
-        if (!$this->isEnabled()) {
-            return [];
-        }
-
         $warnings = [];
-        $key      = (string) $this->setting('api_key');
+        $key      = (string) $this->params->get('api_key', '');
 
         if ($this->isTestMode()) {
-            $warnings[] = ['key' => 'COM_TICKETSTATION_CPANEL_ATTENTION_MOLLIE_TEST', 'level' => 'danger'];
+            $warnings[] = ['key' => 'PLG_TICKETSTATIONPAYMENT_MOLLIE_ATTENTION_TEST', 'level' => 'danger'];
         }
 
         if ($key == '') {
-            $warnings[] = ['key' => 'COM_TICKETSTATION_CPANEL_ATTENTION_MOLLIE_KEY_MISSING', 'level' => 'danger'];
+            $warnings[] = ['key' => 'PLG_TICKETSTATIONPAYMENT_MOLLIE_ATTENTION_KEY_MISSING', 'level' => 'danger'];
         } elseif (substr($key, 0, 5) === 'test_') {
-            $warnings[] = ['key' => 'COM_TICKETSTATION_CPANEL_ATTENTION_MOLLIE_KEY_IS_TEST', 'level' => 'danger'];
+            $warnings[] = ['key' => 'PLG_TICKETSTATIONPAYMENT_MOLLIE_ATTENTION_KEY_IS_TEST', 'level' => 'danger'];
         } elseif (substr($key, 0, 5) !== 'live_') {
-            $warnings[] = ['key' => 'COM_TICKETSTATION_CPANEL_ATTENTION_MOLLIE_KEY_INVALID', 'level' => 'danger'];
+            $warnings[] = ['key' => 'PLG_TICKETSTATIONPAYMENT_MOLLIE_ATTENTION_KEY_INVALID', 'level' => 'danger'];
         }
 
         return $warnings;
     }
 
+    /**
+     * The methods the admin allows, as set in the plugin.
+     *
+     * @return  string[]
+     */
     public function getAllowedMethods(): array
     {
-        return MolliePaymentMethods::fromConfig((string) $this->setting('payment_methods'));
+        return MolliePaymentMethods::fromConfig($this->params->get('payment_methods', 'ideal'));
+    }
+
+    public function getCheckoutMethods(string $currency): array
+    {
+        $options = [];
+
+        foreach (MollieCurrencies::filterMethods($currency, $this->getAllowedMethods()) as $method) {
+            $options[] = new PaymentMethodOption($method, MolliePaymentMethods::label($method), sprintf(self::ICON_URL, $method));
+        }
+
+        return $options;
     }
 
     public function methodLabel(string $storedMethod): string
@@ -131,20 +123,25 @@ final class MollieProvider implements PaymentProviderInterface, RefundCapableInt
         $mollie  = $this->client();
         $methods = MollieCurrencies::filterMethods($request->currency, $this->getAllowedMethods());
 
+        // The method the customer chose, when it is one of the allowed ones.
+        if ($request->method !== null && in_array($request->method, $methods, true)) {
+            $methods = [$request->method];
+        }
+
         try {
             $payment = $mollie->payments->create([
                 'amount'      => [
                     'value'    => $request->amount,
                     'currency' => $request->currency,
                 ],
-                // One method is passed as that method, as before methods could be chosen: Mollie then
-                // skips its method screen, so a cancelled or failed payment returns to the site.
-                // With a list Mollie keeps the customer on its own method screen.
+                // One method is passed as that method: Mollie then skips its method screen, so a
+                // cancelled or failed payment returns to the site. With a list Mollie keeps the
+                // customer on its own method screen.
                 'method'      => count($methods) === 1 ? reset($methods) : $methods,
-                'description' => $this->setting('description') . ' ' . $request->ordercode,
+                'description' => $this->params->get('description', '') . ' ' . $request->ordercode,
                 'redirectUrl' => $request->returnUrl,
                 'webhookUrl'  => $request->webhookUrl,
-                'locale'      => $this->setting('mollie_language'),
+                'locale'      => $this->params->get('locale', 'en_GB'),
                 'metadata'    => [
                     'order_id' => $request->ordercode,
                 ],
@@ -323,16 +320,16 @@ final class MollieProvider implements PaymentProviderInterface, RefundCapableInt
      */
     private function client(): MollieApiClient
     {
-        $key = $this->isTestMode() ? $this->setting('api_key_test') : $this->setting('api_key');
+        $key = $this->isTestMode() ? $this->params->get('api_key_test', '') : $this->params->get('api_key', '');
 
         if (empty($key)) {
-            throw new ProviderNotConfiguredException(Text::_('COM_TICKETSTATION_REFUND_ERROR_NO_KEY'));
+            throw new ProviderNotConfiguredException(Text::_('PLG_TICKETSTATIONPAYMENT_MOLLIE_ERROR_NO_KEY'));
         }
 
-        require_once JPATH_SITE . '/components/com_ticketstation/vendor/autoload.php';
+        require_once dirname(__DIR__, 2) . '/vendor/autoload.php';
 
         $mollie = new MollieApiClient();
-        $mollie->setApiKey($key);
+        $mollie->setApiKey(trim($key));
 
         return $mollie;
     }
@@ -349,25 +346,5 @@ final class MollieProvider implements PaymentProviderInterface, RefundCapableInt
     private function plainMessage(\Throwable $e): string
     {
         return method_exists($e, 'getPlainMessage') ? $e->getPlainMessage() : $e->getMessage();
-    }
-
-    /**
-     * One setting from the Mollie row, read once per request.
-     */
-    private function setting(string $name)
-    {
-        if ($this->settings === null) {
-            $db    = Factory::getContainer()->get('DatabaseDriver');
-            $query = $db->getQuery(true)
-                ->select('*')
-                ->from($db->quoteName('#__ticketstation_mollie'))
-                ->where($db->quoteName('configid') . ' = 1');
-
-            $db->setQuery($query);
-
-            $this->settings = $db->loadObject() ?: (object) [];
-        }
-
-        return $this->settings->$name ?? self::DEFAULTS[$name] ?? null;
     }
 }

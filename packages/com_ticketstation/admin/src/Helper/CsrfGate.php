@@ -40,7 +40,7 @@ class CsrfGate
         'controlpanel'     => ['main'],
         'invoices'         => ['display', 'controlpanel'],
         'coupon'           => ['display', 'cancel', 'controlpanel'],
-        'mollie'           => ['main', 'cancel'],
+        'payments'         => ['main', 'cancel'],
         'scanners'         => ['display', 'edit', 'cancel', 'controlpanel'],
         'boxoffice'        => ['display', 'edit', 'cancel', 'reservation', 'controlpanel', 'downloadtickets', 'refundform'],
         'configuration'    => ['main', 'cancel'],

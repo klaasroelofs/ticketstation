@@ -40,7 +40,7 @@ foreach ($this->attention as $item) {
     $badges[$item->view] = $badge;
 }
 
-// The screen buttons: view, icon ('mollie' for the Mollie logo) and label, per group.
+// The screen buttons: view, icon and label, per group.
 $tileGroups = [
     'COM_TICKETSTATION_CPANEL_HEADER_TRANSACTIONMANAGEMENT' => [
         ['boxoffice', 'fa-money-bill-alt', 'COM_TICKETSTATION_BOXOFFICE'],
@@ -60,7 +60,7 @@ $tileGroups = [
         ['scanners', 'fa-qrcode', 'COM_TICKETSTATION_TICKETSCANNING'],
         ['templates', 'fa-envelope', 'COM_TICKETSTATION_VIEW_TEMPLATES_TITLE'],
         ['configuration', 'fa-cog', 'COM_TICKETSTATION_CONFIGURATION'],
-        ['mollie', 'mollie', 'COM_TICKETSTATION_MOLLIE_CONFIG'],
+        ['payments', 'fa-credit-card', 'COM_TICKETSTATION_PAYMENTS_CONFIG'],
         ['docs', 'fa-book', 'COM_TICKETSTATION_VIEW_DOCS_TITLE'],
     ],
 ];
@@ -323,19 +323,13 @@ $sum28     = array_sum(array_column($this->dailySales, 'tickets'));
                 <div class="ticketstation-cpanel-tiles">
                     <?php foreach ($tiles as [$view, $icon, $labelKey]) {
                         $badge = $badges[$view] ?? null;
-                        // Online payments switched off: the Mollie button looks faded and says so.
-                        $off   = $view === 'mollie' && !$this->paymentsOn;
+                        // Online payments switched off: the Payments button looks faded and says so.
+                        $off   = $view === 'payments' && !$this->paymentsOn;
                         ?>
                         <a class="ticketstation-cpanel-tile<?= $off ? ' ticketstation-cpanel-tile--off' : ''; ?>" href="index.php?option=com_ticketstation&view=<?= $view; ?>"<?= $off ? ' title="' . $this->escape(Text::_('COM_TICKETSTATION_CPANEL_MOLLIE_OFF_TITLE')) . '"' : ''; ?>>
                             <span class="ticketstation-cpanel-tile-icon" aria-hidden="true">
-                                <?php if ($icon === 'mollie') { ?>
-                                    <?php // Black monogram on the light theme, white one on the dark theme ?>
-                                    <img class="ticketstation-theme-light" src="components/com_ticketstation/assets/images/MollieMonogram23-Circle.png" alt="">
-                                    <img class="ticketstation-theme-dark" src="components/com_ticketstation/assets/images/MollieMonogram23-CircleWhite.png" alt="">
-                                <?php } else { ?>
-                                    <?php // "fa fa-hotel" would hit Joomla's FA4 compat rule (a bed); fa-solid alone gives the building ?>
-                                    <span class="<?= str_starts_with($icon, 'fa-solid ') ? '' : 'fa '; ?><?= $icon; ?>"></span>
-                                <?php } ?>
+                                <?php // "fa fa-hotel" would hit Joomla's FA4 compat rule (a bed); fa-solid alone gives the building ?>
+                                <span class="<?= str_starts_with($icon, 'fa-solid ') ? '' : 'fa '; ?><?= $icon; ?>"></span>
                             </span>
                             <span class="ticketstation-cpanel-tile-label"><?= Text::_($labelKey) ?></span>
                             <?php if ($off) { ?>

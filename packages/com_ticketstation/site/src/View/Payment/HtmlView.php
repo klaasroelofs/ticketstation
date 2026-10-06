@@ -18,6 +18,8 @@ use Joomla\CMS\MVC\View\HtmlView as BaseHtmlView;
 use Joomla\CMS\Router\Route;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Config;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Shop;
+use Ticketstation\Component\Ticketstation\Administrator\Payment\MethodAwareInterface;
+use Ticketstation\Component\Ticketstation\Administrator\Payment\ProviderRegistry;
 
 
 class HtmlView extends BaseHtmlView {
@@ -88,6 +90,18 @@ class HtmlView extends BaseHtmlView {
         $this->waitlist = $waitlist;
         $this->config   = $config;
         $this->paymentsOn   = Shop::paymentsOn();
+
+        // The payment methods to choose from: only when the provider offers more than one.
+        $this->methods = [];
+        $provider      = ProviderRegistry::active();
+
+        if ($provider instanceof MethodAwareInterface) {
+            $methods = $provider->getCheckoutMethods(ProviderRegistry::currency());
+
+            if (count($methods) > 1) {
+                $this->methods = $methods;
+            }
+        }
 
         parent::display($tpl);
 

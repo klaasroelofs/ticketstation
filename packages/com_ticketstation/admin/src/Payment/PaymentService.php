@@ -61,7 +61,7 @@ final class PaymentService
      *
      * @throws  \RuntimeException  (PaymentException or ProviderNotConfiguredException) when it can't be started.
      */
-    public static function start(PaymentProviderInterface $provider, int $ordercode, float $orderamount): string
+    public static function start(PaymentProviderInterface $provider, int $ordercode, float $orderamount, ?string $method = null): string
     {
         $db = \Joomla\CMS\Factory::getContainer()->get('DatabaseDriver');
 
@@ -89,7 +89,7 @@ final class PaymentService
 
             ## Let the API insert a new payment to the temp transaction table.
             ## insertTempTransaction generates and returns a random token instead of using md5(ordercode).
-            $return_token = $newPayment->insertTempTransaction($userid, md5($ordercode));
+            $return_token = $newPayment->insertTempTransaction($userid, md5($ordercode), $provider->getId());
 
             ## If there is no new created temporary transaction, quit here.
             if (!$return_token) {
@@ -98,6 +98,9 @@ final class PaymentService
         } else {
             ## An open attempt for this order exists: reuse its token.
             $return_token = $existing->return_token;
+
+            ## The attempt belongs to the provider that takes this payment (it may have changed).
+            $newPayment->setTempProvider((int) $existing->id, $provider->getId());
 
             ## A new try after a failed one ("Pay again" on the result page): back to "no
             ## state yet", or the wait page would report the old failure before the provider's
@@ -121,9 +124,10 @@ final class PaymentService
         $redirect = $provider->createPayment(new PaymentRequest(
             $ordercode,
             $ordertotal,
-            $provider->getCurrency(),
+            ProviderRegistry::currency(),
             self::returnUrl($provider, $return_token),
-            self::webhookUrl($provider)
+            self::webhookUrl($provider),
+            $method
         ));
 
         History::log($ordercode, 'payment_initiated', 'Payment initiated at ' . $provider->getTitle() . ' (transaction ' . $redirect->providerPaymentId . ')',
@@ -182,9 +186,9 @@ final class PaymentService
         ## payment are stored; one made in the provider's dashboard waits under "Needs attention"
         ## for a decision about the tickets.
         if ((int) $tmpTransaction->processed === 1) {
-            if ($tmpTransaction->message !== $update->providerPaymentId) {
+            if ($tmpTransaction->provider_payment_id !== $update->providerPaymentId) {
                 if ($update->state === PaymentUpdate::PAID) {
-                    History::log($order_id, 'payment_duplicate', 'Second payment ' . $update->providerPaymentId . ' received for an order that was already paid (transaction ' . $tmpTransaction->message . '); refund one of them in ' . $provider->getTitle(), [$idKey => $update->providerPaymentId, 'method' => $update->method]);
+                    History::log($order_id, 'payment_duplicate', 'Second payment ' . $update->providerPaymentId . ' received for an order that was already paid (transaction ' . $tmpTransaction->provider_payment_id . '); refund one of them in ' . $provider->getTitle(), [$idKey => $update->providerPaymentId, 'method' => $update->method]);
                 }
             } elseif ($update->hasRefunds && $provider instanceof RefundCapableInterface) {
                 try {
@@ -219,7 +223,7 @@ final class PaymentService
                     $payment_state = $newPayment->updateOrder();
 
                     ## Insert transaction details:
-                    $newPayment->saveTransaction($order_id, $tmpTransaction->userid, $update->details, $paid_price, ucfirst($update->method));
+                    $newPayment->saveTransaction($order_id, $tmpTransaction->userid, $update->details, $paid_price, ucfirst($update->method), $provider->getId());
 
                     ## if state is true, create the tickets:
                     $ticket_creator = false;
@@ -230,7 +234,7 @@ final class PaymentService
                     }
 
                     ## set temporary payment to 1 (paid order)
-                    $newPayment->updateTempTransaction($return_token, '1', $update->providerPaymentId);
+                    $newPayment->updateTempTransaction($return_token, '1', $update->providerPaymentId, $update->providerPaymentId);
 
                     ## if tickets has been created:
                     if ($ticket_creator == true && self::sendTicketsDirectly()) {

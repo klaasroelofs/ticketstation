@@ -986,7 +986,7 @@ class BoxofficeModel extends ListModel
      * The latest transaction of each order. An order can have more than one, for instance
      * after a duplicate payment; the latest is the one the order is shown with.
      *
-     * @return  array  ordercode => (object) pid, amount, type
+     * @return  array  ordercode => (object) pid, amount, type, provider
      */
     private function loadTransactions(array $codes)
     {
@@ -998,7 +998,7 @@ class BoxofficeModel extends ListModel
             ->group($db->quoteName('orderid'));
 
         $query = $db->getQuery(true)
-            ->select([$db->quoteName('orderid'), $db->quoteName('pid'), $db->quoteName('amount'), $db->quoteName('type')])
+            ->select([$db->quoteName('orderid'), $db->quoteName('pid'), $db->quoteName('amount'), $db->quoteName('type'), $db->quoteName('provider')])
             ->from($db->quoteName('#__ticketstation_transactions'))
             ->where($db->quoteName('pid') . ' IN (' . $latest . ')');
 
