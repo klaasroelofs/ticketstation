@@ -419,6 +419,29 @@ class WalletUpdate
     }
 
     /**
+     * Whether an Apple pass notifies with its message. A phone with several passes of one order
+     * gets one notification, not one per pass: the pass with the lowest id notifies, a later one
+     * only when a phone has it that no earlier pass of the order with the same message reaches.
+     * A pass shared to another phone is the same pass with one more device, so that phone is
+     * notified through it.
+     */
+    private static function notifies(object $pass): bool
+    {
+        $db = Factory::getContainer()->get('DatabaseDriver');
+
+        $db->setQuery('SELECT COUNT(*) FROM ' . $db->quoteName('#__ticketstation_wallet_devices', 'd')
+            . ' WHERE d.pass_row = ' . (int) $pass->id
+            . ' AND NOT EXISTS (SELECT 1 FROM ' . $db->quoteName('#__ticketstation_wallet_devices', 'd2')
+            . ' INNER JOIN ' . $db->quoteName('#__ticketstation_wallet_passes', 'p2') . ' ON p2.id = d2.pass_row'
+            . ' WHERE d2.device_id = d.device_id AND p2.wallet = ' . $db->quote(Wallet::APPLE)
+            . ' AND p2.ordercode = ' . $db->quote((string) $pass->ordercode)
+            . ' AND p2.id < ' . (int) $pass->id . ' AND p2.removed = 0'
+            . ' AND (p2.message_pending = ' . (int) $pass->message_pending . ' OR ABS(p2.message_shown) = ' . (int) $pass->message_pending . '))');
+
+        return (int) $db->loadResult() > 0;
+    }
+
+    /**
      * An Apple pass: marks it as changed, makes its message the current one, and pushes the
      * devices that registered for it.
      *
@@ -433,7 +456,8 @@ class WalletUpdate
 
         if ((int) $pass->message_pending > 0)
         {
-            $fields[] = $db->quoteName('message_shown') . ' = ' . (int) $pass->message_pending;
+            // Negative: shown without a notification, as the phone is notified on another pass
+            $fields[] = $db->quoteName('message_shown') . ' = ' . (self::notifies($pass) ? 1 : -1) * (int) $pass->message_pending;
         }
 
         $db->setQuery($db->getQuery(true)

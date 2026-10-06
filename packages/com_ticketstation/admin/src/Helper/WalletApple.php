@@ -254,7 +254,7 @@ class WalletApple
      *
      * @throws  \RuntimeException
      */
-    public static function pass(object $ticket, int $number, int $total, array $images, ?string $message = null, bool $valid = true): string
+    public static function pass(object $ticket, int $number, int $total, array $images, ?string $message = null, bool $valid = true, bool $notify = true): string
     {
         $config = Wallet::config();
         $info   = self::certificateInfo($config->wallet_apple_cert ?? null);
@@ -264,7 +264,7 @@ class WalletApple
             throw new \RuntimeException('Apple Wallet has no certificate.');
         }
 
-        $json = self::passJson($ticket, $number, $total, $info, isset($images['logo.png']), $message, $valid);
+        $json = self::passJson($ticket, $number, $total, $info, isset($images['logo.png']), $message, $valid, $notify);
 
         Wallet::record(Wallet::APPLE, $ticket, $json['passTypeIdentifier'] . '/' . $json['serialNumber']);
 
@@ -335,7 +335,7 @@ class WalletApple
     /**
      * The pass.json of a ticket.
      */
-    private static function passJson(object $ticket, int $number, int $total, array $info, bool $hasLogo, ?string $message = null, bool $valid = true): array
+    private static function passJson(object $ticket, int $number, int $total, array $info, bool $hasLogo, ?string $message = null, bool $valid = true, bool $notify = true): array
     {
         [$background, $foreground] = Wallet::colors();
 
@@ -416,15 +416,23 @@ class WalletApple
         $back[] = ['key' => 'organiser', 'label' => TicketLanguage::_('COM_TICKETSTATION_WALLET_FIELD_ORGANISER'), 'value' => $contact];
 
         // A message from the organiser: the device shows it as a notification when the text of
-        // this field changes (changeMessage), so every message is a new value
+        // this field changes (changeMessage), so every message is a new value. A silent pass
+        // ($notify false) shows the same text without a notification: a phone with several passes
+        // of one order is notified once (see WalletUpdate::notifies()).
         if ($message !== null && $message !== '')
         {
-            array_unshift($back, [
-                'key'           => 'message',
-                'label'         => TicketLanguage::_('COM_TICKETSTATION_WALLET_FIELD_MESSAGE'),
-                'value'         => $message,
-                'changeMessage' => '%@',
-            ]);
+            $field = [
+                'key'   => 'message',
+                'label' => TicketLanguage::_('COM_TICKETSTATION_WALLET_FIELD_MESSAGE'),
+                'value' => $message,
+            ];
+
+            if ($notify)
+            {
+                $field['changeMessage'] = '%@';
+            }
+
+            array_unshift($back, $field);
         }
 
         $pass = [
@@ -477,10 +485,23 @@ class WalletApple
             $pass['authenticationToken'] = Wallet::appleToken($pass['serialNumber']);
         }
 
-        // A refunded or blocked ticket: the pass stays in the wallet, marked as void
+        // A refunded or blocked ticket: the pass stays in the wallet but can't be used any more: void
+        // and expired, without QR code, and it says so on the front (with a notification, as the text
+        // is new). iPhones hardly show a void pass differently on their own. Valid again, the next
+        // build of the pass has all of this gone.
         if (!$valid)
         {
-            $pass['voided'] = true;
+            array_unshift($pass['eventTicket']['auxiliaryFields'], [
+                'key'           => 'status',
+                'label'         => TicketLanguage::_('COM_TICKETSTATION_WALLET_FIELD_STATUS'),
+                'value'         => TicketLanguage::_('COM_TICKETSTATION_WALLET_INVALID'),
+                'changeMessage' => '%@',
+            ]);
+
+            unset($pass['barcodes'], $pass['barcode'], $pass['relevantDate']);
+
+            $pass['voided']         = true;
+            $pass['expirationDate'] = gmdate('Y-m-d\TH:i:sP', time() - 86400);
         }
 
         return $pass;

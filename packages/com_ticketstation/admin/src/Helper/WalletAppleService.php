@@ -94,6 +94,21 @@ class WalletAppleService
         }
         catch (\Throwable $e)
         {
+            // The device only sees the 500; the reason goes to the wallet log
+            try
+            {
+                \Joomla\CMS\Log\Log::addLogger(['text_file' => 'com_ticketstation_wallet.php'], \Joomla\CMS\Log\Log::ALL, ['com_ticketstation.wallet']);
+                \Joomla\CMS\Log\Log::add(
+                    'Web service ' . $method . ' ' . $match[1] . ' failed: ' . get_class($e) . ': ' . mb_substr($e->getMessage(), 0, 300)
+                    . ' (' . basename($e->getFile()) . ':' . $e->getLine() . ')',
+                    \Joomla\CMS\Log\Log::ERROR,
+                    'com_ticketstation.wallet'
+                );
+            }
+            catch (\Throwable $ignored)
+            {
+            }
+
             self::respond(500);
         }
 
@@ -125,12 +140,15 @@ class WalletAppleService
             self::respond(200);
         }
 
-        $db->insertObject('#__ticketstation_wallet_devices', (object) [
+        // insertObject() takes the object by reference, so it can't be built in the call
+        $row = (object) [
             'device_id'  => $device,
             'pass_row'   => (int) $pass->id,
             'push_token' => $push,
             'created'    => Date::localNow(),
-        ]);
+        ];
+
+        $db->insertObject('#__ticketstation_wallet_devices', $row);
 
         self::respond(201);
     }
@@ -245,14 +263,15 @@ class WalletAppleService
 
         $message = null;
 
-        if ((int) $pass->message_shown > 0)
+        // A negative message_shown is a message this pass shows without a notification
+        if ((int) $pass->message_shown !== 0)
         {
             $db = Factory::getContainer()->get('DatabaseDriver');
-            $db->setQuery('SELECT body FROM ' . $db->quoteName('#__ticketstation_wallet_messages') . ' WHERE id = ' . (int) $pass->message_shown);
+            $db->setQuery('SELECT body FROM ' . $db->quoteName('#__ticketstation_wallet_messages') . ' WHERE id = ' . abs((int) $pass->message_shown));
             $message = $db->loadResult() ?: null;
         }
 
-        $content = WalletApple::pass($ticket, $position, max(1, count($valid)), WalletApple::images(), $message, $isValid);
+        $content = WalletApple::pass($ticket, $position, max(1, count($valid)), WalletApple::images(), $message, $isValid, (int) $pass->message_shown >= 0);
 
         header('Last-Modified: ' . gmdate('D, d M Y H:i:s', $modified) . ' GMT');
 
