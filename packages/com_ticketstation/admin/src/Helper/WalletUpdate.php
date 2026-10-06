@@ -104,6 +104,22 @@ class WalletUpdate
     }
 
     /**
+     * The messages sent to the wallets for an event: how many, and when the last was sent.
+     *
+     * @return  array{total: int, last: ?string}
+     */
+    public static function messagesOfEvent(int $eventid): array
+    {
+        $db = Factory::getContainer()->get('DatabaseDriver');
+
+        $db->setQuery('SELECT COUNT(*) AS total, MAX(created) AS last FROM ' . $db->quoteName('#__ticketstation_wallet_messages')
+            . ' WHERE eventid = ' . $eventid);
+        $row = $db->loadObject();
+
+        return ['total' => (int) ($row->total ?? 0), 'last' => $row->last ?? null];
+    }
+
+    /**
      * What is waiting or went wrong for the passes of an event.
      *
      * @return  array{pending: int, failed: int, error: string}

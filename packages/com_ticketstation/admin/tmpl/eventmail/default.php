@@ -148,6 +148,11 @@ $status  = $this->walletStatus;
                         <?php echo Text::_('COM_TICKETSTATION_COMMUNICATION_STATUS_NO_REMINDERS'); ?>
                     <?php } ?>
                 </li>
+                <?php if ($this->walletOn && $this->walletMessages['total'] > 0) { ?>
+                    <li>
+                        <?php echo Text::sprintf('COM_TICKETSTATION_COMMUNICATION_STATUS_WALLET_MESSAGES', $this->walletMessages['total'], $this->walletMessages['last']); ?>
+                    </li>
+                <?php } ?>
                 <?php if ($this->walletOn) { ?>
                     <li>
                         <?php if ($status['pending'] === 0) { ?>

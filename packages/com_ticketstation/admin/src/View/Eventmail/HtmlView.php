@@ -39,6 +39,8 @@ class HtmlView extends BaseHtmlView
     public $summary      = [];
     public $walletStatus = ['pending' => 0, 'failed' => 0, 'error' => ''];
 
+    public $walletMessages = ['total' => 0, 'last' => null];
+
     function display($tpl = null)
     {
         $app     = Factory::getApplication();
@@ -68,7 +70,8 @@ class HtmlView extends BaseHtmlView
                 'google' => WalletUpdate::passesOfEvent($eventid, Wallet::GOOGLE),
                 'apple'  => WalletUpdate::passesOfEvent($eventid, Wallet::APPLE),
             ];
-            $this->walletStatus = WalletUpdate::statusOfEvent($eventid);
+            $this->walletStatus   = WalletUpdate::statusOfEvent($eventid);
+            $this->walletMessages = WalletUpdate::messagesOfEvent($eventid);
         }
 
         $this->draft = (array) $app->getUserState('com_ticketstation.eventmail', []);
