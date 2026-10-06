@@ -343,7 +343,13 @@ final class MollieProvider implements PaymentProviderInterface, RefundCapableInt
         require_once dirname(__DIR__, 2) . '/vendor/autoload.php';
 
         $mollie = new MollieApiClient();
-        $mollie->setApiKey(trim($key));
+
+        try {
+            $mollie->setApiKey(trim($key));
+        } catch (\Throwable $e) {
+            // Not a Mollie key at all (wrong prefix or length): Mollie's library refuses it before asking Mollie.
+            throw new ProviderNotConfiguredException(Text::_('PLG_TICKETSTATIONPAYMENT_MOLLIE_ERROR_INVALID_KEY'), 0, $e);
+        }
 
         return $mollie;
     }
