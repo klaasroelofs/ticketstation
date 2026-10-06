@@ -21,6 +21,7 @@ use Joomla\CMS\Factory;
 use Joomla\Filesystem\File;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\Uri\Uri;
+use Ticketstation\Component\Ticketstation\Administrator\Payment\ProviderRegistry;
 
 defined('_JEXEC') or die;
 
@@ -51,16 +52,11 @@ class ticketcreator
      */
     function doPDF($newCode = false, $into = null)
     {
-        ## Load Mollie config to determine testmode on/off
+        ## Is the payment provider in test mode? Then the tickets are recognisable test tickets.
         $db = Factory::getContainer()->get('DatabaseDriver');
 
-        ## Making the query for showing all the clients in list function
-        $query = 'SELECT * FROM #__ticketstation_mollie WHERE configid = 1';
-
-        $db->setQuery($query);
-        $mollieconfig = $db->loadObject();
-
-        $mollie_test = $mollieconfig->test_mode;
+        $provider    = ProviderRegistry::active();
+        $mollie_test = $provider !== null && $provider->isTestMode() ? 1 : 0;
 
         ## Load Ticketstation config
         $query = $db->getQuery(true);

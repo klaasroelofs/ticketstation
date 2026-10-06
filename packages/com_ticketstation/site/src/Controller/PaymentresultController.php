@@ -32,24 +32,15 @@ use Ticketstation\Component\Ticketstation\Site\View\Paymentresult\HtmlView;
 class PaymentresultController extends BaseController
 {
     private $ordercode;
-    private $mollieconfig;
 
     function __construct()
     {
         parent::__construct();
 
         $jinput = Factory::getApplication()->getInput();
-        $db = Factory::getContainer()->get('DatabaseDriver');
 
         // Get Ordercode
         $this->ordercode = $jinput->get('ordercode', '0', 'int');
-
-        // Get Mollie config from database
-        $query = 'SELECT * FROM #__ticketstation_mollie WHERE configid = 1';
-
-        $db->setQuery($query);
-        $this->mollieconfig = $db->loadObject();
-
     }
 
     function downloadTicketAfterPurchase()

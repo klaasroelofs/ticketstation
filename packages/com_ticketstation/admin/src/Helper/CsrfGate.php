@@ -78,7 +78,9 @@ class CsrfGate
         // never a form submission from our own UI and can never carry a Joomla
         // session CSRF token. Each has its own independent protection (Mollie's
         // signed callback, single-use free-order token, session-side redirect state).
-        'payment'       => ['mollie', 'freeorder', 'ipnprocesspayment'],
+        // "webhook" and "return" are the provider-neutral addresses; "mollie" and
+        // "ipnprocesspayment" are those of payments started before them, and stay.
+        'payment'       => ['webhook', 'return', 'mollie', 'freeorder', 'ipnprocesspayment'],
         'paymentresult' => ['poll', 'return', 'calendar'],
 
         // "Add to wallet" links in the ticket mail: read-only, authorised by the order's

@@ -17,6 +17,7 @@ use Joomla\CMS\Toolbar\ToolbarHelper;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\AclGate;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Docs;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Refund;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\Shop;
 
 /**
  * Ticketstation Controlpanel Admin View
@@ -56,18 +57,18 @@ class HtmlView extends BaseHtmlView {
         $model = $this->getModel('Controlpanel', 'Administrator');
         $this->data 	= $model->getData();
         $this->update   = $model->getAvailableUpdate();
-		$this->mollie   = $model->getMollie();
+		$this->paymentsOn = Shop::paymentsOn();
         $this->config   = $model->getConfig();
 
         $this->stats        = $model->getStats();
         $this->availability = $model->getAvailability();
 
         // Refunds a colleague made in the Mollie Dashboard, before the webhook reports them.
-        Refund::pollMollie();
+        Refund::pollProviders();
 
-        $this->attention    = $model->getAttention($this->config, $this->mollie);
+        $this->attention    = $model->getAttention($this->config);
         $this->dailySales   = $model->getDailySales();
-        $this->setupSteps   = $model->getSetupSteps($this->config, $this->mollie);
+        $this->setupSteps   = $model->getSetupSteps($this->config);
 
 
         parent::display($tpl);

@@ -119,7 +119,7 @@ $treatments = [
                 <h3 class="card-header"><?= Text::_('COM_TICKETSTATION_REFUND_TITLE') ?></h3>
                 <div class="card-body">
                     <p>
-                        <?= Text::_($this->molliePayment !== '' ? 'COM_TICKETSTATION_REFUND_INTRO_MOLLIE' : 'COM_TICKETSTATION_REFUND_INTRO_MANUAL') ?>
+                        <?= Text::_($this->providerPayment !== '' ? 'COM_TICKETSTATION_REFUND_INTRO_MOLLIE' : 'COM_TICKETSTATION_REFUND_INTRO_MANUAL') ?>
                     </p>
                     <div class="mb-3">
                         <label for="ts-refund-amount" class="form-label"><?= Text::_('COM_TICKETSTATION_REFUND_AMOUNT') ?></label>
@@ -140,7 +140,7 @@ $treatments = [
                         <label for="ts-refund-description" class="form-label"><?= Text::_('COM_TICKETSTATION_REFUND_DESCRIPTION') ?></label>
                         <input type="text" class="form-control" name="description" id="ts-refund-description" maxlength="140"
                                placeholder="<?= $this->escape(Text::sprintf('COM_TICKETSTATION_REFUND_DEFAULT_DESCRIPTION', $this->items->ordercode)); ?>">
-                        <?php if ($this->molliePayment !== '') { ?>
+                        <?php if ($this->providerPayment !== '') { ?>
                             <div class="form-text"><?= Text::_('COM_TICKETSTATION_REFUND_DESCRIPTION_DESC') ?></div>
                         <?php } ?>
                     </div>

@@ -13,14 +13,19 @@ defined('_JEXEC') or die('Restricted access');
 
 use Joomla\CMS\Factory;
 use Joomla\CMS\Language\Text;
-use Mollie\Api\MollieApiClient;
+use Ticketstation\Component\Ticketstation\Administrator\Payment\PaymentException;
+use Ticketstation\Component\Ticketstation\Administrator\Payment\PaymentProviderInterface;
+use Ticketstation\Component\Ticketstation\Administrator\Payment\ProviderRegistry;
+use Ticketstation\Component\Ticketstation\Administrator\Payment\RefundCapableInterface;
 
 /**
  * Refunds and chargebacks of an order, kept in #__ticketstation_refunds.
  *
- * A refund is made in the Box Office (sent to Mollie, or registered by hand for an order paid
- * outside Mollie), or in the Mollie dashboard, in which case Mollie's webhook reports it and it
- * waits under "Needs attention" until an admin has decided what happens to the tickets.
+ * A refund is made in the Box Office (sent to the payment provider, or registered by hand for an
+ * order paid outside it), or in the provider's dashboard, in which case the provider's webhook
+ * reports it and it waits under "Needs attention" until an admin has decided what happens to the
+ * tickets. Talking to the provider is up to its RefundCapableInterface; what a refund means for
+ * the tickets is decided here.
  *
  * The order rows stay when their tickets are refunded, so the order stays in the Box Office.
  * Each row's refund_state says what happened to its ticket (see the TICKET_ constants); only a
@@ -203,10 +208,12 @@ class Refund
     }
 
     /**
-     * The Mollie payment the order was paid with, or '' when it was paid outside Mollie (Box
-     * Office, reservation). The webhook stores the payment id on the processed attempt.
+     * The payment provider's id of the payment the order was paid with, or '' when it was paid
+     * outside a provider (Box Office, reservation). The webhook stores the payment id on the
+     * processed attempt. Payments don't record their provider yet; all went through Mollie,
+     * whose ids start with "tr_".
      */
-    public static function molliePaymentId(int $ordercode): string
+    public static function paymentId(int $ordercode): string
     {
         $db    = Factory::getContainer()->get('DatabaseDriver');
         $query = $db->getQuery(true)
@@ -223,45 +230,24 @@ class Refund
     }
 
     /**
-     * A Mollie client with the key of the current mode (test or live).
+     * The provider that made the payment with the given id, when it can refund payments. Null for
+     * a payment of a provider without refunds, which can only be refunded by hand.
      *
-     * @throws  \RuntimeException  when no key is set.
+     * @return  PaymentProviderInterface|null  Always also a RefundCapableInterface.
      */
-    public static function mollieClient(): MollieApiClient
+    private static function refunder(string $paymentId): ?PaymentProviderInterface
     {
-        $db = Factory::getContainer()->get('DatabaseDriver');
-        $db->setQuery('SELECT * FROM ' . $db->quoteName('#__ticketstation_mollie') . ' WHERE ' . $db->quoteName('configid') . ' = 1');
-        $config = $db->loadObject();
+        $provider = ProviderRegistry::forPayment($paymentId);
 
-        $key = $config && $config->test_mode == '1' ? $config->api_key_test : ($config->api_key ?? '');
-
-        if (empty($key)) {
-            throw new \RuntimeException(Text::_('COM_TICKETSTATION_REFUND_ERROR_NO_KEY'));
-        }
-
-        require_once JPATH_SITE . '/components/com_ticketstation/vendor/autoload.php';
-
-        $mollie = new MollieApiClient();
-        $mollie->setApiKey($key);
-
-        return $mollie;
+        return $provider instanceof RefundCapableInterface ? $provider : null;
     }
 
     /**
-     * A status, method or other value from Mollie as a plain string. Since version 4 of Mollie's
-     * library such fields hold an enum case for the values it knows and a string for the rest.
-     */
-    public static function mollieValue($value): string
-    {
-        return $value instanceof \BackedEnum ? (string) $value->value : (string) $value;
-    }
-
-    /**
-     * Refunds (part of) a paid order and records what happens to its tickets. With a Mollie
-     * payment the refund is made at Mollie; nothing is stored when Mollie refuses it. The tickets
-     * only change once the refund can't be cancelled any more (see FINAL): usually a day later,
-     * when Mollie reports it as processing. Without a Mollie payment the refund is registered as
-     * paid back by hand and the tickets change straight away.
+     * Refunds (part of) a paid order and records what happens to its tickets. With a provider
+     * payment the refund is made at the provider; nothing is stored when it refuses it. The
+     * tickets only change once the refund can't be cancelled any more (see FINAL): usually a day
+     * later, when the provider reports it as processing. Without a provider payment the refund is
+     * registered as paid back by hand and the tickets change straight away.
      *
      * @param   array  $treatments  orderid => TICKET_ constant
      *
@@ -283,7 +269,8 @@ class Refund
 
         $description = trim($description) !== '' ? trim($description) : Text::sprintf('COM_TICKETSTATION_REFUND_DEFAULT_DESCRIPTION', $ordercode);
         $description = mb_substr($description, 0, 255);
-        $paymentId   = self::molliePaymentId($ordercode);
+        $paymentId   = self::paymentId($ordercode);
+        $provider    = $paymentId !== '' ? self::refunder($paymentId) : null;
         $userId      = (int) Factory::getApplication()->getIdentity()->id;
 
         $refund = (object) [
@@ -301,32 +288,30 @@ class Refund
             'treatments'        => self::encodeTreatments($treatments),
         ];
 
-        if ($paymentId !== '') {
+        if ($provider !== null) {
             try {
-                $payment = self::mollieClient()->payments->get($paymentId);
-
-                if (!$payment->canBeRefunded()) {
-                    throw new \RuntimeException(Text::_('COM_TICKETSTATION_REFUND_ERROR_NOT_REFUNDABLE'));
-                }
-
-                if ($amount > $payment->getAmountRemaining() + 0.004) {
-                    throw new \RuntimeException(Text::sprintf('COM_TICKETSTATION_REFUND_ERROR_TOO_MUCH', number_format($payment->getAmountRemaining(), 2, ',', '')));
-                }
-
-                $currency = $payment->amount->currency;
-
-                $mollieRefund = $payment->refund([
-                    'amount'      => ['currency' => $currency, 'value' => number_format($amount, 2, '.', '')],
-                    'description' => $description,
-                    'metadata'    => ['source' => 'ticketstation', 'ordercode' => $ordercode],
-                ]);
-            } catch (\Mollie\Api\Exceptions\MollieException $e) {
-                throw new \RuntimeException(Text::sprintf('COM_TICKETSTATION_REFUND_ERROR_MOLLIE', $e->getPlainMessage()));
+                $check = $provider->canRefund($paymentId);
+            } catch (PaymentException $e) {
+                throw new \RuntimeException(Text::sprintf('COM_TICKETSTATION_REFUND_ERROR_MOLLIE', $e->getMessage()));
             }
 
-            $refund->mollie_id = $mollieRefund->id;
-            $refund->currency  = $currency;
-            $refund->status    = self::mollieValue($mollieRefund->status);
+            if (!$check->refundable) {
+                throw new \RuntimeException(Text::_('COM_TICKETSTATION_REFUND_ERROR_NOT_REFUNDABLE'));
+            }
+
+            if ($amount > $check->amountRemaining + 0.004) {
+                throw new \RuntimeException(Text::sprintf('COM_TICKETSTATION_REFUND_ERROR_TOO_MUCH', number_format($check->amountRemaining, 2, ',', '')));
+            }
+
+            try {
+                $made = $provider->createRefund($paymentId, $amount, $description, ['source' => 'ticketstation', 'ordercode' => $ordercode]);
+            } catch (PaymentException $e) {
+                throw new \RuntimeException(Text::sprintf('COM_TICKETSTATION_REFUND_ERROR_MOLLIE', $e->getMessage()));
+            }
+
+            $refund->mollie_id = $made->id;
+            $refund->currency  = $made->currency;
+            $refund->status    = $made->status;
         } else {
             $remaining = round(self::paidAmount($ordercode) - self::refundedAmount($ordercode), 2);
 
@@ -341,8 +326,8 @@ class Refund
 
         $id = self::store($refund);
 
-        History::log($ordercode, 'refund_created', ($paymentId !== '' ? 'Refund of ' : 'Manual refund of ')
-            . number_format($amount, 2, '.', '') . ' ' . $refund->currency . ($paymentId !== '' ? ' made at Mollie (' . $refund->mollie_id . ')' : ' registered'),
+        History::log($ordercode, 'refund_created', ($provider !== null ? 'Refund of ' : 'Manual refund of ')
+            . number_format($amount, 2, '.', '') . ' ' . $refund->currency . ($provider !== null ? ' made at ' . $provider->getTitle() . ' (' . $refund->mollie_id . ')' : ' registered'),
             ['amount' => $amount, 'refund' => $id, 'mollie_id' => $refund->mollie_id]);
 
         self::applyPending($id);
@@ -595,36 +580,30 @@ class Refund
     }
 
     /**
-     * Stores the refunds and chargebacks Mollie has for the order's payment. New ones made in the
-     * Mollie dashboard wait for a decision; a refund that fails or a chargeback that is reversed
-     * after its decision is flagged again. Called by the webhook and by "Sync with Mollie".
+     * Stores the refunds and chargebacks the provider has for the order's payment. New ones made
+     * in the provider's dashboard wait for a decision; a refund that fails or a chargeback that is
+     * reversed after its decision is flagged again. Called by the webhook and by "Sync with Mollie".
      *
-     * @param   \Mollie\Api\Resources\Payment  $payment
+     * @param   PaymentProviderInterface  $provider  A provider that is also a RefundCapableInterface.
      *
      * @return  int  The number of new refunds and chargebacks.
+     *
+     * @throws  \RuntimeException  (PaymentException or ProviderNotConfiguredException) when the provider can't be asked.
      */
-    public static function syncFromMollie(int $ordercode, $payment): int
+    public static function syncPayment(int $ordercode, PaymentProviderInterface $provider, string $paymentId): int
     {
         $new = 0;
 
-        foreach ($payment->refunds() as $refund) {
-            $new += self::report($ordercode, $payment->id, 'refund', $refund->id, (float) $refund->amount->value, $refund->amount->currency,
-                (string) $refund->description, self::mollieValue($refund->status), (string) $refund->createdAt,
-                isset($refund->metadata->source) && $refund->metadata->source === 'ticketstation');
-        }
-
-        if ($payment->hasChargebacks()) {
-            foreach ($payment->chargebacks() as $chargeback) {
-                $new += self::report($ordercode, $payment->id, 'chargeback', $chargeback->id, (float) $chargeback->amount->value, $chargeback->amount->currency,
-                    (string) ($chargeback->reason->description ?? ''), $chargeback->reversedAt ? 'reversed' : 'charged_back', (string) $chargeback->createdAt, false);
-            }
+        foreach ($provider->getRefunds($paymentId) as $found) {
+            $new += self::report($ordercode, $provider, $paymentId, $found->type, $found->id, $found->amount, $found->currency,
+                $found->description, $found->status, $found->createdAt, $found->fromTicketstation);
         }
 
         return $new;
     }
 
     /**
-     * Fetches the order's payment from Mollie and stores its refunds (see syncFromMollie()).
+     * Fetches the order's payment from its provider and stores its refunds (see syncPayment()).
      *
      * @return  int  The number of new refunds and chargebacks.
      *
@@ -632,34 +611,37 @@ class Refund
      */
     public static function sync(int $ordercode): int
     {
-        $paymentId = self::molliePaymentId($ordercode);
+        $paymentId = self::paymentId($ordercode);
+        $provider  = $paymentId !== '' ? self::refunder($paymentId) : null;
 
-        if ($paymentId === '') {
+        if ($provider === null) {
             throw new \RuntimeException(Text::_('COM_TICKETSTATION_REFUND_ERROR_NO_PAYMENT'));
         }
 
         try {
-            return self::syncFromMollie($ordercode, self::mollieClient()->payments->get($paymentId));
-        } catch (\Mollie\Api\Exceptions\MollieException $e) {
-            throw new \RuntimeException(Text::sprintf('COM_TICKETSTATION_REFUND_ERROR_MOLLIE', $e->getPlainMessage()));
+            return self::syncPayment($ordercode, $provider, $paymentId);
+        } catch (PaymentException $e) {
+            throw new \RuntimeException(Text::sprintf('COM_TICKETSTATION_REFUND_ERROR_MOLLIE', $e->getMessage()));
         }
     }
 
     /**
-     * Minutes between two looks at Mollie's latest refunds, per admin session.
+     * Minutes between two looks at the providers' latest refunds, per admin session.
      */
     private const POLL_MINUTES = 5;
 
     /**
-     * Looks at the latest refunds and chargebacks of the whole Mollie account and stores the ones
-     * that belong to an order. The webhook only reports a refund once Mollie processes it (usually
-     * the next working day), so without this a refund a colleague made in the Mollie Dashboard
-     * would stay unnoticed until then. Called when the dashboard or the Box Office opens, at most
-     * once every few minutes per session; errors are ignored, the webhook remains the fallback.
+     * Looks at the latest refunds and chargebacks of the whole provider account and stores the ones
+     * that belong to an order. Mollie only reports a refund by webhook once it processes it
+     * (usually the next working day), so without this a refund a colleague made in the Mollie
+     * Dashboard would stay unnoticed until then. Called when the dashboard or the Box Office opens,
+     * at most once every few minutes per session; errors are ignored, the webhook remains the
+     * fallback. All providers are asked, switched on or not: their earlier payments can still be
+     * refunded.
      *
      * @return  int  The number of new refunds and chargebacks.
      */
-    public static function pollMollie(bool $force = false): int
+    public static function pollProviders(bool $force = false): int
     {
         $session = Factory::getApplication()->getSession();
         $last    = (int) $session->get('com_ticketstation.refunds.polled', 0);
@@ -670,30 +652,29 @@ class Refund
 
         $session->set('com_ticketstation.refunds.polled', time());
 
-        try {
-            $mollie = self::mollieClient();
-            $found  = [];
+        $found = [];
 
-            foreach ($mollie->refunds->page(null, 50) as $refund) {
-                $found[] = ['refund', $refund->paymentId, $refund->id, (float) $refund->amount->value, $refund->amount->currency,
-                    (string) $refund->description, self::mollieValue($refund->status), (string) $refund->createdAt,
-                    isset($refund->metadata->source) && $refund->metadata->source === 'ticketstation'];
+        foreach (ProviderRegistry::all() as $provider) {
+            if (!$provider instanceof RefundCapableInterface) {
+                continue;
             }
 
-            foreach ($mollie->chargebacks->page(null, 50) as $chargeback) {
-                $found[] = ['chargeback', $chargeback->paymentId, $chargeback->id, (float) $chargeback->amount->value, $chargeback->amount->currency,
-                    (string) ($chargeback->reason->description ?? ''), $chargeback->reversedAt ? 'reversed' : 'charged_back', (string) $chargeback->createdAt, false];
+            try {
+                foreach ($provider->pollRecent() as $refund) {
+                    $found[] = [$provider, $refund];
+                }
+            } catch (\Throwable $e) {
+                continue;
             }
-        } catch (\Throwable $e) {
-            return 0;
         }
 
-        $orders = self::ordersForPayments(array_unique(array_column($found, 1)));
+        $orders = self::ordersForPayments(array_unique(array_map(static fn ($item) => $item[1]->paymentId, $found)));
         $new    = 0;
 
-        foreach ($found as [$type, $paymentId, $mollieId, $amount, $currency, $description, $status, $createdAt, $fromTicketstation]) {
-            if (isset($orders[$paymentId])) {
-                $new += self::report($orders[$paymentId], $paymentId, $type, $mollieId, $amount, $currency, $description, $status, $createdAt, $fromTicketstation);
+        foreach ($found as [$provider, $refund]) {
+            if (isset($orders[$refund->paymentId])) {
+                $new += self::report($orders[$refund->paymentId], $provider, $refund->paymentId, $refund->type, $refund->id, $refund->amount,
+                    $refund->currency, $refund->description, $refund->status, $refund->createdAt, $refund->fromTicketstation);
             }
         }
 
@@ -701,7 +682,7 @@ class Refund
     }
 
     /**
-     * The orders paid with the given Mollie payments.
+     * The orders paid with the given provider payments.
      *
      * @return  array  payment id => ordercode
      */
@@ -836,11 +817,11 @@ class Refund
     }
 
     /**
-     * Stores a refund or chargeback that Mollie reports, or updates its status.
+     * Stores a refund or chargeback that a provider reports, or updates its status.
      *
      * @return  int  1 when it was new.
      */
-    private static function report(int $ordercode, string $paymentId, string $type, string $mollieId, float $amount, string $currency,
+    private static function report(int $ordercode, PaymentProviderInterface $provider, string $paymentId, string $type, string $mollieId, float $amount, string $currency,
         string $description, string $status, string $createdAt, bool $fromTicketstation): int
     {
         $db    = Factory::getContainer()->get('DatabaseDriver');
@@ -863,7 +844,7 @@ class Refund
                 'currency'          => $currency,
                 'description'       => mb_substr($description, 0, 255),
                 'status'            => $status,
-                'source'            => $fromTicketstation ? 'ticketstation' : 'mollie',
+                'source'            => $fromTicketstation ? 'ticketstation' : $provider->getId(),
                 'attention'         => !$fromTicketstation && self::counts($status) ? self::ATTENTION_DECISION : 0,
                 'created'           => Factory::getDate($createdAt ?: 'now')->toSql(),
             ];
@@ -872,9 +853,9 @@ class Refund
 
             if (!$fromTicketstation) {
                 History::log($ordercode, $type === 'chargeback' ? 'chargeback_reported' : 'refund_reported',
-                    $label . ' of ' . number_format($amount, 2, '.', '') . ' ' . $currency . ' reported by Mollie (' . $mollieId . ')'
+                    $label . ' of ' . number_format($amount, 2, '.', '') . ' ' . $currency . ' reported by ' . $provider->getTitle() . ' (' . $mollieId . ')'
                     . ($refund->attention ? '; a decision about the tickets is needed' : ''),
-                    ['amount' => $amount, 'mollie_id' => $mollieId, 'status' => $status], 'Mollie');
+                    ['amount' => $amount, 'mollie_id' => $mollieId, 'status' => $status], $provider->getTitle());
             }
 
             return $fromTicketstation ? 0 : 1;
@@ -893,9 +874,9 @@ class Refund
             // dealt with does the admin need to look at them again.
             $attention = !empty($existing->applied) ? self::ATTENTION_FAILED : 0;
 
-            History::log($ordercode, 'refund_failed', $label . ' ' . $mollieId . ' is now ' . $status . ' at Mollie; no money went back'
+            History::log($ordercode, 'refund_failed', $label . ' ' . $mollieId . ' is now ' . $status . ' at ' . $provider->getTitle() . '; no money went back'
                 . (self::isWaiting($existing) ? '. The tickets were left unchanged' : ''),
-                ['mollie_id' => $mollieId, 'status' => $status], 'Mollie');
+                ['mollie_id' => $mollieId, 'status' => $status], $provider->getTitle());
 
             if (self::isWaiting($existing)) {
                 $treatments = null;
@@ -964,9 +945,8 @@ class Refund
 
     private static function currency(): string
     {
-        $db = Factory::getContainer()->get('DatabaseDriver');
-        $db->setQuery('SELECT ' . $db->quoteName('currency') . ' FROM ' . $db->quoteName('#__ticketstation_mollie') . ' WHERE ' . $db->quoteName('configid') . ' = 1');
+        $provider = ProviderRegistry::active();
 
-        return MollieCurrencies::fromConfig($db->loadResult());
+        return $provider !== null ? $provider->getCurrency() : 'EUR';
     }
 }

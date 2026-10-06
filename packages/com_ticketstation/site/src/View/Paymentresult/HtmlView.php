@@ -41,7 +41,6 @@ class HtmlView extends BaseHtmlView {
 
         $this->ordercode        = $ordercode;
         $this->authorized       = $authorized;
-        $this->mollieconfig     = $this->get('mollie');
         $this->contactEmail     = (new Config)->getContactEmail();
 
         $this->canRetry = false;

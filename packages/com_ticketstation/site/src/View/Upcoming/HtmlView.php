@@ -41,7 +41,6 @@ class HtmlView extends BaseHtmlView {
         $added      = $this->get('added');
         $sold       = $this->get('sold');
         $pagination = $this->get('pagination');
-        $mollie     = $this->get('mollie');
 
         // In test mode only logged-in users see the tickets (with a warning that the mode is
         // on); other visitors only see the events whose sale is about to start.
@@ -77,7 +76,6 @@ class HtmlView extends BaseHtmlView {
         $this->sold       = $sold;
         $this->pagination = $pagination;
         $this->testmode   = Shop::inTestMode() && !Shop::isClosed();
-        $this->mollie     = $mollie;
 
         // Call the parent display to display the layout file
         parent::display($tpl);

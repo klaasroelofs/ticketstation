@@ -324,7 +324,7 @@ $sum28     = array_sum(array_column($this->dailySales, 'tickets'));
                     <?php foreach ($tiles as [$view, $icon, $labelKey]) {
                         $badge = $badges[$view] ?? null;
                         // Online payments switched off: the Mollie button looks faded and says so.
-                        $off   = $view === 'mollie' && ($this->mollie->enabled ?? '1') != '1';
+                        $off   = $view === 'mollie' && !$this->paymentsOn;
                         ?>
                         <a class="ticketstation-cpanel-tile<?= $off ? ' ticketstation-cpanel-tile--off' : ''; ?>" href="index.php?option=com_ticketstation&view=<?= $view; ?>"<?= $off ? ' title="' . $this->escape(Text::_('COM_TICKETSTATION_CPANEL_MOLLIE_OFF_TITLE')) . '"' : ''; ?>>
                             <span class="ticketstation-cpanel-tile-icon" aria-hidden="true">

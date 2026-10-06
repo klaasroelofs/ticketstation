@@ -73,7 +73,6 @@ class HtmlView extends BaseHtmlView {
 
         $items	        = $this->get('data');
         $config	        = $this->get('config');
-        $mollieconfig   = $this->get('mollie');
 
         if ($config->pro_installed == 1)
         {
@@ -88,7 +87,6 @@ class HtmlView extends BaseHtmlView {
         $this->items    = $items;
         $this->waitlist = $waitlist;
         $this->config   = $config;
-        $this->mollieconfig = $mollieconfig;
         $this->paymentsOn   = Shop::paymentsOn();
 
         parent::display($tpl);

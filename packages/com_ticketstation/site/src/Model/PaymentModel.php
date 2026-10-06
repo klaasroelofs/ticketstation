@@ -129,15 +129,4 @@ class PaymentModel extends BaseDatabaseModel
         return $db->loadObjectList();
     }
 
-    function getMollie() {
-
-        $db = Factory::getContainer()->get('DatabaseDriver');
-
-        ## Making the query for showing all the clients in list function
-        $query = 'SELECT * FROM #__ticketstation_mollie WHERE configid = 1';
-
-        $db->setQuery($query);
-        return $db->loadObject();
-    }
-
 }

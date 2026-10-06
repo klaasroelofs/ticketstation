@@ -67,17 +67,4 @@ class PaymentresultModel extends BaseDatabaseModel
         return $db->loadObject();
     }
 
-    function getMollie() {
-
-        $db = Factory::getContainer()->get('DatabaseDriver');
-
-        $query = $db->getQuery(true)
-            ->select(['*'])
-            ->from($db->quoteName('#__ticketstation_mollie'))
-            ->where($db->quoteName('configid') . " = 1");
-
-        $db->setQuery($query);
-        return $db->loadObject();
-    }
-
 }

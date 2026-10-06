@@ -255,11 +255,11 @@ $progress = function (int $done) use ($status) {
 
 <?php // Refunds and chargebacks, and a way to fetch them from Mollie when a webhook was missed. ?>
 <?php $canRefund = AclGate::can('ticketstation.payment'); ?>
-<?php if ($this->refunds || ($canRefund && $this->molliePayment !== '' && $status->paid === 1)) { ?>
+<?php if ($this->refunds || ($canRefund && $this->providerPayment !== '' && $status->paid === 1)) { ?>
     <div class="card mb-3">
         <div class="card-header d-flex flex-wrap align-items-center gap-2">
             <h3 class="mb-0 me-auto"><?= Text::_('COM_TICKETSTATION_REFUNDS') ?></h3>
-            <?php if ($canRefund && $this->molliePayment !== '') { ?>
+            <?php if ($canRefund && $this->providerPayment !== '') { ?>
                 <button type="button" class="btn btn-sm btn-outline-primary" onclick="Joomla.submitbutton('syncrefunds');">
                     <span class="fa fa-sync" aria-hidden="true"></span> <?= Text::_('COM_TICKETSTATION_REFUND_SYNC') ?>
                 </button>

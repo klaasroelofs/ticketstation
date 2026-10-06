@@ -12,11 +12,12 @@ namespace Ticketstation\Component\Ticketstation\Administrator\Helper;
 defined('_JEXEC') or die('Restricted access');
 
 use Joomla\CMS\Factory;
+use Ticketstation\Component\Ticketstation\Administrator\Payment\ProviderRegistry;
 
 /**
  * Who may see and order tickets on the website.
  *
- * Mollie's test mode is for trying the shop out, never for customers: while it is on, only
+ * The payment provider's test mode is for trying the shop out, never for customers: while it is on, only
  * logged-in site users (the organisation's own staff) see tickets and can order them. Anonymous visitors get the same answer as for an unpublished ticket, but still
  * see the events whose sale is about to start (the countdown in the upcoming-events list).
  *
@@ -26,22 +27,22 @@ use Joomla\CMS\Factory;
  */
 class Shop
 {
-    private static ?object $mollie = null;
-
     /**
-     * Whether customers can pay online through Mollie.
+     * Whether customers can pay online: the active payment provider is switched on.
      */
     public static function paymentsOn(): bool
     {
-        return self::getMollie()->enabled == '1';
+        $provider = ProviderRegistry::active();
+
+        return $provider !== null && $provider->isEnabled();
     }
 
     /**
-     * Whether Mollie's test mode is on.
+     * Whether the payment provider's test mode is on.
      */
     public static function inTestMode(): bool
     {
-        return self::paymentsOn() && self::getMollie()->test_mode == '1';
+        return self::paymentsOn() && ProviderRegistry::active()->isTestMode();
     }
 
     /**
@@ -147,22 +148,5 @@ class Shop
         $db->setQuery($query);
 
         return (float) $db->loadResult();
-    }
-
-    private static function getMollie(): object
-    {
-        if (self::$mollie === null) {
-            $db    = Factory::getContainer()->get('DatabaseDriver');
-            $query = $db->getQuery(true)
-                ->select($db->quoteName(['enabled', 'test_mode']))
-                ->from($db->quoteName('#__ticketstation_mollie'))
-                ->where($db->quoteName('configid') . ' = 1');
-
-            $db->setQuery($query);
-
-            self::$mollie = $db->loadObject() ?: (object) ['enabled' => '1', 'test_mode' => '0'];
-        }
-
-        return self::$mollie;
     }
 }

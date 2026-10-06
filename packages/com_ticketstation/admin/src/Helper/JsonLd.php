@@ -14,6 +14,7 @@ defined('_JEXEC') or die('Restricted access');
 use Joomla\CMS\Factory;
 use Joomla\CMS\Router\Route;
 use Joomla\CMS\Uri\Uri;
+use Ticketstation\Component\Ticketstation\Administrator\Payment\ProviderRegistry;
 
 /**
  * Schema.org Event data (JSON-LD) for the public ticket pages, so search engines can show date,
@@ -138,15 +139,9 @@ class JsonLd
      */
     public static function currency(): string
     {
-        $db = Factory::getContainer()->get('DatabaseDriver');
-        $db->setQuery(
-            $db->getQuery(true)
-                ->select($db->quoteName('currency'))
-                ->from($db->quoteName('#__ticketstation_mollie'))
-                ->where($db->quoteName('configid') . ' = 1')
-        );
+        $provider = ProviderRegistry::active();
 
-        return MollieCurrencies::fromConfig((string) $db->loadResult());
+        return $provider !== null ? $provider->getCurrency() : MollieCurrencies::DEFAULT;
     }
 
     private static function eventNode(object $row, object $config, array $offers): array

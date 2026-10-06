@@ -10,7 +10,7 @@
 /**
  * Mollie topic on the central documentation page: getting a Mollie account, the
  * settings on the Mollie screen (view=mollie) and how a payment flows through
- * site PaymentController (makepayment, IPNProcessPayment, mollie).
+ * site PaymentController (makepayment, webhook, return) and the Payment namespace (PaymentService, MollieProvider).
  */
 
 use Joomla\CMS\Language\Text;

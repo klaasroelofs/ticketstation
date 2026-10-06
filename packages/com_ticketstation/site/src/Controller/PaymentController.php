@@ -12,48 +12,38 @@ namespace Ticketstation\Component\Ticketstation\Site\Controller;
 defined('_JEXEC') or die;
 
 use Joomla\CMS\Language\Text;
-use Joomla\CMS\Log\Log;
 use Joomla\CMS\MVC\Controller\BaseController;
 use Joomla\CMS\Factory;
 use Joomla\CMS\Router\Route;
-use Joomla\CMS\Uri\Uri;
-use Mollie\Api\MollieApiClient;
-use Ticketstation\Component\Ticketstation\Administrator\Helper\Config;
-use Ticketstation\Component\Ticketstation\Administrator\Helper\History;
-use Ticketstation\Component\Ticketstation\Administrator\Helper\MollieCurrencies;
-use Ticketstation\Component\Ticketstation\Administrator\Helper\MolliePaymentMethods;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\OrderTotals;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\PaymentAPI;
-use Ticketstation\Component\Ticketstation\Administrator\Helper\Refund;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Shop;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\TicketstationFunctions;
+use Ticketstation\Component\Ticketstation\Administrator\Payment\PaymentLog;
+use Ticketstation\Component\Ticketstation\Administrator\Payment\PaymentService;
+use Ticketstation\Component\Ticketstation\Administrator\Payment\ProviderRegistry;
 
 /**
  * Ticketstation Payment Controller
+ *
+ * Takes the customer to the payment provider and receives what comes back: the customer (return)
+ * and the provider's server (webhook). What a payment means for the order is decided in
+ * PaymentService; the provider itself is behind PaymentProviderInterface.
+ *
  * @since  0.2.11
  */
 class PaymentController extends BaseController
 {
     private $ordercode;
-    private $mollieconfig;
 
     function __construct()
     {
         parent::__construct();
 
         $jinput = Factory::getApplication()->getInput();
-        $db = Factory::getContainer()->get('DatabaseDriver');
 
         // Get Ordercode
         $this->ordercode = $jinput->get('ordercode', '0', 'int');
-
-        // Get Mollie config from database
-        $query = 'SELECT * FROM #__ticketstation_mollie WHERE configid = 1';
-
-        $db->setQuery($query);
-        $this->mollieconfig = $db->loadObject();
-
-
     }
 
     function makepayment()
@@ -96,114 +86,23 @@ class PaymentController extends BaseController
             Factory::getApplication()->enqueueMessage(Text::_('COM_TICKETSTATION_ONLINE_PAYMENTS_OFF_ORDER'), 'error');
             Factory::getApplication()->redirect(Route::_('index.php?option=com_ticketstation&view=cart' . ($itemid ? '&Itemid=' . $itemid : ''), false));
         }
-        //$return_url = URI::root() . 'index.php?option=com_ticketstation&controller=payment&task=mollie';
-        $return_url = URI::root() . 'index.php?option=com_ticketstation&controller=payment&task=mollie';
-        $notify_url = URI::root() . 'index.php?option=com_ticketstation&controller=payment&task=IPNProcessPayment';
 
         if ($orderamount != 0) {
 
-            ## Only set up Mollie when the order actually goes there: setApiKey() throws on an
-            ## empty key, which would break free orders on a site without keys.
-            if ($this->mollieconfig->test_mode == '1') {
-                $api_key = $this->mollieconfig->api_key_test;
-            } else {
-                $api_key = $this->mollieconfig->api_key;
-            }
-
-            require_once JPATH_COMPONENT . "/vendor/autoload.php";
-
-            $mollie = new MollieApiClient();
-            $mollie->setApiKey($api_key);
-
-            $protocol = isset($_SERVER['HTTPS']) && strcasecmp('off', $_SERVER['HTTPS']) !== 0 ? "https" : "http";
-            $hostname = $_SERVER['HTTP_HOST'];
-            $path = dirname(isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : $_SERVER['PHP_SELF']);
-
-            ## Force total of the order in this format:
-            $ordertotal = number_format($orderamount, 2, '.', '');
-            $currency   = MollieCurrencies::fromConfig($this->mollieconfig->currency ?? '');
-
-            ## Start the API to process everything.
-            $newPayment = new PaymentAPI((int)$this->ordercode);
-            $existing = $newPayment->getTempTransactionByOrdercode($this->ordercode);
-
-            ## A new payment attempt gets its own temporary transaction, unless an earlier attempt
-            ## for this order is still open. A paid one (processed = 1) belongs to an earlier,
-            ## removed order that had the same ordercode (ordercodes get reused): reusing it would
-            ## make the webhook take this payment for a second payment of a paid order.
-            if (!$existing || (int) $existing->processed === 1) {
-
-                $query = $db->getQuery(true)
-                    ->select($db->quoteName('userid'))
-                    ->from($db->quoteName('#__ticketstation_orders'))
-                    ->where($db->quoteName('ordercode') . ' = ' . $db->quote($this->ordercode));
-
-                $db->setQuery($query);
-
-                $userid = $db->loadResult();
-
-                ## Let the API insert a new payment to the temp transaction table.
-                ## insertTempTransaction now generates and returns a random token instead of using md5(ordercode).
-                $return_token = $newPayment->insertTempTransaction($userid, md5($this->ordercode));
-
-                ## If there is no new created temporary transaction, quit here.
-                if (!$return_token) {
-                    exit(Text::_('COM_TICKETSTATION_MOLLIE_ERROR_1000'));
-                }
-            } else {
-                ## An open attempt for this order exists: reuse its token.
-                $return_token = $existing->return_token;
-
-                ## A new try after a failed one ("Pay again" on the result page): back to "no
-                ## state yet", or the wait page would report the old failure before Mollie's
-                ## webhook reports this attempt.
-                if ($return_token && (int) $existing->processed === 5) {
-                    $newPayment->updateTempTransaction($return_token, 0, '');
-                }
-
-                ## Existing rows created before the return_token column existed (or otherwise
-                ## missing a token) would otherwise send the customer to Mollie with an empty
-                ## 'order=' redirect parameter. Backfill a fresh token onto that row instead.
-                if (!$return_token) {
-                    $return_token = $newPayment->refreshReturnToken($existing->id);
-
-                    if (!$return_token) {
-                        exit(Text::_('COM_TICKETSTATION_MOLLIE_ERROR_1000'));
-                    }
-                }
-            }
-
+            ## Only set up the provider when the order actually goes there: a provider without
+            ## credentials would break free orders on a site without them.
             try {
-                $payment = $mollie->payments->create(array(
-                    "amount" => array(
-                        "value"     => $ordertotal,
-                        "currency"  => $currency,
-                    ),
-                    "method"        => MollieCurrencies::filterMethods($currency, MolliePaymentMethods::fromConfig($this->mollieconfig->payment_methods ?? '')),
-                    "description"   => $this->mollieconfig->description . ' ' . $this->ordercode,
-                    "redirectUrl"   => $return_url . '&order=' . $return_token,
-                    "webhookUrl"    => $notify_url,
-                    "locale"        => $this->mollieconfig->mollie_language,
-                    "metadata"      => array(
-                        "order_id"      => $this->ordercode,
-                    ),
-                ));
-            } catch (\Mollie\Api\Exceptions\MollieException $e) {
-                $this->log('Mollie API error while creating payment: ' . $e->getMessage());
+                $checkoutUrl = PaymentService::start(ProviderRegistry::active(), (int) $this->ordercode, (float) $orderamount);
+            } catch (\RuntimeException $e) {
+                PaymentLog::add('Error while creating payment: ' . $e->getMessage());
                 exit(Text::_('COM_TICKETSTATION_MOLLIE_ERROR_1000'));
             }
 
-            History::log($this->ordercode, 'payment_initiated', 'Payment initiated at Mollie (transaction ' . $payment->id . ')', ['mollie_id' => $payment->id]);
-
-            if ($this->mollieconfig->change_payment_state == 1) {
-                $pending_payment = $newPayment->paymentPendingState();
-            }
-
-            header("Location: " . $payment->getCheckoutUrl());
+            header("Location: " . $checkoutUrl);
 
         } else {
 
-            ## Amount is 0: the order never goes to Mollie.
+            ## Amount is 0: the order never goes to a payment provider.
             ## Generate a random token for the redirect (not the guessable ordercode).
             $free_token = bin2hex(random_bytes(32));
 
@@ -225,14 +124,12 @@ class PaymentController extends BaseController
 
         }
 
-        //$method = $mollie->methods->get(\Mollie\Api\Types\PaymentMethod::IDEAL, ["include" => "issuers"]);
-
     }
 
     function processFreeOrder($ordercode)
     {
-        $this->log('processFreeOrder');
-        $this->log('Sent ordercode: ' . $ordercode);
+        PaymentLog::add('processFreeOrder');
+        PaymentLog::add('Sent ordercode: ' . $ordercode);
 
         $order_id = $ordercode;
 
@@ -254,16 +151,19 @@ class PaymentController extends BaseController
         }
 
         ## if tickets has been created:
-        if ($ticket_creator == true && $this->sendTicketsDirectly()) {
+        if ($ticket_creator == true && PaymentService::sendTicketsDirectly()) {
             $newPayment->sendTickets();
         }
 
         return true;
     }
 
-    function mollie()
+    /**
+     * The customer comes back from the payment provider, with the token of the payment attempt.
+     */
+    function return()
     {
-        // Do NOT add checkToken() here — this is a redirect callback from Mollie,
+        // Do NOT add checkToken() here — this is a redirect callback from the payment provider,
         // not a browser form submission, so Joomla CSRF tokens do not apply.
 
         $jinput = Factory::getApplication()->getInput();
@@ -290,11 +190,20 @@ class PaymentController extends BaseController
         ## Marking this browser session as authorized to view/download this order's tickets.
         Factory::getApplication()->getSession()->set('ticketstation.authorized_ordercode', (int) $temp_transaction->ordercode);
 
-        $this->log('Payment processed. Customer redirected to payment result screen');
+        PaymentLog::add('Payment processed. Customer redirected to payment result screen');
 
         $itemid = TicketstationFunctions::getSiteItemid();
         Factory::getApplication()->redirect(Route::_('index.php?option=com_ticketstation&task=paymentresult.return&ordercode=' . $temp_transaction->ordercode . ($itemid ? '&Itemid=' . $itemid : '')));
 
+    }
+
+    /**
+     * The return address of payments that were started before provider-neutral addresses: always
+     * Mollie. Payments are still on their way back to it, so it stays.
+     */
+    function mollie()
+    {
+        $this->return();
     }
 
     function freeorder()
@@ -338,7 +247,7 @@ class PaymentController extends BaseController
         ## Clearing the session:
         $session->clear('ordercode');
 
-        ## Marking this browser session as authorized (see mollie() above).
+        ## Marking this browser session as authorized (see return() above).
         $session->set('ticketstation.authorized_ordercode', (int) $ordercode);
 
         $itemid = TicketstationFunctions::getSiteItemid();
@@ -346,176 +255,48 @@ class PaymentController extends BaseController
 
     }
 
+    /**
+     * The payment provider's server reports a payment. The provider is named in the address
+     * (&provider=); an unknown one gets a plain 404. A provider that is switched off still gets
+     * its webhooks: payments, refunds and chargebacks of earlier orders are reported there.
+     */
+    function webhook()
+    {
+        // Do NOT add checkToken() here — this is a server-to-server webhook callback from the
+        // payment provider, not a browser form submission, so Joomla CSRF tokens do not apply.
+        // The provider checks the call is genuine itself.
+
+        $provider = ProviderRegistry::get(Factory::getApplication()->getInput()->getCmd('provider', ''));
+
+        $this->processWebhook($provider);
+    }
+
+    /**
+     * The webhook address of payments that were started before provider-neutral addresses:
+     * always Mollie. Payments are still on their way back to it, and refunds and chargebacks of
+     * earlier payments are reported there too, so it stays.
+     */
     function IPNProcessPayment()
     {
-        // Do NOT add checkToken() here — this is a server-to-server webhook callback from Mollie,
-        // not a browser form submission, so Joomla CSRF tokens do not apply.
-
-        $this->log('IPN script called by Mollie');
-
-        $response = Factory::getApplication()->getInput()->post->getArray();
-
-        if ($this->mollieconfig->test_mode == '1') {
-            $api_key = $this->mollieconfig->api_key_test;
-        } else {
-            $api_key = $this->mollieconfig->api_key;
-        }
-
-        require_once JPATH_COMPONENT . "/vendor/autoload.php";
-
-        $mollie = new MollieApiClient();
-        $mollie->setApiKey($api_key);
-
-        try {
-            $payment = $mollie->payments->get($response['id']);
-        } catch (\Mollie\Api\Exceptions\MollieException $e) {
-            $this->log('Mollie API error while fetching payment: ' . $e->getMessage());
-            exit('Unable to retrieve payment from Mollie.');
-        }
-
-        $order_id = $payment->metadata->order_id;
-        $this->log('Sent ordercode: ' . $order_id);
-
-
-        ## add all information to a string:
-        $payment_details = http_build_query($payment);
-
-        ## Start the API to process everything.
-        $newPayment = new PaymentAPI((int)$order_id);
-        ## Look up temp transaction by ordercode (now returns the one with return_token).
-        ## Webhooks only have the ordercode from metadata, not the token.
-        $tmpTransaction = $newPayment->getTempTransactionByOrdercode($order_id);
-
-        if (!$tmpTransaction) {
-            $this->log('No temporary transaction in the database, script has been stopped.');
-            exit('No temporary transaction in the database.');
-        }
-
-        ## Extract the return_token for use in updateTempTransaction calls.
-        $return_token = $tmpTransaction->return_token;
-
-        ## Mollie also calls the webhook after a payment was paid (a refund or a chargeback),
-        ## and a customer may pay a second attempt of the same order. The order is complete
-        ## by then, so don't run the paid branch again: it would add a transaction and create
-        ## and send the tickets and the invoice once more. Another attempt that fails or
-        ## expires must not overwrite the paid state either. Refunds and chargebacks of the
-        ## payment are stored; one made in the Mollie dashboard waits under "Needs attention"
-        ## for a decision about the tickets.
-        if ((int) $tmpTransaction->processed === 1) {
-            if ($tmpTransaction->message !== $payment->id) {
-                if ($payment->isPaid()) {
-                    History::log($order_id, 'payment_duplicate', 'Second payment ' . $payment->id . ' received for an order that was already paid (transaction ' . $tmpTransaction->message . '); refund one of them in Mollie', ['mollie_id' => $payment->id, 'method' => $payment->method]);
-                }
-            } elseif ($payment->hasRefunds() || $payment->hasChargebacks()) {
-                try {
-                    $new = Refund::syncFromMollie((int) $order_id, $payment);
-                    $this->log('Refunds and chargebacks of ' . $payment->id . ' stored, ' . $new . ' new.');
-                } catch (\Throwable $e) {
-                    $this->log('Could not store the refunds of ' . $payment->id . ': ' . $e->getMessage());
-                    http_response_code(500);
-                    exit();
-                }
-            }
-
-            $this->log('Payment ' . $payment->id . ' for an already paid order, not processed again.');
-            exit();
-        }
-
-        ## PAYMENT SUCCESFULL
-        if ($payment->isPaid() == true) {
-            ## Getting the amounts for this order.
-            $amount = OrderTotals::get((int) $order_id, true)->total;
-
-            $netto_price = number_format($amount, 2, '.', '');
-            $paid_price = $payment->amount->value;
-
-            $this->log('Amount to be paid:' . $netto_price);
-            $this->log('Amount paid by customer:' . $payment->amount->value);
-
-            if ($netto_price == $paid_price) {
-                ## Update the order state in the order table:
-                $payment_state = $newPayment->updateOrder();
-
-                ## Insert transaction details:
-                $newPayment->saveTransaction($order_id, $tmpTransaction->userid, $payment_details, $paid_price, ucfirst(Refund::mollieValue($payment->method)));
-
-                ## if state is true, create the tickets:
-                if ($payment_state == true) {
-                    $ticket_creator = $newPayment->createTickets();
-                    $this->log('Tickets created');
-                }
-
-                ## set temporary payment to 1 (paid order)
-                $newPayment->updateTempTransaction($return_token, '1', $response['id']);
-
-                ## if tickets has been created:
-                if ($ticket_creator == true && $this->sendTicketsDirectly()) {
-                    $newPayment->sendTickets();
-                    $this->log('Tickets sent');
-                }
-
-                ## Clearing the session:
-                $newPayment->clearSession();
-                exit();
-            } else {
-                ## set temporary payment to 2 (wrong amount)
-                $newPayment->updateTempTransaction($return_token, '2');
-                exit();
-            }
-        } elseif ($payment->isOpen() == true) {
-            $newPayment->updateTempTransaction($return_token, '3');
-            exit();
-        } elseif ($payment->isPending() == true) {
-            $newPayment->updateTempTransaction($return_token, '4');
-            exit();
-        } elseif ($payment->isFailed() == true) {
-            $newPayment->updateTempTransaction($return_token, '5');
-            History::log($order_id, 'payment_failed', 'Payment failed at Mollie (transaction ' . $payment->id . ')', ['mollie_id' => $payment->id, 'method' => $payment->method]);
-            exit();
-        } elseif ($payment->isCanceled() == true) {
-            $newPayment->updateTempTransaction($return_token, '5');
-            History::log($order_id, 'payment_cancelled', 'Payment cancelled by customer (transaction ' . $payment->id . ')', ['mollie_id' => $payment->id, 'method' => $payment->method]);
-            exit();
-        } elseif ($payment->isExpired() == true) {
-            $newPayment->updateTempTransaction($return_token, '5');
-            History::log($order_id, 'payment_expired', 'Payment expired before completion (transaction ' . $payment->id . ')', ['mollie_id' => $payment->id, 'method' => $payment->method]);
-            exit();
-        } else {
-            $newPayment->updateTempTransaction($return_token, '5');
-            exit();
-        }
-
-        ## set temporary payment to 0 (payment is returning without state)
-        $newPayment->updateTempTransaction($return_token, '0');
-        exit();
+        $this->processWebhook(ProviderRegistry::get('mollie'));
     }
 
-    /**
-     * Writes a line to the Mollie log, com_ticketstation_mollie.php in Joomla's log folder
-     * (administrator/logs), which can't be read from the web.
-     */
-    private function log($text)
+    private function processWebhook($provider)
     {
-        static $registered = false;
-
-        if ( ! $registered)
-        {
-            Log::addLogger(['text_file' => 'com_ticketstation_mollie.php'], Log::ALL, ['com_ticketstation.mollie']);
-            $registered = true;
+        if ($provider === null) {
+            http_response_code(404);
+            exit();
         }
 
-        Log::add($text, Log::INFO, 'com_ticketstation.mollie');
+        $app = Factory::getApplication();
 
-        return true;
-    }
+        [$status, $body] = PaymentService::handleWebhook($provider, $app->getInput(), (string) file_get_contents('php://input'));
 
-    /**
-     * "Send tickets directly" in the Configuration: email the tickets as soon as an order is paid
-     * online or a free order is completed.
-     */
-    private function sendTicketsDirectly(): bool
-    {
-        return (int) ((new Config)->get(['send_tickets_directly'])->send_tickets_directly ?? 1) === 1;
+        if ($status !== 200) {
+            http_response_code($status);
+        }
+
+        exit($body);
     }
 
 }

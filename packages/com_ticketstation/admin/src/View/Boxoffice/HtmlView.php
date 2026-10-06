@@ -20,7 +20,7 @@ use Joomla\CMS\Toolbar\ToolbarHelper;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\AclGate;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\CustomerNote;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Invoice;
-use Ticketstation\Component\Ticketstation\Administrator\Helper\MolliePaymentMethods;
+use Ticketstation\Component\Ticketstation\Administrator\Payment\ProviderRegistry;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\OrderTotals;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Refund;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Tickets;
@@ -107,7 +107,7 @@ class HtmlView extends BaseHtmlView
             'value', 'text', $filters['sent']);
 
         // Refunds a colleague made in the Mollie Dashboard, before the webhook reports them.
-        Refund::pollMollie();
+        Refund::pollProviders();
 
         $this->items      = $this->get('list');
         $this->pagination = $this->get('Pagination');
@@ -324,7 +324,7 @@ class HtmlView extends BaseHtmlView
         $this->config        = $config;
         $this->orderprice    = $orderprice;
         $this->transaction   = $transaction;
-        $this->paymentMethod = $transaction && $transaction->type !== '' ? MolliePaymentMethods::label(strtolower($transaction->type)) : '';
+        $this->paymentMethod = $transaction && $transaction->type !== '' ? ProviderRegistry::methodLabel(strtolower($transaction->type)) : '';
         $this->invoice       = $invoice;
         $this->invoiceNumber = $invoice ? (new Invoice)->getInvoiceNumber($invoice->invoiceid, $config->invoice_prefix) : '';
         $this->invoiceFile   = $invoice ? (new Invoice)->getPdfFilename($invoice->invoiceid) : '';
@@ -343,7 +343,7 @@ class HtmlView extends BaseHtmlView
         }
         $this->refunded      = $refunded;
         $this->paidAmount    = $paidAmount;
-        $this->molliePayment = Refund::molliePaymentId($ordercode);
+        $this->providerPayment = Refund::paymentId($ordercode);
 
         parent::display($tpl);
 
@@ -396,7 +396,7 @@ class HtmlView extends BaseHtmlView
         $this->paidAmount    = $paidAmount;
         $this->refunded      = $refunded;
         $this->remaining     = max(0.0, round($paidAmount - $refunded, 2));
-        $this->molliePayment = Refund::molliePaymentId($ordercode);
+        $this->providerPayment = Refund::paymentId($ordercode);
         $this->waitingTreatments = [];
 
         foreach (Refund::forOrder($ordercode) as $other)

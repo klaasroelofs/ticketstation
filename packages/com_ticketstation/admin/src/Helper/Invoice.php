@@ -16,6 +16,7 @@ use Joomla\CMS\Factory;
 use Joomla\Filesystem\File;
 use Joomla\Filesystem\Folder;
 use Joomla\CMS\Language\Text;
+use Ticketstation\Component\Ticketstation\Administrator\Payment\ProviderRegistry;
 use stdClass;
 
 defined('_JEXEC') or die('Restricted access');
@@ -549,7 +550,7 @@ class Invoice
             $pdf->SetFont($font_name, '', $font_size);
             $pdf->SetXY(120, $height);
             $pdf->Write(0, PdfEncoding::toLatin1(Text::sprintf('COM_TICKETSTATION_INVOICE_PAID_VIA',
-                MolliePaymentMethods::label(strtolower($invoice->payment_provider)))));
+                ProviderRegistry::methodLabel(strtolower($invoice->payment_provider)))));
         }
 
         $dir = JPATH_ADMINISTRATOR . '/components/com_ticketstation/invoices';
