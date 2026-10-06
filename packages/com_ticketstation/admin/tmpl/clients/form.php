@@ -11,6 +11,7 @@ use Joomla\CMS\Factory;
 use \Joomla\CMS\HTML\HTMLHelper;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\Router\Route;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\Date;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Price;
 
 // No direct access to this file
@@ -69,7 +70,7 @@ $document->setTitle(Text::_('COM_TICKETSTATION_VIEW_CUSTOMER_DETAILS') . ' - ' .
                                     <span class="badge bg-info" style="border: 1px solid #000;background-color:#f5a742;font-size:10pt;margin-top:5px;"><?= $this->escape($row->remarks); ?></span>
                                 <?php } ?>
                             </td>
-                            <td class="w-3 text-center" style="text-align: center;"><small><?= date ("d-m-Y", strtotime($row->orderdate)); ?></small></td>
+                            <td class="w-3 text-center" style="text-align: center;"><small><?= Date::screen($row->orderdate, $this->config->dateformat ?? 'd-m-Y'); ?></small></td>
                             <td class="w-3 d-none d-md-table-cell text-center" style="text-align: center;"><?= $row->totaltickets; ?></td>
                             <td class="w-3 d-none d-lg-table-cell text-center" style="text-align: center;"><?= Price::format($row->orderprice, $this->config->valuta); ?></td>
                             <td class="w-3 d-none d-md-table-cell text-center" style="text-align: center;">

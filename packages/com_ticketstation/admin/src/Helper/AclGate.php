@@ -192,6 +192,7 @@ class AclGate
             'controlpanel'       => self::MANAGE,
             'reservation'        => self::RESERVE,
             'export'             => self::BOXOFFICE,
+            'exportxlsx'         => self::BOXOFFICE,
             'downloadtickets'    => self::BOXOFFICE,
             'processticket'      => self::BOXOFFICE,
             'sendingticket'      => self::BOXOFFICE,

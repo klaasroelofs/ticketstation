@@ -13,6 +13,7 @@
         <action name="ticketstation.payment" title="COM_TICKETSTATION_ACTION_PAYMENT" description="COM_TICKETSTATION_ACTION_PAYMENT_DESC" />
         <action name="ticketstation.order.delete" title="COM_TICKETSTATION_ACTION_ORDER_DELETE" description="COM_TICKETSTATION_ACTION_ORDER_DELETE_DESC" />
         <action name="ticketstation.finance" title="COM_TICKETSTATION_ACTION_FINANCE" description="COM_TICKETSTATION_ACTION_FINANCE_DESC" />
+        <action name="ticketstation.testshop" title="COM_TICKETSTATION_ACTION_TESTSHOP" description="COM_TICKETSTATION_ACTION_TESTSHOP_DESC" />
         <action name="ticketstation.scanners" title="COM_TICKETSTATION_ACTION_SCANNERS" description="COM_TICKETSTATION_ACTION_SCANNERS_DESC" />
     </section>
 </access>

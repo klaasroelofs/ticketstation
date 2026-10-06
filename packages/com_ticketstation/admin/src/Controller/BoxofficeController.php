@@ -21,10 +21,12 @@ use Joomla\CMS\Application\CMSApplication;
 use Joomla\CMS\MVC\Controller\BaseController;
 use Joomla\CMS\MVC\Factory\MVCFactoryInterface;
 use Joomla\Input\Input;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\Config;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Date;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Order;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Refund;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Tickets;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\Xlsx;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Shop;
 
 
@@ -505,8 +507,27 @@ class BoxofficeController extends BaseController {
      */
     function export()
     {
-        $app  = Factory::getApplication();
-        $rows = $this->getModel('boxoffice')->getExportRows();
+        $this->download('csv');
+    }
+
+    /**
+     * The same guest list as an Excel file (.xlsx): phone numbers and codes stay text, so a
+     * leading zero is kept, and the price is a number.
+     */
+    function exportxlsx()
+    {
+        $this->download('xlsx');
+    }
+
+    private function download(string $format)
+    {
+        $app    = Factory::getApplication();
+        $rows   = $this->getModel('boxoffice')->getExportRows();
+        $config = (new Config)->getPartialConfig(['dateformat', 'time_format']);
+
+        // The dates are written as on screen: the notation of the Configuration, and the calendar
+        // of the site language
+        $dateTime = trim(($config->dateformat ?: 'd-m-Y') . ' ' . ($config->time_format ?: 'H:i'));
 
         $status = [
             0 => Text::_('COM_TICKETSTATION_UNPAID_OVERVIEW'),
@@ -515,19 +536,7 @@ class BoxofficeController extends BaseController {
             3 => Text::_('COM_TICKETSTATION_PENDING'),
         ];
 
-        // A value starting with one of these would be read as a formula by a spreadsheet.
-        $cell = static function ($value) {
-            $value = (string) $value;
-
-            return $value !== '' && strpbrk($value[0], "=+-@\t\r") !== false ? "'" . $value : $value;
-        };
-
-        $out = fopen('php://temp', 'r+');
-
-        // A byte order mark, so spreadsheet programs read the file as UTF-8.
-        fwrite($out, "\xEF\xBB\xBF");
-
-        fputcsv($out, [
+        $header = [
             Text::_('COM_TICKETSTATION_ORDERCODE'),
             Text::_('COM_TICKETSTATION_ORDERDATE'),
             Text::_('COM_TICKETSTATION_BOXOFFICE_EXPORT_FIRSTNAME'),
@@ -542,13 +551,15 @@ class BoxofficeController extends BaseController {
             Text::_('COM_TICKETSTATION_BOXOFFICE_SCANNED'),
             Text::_('COM_TICKETSTATION_BOXOFFICE_BLACKLIST'),
             Text::_('COM_TICKETSTATION_ORDERREFERENCE'),
-        ], ';');
+        ];
+
+        $lines = [];
 
         foreach ($rows as $row)
         {
-            fputcsv($out, array_map($cell, [
+            $lines[] = [
                 $row->ordercode,
-                Date::_($row->orderdate, 'Y-m-d H:i'),
+                Date::screen($row->orderdate, $dateTime),
                 $row->firstname,
                 $row->name,
                 $row->emailaddress,
@@ -556,12 +567,56 @@ class BoxofficeController extends BaseController {
                 $row->eventname,
                 $row->ticketname,
                 $row->seatid ? $row->row_name . $row->seatid : '',
-                number_format((float) $row->price, 2, ',', ''),
+                $format === 'xlsx' ? (float) $row->price : number_format((float) $row->price, 2, ',', ''),
                 $status[(int) $row->paid] ?? '',
-                $row->scanned ? substr((string) $row->scandate, 0, 16) : '',
+                $row->scanned ? Date::display($row->scandate, $dateTime) : '',
                 $row->blacklisted ? Text::_('COM_TICKETSTATION_YES') : '',
                 $row->remarks,
-            ]), ';');
+            ];
+        }
+
+        $name = 'boxoffice-' . date('Y-m-d-His');
+
+        if ($format === 'xlsx')
+        {
+            $file = Xlsx::build($header, $lines, Factory::getDocument()->getDirection() === 'rtl', Text::_('COM_TICKETSTATION_BOXOFFICE_EXPORT'));
+
+            if ($file === '')
+            {
+                $app->enqueueMessage(Text::_('COM_TICKETSTATION_BOXOFFICE_EXPORT_XLSX_FAILED'), 'error');
+                $this->setRedirect('index.php?option=com_ticketstation&view=boxoffice');
+
+                return;
+            }
+
+            $app->setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', true);
+            $app->setHeader('Content-Disposition', 'attachment; filename="' . $name . '.xlsx"', true);
+            $app->setHeader('Cache-Control', 'no-store', true);
+            $app->sendHeaders();
+
+            echo $file;
+
+            $app->close();
+        }
+
+        // A value starting with one of these would be read as a formula by a spreadsheet.
+        $cell = static function ($value) {
+            $value = (string) $value;
+
+            return $value !== '' && strpbrk($value[0], "=+-@\t\r") !== false ? "'" . $value : $value;
+        };
+
+        $out = fopen('php://temp', 'r+');
+
+        // A byte order mark, so spreadsheet programs read the file as UTF-8.
+        fwrite($out, "\xEF\xBB\xBF");
+
+        // The escape character is given explicitly (PHP 8.4 asks for it); empty means none
+        fputcsv($out, $header, ';', '"', '');
+
+        foreach ($lines as $line)
+        {
+            fputcsv($out, array_map($cell, $line), ';', '"', '');
         }
 
         rewind($out);
@@ -569,7 +624,7 @@ class BoxofficeController extends BaseController {
         fclose($out);
 
         $app->setHeader('Content-Type', 'text/csv; charset=utf-8', true);
-        $app->setHeader('Content-Disposition', 'attachment; filename="boxoffice-' . date('Y-m-d-His') . '.csv"', true);
+        $app->setHeader('Content-Disposition', 'attachment; filename="' . $name . '.csv"', true);
         $app->setHeader('Cache-Control', 'no-store', true);
         $app->sendHeaders();
 

@@ -260,7 +260,7 @@ $progress = function (int $done, int $total, string $title, string $complete = '
         Joomla.submitbutton = function (task) {
             submitbutton.apply(this, arguments);
 
-            if (task === 'boxoffice.export') {
+            if (task === 'boxoffice.export' || task === 'boxoffice.exportxlsx') {
                 setTimeout(function () {
                     document.getElementById('adminForm').task.value = '';
                 }, 0);

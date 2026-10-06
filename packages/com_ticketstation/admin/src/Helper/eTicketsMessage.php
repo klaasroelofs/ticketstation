@@ -125,7 +125,7 @@ class eTicketsMessage
 
         return [
             'ordercode' => $ordercode,
-            'orderdate' => $orderdate ? date($config->dateformat, strtotime($orderdate)) : '',
+            'orderdate' => $orderdate ? Date::_($orderdate, $config->dateformat) : '',
             'orderlist' => $payment->getOrderList(),
             'price'     => TicketstationFunctions::showprice($config->priceformat, $total, $config->valuta),
         ];

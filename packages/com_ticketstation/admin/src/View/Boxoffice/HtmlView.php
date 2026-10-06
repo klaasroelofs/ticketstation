@@ -191,6 +191,10 @@ class HtmlView extends BaseHtmlView
             ->icon('fa fa-file-csv')
             ->listCheck(false);
 
+        $toolbar->standardButton('exportxlsx', 'COM_TICKETSTATION_BOXOFFICE_EXPORT_XLSX', 'boxoffice.exportxlsx')
+            ->icon('fa fa-file-excel')
+            ->listCheck(false);
+
         ToolbarHelper::custom('','spacer');
         ToolbarHelper::custom('controlpanel', 'icon-home', '', 'COM_TICKETSTATION_VIEW_CPANEL_TITLE_SHORT', false);
         Docs::toolbarButton('boxoffice');

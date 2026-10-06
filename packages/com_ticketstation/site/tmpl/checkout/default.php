@@ -62,6 +62,29 @@ $requiredMark = '<span class="ts-required" aria-hidden="true">*</span>';
 
     <p class="ts-intro"><?php echo Text::_('COM_TICKETSTATION_CREATEACCOUNT_NOW2'); ?></p>
 
+    <?php if ($this->prefilled) { ?>
+        <p class="ts-intro ts-prefilled">
+            <?php echo Text::_('COM_TICKETSTATION_CHECKOUT_PREFILLED'); ?>
+            <button type="button" class="ts-btn ts-btn--secondary ts-btn--sm" id="ts-clear-details"><?php echo Text::_('COM_TICKETSTATION_CHECKOUT_PREFILLED_OTHER'); ?></button>
+        </p>
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                var button = document.getElementById('ts-clear-details');
+
+                button.addEventListener('click', function () {
+                    ['firstname', 'lastname', 'emailaddress', 'email2'].forEach(function (id) {
+                        var field = document.getElementById(id);
+
+                        if (field) { field.value = ''; }
+                    });
+
+                    document.getElementById('firstname').focus();
+                    button.hidden = true;
+                });
+            });
+        </script>
+    <?php } ?>
+
     <?php if ($this->errors) { ?>
         <div class="ts-alert ts-alert--danger" role="alert"><?php echo Text::_('COM_TICKETSTATION_CHECKOUT_CHECK_FIELDS'); ?></div>
     <?php } ?>

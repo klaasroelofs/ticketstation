@@ -78,6 +78,7 @@ class com_ticketstationInstallerScript extends InstallerScript
         if ($type === 'install' || $type === 'update')
         {
             $this->setDefaultPermissions();
+            $this->grantTestShop();
         }
 
         return true;
@@ -127,6 +128,7 @@ class com_ticketstationInstallerScript extends InstallerScript
                 'ticketstation.boxoffice'    => [$manager, $administrator],
                 'ticketstation.reserve'      => [$manager, $administrator],
                 'ticketstation.scanners'     => [$manager, $administrator],
+                'ticketstation.testshop'     => [$manager, $administrator],
                 'ticketstation.payment'      => [$administrator],
                 'ticketstation.finance'      => [$administrator],
                 'ticketstation.order.delete' => [$administrator],
@@ -151,6 +153,54 @@ class com_ticketstationInstallerScript extends InstallerScript
         }
     }
 
+    /**
+     * "In test mode, order on the website" (ticketstation.testshop, since 2.25.1) closes the shop in
+     * test mode to everyone without it. Before, any logged-in user could order then, so Managers and
+     * Administrators get it when the rules of the component don't mention it yet; a rule an admin has
+     * set (also a deny) is never touched. A new install gets it from setDefaultPermissions().
+     */
+    private function grantTestShop(): void
+    {
+        try
+        {
+            $db    = \Joomla\CMS\Factory::getContainer()->get('DatabaseDriver');
+            $query = $db->getQuery(true)
+                ->select([$db->quoteName('id'), $db->quoteName('rules')])
+                ->from($db->quoteName('#__assets'))
+                ->where($db->quoteName('name') . ' = ' . $db->quote('com_ticketstation'));
+
+            $asset = $db->setQuery($query)->loadObject();
+
+            if (!$asset)
+            {
+                return;
+            }
+
+            $rules = json_decode((string) $asset->rules, true);
+
+            if (!is_array($rules) || array_key_exists('ticketstation.testshop', $rules))
+            {
+                return;
+            }
+
+            $query = $db->getQuery(true)
+                ->select($db->quoteName('id'))
+                ->from($db->quoteName('#__usergroups'))
+                ->whereIn($db->quoteName('title'), ['Manager', 'Administrator'], \Joomla\Database\ParameterType::STRING);
+
+            foreach ($db->setQuery($query)->loadColumn() as $groupId)
+            {
+                $rules['ticketstation.testshop'][(string) $groupId] = 1;
+            }
+
+            $update = (object) ['id' => (int) $asset->id, 'rules' => json_encode($rules)];
+            $db->updateObject('#__assets', $update, 'id');
+        }
+        catch (\Throwable $e)
+        {
+            // Not fatal: the permission can still be set by hand under Options.
+        }
+    }
     /**
      * Until 2.17.0 the PDF with all tickets of an order was eTickets-<ordercode>.pdf and that of
      * an order with one ticket eTicket-<orderid>.pdf; they are Tickets-<ordercode>.pdf and

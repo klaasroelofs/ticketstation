@@ -72,7 +72,7 @@ class Confirmation
         ## Global things for this email:
 
         ## The mail goes out when the signup is completed at checkout, so today is its date.
-        $date       = date($config->dateformat);
+        $date       = Date::_(Factory::getDate()->toSql(), $config->dateformat);
 
         ## getOrderCount() only reflects the previous getWaitingList()/getOrderList() call,
         ## so it must run after getWaitingList() below, not before it.

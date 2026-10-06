@@ -18,7 +18,8 @@ use Ticketstation\Component\Ticketstation\Administrator\Payment\ProviderRegistry
  * Who may see and order tickets on the website.
  *
  * The payment provider's test mode is for trying the shop out, never for customers: while it is on, only
- * logged-in site users (the organisation's own staff) see tickets and can order them. Anonymous visitors get the same answer as for an unpublished ticket, but still
+ * users with the permission "In test mode, order on the website" (Manager and Administrator by default,
+ * see admin/access.xml) see tickets and can order them. Anonymous visitors get the same answer as for an unpublished ticket, but still
  * see the events whose sale is about to start (the countdown in the upcoming-events list).
  *
  * With online payments switched off (Mollie settings) the website only sells free tickets: an
@@ -46,12 +47,13 @@ class Shop
     }
 
     /**
-     * Whether the shop is closed to the current visitor: test mode is on and the
-     * visitor isn't logged in.
+     * Whether the shop is closed to the current visitor: test mode is on and the visitor may not
+     * order in test mode (the Ticketstation permission "In test mode, order on the website").
+     * Being logged in isn't enough: a site can have customers with an account.
      */
     public static function isClosed(): bool
     {
-        return self::inTestMode() && Factory::getApplication()->getIdentity()->guest;
+        return self::inTestMode() && !Factory::getApplication()->getIdentity()->authorise('ticketstation.testshop', 'com_ticketstation');
     }
 
     /**

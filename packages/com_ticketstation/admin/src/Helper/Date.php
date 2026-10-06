@@ -173,11 +173,12 @@ class Date
      */
     public static function display($value, string $format, bool $translate = false): string
     {
-        if ($value === null || $value === '' || str_starts_with((string) $value, '0000-00-00')) {
+        $object = $value instanceof \DateTimeInterface;
+
+        if ($value === null || $value === '' || (!$object && str_starts_with((string) $value, '0000-00-00'))) {
             return '';
         }
 
-        $object = $value instanceof \DateTimeInterface;
         $stamp  = $object ? $value->getTimestamp() : (is_int($value) ? $value : strtotime((string) $value));
 
         if ($stamp === false) {

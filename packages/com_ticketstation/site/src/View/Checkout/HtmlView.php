@@ -26,6 +26,9 @@ use Ticketstation\Component\Ticketstation\Site\Controller\CheckoutController;
 
 class HtmlView extends BaseHtmlView {
 
+    /** @var bool The name and email address come from the account of the logged-in user */
+    public $prefilled = false;
+
 
     /**
      * Display the view
@@ -141,6 +144,20 @@ class HtmlView extends BaseHtmlView {
             'emailaddress' => $client->emailaddress ?? '',
             'email2'       => $client->emailaddress ?? '',
         ];
+        ## A logged-in visitor with no details stored for this order yet starts with the name and email
+        ## address of the account; the customer can clear them to book for someone else.
+        $user = $app->getIdentity();
+
+        if (!is_array($typed) && $user && $user->id && empty($client->emailaddress) && trim((string) $user->email) !== '') {
+            $name = preg_split('/\s+/', trim((string) $user->name), 2);
+
+            $this->values['firstname']    = $name[0] ?? '';
+            $this->values['lastname']     = $name[1] ?? '';
+            $this->values['emailaddress'] = $user->email;
+            $this->values['email2']       = $user->email;
+            $this->prefilled              = true;
+        }
+
         $this->errors = (array) $app->getUserState(CheckoutController::STATE_ERRORS, []);
 
         $app->setUserState(CheckoutController::STATE_DATA, null);
