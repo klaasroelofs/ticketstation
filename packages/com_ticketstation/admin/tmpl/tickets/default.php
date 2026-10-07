@@ -29,7 +29,11 @@ $wa->registerAndUseStyle('searchtools', Uri::root() . 'media/templates/administr
 
 ## Tickets left / capacity as a coloured badge (see Availability).
 $availabilityBadge = function (object $availability) {
-    $class = $availability->available <= 5 ? 'bg-danger' : ($availability->available < 25 ? 'bg-warning' : 'bg-success');
+    // The colour follows the share still available, with the same thresholds as the frontend.
+    $percentage = ($availability->capacity > 0)
+        ? round((($availability->available / $availability->capacity) * 100), 0)
+        : 0;
+    $class = $percentage < 11 ? 'bg-danger' : ($percentage < 26 ? 'bg-warning' : 'bg-success');
 
     return '<span class="badge ' . $class . '">' . (int) $availability->available . ' / ' . (int) $availability->capacity . '</span>';
 };
