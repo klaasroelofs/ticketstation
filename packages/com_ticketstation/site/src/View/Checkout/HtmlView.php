@@ -142,7 +142,6 @@ class HtmlView extends BaseHtmlView {
             'country_id'   => $client->country_id ?? '',
             'phonenumber'  => $client->phonenumber ?? '',
             'emailaddress' => $client->emailaddress ?? '',
-            'email2'       => $client->emailaddress ?? '',
         ];
         ## A logged-in visitor with no details stored for this order yet starts with the name and email
         ## address of the account; the customer can clear them to book for someone else.
@@ -154,7 +153,6 @@ class HtmlView extends BaseHtmlView {
             $this->values['firstname']    = $name[0] ?? '';
             $this->values['lastname']     = $name[1] ?? '';
             $this->values['emailaddress'] = $user->email;
-            $this->values['email2']       = $user->email;
             $this->prefilled              = true;
         }
 

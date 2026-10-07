@@ -1120,6 +1120,16 @@
     color: var(--ts-danger);
 }
 
+.ticketstation .ts-field__hint {
+    margin: .375rem 0 0;
+    font-size: .875rem;
+    color: var(--ts-muted);
+}
+
+.ticketstation .ts-field__hint:empty {
+    display: none;
+}
+
 .ticketstation .ts-inline-form {
     display: flex;
     flex-wrap: wrap;

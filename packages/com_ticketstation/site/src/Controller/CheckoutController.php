@@ -40,7 +40,7 @@ class CheckoutController extends BaseController
     public const STATE_ERRORS = 'com_ticketstation.checkout.errors';
 
     /** The fields of the details form */
-    public const FORM_FIELDS = ['gender', 'firstname', 'lastname', 'address', 'address2', 'address3', 'zipcode', 'city', 'country_id', 'phonenumber', 'emailaddress', 'email2'];
+    public const FORM_FIELDS = ['gender', 'firstname', 'lastname', 'address', 'address2', 'address3', 'zipcode', 'city', 'country_id', 'phonenumber', 'emailaddress'];
 
     private $username;
     private $password;
@@ -329,10 +329,6 @@ class CheckoutController extends BaseController
         if (!filter_var($email, FILTER_VALIDATE_EMAIL))
         {
             $errors['emailaddress'] = Text::_('COM_TICKETSTATION_USER_EMAIL_INCORRECT');
-        }
-        elseif ($email !== $jinput->get('email2', '', 'string'))
-        {
-            $errors['email2'] = Text::_('COM_TICKETSTATION_EMAILADDRESSES_DO_NOT_COMPARE');
         }
 
         return $errors;

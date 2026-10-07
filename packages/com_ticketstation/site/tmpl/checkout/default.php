@@ -27,6 +27,7 @@ $app        = Factory::getApplication();
 $document   = $app->getDocument();
 $document->setTitle( Text::_('COM_TICKETSTATION_ORDER_DETAILS') . ' - ' . $app->get('sitename') );
 TicketstationFunctions::addSiteStylesheet();
+$document->addScript('components/com_ticketstation/assets/javascripts/emailsuggest.js', ['version' => 'auto'], ['defer' => true]);
 
 ## Redirection link in JRoute:
 $itemid = TicketstationFunctions::getSiteItemid();
@@ -45,7 +46,6 @@ $fields = [
     'country_id'   => [$this->config->show_country != 0, 'COM_TICKETSTATION_YOUR_COUNTRY', 'select', '', true],
     'phonenumber'  => [$this->config->show_phone != 0, 'COM_TICKETSTATION_YOUR_PHONE', 'tel', 'tel', true],
     'emailaddress' => [true, 'COM_TICKETSTATION_YOUR_EMAIL', 'email', 'email', true],
-    'email2'       => [true, 'COM_TICKETSTATION_RETYPE_EMAIL', 'email', 'email', true],
 ];
 
 $requiredMark = '<span class="ts-required" aria-hidden="true">*</span>';
@@ -72,7 +72,7 @@ $requiredMark = '<span class="ts-required" aria-hidden="true">*</span>';
                 var button = document.getElementById('ts-clear-details');
 
                 button.addEventListener('click', function () {
-                    ['firstname', 'lastname', 'emailaddress', 'email2'].forEach(function (id) {
+                    ['firstname', 'lastname', 'emailaddress'].forEach(function (id) {
                         var field = document.getElementById(id);
 
                         if (field) { field.value = ''; }
@@ -119,6 +119,12 @@ $requiredMark = '<span class="ts-required" aria-hidden="true">*</span>';
                                <?php echo $autocomplete ? 'autocomplete="' . $autocomplete . '"' : ''; ?>
                                <?php echo $isRequired ? 'required' : ''; ?>
                                <?php echo $error ? 'aria-invalid="true" aria-describedby="' . $name . '-error"' : ''; ?> />
+                    <?php } ?>
+
+                    <?php if ($name === 'emailaddress') { ?>
+                        <p class="ts-field__hint" id="emailaddress-suggestion" aria-live="polite"
+                           data-text="<?php echo htmlspecialchars(Text::_('COM_TICKETSTATION_EMAIL_DID_YOU_MEAN'), ENT_QUOTES, 'UTF-8'); ?>"
+                           data-accept="<?php echo htmlspecialchars(Text::_('COM_TICKETSTATION_EMAIL_USE_SUGGESTION'), ENT_QUOTES, 'UTF-8'); ?>"></p>
                     <?php } ?>
 
                     <?php if ($error) { ?>
