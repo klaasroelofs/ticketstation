@@ -39,6 +39,28 @@ class Price
     public static function format($price, $currency): string
     {
         $settings = self::settings();
+        $number   = self::number($price, (string) $settings->price_thousands_sep);
+        $currency = trim((string) $currency);
+
+        if ($currency === '') {
+            return $number;
+        }
+
+        return $settings->price_symbol_after ? $number . ' ' . $currency : $currency . ' ' . $number;
+    }
+
+    /**
+     * An amount for an export: the decimals and decimal point of the configuration, but no
+     * thousands separator and no currency symbol, so a spreadsheet reads it as a number.
+     */
+    public static function plain($price): string
+    {
+        return self::number($price, '');
+    }
+
+    private static function number($price, string $thousandsSep): string
+    {
+        $settings = self::settings();
         $price    = (float) $price;
         $decimals = (int) $settings->price_decimals;
 
@@ -47,14 +69,7 @@ class Price
             $decimals = abs($price - round($price)) < 0.005 ? 0 : 2;
         }
 
-        $number   = number_format($price, $decimals, (string) $settings->price_decimal_sep, (string) $settings->price_thousands_sep);
-        $currency = trim((string) $currency);
-
-        if ($currency === '') {
-            return $number;
-        }
-
-        return $settings->price_symbol_after ? $number . ' ' . $currency : $currency . ' ' . $number;
+        return number_format($price, $decimals, (string) $settings->price_decimal_sep, $thousandsSep);
     }
 
     private static function settings(): object

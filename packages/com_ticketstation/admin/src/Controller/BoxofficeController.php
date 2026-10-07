@@ -23,6 +23,7 @@ use Joomla\CMS\MVC\Factory\MVCFactoryInterface;
 use Joomla\Input\Input;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Config;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Date;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\Price;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Order;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Refund;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Tickets;
@@ -565,7 +566,7 @@ class BoxofficeController extends BaseController {
                 $row->eventname,
                 $row->ticketname,
                 $row->seatid ? $row->row_name . $row->seatid : '',
-                $format === 'xlsx' ? (float) $row->price : number_format((float) $row->price, 2, ',', ''),
+                $format === 'xlsx' ? (float) $row->price : Price::plain($row->price),
                 $status[(int) $row->paid] ?? '',
                 $row->scanned ? Date::display($row->scandate, $dateTime) : '',
                 $row->blacklisted ? Text::_('COM_TICKETSTATION_YES') : '',
