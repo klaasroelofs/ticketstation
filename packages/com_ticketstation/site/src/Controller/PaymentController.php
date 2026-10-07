@@ -15,13 +15,11 @@ use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\Controller\BaseController;
 use Joomla\CMS\Factory;
 use Joomla\CMS\Router\Route;
-use Ticketstation\Component\Ticketstation\Administrator\Helper\OrderTotals;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\PaymentAPI;
-use Ticketstation\Component\Ticketstation\Administrator\Helper\Shop;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\TicketstationFunctions;
-use Ticketstation\Component\Ticketstation\Administrator\Payment\MethodAwareInterface;
 use Ticketstation\Component\Ticketstation\Administrator\Payment\PaymentLog;
 use Ticketstation\Component\Ticketstation\Administrator\Payment\PaymentService;
+use Ticketstation\Component\Ticketstation\Administrator\Payment\PaymentStarter;
 use Ticketstation\Component\Ticketstation\Administrator\Payment\ProviderRegistry;
 
 /**
@@ -49,115 +47,16 @@ class PaymentController extends BaseController
 
     function makepayment()
     {
+        ## The order itself is checked and started in PaymentStarter, which the combined checkout
+        ## page uses as well.
+        $this->ordercode = Factory::getApplication()->getInput()->get('ordercode', '0', 'int');
 
-        $jinput = Factory::getApplication()->getInput();
-        $db = Factory::getContainer()->get('DatabaseDriver');
-
-        ## Test mode is for logged-in staff only: a visitor who still has a cart from before the
-        ## mode was switched on can't pay it.
-        if (Shop::isClosed()) {
-            $itemid = TicketstationFunctions::getSiteItemid();
-            Factory::getApplication()->enqueueMessage(Text::_('COM_TICKETSTATION_TICKET_NOT_AVAILABLE'), 'error');
-            Factory::getApplication()->redirect(Route::_('index.php?option=com_ticketstation&view=upcoming' . ($itemid ? '&Itemid=' . $itemid : '')));
-        }
-
-        $this->ordercode = $jinput->get('ordercode', '0', 'int');
-
-        ## Something left to pay? A retry after a failed payment may come after the Ticketcleaner
-        ## removed the order, and an empty order must not go through as a free one.
-        $query = $db->getQuery(true)
-            ->select('COUNT(*)')
-            ->from($db->quoteName('#__ticketstation_orders'))
-            ->where($db->quoteName('ordercode') . ' = ' . (int) $this->ordercode)
-            ->where($db->quoteName('paid') . ' != 1');
-        $db->setQuery($query);
-
-        if ((int) $db->loadResult() === 0) {
-            $itemid = TicketstationFunctions::getSiteItemid();
-            Factory::getApplication()->enqueueMessage(Text::_('COM_TICKETSTATION_ORDER_NO_LONGER_AVAILABLE'), 'error');
-            Factory::getApplication()->redirect(Route::_('index.php?option=com_ticketstation&view=upcoming' . ($itemid ? '&Itemid=' . $itemid : ''), false));
-        }
-
-        $orderamount = OrderTotals::get($this->ordercode, true)->total;
-
-        ## With online payments switched off only an order of nothing goes through; paid tickets
-        ## are sold at the box office. Covers a cart filled before the switch, and payment links.
-        if ($orderamount > 0 && !Shop::paymentsOn()) {
-            $itemid = TicketstationFunctions::getSiteItemid();
-            Factory::getApplication()->enqueueMessage(Text::_('COM_TICKETSTATION_ONLINE_PAYMENTS_OFF_ORDER'), 'error');
-            Factory::getApplication()->redirect(Route::_('index.php?option=com_ticketstation&view=cart' . ($itemid ? '&Itemid=' . $itemid : ''), false));
-        }
-
-        if ($orderamount != 0) {
-
-            ## Only set up the provider when the order actually goes there: a provider without
-            ## credentials would break free orders on a site without them.
-            try {
-                $provider    = ProviderRegistry::active();
-                $checkoutUrl = PaymentService::start($provider, (int) $this->ordercode, (float) $orderamount, $this->chosenMethod($provider));
-            } catch (\RuntimeException $e) {
-                PaymentLog::add('Error while creating payment: ' . $e->getMessage());
-                exit(Text::_('COM_TICKETSTATION_MOLLIE_ERROR_1000'));
-            }
-
-            header("Location: " . $checkoutUrl);
-
-        } else {
-
-            ## Amount is 0: the order never goes to a payment provider.
-            ## Generate a random token for the redirect (not the guessable ordercode).
-            $free_token = bin2hex(random_bytes(32));
-
-            ## Store the token in a session-side map (token => ordercode) so freeorder() can
-            ## verify it. Keyed by token rather than a single slot, so a second free checkout
-            ## started in another tab (or before the first redirect is followed) doesn't
-            ## clobber an earlier one still in flight under the same session.
-            $freeSession = Factory::getApplication()->getSession();
-            $freeTokens = $freeSession->get('ticketstation.free_order_tokens', []);
-            $freeTokens[$free_token] = $this->ordercode;
-            $freeSession->set('ticketstation.free_order_tokens', $freeTokens);
-
-            ## Process the order
-            if ($this->processFreeOrder($this->ordercode)) {
-                ## Redirect to freeorder with the token
-                $itemid = TicketstationFunctions::getSiteItemid();
-                Factory::getApplication()->redirect(Route::_('index.php?option=com_ticketstation&controller=payment&task=freeorder&token=' . $free_token . ($itemid ? '&Itemid=' . $itemid : '')));
-            }
-
-        }
-
+        PaymentStarter::start((int) $this->ordercode, Factory::getApplication()->getInput()->post->getCmd('method', ''));
     }
 
     function processFreeOrder($ordercode)
     {
-        PaymentLog::add('processFreeOrder');
-        PaymentLog::add('Sent ordercode: ' . $ordercode);
-
-        $order_id = $ordercode;
-
-        ## Start the API to process everything.
-        $newPayment = new PaymentAPI((int)$order_id);
-
-        ## Update the order state in the order table:
-        $payment_state = $newPayment->updateOrder();
-
-        ## No payment was made as the order is free, so no transaction costs either (the
-        ## invoice reads them from the order).
-        OrderTotals::capture($ordercode, false);
-
-        ## if state is true, create the tickets:
-        if ($payment_state == true) {
-            $ticket_creator = $newPayment->createTickets();
-        } else {
-            $ticket_creator = false;
-        }
-
-        ## if tickets has been created:
-        if ($ticket_creator == true && PaymentService::sendTicketsDirectly()) {
-            $newPayment->sendTickets();
-        }
-
-        return true;
+        return PaymentStarter::processFreeOrder($ordercode);
     }
 
     /**
@@ -281,28 +180,6 @@ class PaymentController extends BaseController
     function IPNProcessPayment()
     {
         $this->processWebhook(ProviderRegistry::get('mollie'));
-    }
-
-    /**
-     * The payment method the customer chose on the payment page, when it is one the provider
-     * offers; null otherwise (a form without a choice, or a method that isn't offered), which
-     * leaves the choice to the provider.
-     */
-    private function chosenMethod($provider): ?string
-    {
-        $method = Factory::getApplication()->getInput()->post->getCmd('method', '');
-
-        if ($method === '' || !$provider instanceof MethodAwareInterface) {
-            return null;
-        }
-
-        foreach ($provider->getCheckoutMethods(ProviderRegistry::currency()) as $option) {
-            if ($option->id === $method) {
-                return $method;
-            }
-        }
-
-        return null;
     }
 
     private function processWebhook($provider)

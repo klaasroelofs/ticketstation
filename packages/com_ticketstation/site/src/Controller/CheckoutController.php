@@ -25,6 +25,7 @@ use Ticketstation\Component\Ticketstation\Administrator\Helper\SiteCaptcha;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Ticket;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\TicketstationFunctions;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\User;
+use Ticketstation\Component\Ticketstation\Administrator\Payment\PaymentStarter;
 use Ticketstation\Component\Ticketstation\Site\Model\CheckoutModel;
 
 /**
@@ -270,6 +271,16 @@ class CheckoutController extends BaseController
             $session = $app->getSession();
             $session->set('ticketstation.waitinglist_ordercode', (int) $this->ordercode);
             $session->clear('ordercode');
+        }
+
+        // The combined page pays in the same request: on to the payment provider, or for an order
+        // of nothing straight to the result. A waiting-list-only signup has nothing to pay and
+        // goes on to the confirmation below.
+        if (!$waitingOnly && $jinput->post->getInt('pay', 0) === 1)
+        {
+            PaymentStarter::start((int) $app->getSession()->get('ordercode'), $jinput->post->getCmd('method', ''));
+
+            return true;
         }
 
         // Joomla's built-in "borrow the active menu item's Itemid" fallback (System - SEF

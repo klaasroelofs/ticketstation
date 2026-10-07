@@ -57,6 +57,26 @@ class Config
     }
 
     /**
+     * Whether customers order on the combined page (Configuration > Checkout layout) instead of
+     * the separate cart, details and payment steps.
+     *
+     * @return  bool
+     *
+     * @since   2.26.0
+     */
+    public static function combinedCheckout(): bool
+    {
+        static $combined = null;
+
+        if ($combined === null)
+        {
+            $combined = (int) ((new self)->getPartialConfig(['checkout_layout'])->checkout_layout ?? 0) === 1;
+        }
+
+        return $combined;
+    }
+
+    /**
      * The address customers are pointed to when something needs checking: the company email
      * (Configuration > Company), else the sender address, else Joomla's global sender address.
      *

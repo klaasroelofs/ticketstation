@@ -52,16 +52,6 @@ $genderLabels = [
     '2' => Text::_('COM_TICKETSTATION_MRS'),
 ];
 
-## Terms and privacy statement links (Configuration > Company); a link that is not set is left out
-$termsLinks = [];
-
-foreach (['terms_url' => 'COM_TICKETSTATION_TERMS_AND_CONDITIONS', 'privacy_url' => 'COM_TICKETSTATION_PRIVACY_STATEMENT'] as $field => $label) {
-    $url = Config::toAbsoluteLink($this->config->$field ?? '');
-
-    if ($url !== '') {
-        $termsLinks[] = '<a href="' . htmlspecialchars($url, ENT_QUOTES, 'UTF-8') . '" target="_blank" rel="noopener">' . Text::_($label) . '</a>';
-    }
-}
 ?>
 
 <div class="ticketstation ticketstation--payment">
@@ -155,74 +145,9 @@ foreach (['terms_url' => 'COM_TICKETSTATION_TERMS_AND_CONDITIONS', 'privacy_url'
             </dl>
         </section>
 
-        <table class="ts-table ts-summary" id="cart">
-            <thead>
-                <tr>
-                    <th scope="col"><?= Text::_('COM_TICKETSTATION_EVENT_INFORMATION'); ?></th>
-                    <th scope="col" class="ts-price"><?= Text::_('COM_TICKETSTATION_PRICE'); ?></th>
-                </tr>
-            </thead>
+        <?php echo LayoutHelper::render('order_summary', ['items' => $this->items, 'coords' => $this->coords ?? [], 'config' => $this->config, 'totals' => $totals], null, ['component' => 'com_ticketstation', 'client' => 0]); ?>
 
-            <tbody>
-                <?php ## As in the cart: one line per ticket type with its quantity, seats by seat number
-                foreach (Order::cartLines($this->items, $this->coords ?? []) as $line) {
-                    $row = $line->rows[0]; ?>
-
-                    <tr class="ts-summary__item">
-                        <td>
-                            <span class="ts-summary__name">
-                                <?= htmlspecialchars($row->eventname . ' - ' . $row->ticketname, ENT_QUOTES, 'UTF-8'); ?>
-
-                                <?php if ($line->seated) { ?>
-                                    <?= ' - ' . Text::_('COM_TICKETSTATION_SEATNUMBER') . ': ' . htmlspecialchars($line->seat, ENT_QUOTES, 'UTF-8'); ?>
-                                <?php } ?>
-                            </span>
-
-                            <span class="ts-summary__date"><?= Date::long($row->startdate, true); ?></span>
-
-                            <?php if (!$line->seated) { ?>
-                                <span class="ts-summary__qty"><?= $line->quantity; ?> &times; <?= (new TicketstationFunctions)->showprice($this->config->priceformat, $row->price, $this->config->valuta); ?></span>
-                            <?php } ?>
-                        </td>
-                        <td class="ts-price"><?= (new TicketstationFunctions)->showprice($this->config->priceformat, $line->total, $this->config->valuta); ?></td>
-                    </tr>
-
-                <?php } ?>
-            </tbody>
-
-            <tfoot>
-                <tr class="ts-summary__subtotal">
-                    <th scope="row"><?= Text::_('COM_TICKETSTATION_SUBTOTAL'); ?></th>
-                    <td class="ts-price"><?= (new TicketstationFunctions)->showprice($this->config->priceformat , $totals->tickets, $this->config->valuta); ?></td>
-                </tr>
-
-                <?php if($discount != 0) { ?>
-                    <tr class="ts-summary__discount">
-                        <th scope="row"><?= Text::_('COM_TICKETSTATION_DISCOUNT'); ?><?php if ($totals->discount_type == 1):?> (<?= (float) $totals->discount_amount;?>%)<?php endif; ?></th>
-                        <td class="ts-price">- <?= (new TicketstationFunctions)->showprice($this->config->priceformat , $discount, $this->config->valuta); ?></td>
-                    </tr>
-                <?php } ?>
-
-                <?php ## No fees row when there is no fee: switched off, or nothing to pay (a free order). ?>
-                <?php if ($fees > 0 && $totals->fee_type != OrderTotals::FEE_NONE) { ?>
-                    <tr class="ts-summary__fees">
-                        <th scope="row"><?= Text::_('COM_TICKETSTATION_FEES'); ?><?= OrderTotals::feeLabel($totals, fn ($amount) => (new TicketstationFunctions)->showprice($this->config->priceformat, $amount, $this->config->valuta)); ?></th>
-                        <td class="ts-price"><?= (new TicketstationFunctions)->showprice($this->config->priceformat , $fees, $this->config->valuta); ?></td>
-                    </tr>
-                <?php } ?>
-
-                <tr class="ts-summary__total">
-                    <th scope="row"><?= Text::_('COM_TICKETSTATION_ORDERTOTAL'); ?></th>
-                    <td class="ts-price"><?= (new TicketstationFunctions)->showprice($this->config->priceformat , $ordertotal, $this->config->valuta); ?></td>
-                </tr>
-            </tfoot>
-        </table>
-
-        <?php if (count($termsLinks) == 2) { ?>
-            <p class="ts-terms"><?= Text::sprintf('COM_TICKETSTATION_AGREE_TO_TERMS', $termsLinks[0], $termsLinks[1]); ?></p>
-        <?php } elseif (count($termsLinks) == 1) { ?>
-            <p class="ts-terms"><?= Text::sprintf('COM_TICKETSTATION_AGREE_TO_TERMS_SINGLE', $termsLinks[0]); ?></p>
-        <?php } ?>
+        <?php echo LayoutHelper::render('payment_terms', ['config' => $this->config], null, ['component' => 'com_ticketstation', 'client' => 0]); ?>
 
         <?php if ($ordertotal == 0) { ?>
             <p class="ts-note"><?= Text::sprintf('COM_TICKETSTATION_ZERO_TOTAL', (new TicketstationFunctions)->showprice($this->config->priceformat, 0, $this->config->valuta)); ?></p>
@@ -236,18 +161,7 @@ foreach (['terms_url' => 'COM_TICKETSTATION_TERMS_AND_CONDITIONS', 'privacy_url'
 
             <?php ## More than one payment method: the customer chooses here, so the provider's own pages don't ask again. ?>
             <?php if ($this->methods && $this->paymentsOn && $ordertotal > 0) { ?>
-                <fieldset class="ts-methods">
-                    <legend class="ts-methods__title"><?= Text::_('COM_TICKETSTATION_CHOOSE_PAYMENT_METHOD'); ?></legend>
-                    <?php foreach ($this->methods as $i => $method) { ?>
-                        <label class="ts-method">
-                            <input class="ts-method__input" type="radio" name="method" value="<?= $this->escape($method->id); ?>"<?= $i === 0 ? ' checked' : ''; ?> required />
-                            <?php if ($method->iconUrl !== '') { ?>
-                                <img class="ts-method__icon" src="<?= $this->escape($method->iconUrl); ?>" alt="" width="32" height="24" loading="lazy" onerror="this.style.display='none'" />
-                            <?php } ?>
-                            <span class="ts-method__label"><?= $this->escape($method->label); ?></span>
-                        </label>
-                    <?php } ?>
-                </fieldset>
+                <?php echo LayoutHelper::render('payment_methods', ['methods' => $this->methods], null, ['component' => 'com_ticketstation', 'client' => 0]); ?>
             <?php } ?>
 
             <a class="ts-btn ts-btn--secondary ts-btn--back" href="<?php echo $gotocheckout; ?>">

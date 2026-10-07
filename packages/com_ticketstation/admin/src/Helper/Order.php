@@ -210,6 +210,10 @@ class Order
             return false;
         }
 
+        // Only the first save turns a temporary code into the final one; a second save of the
+        // same order (a double click, the back button) leaves the history alone.
+        $firstSave = Ordercode::isTemporaryOrdercode($ordercode);
+
         // Getting a new ordercode from the database.
         $new_ordercode = (new Ordercode)->getFinalOrdercode($ordercode);
 
@@ -250,7 +254,10 @@ class Order
         // A plain log() (not logOnce()) so that a reused ordercode still gets its own fresh
         // "created" timestamp - getForOrder() relies on that to hide an older, removed order's
         // history from the new order that reused its ordercode.
-        History::log($new_ordercode, 'order_created', 'Order created');
+        if ($firstSave)
+        {
+            History::log($new_ordercode, 'order_created', 'Order created');
+        }
 
         return true;
     }

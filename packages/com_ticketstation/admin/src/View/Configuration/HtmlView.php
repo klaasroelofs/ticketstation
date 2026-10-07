@@ -160,7 +160,12 @@ class HtmlView extends BaseHtmlView {
         $lists['show_remark_field'] = HTMLHelper::_('select.genericList', $yesno, 'show_remark_field', ' class="form-select" ' . '',
             'value', 'text', $config->show_remark_field);
 
-        $lists['show_waitinglist'] = HTMLHelper::_('select.genericList', $yesno, 'show_waitinglist', ' class="form-select" ' . '',
+        $lists['checkout_layout'] = HTMLHelper::_('select.genericList', [
+            ['value' => '0', 'text' => Text::_('COM_TICKETSTATION_CHECKOUT_LAYOUT_STEPS')],
+            ['value' => '1', 'text' => Text::_('COM_TICKETSTATION_CHECKOUT_LAYOUT_COMBINED')],
+        ], 'checkout_layout', ' class="form-select" ', 'value', 'text', (string) ($config->checkout_layout ?? 0));
+
+        $lists['show_waitinglist'] =HTMLHelper::_('select.genericList', $yesno, 'show_waitinglist', ' class="form-select" ' . '',
             'value', 'text', $config->show_waitinglist);
 
         $lists['show_phone'] = HTMLHelper::_('select.genericList', $yesno, 'show_phone', ' class="form-select" ' . '',

@@ -18,11 +18,15 @@ use Joomla\CMS\MVC\View\HtmlView as BaseHtmlView;
 use Joomla\CMS\Router\Route;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\CheckoutFieldMap;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Config;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\OrderTotals;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\SeatOrphans;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\Shop;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\SiteCaptcha;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\TicketstationFunctions;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\User;
+use Ticketstation\Component\Ticketstation\Administrator\Payment\PaymentStarter;
 use Ticketstation\Component\Ticketstation\Site\Controller\CheckoutController;
+use Ticketstation\Component\Ticketstation\Site\Model\CartModel;
 
 
 class HtmlView extends BaseHtmlView {
@@ -190,9 +194,41 @@ class HtmlView extends BaseHtmlView {
         $this->lists    = $lists;
         $this->data     = $data;
         $this->config   = $config;
-        
+
+        ## The combined page also shows the order and takes the payment
+        if ((int) ($config->checkout_layout ?? 0) === 1) {
+            $this->prepareCombined();
+        }
+
         // Call the parent display to display the layout file
         parent::display($tpl);
+    }
+
+    /**
+     * What the combined checkout page shows next to the details form: the order with its totals
+     * and what the customer pays with. An empty basket goes back to the basket, which moves on.
+     *
+     * @return  void
+     */
+    private function prepareCombined()
+    {
+        $cart = new CartModel;
+
+        $this->items   = $cart->getData();
+        $this->waiters = $cart->getWaiters();
+        $this->coords  = $cart->getExtData();
+
+        if (!$this->items && !$this->waiters) {
+            $itemid = TicketstationFunctions::getSiteItemid();
+
+            Factory::getApplication()->redirect(Route::_('index.php?option=com_ticketstation&view=cart' . ($itemid ? '&Itemid=' . $itemid : ''), false));
+        }
+
+        $this->totals     = OrderTotals::get((int) Factory::getApplication()->getSession()->get('ordercode'), true);
+        $this->paymentsOn = Shop::paymentsOn();
+        $this->methods    = PaymentStarter::methods();
+
+        $this->setLayout('onepage');
     }
 
 }

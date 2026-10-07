@@ -498,6 +498,19 @@ $document->getWebAssetManager()->addInlineScript("
                         . '</div>';
                 };
                 ?>
+                <div class="row mb-3">
+                    <label for="checkout_layout" class="col-sm-3 col-form-label"
+                           rel="popover"
+                           title="<?= Text::_('COM_TICKETSTATION_CHECKOUT_LAYOUT') ?>">
+                        <?= Text::_('COM_TICKETSTATION_CHECKOUT_LAYOUT') ?>
+                    </label>
+                    <div class="col-sm-9">
+                        <?= $this->lists['checkout_layout']; ?>
+                        <small class="form-text">
+                            <?= Text::_('COM_TICKETSTATION_CHECKOUT_LAYOUT_DESC') ?>
+                        </small>
+                    </div>
+                </div>
                 <p class="text-muted small">
                     <?= Text::_($this->userFields ? 'COM_TICKETSTATION_CHECKOUT_MAP_HELP' : 'COM_TICKETSTATION_CHECKOUT_MAP_NO_FIELDS'); ?>
                 </p>

@@ -1499,3 +1499,65 @@
         animation-iteration-count: 1 !important;
     }
 }
+
+/* ==========================================================================
+   Combined checkout (Configuration > Checkout layout): details, order and payment on one page
+   ========================================================================== */
+
+/* Phone: the order first (short), then the form. */
+.ticketstation .ts-checkout {
+    display: grid;
+    gap: 1.5rem;
+}
+
+.ticketstation .ts-checkout__order {
+    padding: 1rem;
+    border: 1px solid var(--ts-border);
+    border-radius: var(--ts-radius);
+    background: var(--ts-surface-alt);
+}
+
+.ticketstation .ts-checkout__order .ts-subtitle {
+    margin-top: 0;
+}
+
+.ticketstation .ts-checkout__waiting {
+    margin: .5rem 0 0;
+    padding-left: 1.25rem;
+}
+
+.ticketstation .ts-checkout__change {
+    margin: .75rem 0 0;
+    font-size: .875rem;
+}
+
+.ticketstation .ts-checkout__payment {
+    margin: 1.5rem 0 0;
+}
+
+.ticketstation .ts-checkout__main .ts-form__fields {
+    max-width: none;
+}
+
+.ticketstation .ts-checkout__main .ts-methods {
+    grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr));
+}
+
+/* Desktop: the form on the left, the order beside it and kept in view */
+@media (min-width: 992px) {
+    .ticketstation .ts-checkout {
+        grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+        align-items: start;
+        gap: 2rem;
+    }
+
+    .ticketstation .ts-checkout__aside {
+        order: 2;
+        position: sticky;
+        top: 1rem;
+    }
+
+    .ticketstation .ts-checkout__main {
+        order: 1;
+    }
+}

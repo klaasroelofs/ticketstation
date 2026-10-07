@@ -11,6 +11,7 @@
 defined('_JEXEC') or die('Restricted Access');
 
 use Joomla\CMS\Language\Text;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\Config;
 
 /**
  * Order progress shown above the ticket, cart, checkout and payment views.
@@ -29,6 +30,17 @@ $steps = [
     3 => Text::_('COM_TICKETSTATION_ORDER_DETAILS'),
     4 => Text::_('COM_TICKETSTATION_STEP_PAYMENT'),
 ];
+
+// The combined checkout (Configuration > Checkout layout) has the details and the payment on one page
+if (Config::combinedCheckout())
+{
+    $steps   = [
+        1 => $steps[1],
+        2 => $steps[2],
+        3 => Text::_('COM_TICKETSTATION_STEP_CHECKOUT'),
+    ];
+    $current = min($current, 3);
+}
 ?>
 <nav class="ts-steps-nav" aria-label="<?php echo Text::_('COM_TICKETSTATION_ORDER_STEPS'); ?>">
     <ol class="ts-steps">
