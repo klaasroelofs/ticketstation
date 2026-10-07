@@ -13,7 +13,6 @@ CREATE TABLE IF NOT EXISTS `#__ticketstation_scannermap` (
 DROP TABLE IF EXISTS `#__ticketstation_clients`;
 CREATE TABLE IF NOT EXISTS `#__ticketstation_clients` (
   `clientid` int(10) NOT NULL AUTO_INCREMENT,
-  `firstname` varchar(30),
   `name` varchar(255),
   `address` varchar(255) DEFAULT NULL,
   `address2` varchar(255) DEFAULT NULL,
@@ -960,7 +959,7 @@ INSERT IGNORE INTO `#__ticketstation_config` VALUES(
 "55-150",
 "55-140",
 "0",
-"%%SALUTATION%% %%FIRSTNAME%%	%%LASTNAME%% \n%%ADDRESS1%% \n%%ZIPCODE%% %%CITY%% \n%%COUNTRY_FULL%% (%%COUNTRY_2D%%)",
+"%%SALUTATION%% %%FULLNAME%% \n%%ADDRESS1%% \n%%ZIPCODE%% %%CITY%% \n%%COUNTRY_FULL%% (%%COUNTRY_2D%%)",
 "%%COMPANY_NAME%% \n%%ADDRESS1%% \n%%ZIPCODE%% %%CITY%% \n%%EMAIL%% \n%%WEBSITE%%",
 "0",
 "1",

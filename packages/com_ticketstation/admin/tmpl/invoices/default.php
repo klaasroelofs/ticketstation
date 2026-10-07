@@ -58,7 +58,7 @@ $wa->registerAndUseStyle('ticketstation', Uri::base() . 'components\com_ticketst
                         <tr class="row<?= $i;?>">
                             <td><?php echo (new Invoice)->getInvoiceNumber($row->invoiceid, $this->config->invoice_prefix); ?></td>
                             <td><a href="<?php echo $orderlink; ?>"><?php echo (int) $row->ordercode; ?></a></td>
-                            <td><a href="<?php echo $clientlink; ?>"><?= $row->client_firstname ?> <?= $row->client_name ?></a><br/><small><?= $row->client_email ?></small></td>
+                            <td><a href="<?php echo $clientlink; ?>"><?= $this->escape($row->client_name) ?></a><br/><small><?= $row->client_email ?></small></td>
                             <td class="d-none d-md-table-cell text-center"><?php echo TicketstationFunctions::showprice($this->config->priceformat, $row->netto + $row->fees, $this->config->valuta); ?></td>
                             <td class="d-none d-md-table-cell text-center small"><?php echo Date::screen($row->invoicedate, $this->config->dateformat . ' H:i'); ?></td>
                             <td class="text-center">

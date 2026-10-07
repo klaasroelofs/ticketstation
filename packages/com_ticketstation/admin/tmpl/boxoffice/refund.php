@@ -57,7 +57,7 @@ $treatments = [
                     </tr>
                     <tr>
                         <th scope="row" class="fw-normal"><?= Text::_('COM_TICKETSTATION_NAME') ?></th>
-                        <td><?= $this->escape(trim($this->items->firstname . ' ' . $this->items->name)); ?></td>
+                        <td><?= $this->escape(trim($this->items->name)); ?></td>
                     </tr>
                     <tr>
                         <th scope="row" class="fw-normal"><?= Text::_('COM_TICKETSTATION_REFUND_PAID') ?></th>

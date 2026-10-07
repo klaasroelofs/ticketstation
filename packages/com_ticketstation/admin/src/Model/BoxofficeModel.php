@@ -332,7 +332,7 @@ class BoxofficeModel extends ListModel
         $query = $db->getQuery(true)
             ->select([
                 'a.ordercode', 'a.orderid', 'a.orderdate', 'a.paid', 'a.price', 'a.scanned', 'a.scandate', 'a.blacklisted',
-                'c.firstname', 'c.name', 'c.emailaddress', 'c.phonenumber',
+                'c.name', 'c.emailaddress', 'c.phonenumber',
                 'e.eventname', 't.ticketname', 'co.row_name', 'co.seatid', 'r.remarks',
             ])
             ->from($db->quoteName('#__ticketstation_orders', 'a'))
@@ -345,7 +345,7 @@ class BoxofficeModel extends ListModel
                 . ' FROM ' . $db->quoteName('#__ticketstation_remarks') . ' GROUP BY ' . $db->quoteName('ordercode') . ') AS ' . $db->quoteName('r')
                 . ' ON ' . $db->quoteName('r.ordercode') . ' = ' . $db->quoteName('a.ordercode'))
             ->order([
-                $db->quoteName('e.eventdate') . ' DESC', $db->quoteName('e.eventname'), $db->quoteName('c.name'), $db->quoteName('c.firstname'),
+                $db->quoteName('e.eventdate') . ' DESC', $db->quoteName('e.eventname'), $db->quoteName('c.name'),
                 $db->quoteName('a.ordercode'), $db->quoteName('co.row_name'), 'CAST(' . $db->quoteName('co.seatid') . ' AS UNSIGNED)', $db->quoteName('co.seatid'), $db->quoteName('a.orderid'),
             ]);
 
@@ -479,7 +479,7 @@ class BoxofficeModel extends ListModel
         $like    = ' LIKE ' . $pattern;
 
         $conditions = [
-            'CONCAT_WS(' . $db->quote(' ') . ', ' . $db->quoteName('c.firstname') . ', ' . $db->quoteName('c.name') . ')' . $like,
+            $db->quoteName('c.name') . $like,
             $db->quoteName('c.emailaddress') . $like,
             $db->quoteName('c.phonenumber') . $like,
             'EXISTS (SELECT 1 FROM ' . $db->quoteName('#__ticketstation_remarks', 'r')
@@ -510,7 +510,7 @@ class BoxofficeModel extends ListModel
     /**
      * Loads the given live orders for the list, each summed up over all its order rows.
      *
-     * Every row has: ordercode, orderdate, orderid, paid, userid, firstname, name,
+     * Every row has: ordercode, orderdate, orderid, paid, userid, name,
      * emailaddress, o_tickets, scanned_tickets, blocked_tickets, created_tickets,
      * sent_tickets, downloaded, published, coupon, orderprice (what was paid, or else what the
      * customer pays), transaction_pid, remarks, customer_note, events (per event: eventid,
@@ -596,7 +596,6 @@ class BoxofficeModel extends ListModel
             $subtotal    = round($tickets - $discount, PaymentCurrencies::decimals());
             $total       = round($subtotal + OrderTotals::feesFor($subtotal, $terms), 2);
 
-            $row->firstname       = $client->firstname ?? null;
             $row->name            = $client->name ?? null;
             $row->emailaddress    = $client->emailaddress ?? null;
             $row->orderprice      = $transaction && (float) $transaction->amount > 0 ? (float) $transaction->amount : $total;
@@ -779,7 +778,6 @@ class BoxofficeModel extends ListModel
                 'orderid'         => $candidate->first->orderid,
                 'paid'            => $candidate->paid,
                 'userid'          => $candidate->first->userid,
-                'firstname'       => $client->firstname ?? null,
                 'name'            => $client->name ?? null,
                 'emailaddress'    => $client->emailaddress ?? null,
                 'o_tickets'       => count($lines),
@@ -818,7 +816,7 @@ class BoxofficeModel extends ListModel
         }
 
         $texts = [
-            trim(($client->firstname ?? '') . ' ' . ($client->name ?? '')),
+            trim($client->name ?? ''),
             $client->emailaddress ?? '',
             $client->phonenumber ?? '',
             $remark,
@@ -879,7 +877,7 @@ class BoxofficeModel extends ListModel
 
         $db    = Factory::getContainer()->get('DatabaseDriver');
         $query = $db->getQuery(true)
-            ->select(['clientid', 'firstname', 'name', 'emailaddress', 'phonenumber'])
+            ->select(['clientid', 'name', 'emailaddress', 'phonenumber'])
             ->from($db->quoteName('#__ticketstation_clients'))
             ->whereIn($db->quoteName('clientid'), $ids);
 

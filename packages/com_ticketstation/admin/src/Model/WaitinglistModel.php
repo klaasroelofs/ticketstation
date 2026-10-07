@@ -55,7 +55,7 @@ class WaitinglistModel extends BaseDatabaseModel
     private function getBaseQuery($db)
     {
         return $db->getQuery(true)
-            ->select(['w.*', 'e.eventname', 't.ticketname', 'c.name AS client_name', 'c.firstname AS client_firstname', 'c.emailaddress AS client_email'])
+            ->select(['w.*', 'e.eventname', 't.ticketname', 'c.name AS client_name', 'c.emailaddress AS client_email'])
             ->from($db->quoteName('#__ticketstation_waitinglist', 'w'))
             ->join('LEFT', $db->quoteName('#__ticketstation_events', 'e') . ' ON ' . $db->quoteName('e.eventid') . ' = ' . $db->quoteName('w.eventid'))
             ->join('LEFT', $db->quoteName('#__ticketstation_tickets', 't') . ' ON ' . $db->quoteName('t.ticketid') . ' = ' . $db->quoteName('w.ticketid'))

@@ -70,7 +70,7 @@ $document->setTitle(Text::_('COM_TICKETSTATION_VIEW_TRANSACTION_DETAILS') . ' - 
                 <div class="col-sm-9">
                     <input type="text" name="client" id="client"
                            class="form-control" disabled
-                           value="<?= isset($this->data->name)?$this->data->firstname:null; ?> <?php echo $this->data->name;?>"/>
+                           value="<?= $this->escape($this->data->name ?? ""); ?>"/>
                 </div>
             </div>
             <div class="row mb-3">

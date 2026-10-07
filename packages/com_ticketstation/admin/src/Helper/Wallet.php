@@ -155,7 +155,7 @@ class Wallet
      *
      * @return  object[]  orderid, ordercode, barcode, eventid, ticketid, refund_state, blacklisted,
      *                    eventname, ticketname, startdate, enddate, doors_open, venue, street, zipcode,
-     *                    city, firstname, name, row_name, seatid
+     *                    city, name, row_name, seatid
      */
     public static function tickets(int $ordercode, bool $validOnly = true): array
     {
@@ -170,7 +170,7 @@ class Wallet
                 "COALESCE(NULLIF(t.doors_open, ''), NULLIF(p.doors_open, ''), '') AS doors_open",
                 "IF(p.ticketid IS NULL, t.ticketname, CONCAT(p.ticketname, ' - ', t.ticketname)) AS ticketname",
                 'v.venue', 'v.street', 'v.zipcode', 'v.city',
-                'c.firstname', 'c.name',
+                'c.name',
                 's.row_name', 's.seatid',
             ])
             ->from($db->quoteName('#__ticketstation_orders', 'o'))
@@ -429,7 +429,7 @@ class Wallet
      */
     public static function holder(object $ticket): string
     {
-        return trim(trim((string) $ticket->firstname) . ' ' . trim((string) $ticket->name));
+        return trim((string) $ticket->name);
     }
 
     /**

@@ -132,8 +132,7 @@ class HtmlView extends BaseHtmlView {
 
         $this->values = is_array($typed) ? $typed : [
             'gender'       => $client->gender ?? '',
-            'firstname'    => $client->firstname ?? '',
-            'lastname'     => $client->name ?? '',
+            'name'         => $client->name ?? '',
             'address'      => $client->address ?? '',
             'address2'     => $client->address2 ?? '',
             'address3'     => $client->address3 ?? '',
@@ -148,10 +147,7 @@ class HtmlView extends BaseHtmlView {
         $user = $app->getIdentity();
 
         if (!is_array($typed) && $user && $user->id && empty($client->emailaddress) && trim((string) $user->email) !== '') {
-            $name = preg_split('/\s+/', trim((string) $user->name), 2);
-
-            $this->values['firstname']    = $name[0] ?? '';
-            $this->values['lastname']     = $name[1] ?? '';
+            $this->values['name']         = trim((string) $user->name);
             $this->values['emailaddress'] = $user->email;
             $this->prefilled              = true;
         }

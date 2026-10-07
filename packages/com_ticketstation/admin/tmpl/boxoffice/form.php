@@ -201,7 +201,7 @@ $progress = function (int $done) use ($status) {
                 <table class="table mb-0" style="table-layout:fixed;">
                     <tr>
                         <th scope="row" class="w-50 fw-normal"><?= Text::_('COM_TICKETSTATION_NAME') ?></th>
-                        <td><a href="index.php?option=com_ticketstation&controller=clients&task=edit&cid=<?= (int) $this->items->clientid; ?>"><?= $this->escape(trim($this->items->firstname . ' ' . $this->items->name)); ?></a></td>
+                        <td><a href="index.php?option=com_ticketstation&controller=clients&task=edit&cid=<?= (int) $this->items->clientid; ?>"><?= $this->escape(trim($this->items->name)); ?></a></td>
                     </tr>
                     <tr>
                         <th scope="row" class="fw-normal"><?= Text::_('COM_TICKETSTATION_PHONENUMBER') ?></th>

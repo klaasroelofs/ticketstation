@@ -34,7 +34,7 @@ class eTicketsMessage
      * user()) and the company details from the Configuration (see setDefaultVariables()).
      */
     private const COMMON_FIELDS = [
-        'COM_TICKETSTATION_TEMPLATE_FIELDS_CLIENT'  => ['firstname', 'name', 'emailaddress', 'phonenumber', 'address', 'zipcode', 'city'],
+        'COM_TICKETSTATION_TEMPLATE_FIELDS_CLIENT'  => ['name', 'firstname', 'emailaddress', 'phonenumber', 'address', 'zipcode', 'city'],
         'COM_TICKETSTATION_TEMPLATE_FIELDS_COMPANY' => ['company_name', 'company_address', 'company_zipcode', 'company_city', 'company_email', 'company_website'],
     ];
 
@@ -238,6 +238,23 @@ class eTicketsMessage
     }
 
     /*
+     * The customer has one name field. {name} is that full name, {firstname} its first part
+     * and {lastname} the rest, so a greeting can still use the first name only.
+     */
+    private function setNameVariables()
+    {
+        $name = trim((string) ($this->variables['name'] ?? ''));
+
+        if ($name === '') {
+            return;
+        }
+
+        $this->variables['name']      = $name;
+        $this->variables['firstname'] = PersonName::first($name);
+        $this->variables['lastname']  = PersonName::rest($name);
+    }
+
+    /*
      * Adds a set of default variables to the variables list
      */
     private function setDefaultVariables()
@@ -350,6 +367,7 @@ class eTicketsMessage
         }
 
         $this->setVariablesAliases();
+        $this->setNameVariables();
 
         return $this;
     }
@@ -369,6 +387,7 @@ class eTicketsMessage
         $this->user->password = '';
 
         $this->variables = array_merge($this->variables, (array) $this->user);
+        $this->setNameVariables();
 
         return $this;
     }
@@ -411,7 +430,7 @@ class eTicketsMessage
 
         // Should the email be sent to the user or the shop owner?
         $send_to_email = $this->variables['emailaddress'];
-        $send_to_name  = $this->variables['firstname'] . ' ' . $this->variables['name'];
+        $send_to_name  = $this->variables['name'];
 
         // Compile mailer function:
         $mailer = Factory::getMailer();

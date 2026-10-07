@@ -72,11 +72,8 @@ $switcher = function (string $name, string $label, string $description, int $lev
     <h3 class="card-header"><?= Text::_('COM_TICKETSTATION_RESERVATION_CUSTOMER_TITLE') ?></h3>
     <div class="card-body">
         <dl class="row mb-0">
-            <dt class="col-sm-3"><?= Text::_('COM_TICKETSTATION_RESERVATION_FIRSTNAME') ?></dt>
-            <dd class="col-sm-9"><?= htmlspecialchars($this->customerData['firstname'] ?? '', ENT_QUOTES, 'UTF-8') ?></dd>
-
-            <dt class="col-sm-3"><?= Text::_('COM_TICKETSTATION_RESERVATION_LASTNAME') ?></dt>
-            <dd class="col-sm-9"><?= htmlspecialchars($this->customerData['lastname'] ?? '', ENT_QUOTES, 'UTF-8') ?></dd>
+            <dt class="col-sm-3"><?= Text::_('COM_TICKETSTATION_RESERVATION_NAME') ?></dt>
+            <dd class="col-sm-9"><?= htmlspecialchars($this->customerData['name'] ?? '', ENT_QUOTES, 'UTF-8') ?></dd>
 
             <dt class="col-sm-3"><?= Text::_('COM_TICKETSTATION_EMAILADDRESS') ?></dt>
             <dd class="col-sm-9"><?= htmlspecialchars($this->customerData['emailaddress'] ?? '', ENT_QUOTES, 'UTF-8') ?></dd>

@@ -83,8 +83,7 @@ class ClientsModel extends BaseDatabaseModel
             $like_filter = ' LIKE ' . $db->quote('%' . str_replace(' ', '%', $search) . '%');
 
             $where = [
-                // First and last name together, so "Jan Jansen" is found.
-                'CONCAT_WS(' . $db->quote(' ') . ', ' . $db->quoteName('firstname') . ', ' . $db->quoteName('name') . ')' . $like_filter,
+                $db->quoteName('name') . $like_filter,
                 $db->quoteName('emailaddress') . $like_filter,
             ];
 

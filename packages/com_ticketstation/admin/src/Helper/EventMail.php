@@ -37,20 +37,20 @@ class EventMail
     /**
      * The orders that hold valid, paid tickets for an event, with the client's address.
      *
-     * @return  object[]  ordercode, userid, emailaddress, firstname, name
+     * @return  object[]  ordercode, userid, emailaddress, name
      */
     public static function audience(int $eventid): array
     {
         $db    = Factory::getContainer()->get('DatabaseDriver');
         $query = $db->getQuery(true)
-            ->select(['o.ordercode', 'MIN(o.userid) AS userid', 'c.emailaddress', 'c.firstname', 'c.name'])
+            ->select(['o.ordercode', 'MIN(o.userid) AS userid', 'c.emailaddress', 'c.name'])
             ->from($db->quoteName('#__ticketstation_orders', 'o'))
             ->join('INNER', $db->quoteName('#__ticketstation_clients', 'c') . ' ON ' . $db->quoteName('c.clientid') . ' = ' . $db->quoteName('o.userid'))
             ->where($db->quoteName('o.eventid') . ' = ' . $eventid)
             ->where($db->quoteName('o.paid') . ' = 1')
             ->where(Refund::validSql('o'))
             ->where($db->quoteName('c.emailaddress') . " <> ''")
-            ->group(['o.ordercode', 'c.emailaddress', 'c.firstname', 'c.name'])
+            ->group(['o.ordercode', 'c.emailaddress', 'c.name'])
             ->order($db->quoteName('o.ordercode'));
 
         $db->setQuery($query);
@@ -251,7 +251,7 @@ class EventMail
         $query = $db->getQuery(true)
             ->select([
                 'o.ordercode', 'MIN(o.userid) AS userid', 't.eventid', 't.startdate', 'MIN(NULLIF(t.doors_open, \'\')) AS doors_open',
-                'c.emailaddress', 'c.firstname', 'c.name',
+                'c.emailaddress', 'c.name',
             ])
             ->from($db->quoteName('#__ticketstation_orders', 'o'))
             ->join('INNER', $db->quoteName('#__ticketstation_tickets', 't') . ' ON ' . $db->quoteName('t.ticketid') . ' = ' . $db->quoteName('o.ticketid'))
@@ -268,7 +268,7 @@ class EventMail
             ->where('NOT EXISTS (SELECT 1 FROM ' . $db->quoteName('#__ticketstation_event_mails', 'm')
                 . ' WHERE m.ordercode = o.ordercode AND m.eventid = t.eventid AND m.startdate = t.startdate AND m.kind = '
                 . $db->quote(self::KIND_REMINDER) . ')')
-            ->group(['o.ordercode', 't.eventid', 't.startdate', 'c.emailaddress', 'c.firstname', 'c.name'])
+            ->group(['o.ordercode', 't.eventid', 't.startdate', 'c.emailaddress', 'c.name'])
             ->order($db->quoteName('t.startdate'));
 
         $db->setQuery($query);

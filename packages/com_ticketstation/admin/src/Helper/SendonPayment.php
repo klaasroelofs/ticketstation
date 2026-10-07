@@ -41,7 +41,7 @@ class SendonPayment
         $query = $db->getQuery(true);
 
         $query->select(
-            array('a.*', 'c.name', 'c.emailaddress', 'c.firstname', 'e.eventname', 't.ticket_size', 't.ticket_orientation')
+            array('a.*', 'c.name', 'c.emailaddress', 'e.eventname', 't.ticket_size', 't.ticket_orientation')
         );
         $query->from($db->quoteName('#__ticketstation_orders', 'a'));
         $query->join('LEFT',$db->quoteName('#__ticketstation_clients', 'c') . ' ON ('.$db->quoteName('a.userid').' = '.$db->quoteName('c.clientid') .')');

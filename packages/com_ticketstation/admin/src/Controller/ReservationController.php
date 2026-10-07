@@ -386,14 +386,12 @@ class ReservationController extends BaseController
 
         $ordercode = $this->getOrdercode();
 
-        $firstname    = $jinput->getString('firstname', '');
-        $lastname     = $jinput->getString('lastname', '');
+        $name         = $jinput->getString('name', '');
         $emailaddress = $jinput->getString('emailaddress', '');
         $phonenumber  = $jinput->getString('phonenumber', '');
 
         $data = [
-            'firstname'    => $firstname,
-            'name'         => $lastname,
+            'name'         => $name,
             'emailaddress' => $emailaddress,
             'phonenumber'  => $phonenumber,
         ];
@@ -428,8 +426,7 @@ class ReservationController extends BaseController
         // it for review, even though findOrCreateClient() may have matched an existing client
         // whose stored name/phone could differ slightly.
         $state['customer'] = [
-            'firstname'    => $firstname,
-            'lastname'     => $lastname,
+            'name'         => $name,
             'emailaddress' => $emailaddress,
             'phonenumber'  => $phonenumber,
         ];

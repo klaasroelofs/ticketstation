@@ -74,7 +74,7 @@ class TransactionsModel extends BaseDatabaseModel
 
         $query = $db->getQuery(true);
 
-        $query->select( array('t.*', 'c.name', 'c.firstname'));
+        $query->select( array('t.*', 'c.name'));
         $query->from($db->quoteName('#__ticketstation_transactions', 't'));
         $query->join('LEFT', $db->quoteName('#__ticketstation_clients', 'c') . ' ON (' . $db->quoteName('c.clientid') . ' = ' . $db->quoteName('t.userid') . ')');
 
@@ -83,8 +83,7 @@ class TransactionsModel extends BaseDatabaseModel
             $like_filter = ' LIKE ' . $db->quote('%' . str_replace(' ', '%', $search) . '%');
 
             $where = [
-                // First and last name together, so "Jan Jansen" is found.
-                'CONCAT_WS(' . $db->quote(' ') . ', ' . $db->quoteName('c.firstname') . ', ' . $db->quoteName('c.name') . ')' . $like_filter,
+                $db->quoteName('c.name') . $like_filter,
                 $db->quoteName('t.orderid') . $like_filter,
             ];
 

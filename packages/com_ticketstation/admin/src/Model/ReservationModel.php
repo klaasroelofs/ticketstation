@@ -236,7 +236,6 @@ class ReservationModel extends BaseDatabaseModel
             $updateQuery = $db->getQuery(true)
                 ->update($db->quoteName('#__ticketstation_clients'))
                 ->set($db->quoteName('name') . ' = ' . $db->quote($data['name']))
-                ->set($db->quoteName('firstname') . ' = ' . $db->quote($data['firstname']))
                 ->set($db->quoteName('phonenumber') . ' = ' . $db->quote($data['phonenumber']))
                 ->where($db->quoteName('clientid') . ' = ' . $clientid);
 

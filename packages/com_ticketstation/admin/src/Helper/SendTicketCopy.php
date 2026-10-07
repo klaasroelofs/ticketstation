@@ -51,7 +51,7 @@ class SendTicketCopy
 
         $query = $db->getQuery(true);
 
-        $query->select(array('a.*', 'c.name', 'c.emailaddress', 'c.firstname', 'e.eventname', 't.ticket_size', 't.ticket_orientation'));
+        $query->select(array('a.*', 'c.name', 'c.emailaddress', 'e.eventname', 't.ticket_size', 't.ticket_orientation'));
         $query->from($db->quoteName('#__ticketstation_orders', 'a'));
         $query->join('LEFT', $db->quoteName('#__ticketstation_clients', 'c') . ' ON (' . $db->quoteName('c.clientid') . ' = ' . $db->quoteName('a.userid') . ')');
         $query->join('LEFT', $db->quoteName('#__ticketstation_events', 'e') . ' ON (' . $db->quoteName('e.eventid') . ' = ' . $db->quoteName('a.eventid') . ')');

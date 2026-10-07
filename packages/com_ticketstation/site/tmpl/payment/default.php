@@ -113,7 +113,7 @@ foreach (['terms_url' => 'COM_TICKETSTATION_TERMS_AND_CONDITIONS', 'privacy_url'
                 <?php endif; ?>
 
                 <dt><?= Text::_('COM_TICKETSTATION_NAME'); ?></dt>
-                <dd><?= htmlspecialchars($this->items[0]->firstname . ' ' . $this->items[0]->name, ENT_QUOTES, 'UTF-8'); ?></dd>
+                <dd><?= htmlspecialchars($this->items[0]->name, ENT_QUOTES, 'UTF-8'); ?></dd>
 
                 <?php if($this->config->show_address != 0 ): ?>
                     <dt><?= Text::_('COM_TICKETSTATION_ADDRESS'); ?></dt>

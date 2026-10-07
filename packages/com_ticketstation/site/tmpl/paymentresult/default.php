@@ -13,6 +13,7 @@ use Joomla\CMS\Language\Text;
 use Joomla\CMS\Plugin\PluginHelper;
 use Joomla\CMS\Router\Route;
 use Joomla\CMS\Uri\Uri;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\PersonName;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\TicketstationFunctions;
 
 // No direct access to this file
@@ -105,7 +106,7 @@ $contactLink  = '<a href="mailto:' . $contactEmail . '">' . $contactEmail . '</a
             <h1 class="ts-page-title"><?php echo Text::_('COM_TICKETSTATION_PAYMENTRESULT_SUCCESS'); ?></h1>
         </div>
 
-        <p class="ts-lead"><?php echo Text::sprintf('COM_TICKETSTATION_PAYMENTRESULT_THANK_YOU', htmlspecialchars($this->data[0]->firstname, ENT_QUOTES, 'UTF-8')); ?></p>
+        <p class="ts-lead"><?php echo Text::sprintf('COM_TICKETSTATION_PAYMENTRESULT_THANK_YOU', htmlspecialchars(PersonName::first($this->data[0]->name), ENT_QUOTES, 'UTF-8')); ?></p>
 
         <section class="ts-card ts-result ts-result--success">
             <h2 class="ts-card__title"><?php echo Text::_('COM_TICKETSTATION_PAYMENTRESULT_ORDER_PROCESSED'); ?></h2>

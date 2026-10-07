@@ -86,7 +86,7 @@ $wa->registerAndUseStyle('searchtools', Uri::root() . 'media/templates/administr
                             <td class="text-center"><?php echo $checked; ?></td>
                             <td><a href="<?php echo $link; ?>"><?php echo $row->pid; ?></a></td>
                             <td><?php echo date ($this->data->dateformat.' '.$this->data->time_format, strtotime($row->date)); ?></td>
-                            <td><a href="<?php echo $linkuser; ?>"><?php echo $row->firstname; ?> <?php echo $row->name; ?></a></td>
+                            <td><a href="<?php echo $linkuser; ?>"><?php echo $this->escape($row->name); ?></a></td>
                             <td class="d-none d-md-table-cell"><a href="<?php echo $linkorder; ?>"><?php echo $row->orderid; ?></a></td>
                             <td class="small d-none d-lg-table-cell"><?php echo $row->type; ?></td>
                             <td class="small d-none d-lg-table-cell"><?php echo TicketstationFunctions::showprice($this->data->priceformat ,$row->amount, $this->data->valuta); ?></td>

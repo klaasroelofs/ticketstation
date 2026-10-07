@@ -410,7 +410,7 @@ class Invoice
         $pdf->SetXY(34, 75);
         $pdf->Write(0, ': ' . $invoice->ordercode);
 
-        $nameParts = array_filter([$salutation, $client->firstname, $client->name], function ($part) {
+        $nameParts = array_filter([$salutation, $client->name], function ($part) {
             return trim((string) $part) !== '';
         });
 
@@ -782,7 +782,7 @@ class Invoice
         // either - fall back to a sensible layout rather than printing an empty address block.
         if (trim((string) $template) === '')
         {
-            $template = "%%SALUTATION%% %%FIRSTNAME%% %%LASTNAME%%\n%%ADDRESS1%%\n%%ADDRESS2%%\n%%ZIPCODE%% %%CITY%%\n%%COUNTRY_FULL%%";
+            $template = "%%SALUTATION%% %%FULLNAME%%\n%%ADDRESS1%%\n%%ADDRESS2%%\n%%ZIPCODE%% %%CITY%%\n%%COUNTRY_FULL%%";
         }
 
         // country_id 1 is the seeded "Unknown" placeholder row (code "UN") every client
@@ -792,8 +792,9 @@ class Invoice
 
         return $this->renderAddressTemplate($template, [
             '%%SALUTATION%%'   => $salutation,
-            '%%FIRSTNAME%%'    => $client->firstname,
-            '%%LASTNAME%%'     => $client->name,
+            '%%FULLNAME%%'     => $client->name,
+            '%%FIRSTNAME%%'    => PersonName::first($client->name),
+            '%%LASTNAME%%'     => PersonName::rest($client->name),
             '%%ADDRESS1%%'     => $client->address,
             '%%ADDRESS2%%'     => $client->address2,
             '%%ZIPCODE%%'      => $client->zipcode,

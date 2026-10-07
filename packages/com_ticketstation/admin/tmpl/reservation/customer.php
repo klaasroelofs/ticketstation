@@ -57,18 +57,10 @@ $csrfTokenParam = \Joomla\CMS\Session\Session::getFormToken() . '=1';
         <form action="<?= Route::_('index.php?option=com_ticketstation&controller=reservation&task=saveCustomer') ?>" method="post">
 
             <div class="row mb-3">
-                <label for="firstname" class="col-sm-3 col-form-label"><?= Text::_('COM_TICKETSTATION_RESERVATION_FIRSTNAME') ?></label>
+                <label for="name" class="col-sm-3 col-form-label"><?= Text::_('COM_TICKETSTATION_RESERVATION_NAME') ?></label>
                 <div class="col-sm-9">
-                    <input type="text" name="firstname" id="firstname" class="form-control" autocomplete="given-name"
-                           value="<?= htmlspecialchars($this->customerData['firstname'] ?? '', ENT_QUOTES, 'UTF-8') ?>" />
-                </div>
-            </div>
-
-            <div class="row mb-3">
-                <label for="lastname" class="col-sm-3 col-form-label"><?= Text::_('COM_TICKETSTATION_RESERVATION_LASTNAME') ?></label>
-                <div class="col-sm-9">
-                    <input type="text" name="lastname" id="lastname" class="form-control" autocomplete="family-name" required
-                           value="<?= htmlspecialchars($this->customerData['lastname'] ?? '', ENT_QUOTES, 'UTF-8') ?>" />
+                    <input type="text" name="name" id="name" class="form-control" autocomplete="name" required
+                           value="<?= htmlspecialchars($this->customerData['name'] ?? '', ENT_QUOTES, 'UTF-8') ?>" />
                 </div>
             </div>
 

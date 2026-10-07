@@ -36,8 +36,7 @@ $gotocart = Route::_('index.php?option=com_ticketstation&view=cart' . ($itemid ?
 ## Fields in form order: name => [shown, label, input type, autocomplete, required]
 ## (the same rules as CheckoutController::validateForm(); only the third address line is optional)
 $fields = [
-    'firstname'    => [true, 'COM_TICKETSTATION_YOUR_FIRSTNAME', 'text', 'given-name', true],
-    'lastname'     => [true, 'COM_TICKETSTATION_YOUR_LASTNAME', 'text', 'family-name', true],
+    'name'         => [true, 'COM_TICKETSTATION_YOUR_NAME', 'text', 'name', true],
     'address'      => [$this->config->show_address != 0, 'COM_TICKETSTATION_YOUR_ADDRESS', 'text', 'address-line1', true],
     'address2'     => [$this->config->show_secondaddress != 0, 'COM_TICKETSTATION_ADDRESS_2', 'text', 'address-line2', true],
     'address3'     => [$this->config->show_thirdaddress != 0, 'COM_TICKETSTATION_ADDRESS_3', 'text', 'address-line3', false],
@@ -72,13 +71,13 @@ $requiredMark = '<span class="ts-required" aria-hidden="true">*</span>';
                 var button = document.getElementById('ts-clear-details');
 
                 button.addEventListener('click', function () {
-                    ['firstname', 'lastname', 'emailaddress'].forEach(function (id) {
+                    ['name', 'emailaddress'].forEach(function (id) {
                         var field = document.getElementById(id);
 
                         if (field) { field.value = ''; }
                     });
 
-                    document.getElementById('firstname').focus();
+                    document.getElementById('name').focus();
                     button.hidden = true;
                 });
             });

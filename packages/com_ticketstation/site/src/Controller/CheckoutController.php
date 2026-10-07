@@ -40,7 +40,7 @@ class CheckoutController extends BaseController
     public const STATE_ERRORS = 'com_ticketstation.checkout.errors';
 
     /** The fields of the details form */
-    public const FORM_FIELDS = ['gender', 'firstname', 'lastname', 'address', 'address2', 'address3', 'zipcode', 'city', 'country_id', 'phonenumber', 'emailaddress'];
+    public const FORM_FIELDS = ['gender', 'name', 'address', 'address2', 'address3', 'zipcode', 'city', 'country_id', 'phonenumber', 'emailaddress'];
 
     private $username;
     private $password;
@@ -182,8 +182,7 @@ class CheckoutController extends BaseController
         if ($clientid == '')
         {
 
-            $post['name']	   		= $jinput->get('lastname', '', 'string');
-            $post['firstname'] 		= $jinput->get('firstname', '', 'string');
+            $post['name']	   		= $jinput->get('name', '', 'string');
             $post['emailaddress']   = $emailaddress;
             $post['ipaddress'] 		= $_SERVER['REMOTE_ADDR'];
             $post['published'] 		= 1;
@@ -198,8 +197,7 @@ class CheckoutController extends BaseController
         //clientid in database vullen
         $query = $db->getQuery(true)
             ->update($db->quoteName('#__ticketstation_clients'))
-            ->set($db->quoteName('name') . ' = ' . $db->quote($jinput->get('lastname', '', 'string')))
-            ->set($db->quoteName('firstname') . ' = ' . $db->quote($jinput->get('firstname', '', 'string')));
+            ->set($db->quoteName('name') . ' = ' . $db->quote($jinput->get('name', '', 'string')));
 
         if ($config->show_phone == 1)
         {
@@ -301,8 +299,7 @@ class CheckoutController extends BaseController
 
         // Required text fields: field => [shown, message when empty]
         $required = [
-            'firstname'   => [true, 'COM_TICKETSTATION_CHECKOUT_FIRSTNAME_NOT_FILLED'],
-            'lastname'    => [true, 'COM_TICKETSTATION_CHECKOUT_LASTNAME_NOT_FILLED'],
+            'name'        => [true, 'COM_TICKETSTATION_CHECKOUT_NAME_NOT_FILLED'],
             'address'     => [$config->show_address == 1, 'COM_TICKETSTATION_CHECKOUT_ADDRESS_NOT_FILLED'],
             'address2'    => [$config->show_secondaddress == 1, 'COM_TICKETSTATION_CHECKOUT_ADDRESS2_NOT_FILLED'],
             'zipcode'     => [$config->show_zipcode == 1, 'COM_TICKETSTATION_CHECKOUT_ZIPCODE_NOT_FILLED'],

@@ -362,9 +362,9 @@ class ticketcreator
                 $pdf->Write(0, PdfEncoding::toLatin1(TicketLanguage::_('COM_TICKETSTATION_PDF_ORDERED_BY')));
                 $pdf->SetFont($this->font, '', $order->client_fontsize);
                 $pdf->SetXY($position[0], $position[1] + 5);
-                $pdf->Write(0, substr((PdfEncoding::toLatin1($order->firstname) . ' ' . PdfEncoding::toLatin1($order->name)), 0, 35)); // naam afkorten op 35 tekens, anders past het niet
+                $pdf->Write(0, substr(PdfEncoding::toLatin1($order->name), 0, 35)); // naam afkorten op 35 tekens, anders past het niet
             } else {
-                $pdf->Write(0, PdfEncoding::toLatin1(TicketLanguage::_('COM_TICKETSTATION_PDF_ORDERED_BY')) . ' ' . PdfEncoding::toLatin1($order->firstname) . ' ' . PdfEncoding::toLatin1($order->name));
+                $pdf->Write(0, PdfEncoding::toLatin1(TicketLanguage::_('COM_TICKETSTATION_PDF_ORDERED_BY')) . ' ' . PdfEncoding::toLatin1($order->name));
             }
         }
 

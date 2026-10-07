@@ -91,7 +91,7 @@ $wa->registerAndUseStyle('searchtools', Uri::root() . 'media/templates/administr
                                 ?>
                             </td>
                             <td class="d-none d-lg-table-cell"><?php echo $row->clientid; ?></td>
-                            <td><a href="<?php echo $link; ?>"><?php echo $row->firstname; ?> <?php echo $row->name; ?></a></td>
+                            <td><a href="<?php echo $link; ?>"><?php echo $this->escape($row->name); ?></a></td>
                             <td class="small d-none d-lg-table-cell"><?php echo $row->phonenumber; ?></td>
                             <td class="small d-none d-md-table-cell"><?php echo $row->emailaddress; ?></td>
                         </tr>

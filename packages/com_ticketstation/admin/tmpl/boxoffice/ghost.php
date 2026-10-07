@@ -106,7 +106,7 @@ $reason_key = $ghost->reason === 'unfinished'
                         <th scope="row" class="w-50 fw-normal"><?= Text::_('COM_TICKETSTATION_NAME') ?></th>
                         <td>
                             <?php if ($ghost->client) { ?>
-                                <a href="index.php?option=com_ticketstation&controller=clients&task=edit&cid=<?= (int) $ghost->client->clientid; ?>"><?= $this->escape(trim($ghost->client->firstname . ' ' . $ghost->client->name)); ?></a>
+                                <a href="index.php?option=com_ticketstation&controller=clients&task=edit&cid=<?= (int) $ghost->client->clientid; ?>"><?= $this->escape(trim($ghost->client->name)); ?></a>
                             <?php } ?>
                         </td>
                     </tr>

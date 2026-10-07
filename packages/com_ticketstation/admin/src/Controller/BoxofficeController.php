@@ -539,8 +539,7 @@ class BoxofficeController extends BaseController {
         $header = [
             Text::_('COM_TICKETSTATION_ORDERCODE'),
             Text::_('COM_TICKETSTATION_ORDERDATE'),
-            Text::_('COM_TICKETSTATION_BOXOFFICE_EXPORT_FIRSTNAME'),
-            Text::_('COM_TICKETSTATION_BOXOFFICE_EXPORT_LASTNAME'),
+            Text::_('COM_TICKETSTATION_BOXOFFICE_EXPORT_NAME'),
             Text::_('COM_TICKETSTATION_EMAILADDRESS'),
             Text::_('COM_TICKETSTATION_PHONENUMBER'),
             Text::_('COM_TICKETSTATION_BOXOFFICE_EXPORT_EVENT'),
@@ -560,7 +559,6 @@ class BoxofficeController extends BaseController {
             $lines[] = [
                 $row->ordercode,
                 Date::screen($row->orderdate, $dateTime),
-                $row->firstname,
                 $row->name,
                 $row->emailaddress,
                 $row->phonenumber,

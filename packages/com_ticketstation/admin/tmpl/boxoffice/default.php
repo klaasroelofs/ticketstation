@@ -148,7 +148,7 @@ $progress = function (int $done, int $total, string $title, string $complete = '
                                 <?php } ?>
                                 <br />
                                 <small>
-                                    <?= $this->escape(trim($row->firstname . ' ' . $row->name)); ?><br/>
+                                    <?= $this->escape(trim($row->name)); ?><br/>
                                     <em><?= Date::screen($row->orderdate, $this->config->dateformat . ' ' . $this->config->time_format); ?></em>
                                 </small>
                             </td>

@@ -54,8 +54,8 @@ $wa->registerAndUseStyle('ticketstation', Uri::base() . 'components\com_ticketst
                         $row     = $this->items[$i];
                         $checked = HTMLHelper::_('grid.id', $i, $row->id);
 
-                        if ($row->client_name != '' || $row->client_firstname != '') {
-                            $client = trim($row->client_firstname . ' ' . $row->client_name);
+                        if ($row->client_name != '') {
+                            $client = trim($row->client_name);
                         } else {
                             $client = Text::_( 'COM_TICKETSTATION_WAITINGLIST_NO_CLIENT_YET' ) . ' - ' . $row->ip_address;
                         }
