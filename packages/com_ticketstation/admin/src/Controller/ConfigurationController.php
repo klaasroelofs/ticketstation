@@ -15,6 +15,7 @@ use Joomla\CMS\Factory;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\Uri\Uri;
 use Ticketstation\Component\Ticketstation\Administrator\Controller\Mixin\RegisterControllerTasks;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\CheckoutFieldMap;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Config;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Ordercode;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Wallet;
@@ -61,6 +62,12 @@ class ConfigurationController extends BaseController {
         $post 	= $jinput->post->getArray();
 
         $post['valuta'] = $app->getInput()->get('valuta', null, 'raw');
+
+        // Checkout fields linked to a custom user field: kept as JSON in one setting
+        if (array_key_exists('checkout_map', $post))
+        {
+            $post['checkout_field_map'] = CheckoutFieldMap::encode($post['checkout_map']);
+        }
 
         // Notation of prices: a choice of decimals, decimal point and thousands separator
         if (isset($post['price_decimals']))

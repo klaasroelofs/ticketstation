@@ -71,13 +71,19 @@ $requiredMark = '<span class="ts-required" aria-hidden="true">*</span>';
                 var button = document.getElementById('ts-clear-details');
 
                 button.addEventListener('click', function () {
-                    ['name', 'emailaddress'].forEach(function (id) {
+                    var ids = <?php echo json_encode(array_values($this->clearFields)); ?>;
+
+                    ids.forEach(function (id) {
                         var field = document.getElementById(id);
 
-                        if (field) { field.value = ''; }
+                        if (!field) { return; }
+
+                        if (field.tagName === 'SELECT') { field.selectedIndex = 0; } else { field.value = ''; }
                     });
 
-                    document.getElementById('name').focus();
+                    var first = document.getElementById(ids[0]);
+
+                    if (first) { first.focus(); }
                     button.hidden = true;
                 });
             });

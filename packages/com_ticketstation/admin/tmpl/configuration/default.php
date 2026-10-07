@@ -478,6 +478,29 @@ $document->getWebAssetManager()->addInlineScript("
                 <?= Text::_('COM_TICKETSTATION_CHECKOUT_SETTINGS') ?>
             </h3>
             <div class="card-body">
+                <?php
+                // The row to link a checkout field to a custom field of the user; only shown while the field is on
+                $mapRow = function (string $show, string $field): string {
+                    if (!$this->userFields) {
+                        return '';
+                    }
+
+                    $options = '<option value="">' . Text::_('COM_TICKETSTATION_CHECKOUT_MAP_NONE') . '</option>';
+
+                    foreach ($this->userFields as $userField) {
+                        $options .= '<option value="' . $userField['id'] . '"' . (($this->checkoutMap[$field] ?? 0) === $userField['id'] ? ' selected' : '') . '>'
+                            . $this->escape($userField['title']) . ' (' . $this->escape($userField['type']) . ')</option>';
+                    }
+
+                    return '<div class="row mb-3 ts-map-row" data-show="' . $show . '"' . ((int) ($this->config->$show ?? 0) === 0 ? ' hidden' : '') . '>'
+                        . '<label for="map_' . $field . '" class="col-sm-3 col-form-label text-muted ps-4">' . Text::_('COM_TICKETSTATION_CHECKOUT_MAP_LABEL') . '</label>'
+                        . '<div class="col-sm-9"><select name="checkout_map[' . $field . ']" id="map_' . $field . '" class="form-select">' . $options . '</select></div>'
+                        . '</div>';
+                };
+                ?>
+                <p class="text-muted small">
+                    <?= Text::_($this->userFields ? 'COM_TICKETSTATION_CHECKOUT_MAP_HELP' : 'COM_TICKETSTATION_CHECKOUT_MAP_NO_FIELDS'); ?>
+                </p>
                 <div class="row mb-3">
                     <label for="show_salutation" class="col-sm-3 col-form-label"
                            rel="popover"
@@ -488,6 +511,7 @@ $document->getWebAssetManager()->addInlineScript("
                         <?= $this->lists['show_salutation']; ?>
                     </div>
                 </div>
+                <?= $mapRow('show_salutation', 'gender'); ?>
                 <div class="row mb-3">
                     <label for="show_address" class="col-sm-3 col-form-label"
                            rel="popover"
@@ -498,6 +522,7 @@ $document->getWebAssetManager()->addInlineScript("
                         <?= $this->lists['show_address']; ?>
                     </div>
                 </div>
+                <?= $mapRow('show_address', 'address'); ?>
                 <div class="row mb-3">
                     <label for="show_secondaddress" class="col-sm-3 col-form-label"
                            rel="popover"
@@ -508,6 +533,7 @@ $document->getWebAssetManager()->addInlineScript("
                         <?= $this->lists['show_secondaddress']; ?>
                     </div>
                 </div>
+                <?= $mapRow('show_secondaddress', 'address2'); ?>
                 <div class="row mb-3">
                     <label for="show_thirdaddress" class="col-sm-3 col-form-label"
                            rel="popover"
@@ -518,6 +544,7 @@ $document->getWebAssetManager()->addInlineScript("
                         <?= $this->lists['show_thirdaddress']; ?>
                     </div>
                 </div>
+                <?= $mapRow('show_thirdaddress', 'address3'); ?>
                 <div class="row mb-3">
                     <label for="show_zipcode" class="col-sm-3 col-form-label"
                            rel="popover"
@@ -528,6 +555,7 @@ $document->getWebAssetManager()->addInlineScript("
                         <?= $this->lists['show_zipcode']; ?>
                     </div>
                 </div>
+                <?= $mapRow('show_zipcode', 'zipcode'); ?>
                 <div class="row mb-3">
                     <label for="show_city" class="col-sm-3 col-form-label"
                            rel="popover"
@@ -538,6 +566,7 @@ $document->getWebAssetManager()->addInlineScript("
                         <?= $this->lists['show_city']; ?>
                     </div>
                 </div>
+                <?= $mapRow('show_city', 'city'); ?>
                 <div class="row mb-3">
                     <label for="show_country" class="col-sm-3 col-form-label"
                            rel="popover"
@@ -548,6 +577,7 @@ $document->getWebAssetManager()->addInlineScript("
                         <?= $this->lists['show_country']; ?>
                     </div>
                 </div>
+                <?= $mapRow('show_country', 'country_id'); ?>
                 <div class="row mb-3">
                     <label for="show_phone" class="col-sm-3 col-form-label"
                            rel="popover"
@@ -558,6 +588,7 @@ $document->getWebAssetManager()->addInlineScript("
                         <?= $this->lists['show_phone']; ?>
                     </div>
                 </div>
+                <?= $mapRow('show_phone', 'phonenumber'); ?>
                 <div class="row mb-3">
                     <label for="show_birthday" class="col-sm-3 col-form-label"
                            rel="popover"
@@ -570,6 +601,18 @@ $document->getWebAssetManager()->addInlineScript("
                 </div>
             </div>
         </div>
+
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                document.querySelectorAll('.ts-map-row').forEach(function (row) {
+                    var show = document.getElementById(row.dataset.show);
+
+                    if (show) {
+                        show.addEventListener('change', function () { row.hidden = show.value === '0'; });
+                    }
+                });
+            });
+        </script>
 
         <div class="card mt-3 rounded-to">
             <h3 class="card-header">

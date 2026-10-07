@@ -16,6 +16,7 @@ use Joomla\CMS\HTML\HTMLHelper;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\View\HtmlView as BaseHtmlView;
 use Joomla\CMS\Router\Route;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\CheckoutFieldMap;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Config;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\SeatOrphans;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\SiteCaptcha;
@@ -28,6 +29,9 @@ class HtmlView extends BaseHtmlView {
 
     /** @var bool The name and email address come from the account of the logged-in user */
     public $prefilled = false;
+
+    /** The fields filled in from the account, which the clear button empties */
+    public $clearFields = [];
 
 
     /**
@@ -150,6 +154,24 @@ class HtmlView extends BaseHtmlView {
             $this->values['name']         = trim((string) $user->name);
             $this->values['emailaddress'] = $user->email;
             $this->prefilled              = true;
+            $this->clearFields            = ['name', 'emailaddress'];
+        }
+
+        ## The fields linked to a custom field of the user (Configuration > Checkout) are filled in
+        ## from it, unless the order already has details of its own for that field.
+        if (!is_array($typed) && $user && $user->id) {
+            $values = CheckoutFieldMap::valuesFor($user, CheckoutFieldMap::decode($config->checkout_field_map ?? ''));
+
+            foreach ($values as $field => $value) {
+                $current = $this->values[$field] ?? '';
+                $isEmpty = in_array($current, ['', null, 0, '0'], true) || ($field === 'country_id' && (int) $current === 1);
+
+                if ($config->{CheckoutFieldMap::FIELDS[$field]} != 0 && $isEmpty) {
+                    $this->values[$field] = $value;
+                    $this->prefilled      = true;
+                    $this->clearFields[]  = $field;
+                }
+            }
         }
 
         $this->errors = (array) $app->getUserState(CheckoutController::STATE_ERRORS, []);

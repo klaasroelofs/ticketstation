@@ -19,6 +19,7 @@ use Joomla\CMS\Router\Route;
 use Joomla\CMS\Session\Session;
 use Joomla\CMS\Toolbar\ToolbarHelper;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\AclGate;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\CheckoutFieldMap;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Docs;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Wallet;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\WalletApple;
@@ -316,6 +317,8 @@ class HtmlView extends BaseHtmlView {
 
         $this->config = $config;
         $this->lists = $lists;
+        $this->userFields = CheckoutFieldMap::userFields();
+        $this->checkoutMap = CheckoutFieldMap::decode($config->checkout_field_map ?? '');
 
         parent::display($tpl);
     }

@@ -153,6 +153,7 @@ CREATE TABLE IF NOT EXISTS `#__ticketstation_config` (
   `price_symbol_after` tinyint(1) NOT NULL DEFAULT 0,
   `payment_provider` varchar(50) NOT NULL DEFAULT '',
   `payment_currency` varchar(3) NOT NULL DEFAULT 'EUR',
+  `checkout_field_map` varchar(1000) NOT NULL DEFAULT '',
   PRIMARY KEY (`configid`)
 )  ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 DEFAULT COLLATE=utf8mb4_unicode_ci;
 
@@ -1002,4 +1003,5 @@ NULL,
 "",
 "0",
 "mollie",
-"EUR");
+"EUR",
+"");
