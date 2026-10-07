@@ -380,21 +380,26 @@ $sum28     = array_sum(array_column($this->dailySales, 'tickets'));
                     <p class="mb-2"><?= Text::sprintf('COM_TICKETSTATION_CPANEL_FOOTER_ABOUT', $productName); ?></p>
                     <p class="mb-0"><?= Text::_('COM_TICKETSTATION_CPANEL_FOOTER_SUPPORT'); ?></p>
                 </div>
-                <div class="col-12 col-xl-4 text-center">
-                    <div class="mb-1"><?= Text::_('COM_TICKETSTATION_ENJOYING') ?></div>
-                    <?php // A review costs nothing and helps others find the extension, so it comes before the donation ?>
-                    <p class="text-muted mb-2"><?= Text::_('COM_TICKETSTATION_CPANEL_REVIEW_TEXT') ?></p>
-                    <div class="d-flex flex-wrap justify-content-center gap-2">
-                        <a href="https://extensions.joomla.org/extension/calendars-a-events/ticketstation/"
-                           class="btn btn-sm btn-primary" target="blank" rel="noopener noreferrer">
-                            <span class="fa fa-star" aria-hidden="true"></span>
-                            <?= Text::_('COM_TICKETSTATION_CPANEL_REVIEW_BUTTON') ?>
-                        </a>
-                        <a href="https://ko-fi.com/klaasroelofs"
-                           class="btn btn-sm btn-outline-success" target="blank" rel="noopener noreferrer">
-                            <span class="fa fa-mug-hot" aria-hidden="true"></span>
-                            <?= Text::_('COM_TICKETSTATION_DONATE') ?>
-                        </a>
+                <div class="col-12 col-xl-4">
+                    <div class="text-center border border-primary border-2 rounded-3 bg-body text-body p-3">
+                        <div class="fs-5 mb-1">
+                            <span class="fa fa-heart text-danger" aria-hidden="true"></span>
+                            <?= Text::_('COM_TICKETSTATION_ENJOYING') ?>
+                        </div>
+                        <?php // A review costs nothing and helps others find the extension, so it comes before the donation ?>
+                        <p class="mb-3"><?= Text::_('COM_TICKETSTATION_CPANEL_REVIEW_TEXT') ?></p>
+                        <div class="d-flex flex-wrap justify-content-center gap-2">
+                            <a href="https://extensions.joomla.org/extension/calendars-a-events/ticketstation/"
+                               class="btn btn-primary" target="blank" rel="noopener noreferrer">
+                                <span class="fa fa-star" aria-hidden="true"></span>
+                                <?= Text::_('COM_TICKETSTATION_CPANEL_REVIEW_BUTTON') ?>
+                            </a>
+                            <a href="https://ko-fi.com/klaasroelofs"
+                               class="btn btn-success" target="blank" rel="noopener noreferrer">
+                                <span class="fa fa-mug-hot" aria-hidden="true"></span>
+                                <?= Text::_('COM_TICKETSTATION_DONATE') ?>
+                            </a>
+                        </div>
                     </div>
                 </div>
             </div>
