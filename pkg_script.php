@@ -75,6 +75,10 @@ class pkg_ticketstationInstallerScript extends InstallerScript
             $this->setUpMolliePlugin($db);
         }
 
+        // The old Mollie settings table is not used any more (since 2.25.0-rc3), and Joomla's database
+        // check reports its columns against the old update files. Removed once its settings are safe.
+        $this->dropOldMollieTable($db);
+
         $file = $parent->getParent()->getPath('source') . '/release-notes.md';
 
         if (is_file($file)) {
@@ -96,7 +100,7 @@ class pkg_ticketstationInstallerScript extends InstallerScript
      * were plugins bring their settings along: the API keys, test mode, methods, description and
      * language go to the plugin, the currency and the choice to take online payments through
      * Mollie (or not at all, when "Online payments" was off) to the Ticketstation settings. The
-     * old settings table stays where it is, unused. A new installation gets the plugin's defaults
+     * old settings table is removed afterwards (dropOldMollieTable). A new installation gets the plugin's defaults
      * and Mollie as the provider, as the plugin is installed disabled.
      */
     private function setUpMolliePlugin($db)
@@ -177,6 +181,56 @@ class pkg_ticketstationInstallerScript extends InstallerScript
                 ->clean();
         } catch (\Throwable $e) {
             Factory::getApplication()->enqueueMessage('The Mollie settings could not be moved to the Mollie plugin: ' . $e->getMessage(), 'warning');
+        }
+    }
+
+    /**
+     * Removes the old Mollie settings table, which payment plugins made redundant. Its API keys
+     * are never lost: the table only goes when the Mollie plugin holds keys of its own, or when
+     * the table held none.
+     */
+    private function dropOldMollieTable($db)
+    {
+        try {
+            $table = $db->replacePrefix('#__ticketstation_mollie');
+
+            if (!in_array($table, $db->getTableList(), true)) {
+                return;
+            }
+
+            $params = json_decode((string) $db->setQuery(
+                $db->getQuery(true)
+                    ->select($db->quoteName('params'))
+                    ->from($db->quoteName('#__extensions'))
+                    ->where($db->quoteName('type') . ' = ' . $db->quote('plugin'))
+                    ->where($db->quoteName('folder') . ' = ' . $db->quote('ticketstationpayment'))
+                    ->where($db->quoteName('element') . ' = ' . $db->quote('mollie'))
+            )->loadResult(), true);
+
+            $pluginHasKeys = !empty($params['api_key']) || !empty($params['api_key_test']);
+
+            $old = $db->setQuery($db->getQuery(true)->select('*')->from($db->quoteName('#__ticketstation_mollie')))->loadObjectList();
+
+            $oldHasKeys = false;
+
+            foreach ($old as $row) {
+                if (trim((string) ($row->api_key ?? '')) !== '' || trim((string) ($row->api_key_test ?? '')) !== '') {
+                    $oldHasKeys = true;
+                }
+            }
+
+            if ($oldHasKeys && !$pluginHasKeys) {
+                Factory::getApplication()->enqueueMessage(
+                    'The old Mollie settings table was kept: its API keys are not in the Mollie plugin yet. Enter them in the plugin (Payments), then remove the table #__ticketstation_mollie.',
+                    'warning'
+                );
+
+                return;
+            }
+
+            $db->setQuery('DROP TABLE ' . $db->quoteName($table))->execute();
+        } catch (Throwable $e) {
+            // Only a tidy-up: a table that stays is harmless
         }
     }
 
