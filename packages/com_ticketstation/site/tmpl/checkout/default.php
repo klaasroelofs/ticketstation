@@ -28,6 +28,7 @@ $document   = $app->getDocument();
 $document->setTitle( Text::_('COM_TICKETSTATION_ORDER_DETAILS') . ' - ' . $app->get('sitename') );
 TicketstationFunctions::addSiteStylesheet();
 $document->addScript('components/com_ticketstation/assets/javascripts/emailsuggest.js', ['version' => 'auto'], ['defer' => true]);
+$document->addScript('components/com_ticketstation/assets/javascripts/checkout-form.js', ['version' => 'auto'], ['defer' => true]);
 
 ## Redirection link in JRoute:
 $itemid = TicketstationFunctions::getSiteItemid();
@@ -57,7 +58,7 @@ $gotocart = Route::_('index.php?option=com_ticketstation&view=cart' . ($itemid ?
                 <?php echo Text::_('COM_TICKETSTATION_BACK'); ?>
             </a>
 
-            <button type="submit" class="ts-btn ts-btn--primary ts-btn--next"><?php echo Text::_('COM_TICKETSTATION_CONTINUE'); ?></button>
+            <button type="submit" class="ts-btn ts-btn--primary ts-btn--next" id="ts-checkout-submit"><?php echo Text::_('COM_TICKETSTATION_CONTINUE'); ?></button>
         </div>
 
         <input type="hidden" name="option" value="com_ticketstation" />

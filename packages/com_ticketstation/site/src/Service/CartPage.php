@@ -79,7 +79,7 @@ final class CartPage
     /**
      * What sits between the form and the pay button: payment methods, terms, notes and the button.
      */
-    public static function renderPay(object $data): string
+    public static function renderPay(object $data, string $method = ''): string
     {
         return self::layout('checkout_pay', [
             'hasItems'   => count($data->items) > 0,
@@ -87,6 +87,7 @@ final class CartPage
             'config'     => $data->config,
             'paymentsOn' => $data->paymentsOn,
             'methods'    => $data->methods,
+            'selected'   => $method,
         ]);
     }
 

@@ -441,7 +441,7 @@ class WaitingList
         $db = Factory::getContainer()->get('DatabaseDriver');
 
         $query = $db->getQuery(true)
-            ->select(['a.*', "IF(p.ticketid IS NULL, t.ticketname, CONCAT(p.ticketname, ' - ', t.ticketname)) AS ticketname", 't.ticketprice', 't.startdate', 'e.eventname'])
+            ->select(['a.*', "IF(p.ticketid IS NULL, t.ticketname, CONCAT(p.ticketname, ' - ', t.ticketname)) AS ticketname", 't.ticketprice', 't.startdate', 't.max_qty', 'e.eventname'])
             ->from($db->quoteName('#__ticketstation_waitinglist', 'a'))
             ->join('LEFT', $db->quoteName('#__ticketstation_events', 'e') . ' ON ' . $db->quoteName('a.eventid') . ' = ' . $db->quoteName('e.eventid'))
             ->join('LEFT', $db->quoteName('#__ticketstation_tickets', 't') . ' ON ' . $db->quoteName('a.ticketid') . ' = ' . $db->quoteName('t.ticketid'))
@@ -454,4 +454,41 @@ class WaitingList
         return $db->loadObjectList();
     }
 
+    /**
+     * The waiting-list rows of a cart as one line per ticket with a quantity, like the cart lines
+     * of the tickets themselves. Each signup stays a row of its own in the database (they are
+     * promoted one by one); only the cart shows them together.
+     *
+     * @param   array  $rows  getOrdersOnWaitingList()
+     *
+     * @return  object[]  ticketid, eventid, eventname, ticketname, startdate, max_qty and quantity
+     *
+     * @since   2.26.0
+     */
+    public static function cartLines(array $rows): array
+    {
+        $lines = [];
+
+        foreach ($rows as $row)
+        {
+            $key = (int) $row->ticketid;
+
+            if (!isset($lines[$key]))
+            {
+                $lines[$key] = (object) [
+                    'ticketid'   => $key,
+                    'eventid'    => (int) $row->eventid,
+                    'eventname'  => $row->eventname,
+                    'ticketname' => $row->ticketname,
+                    'startdate'  => $row->startdate,
+                    'max_qty'    => (int) ($row->max_qty ?? 0),
+                    'quantity'   => 0,
+                ];
+            }
+
+            $lines[$key]->quantity++;
+        }
+
+        return array_values($lines);
+    }
 }

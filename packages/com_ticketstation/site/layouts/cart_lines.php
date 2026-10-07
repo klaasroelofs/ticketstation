@@ -20,6 +20,7 @@ use Ticketstation\Component\Ticketstation\Administrator\Helper\Order;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\OrderTotals;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Ticketcleaner;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\TicketstationFunctions;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\WaitingList;
 
 /**
  * The tickets of the cart with their totals, with buttons to change the quantity or remove a
@@ -176,24 +177,43 @@ $trashIcon = '<svg class="ts-icon" viewBox="0 0 16 16" aria-hidden="true"><path 
                 </tr>
             <?php } ?>
 
-            <?php foreach ($waitRows as $row): ?>
-                <tr id="wait-<?php echo $row->id; ?>" class="ts-summary__item ts-summary__item--waiting">
-                    <td>
-                        <span class="ts-summary__name">
-                            <?php echo htmlspecialchars($row->eventname, ENT_QUOTES, 'UTF-8'); ?> - <?php echo htmlspecialchars($row->ticketname, ENT_QUOTES, 'UTF-8'); ?>
-                        </span>
+            <?php ## One line per ticket with a quantity, like the tickets; each signup stays a row of its own
+            foreach (WaitingList::cartLines($waitRows) as $wait) {
+                $waitName    = htmlspecialchars($wait->eventname . ' - ' . $wait->ticketname, ENT_QUOTES, 'UTF-8');
+                $canDecrease = $wait->quantity > 1;
+                $canIncrease = $wait->max_qty == 0 || $wait->quantity < $wait->max_qty; ?>
 
-                        <span class="ts-summary__date"><?php echo Date::long($row->startdate, true); ?></span>
+                <tr class="ts-summary__item ts-summary__item--waiting">
+                    <td>
+                        <span class="ts-summary__name"><?php echo $waitName; ?></span>
+
+                        <span class="ts-summary__date"><?php echo Date::long($wait->startdate, true); ?></span>
+
+                        <span class="ts-qty" role="group" aria-label="<?php echo Text::_('COM_TICKETSTATION_QUANTITY'); ?>">
+                            <?php if ($canDecrease) { ?>
+                                <a class="ts-btn ts-btn--secondary ts-btn--icon ts-qty__btn" data-cart-remove
+                                   href="<?php echo $task('task=removeWaitingOne&ticketid=' . $wait->ticketid); ?>"
+                                   aria-label="<?php echo Text::sprintf('COM_TICKETSTATION_QTY_DECREASE', $waitName); ?>">&minus;</a>
+                            <?php } else { ?>
+                                <span class="ts-btn ts-btn--secondary ts-btn--icon ts-qty__btn is-disabled" aria-hidden="true">&minus;</span>
+                            <?php } ?>
+
+                            <span class="ts-qty__value"><?php echo $wait->quantity; ?></span>
+
+                            <button type="button" class="ts-btn ts-btn--secondary ts-btn--icon ts-qty__btn" data-cart-add data-task="waitinglist"
+                                    data-ticketid="<?php echo $wait->ticketid; ?>" data-eventid="<?php echo $wait->eventid; ?>"
+                                    aria-label="<?php echo Text::sprintf('COM_TICKETSTATION_QTY_INCREASE', $waitName); ?>"<?php echo $canIncrease ? '' : ' disabled'; ?>>+</button>
+                        </span>
                     </td>
                     <td class="ts-price">
-                        <a class="ts-btn ts-btn--danger ts-btn--icon ts-btn--remove" data-cart-remove title="<?php echo Text::_('COM_TICKETSTATION_REMOVE'); ?>" href="<?php echo $task('task=removeWaiting&id=' . (int) $row->id); ?>">
+                        <a class="ts-btn ts-btn--danger ts-btn--icon ts-btn--remove" data-cart-remove title="<?php echo Text::_('COM_TICKETSTATION_REMOVE'); ?>" href="<?php echo $task('task=removeWaiting&ticketid=' . $wait->ticketid); ?>">
                             <?php echo $trashIcon; ?>
-                            <span class="ts-visually-hidden"><?php echo Text::_('COM_TICKETSTATION_REMOVE'); ?></span>
+                            <span class="ts-visually-hidden"><?php echo Text::sprintf('COM_TICKETSTATION_REMOVE_LINE', $waitName); ?></span>
                         </a>
                     </td>
                 </tr>
 
-            <?php endforeach; ?>
+            <?php } ?>
         </tbody>
 
         <tfoot>

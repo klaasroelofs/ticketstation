@@ -29,6 +29,7 @@ $document = $app->getDocument();
 $document->setTitle(Text::_('COM_TICKETSTATION_CHECKOUT_PAGE_TITLE') . ' - ' . $app->get('sitename'));
 TicketstationFunctions::addSiteStylesheet();
 $document->addScript('components/com_ticketstation/assets/javascripts/emailsuggest.js', ['version' => 'auto'], ['defer' => true]);
+$document->addScript('components/com_ticketstation/assets/javascripts/checkout-form.js', ['version' => 'auto'], ['defer' => true]);
 $document->addScript('components/com_ticketstation/assets/javascripts/checkout.js', ['version' => 'auto'], ['defer' => true]);
 
 $itemid   = TicketstationFunctions::getSiteItemid();
@@ -104,7 +105,7 @@ $base     = Uri::root(true) . '/index.php?option=com_ticketstation';
                     </div>
                 <?php } ?>
 
-                <?php echo CartPage::renderPay($page); ?>
+                <?php echo CartPage::renderPay($page, $this->method); ?>
 
                 <input type="hidden" name="option" value="com_ticketstation" />
                 <input type="hidden" name="controller" value="checkout" />

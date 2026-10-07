@@ -28,6 +28,7 @@ use Ticketstation\Component\Ticketstation\Administrator\Helper\TicketstationFunc
  *                            'config'     => the Configuration
  *                            'paymentsOn' => whether online payments are switched on
  *                            'methods'    => the payment methods to choose from (empty: no choice)
+ *                            'selected'   => the id of the method to preselect (optional)
  */
 
 $hasItems   = $displayData['hasItems'];
@@ -43,7 +44,7 @@ $render = fn ($layout, $data) => LayoutHelper::render($layout, $data, null, ['co
 
     <?php if ($hasItems && $ordertotal > 0 && $paymentsOn && $displayData['methods']) { ?>
         <div class="ts-checkout__payment">
-            <?php echo $render('payment_methods', ['methods' => $displayData['methods']]); ?>
+            <?php echo $render('payment_methods', ['methods' => $displayData['methods'], 'selected' => $displayData['selected'] ?? '']); ?>
         </div>
     <?php } ?>
 

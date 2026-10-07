@@ -14,10 +14,7 @@ use Joomla\CMS\Layout\LayoutHelper;
 use Joomla\CMS\Router\Route;
 use Joomla\CMS\Session\Session;
 use Joomla\CMS\Uri\Uri;
-use Ticketstation\Component\Ticketstation\Administrator\Helper\Date;
-use Ticketstation\Component\Ticketstation\Administrator\Helper\Order;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\OrderTotals;
-use Ticketstation\Component\Ticketstation\Administrator\Helper\Ticketcleaner;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\TicketstationFunctions;
 
 // No direct access to this file
@@ -45,6 +42,7 @@ $items   = count($this->items);
 $waiters = count($this->waiters);
 
 $token = Session::getFormToken();
+
 if ($items == 0 && $waiters == 0) {
     ## Nothing in the cart: back to the event list
     $app->redirect(Route::_('index.php?option=com_ticketstation&view=upcoming' . ($itemid ? '&Itemid=' . $itemid : ''), false));
@@ -201,7 +199,7 @@ if ($items == 0 && $waiters == 0) {
             cartBusy(true);
             $('#cart-message').hide();
 
-            fetch('<?php echo Uri::root(true); ?>/index.php?option=com_ticketstation&controller=order&task=buyticket&format=raw', {
+            fetch('<?php echo Uri::root(true); ?>/index.php?option=com_ticketstation&controller=order&task=' + (this.dataset.task || 'buyticket') + '&format=raw', {
                 method: 'POST', body: data, credentials: 'same-origin', cache: 'no-store'
             })
                 .then(function (response) {

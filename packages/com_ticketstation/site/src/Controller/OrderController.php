@@ -179,6 +179,24 @@ class OrderController extends BaseController
 
         $db = Factory::getContainer()->get('DatabaseDriver');
 
+        // The maximum per order counts the waiting list as well: what this cart already holds on
+        // it plus what is added now.
+        if ($tickets->max_qty != 0)
+        {
+            $query = $db->getQuery(true)
+                ->select('COUNT(*)')
+                ->from($db->quoteName('#__ticketstation_waitinglist'))
+                ->where($db->quoteName('ordercode') . ' = ' . (int) $this->ordercode)
+                ->where($db->quoteName('ticketid') . ' = ' . (int) $this->id)
+                ->where($db->quoteName('processed') . ' = 0');
+            $db->setQuery($query);
+
+            if ((int) $db->loadResult() + (int) $this->amount > $tickets->max_qty)
+            {
+                $this->showMessage('ts-alert ts-alert--danger', Text::sprintf('COM_TICKETSTATION_MAX_ORDER_PER_TICKET', $tickets->max_qty));
+            }
+        }
+
         // Note: OrderModel::store() only ever writes to the orders table (it ignores a
         // second table-name argument), so waiting-list signups are inserted directly here
         // instead - matching how WaitingList::processWaitingListItem() reads this table back.
@@ -502,10 +520,21 @@ class OrderController extends BaseController
 
         $query = $db->getQuery(true);
 
+        // One signup (id), or all signups of one ticket in this cart (ticketid)
+        $ticketid   = $jinput->get('ticketid', 0, 'int');
         $conditions = [
-            $db->quoteName('id') . ' = ' . (int) $jinput->get('id', '0', 'int'),
             $db->quoteName('ordercode') . ' = ' . (int) Factory::getApplication()->getSession()->get('ordercode'),
         ];
+
+        if ($ticketid)
+        {
+            $conditions[] = $db->quoteName('ticketid') . ' = ' . $ticketid;
+            $conditions[] = $db->quoteName('processed') . ' = 0';
+        }
+        else
+        {
+            $conditions[] = $db->quoteName('id') . ' = ' . (int) $jinput->get('id', '0', 'int');
+        }
 
         $query->delete($db->quoteName('#__ticketstation_waitinglist'))
             ->where($conditions);
@@ -522,6 +551,46 @@ class OrderController extends BaseController
 
         Factory::getApplication()->enqueueMessage(Text::_('COM_TICKETSTATION_REMOVED_ORDER'), 'success');
         Factory::getApplication()->redirect(Route::_('index.php?option=com_ticketstation&view=cart' . (($itemid = TicketstationFunctions::getSiteItemid()) ? '&Itemid=' . $itemid : '')));
+    }
+
+    /**
+     * Takes one signup of a ticket off the waiting list of this cart (the minus button of its
+     * cart line): the one that was added last.
+     *
+     * @return void
+     *
+     * @since 2.26.0
+     */
+    public function removeWaitingOne()
+    {
+        $app       = Factory::getApplication();
+        $db        = Factory::getContainer()->get('DatabaseDriver');
+        $ordercode = (int) $app->getSession()->get('ordercode');
+        $itemid    = TicketstationFunctions::getSiteItemid();
+
+        $query = $db->getQuery(true)
+            ->select('MAX(' . $db->quoteName('id') . ')')
+            ->from($db->quoteName('#__ticketstation_waitinglist'))
+            ->where($db->quoteName('ordercode') . ' = ' . $ordercode)
+            ->where($db->quoteName('ticketid') . ' = ' . $app->getInput()->get('ticketid', 0, 'int'))
+            ->where($db->quoteName('processed') . ' = 0');
+        $db->setQuery($query);
+        $id = (int) $db->loadResult();
+
+        if ($id)
+        {
+            $query = $db->getQuery(true)
+                ->delete($db->quoteName('#__ticketstation_waitinglist'))
+                ->where($db->quoteName('id') . ' = ' . $id);
+            $db->setQuery($query);
+            $db->execute();
+        }
+        else
+        {
+            $app->enqueueMessage(Text::_('COM_TICKETSTATION_REMOVE_ORDER_FAILED'), 'error');
+        }
+
+        $app->redirect(Route::_('index.php?option=com_ticketstation&view=cart' . ($itemid ? '&Itemid=' . $itemid : '')));
     }
 
     public function itemcount ()

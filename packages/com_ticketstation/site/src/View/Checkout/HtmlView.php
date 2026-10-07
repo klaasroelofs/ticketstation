@@ -222,6 +222,11 @@ class HtmlView extends BaseHtmlView {
         $this->items        = $page->items;
         $this->customerNote = $page->customerNote;
 
+        $app          = Factory::getApplication();
+        $this->method = (string) $app->getUserState(CheckoutController::STATE_METHOD, '');
+
+        $app->setUserState(CheckoutController::STATE_METHOD, null);
+
         $this->setLayout('onepage');
     }
 

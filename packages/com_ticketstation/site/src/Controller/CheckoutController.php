@@ -41,6 +41,9 @@ class CheckoutController extends BaseController
     /** User state with the errors per field (field name => message) */
     public const STATE_ERRORS = 'com_ticketstation.checkout.errors';
 
+    /** User state with the payment method that was chosen, when the form comes back with errors */
+    public const STATE_METHOD = 'com_ticketstation.checkout.method';
+
     /** The fields of the details form */
     public const FORM_FIELDS = ['gender', 'name', 'address', 'address2', 'address3', 'zipcode', 'city', 'country_id', 'phonenumber', 'emailaddress'];
 
@@ -150,6 +153,7 @@ class CheckoutController extends BaseController
                 array_combine(self::FORM_FIELDS, self::FORM_FIELDS)
             ));
             $app->setUserState(self::STATE_ERRORS, $errors);
+            $app->setUserState(self::STATE_METHOD, $jinput->post->getCmd('method', ''));
 
             $itemid = TicketstationFunctions::getSiteItemid();
             $app->redirect(Route::_('index.php?option=com_ticketstation&view=checkout' . ($itemid ? '&Itemid=' . $itemid : ''), false));
