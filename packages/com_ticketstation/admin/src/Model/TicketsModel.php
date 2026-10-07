@@ -229,7 +229,7 @@ class TicketsModel extends ListModel
 
             $query = $db->getQuery(true);
 
-            $query->select(array('orderid'));
+            $query->select(array('orderid', 'ordercode'));
             $query->from($db->quoteName('#__ticketstation_orders'));
             $query->where($db->quoteName('ticketid') . ' IN ('.$cids.')');
 
@@ -241,7 +241,7 @@ class TicketsModel extends ListModel
             {
                 $row  = $data[$i];
 
-                $this->_deleteTicket($row->orderid);
+                $this->_deleteOrderFiles($row->ordercode);
             }
 
             $query = $db->getQuery(true);
@@ -260,6 +260,11 @@ class TicketsModel extends ListModel
             if (!$result)
             {
                 return false;
+            }
+
+            foreach ($cid as $ticketid)
+            {
+                $this->_deleteDesignFiles((int) $ticketid);
             }
 
             $query = $db->getQuery(true);
@@ -281,14 +286,41 @@ class TicketsModel extends ListModel
         }
     }
 
-    function _deleteTicket($tid)
+    /**
+     * Deletes the generated PDFs of an order (Ticket-<ordercode>.pdf and Tickets-<ordercode>.pdf).
+     * A missing file is no error: they are made on demand.
+     */
+    function _deleteOrderFiles($ordercode)
     {
+        $folder = JPATH_ADMINISTRATOR . '/components/com_ticketstation/tickets/';
 
-        ## Set FTP credentials, if given
-        ClientHelper::setCredentialsFromRequest('ftp');
+        foreach (['Ticket-', 'Tickets-'] as $prefix)
+        {
+            $file = $folder . $prefix . (int) $ordercode . '.pdf';
 
-        ## Deleting the files (image and thumbnail)
-        File::delete( Uri::base() . 'components/com_ticketstation/tickets/eTicket-' . $tid . '.pdf' );
+            if (is_file($file))
+            {
+                @unlink($file);
+            }
+        }
+    }
+
+    /**
+     * Deletes the uploaded design (eTicket-<ticketid>.jpg or .pdf) of a ticket.
+     */
+    function _deleteDesignFiles($ticketid)
+    {
+        $folder = JPATH_ADMINISTRATOR . '/components/com_ticketstation/assets/etickets/';
+
+        foreach (['jpg', 'pdf'] as $ext)
+        {
+            $file = $folder . 'eTicket-' . (int) $ticketid . '.' . $ext;
+
+            if (is_file($file))
+            {
+                @unlink($file);
+            }
+        }
     }
 
     function cleanup()
