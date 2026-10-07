@@ -31,15 +31,15 @@ $steps = [
     4 => Text::_('COM_TICKETSTATION_STEP_PAYMENT'),
 ];
 
-// The combined checkout (Configuration > Checkout layout) has the details and the payment on one page
+// The combined checkout (Configuration > Checkout layout) has the cart, the details and the
+// payment on one page
 if (Config::combinedCheckout())
 {
     $steps   = [
         1 => $steps[1],
-        2 => $steps[2],
-        3 => Text::_('COM_TICKETSTATION_STEP_CHECKOUT'),
+        2 => Text::_('COM_TICKETSTATION_STEP_CHECKOUT'),
     ];
-    $current = min($current, 3);
+    $current = min($current, 2);
 }
 ?>
 <nav class="ts-steps-nav" aria-label="<?php echo Text::_('COM_TICKETSTATION_ORDER_STEPS'); ?>">

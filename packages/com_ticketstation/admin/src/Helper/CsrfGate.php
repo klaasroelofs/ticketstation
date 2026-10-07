@@ -70,7 +70,7 @@ class CsrfGate
         // "view=..." page request that carries no explicit controller= param.
         'display' => ['display'],
 
-        'cart'         => ['showtos'],
+        'cart'         => ['showtos', 'refresh'],
         'order'        => ['updateavailable', 'updatecart', 'itemcount'],
         'orderseated'  => ['loadseat', 'loadcart'],
 

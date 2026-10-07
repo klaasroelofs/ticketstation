@@ -13,7 +13,9 @@ defined('_JEXEC') or die;
 
 use Joomla\CMS\Factory;
 use Joomla\CMS\MVC\View\HtmlView as BaseHtmlView;
+use Joomla\CMS\Router\Route;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Config;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\TicketstationFunctions;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\SeatOrphans;
 
 
@@ -27,6 +29,14 @@ class HtmlView extends BaseHtmlView {
      * @return  void
      */
     public function display($tpl = null) {
+
+        ## The combined checkout has no cart page of its own: everything that leads to the cart
+        ## (the basket, the buttons, the tasks that change the cart) ends up on the checkout page.
+        if (Config::combinedCheckout()) {
+            $itemid = TicketstationFunctions::getSiteItemid();
+
+            Factory::getApplication()->redirect(Route::_('index.php?option=com_ticketstation&view=checkout' . ($itemid ? '&Itemid=' . $itemid : ''), false));
+        }
 
         ## Seats that leave a single empty seat: back to the seat-picking page.
         SeatOrphans::guard();

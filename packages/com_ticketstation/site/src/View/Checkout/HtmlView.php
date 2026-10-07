@@ -18,15 +18,12 @@ use Joomla\CMS\MVC\View\HtmlView as BaseHtmlView;
 use Joomla\CMS\Router\Route;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\CheckoutFieldMap;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Config;
-use Ticketstation\Component\Ticketstation\Administrator\Helper\OrderTotals;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\SeatOrphans;
-use Ticketstation\Component\Ticketstation\Administrator\Helper\Shop;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\SiteCaptcha;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\TicketstationFunctions;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\User;
-use Ticketstation\Component\Ticketstation\Administrator\Payment\PaymentStarter;
 use Ticketstation\Component\Ticketstation\Site\Controller\CheckoutController;
-use Ticketstation\Component\Ticketstation\Site\Model\CartModel;
+use Ticketstation\Component\Ticketstation\Site\Service\CartPage;
 
 
 class HtmlView extends BaseHtmlView {
@@ -59,7 +56,8 @@ class HtmlView extends BaseHtmlView {
         $data	= $this->get('data');
         $config = $this->get('config');
 
-        if ($config->pro_installed == 1)
+        // The combined page has no separate cart to send the customer back to
+        if ($config->pro_installed == 1 && (int) ($config->checkout_layout ?? 0) !== 1)
         {
             $require  = $this->get('datacheck');
 
@@ -205,28 +203,24 @@ class HtmlView extends BaseHtmlView {
     }
 
     /**
-     * What the combined checkout page shows next to the details form: the order with its totals
-     * and what the customer pays with. An empty basket goes back to the basket, which moves on.
+     * What the combined checkout page shows around the details form: the cart with its totals and
+     * what the customer pays with. An empty cart goes back to the event list.
      *
      * @return  void
      */
     private function prepareCombined()
     {
-        $cart = new CartModel;
+        $page = CartPage::data();
 
-        $this->items   = $cart->getData();
-        $this->waiters = $cart->getWaiters();
-        $this->coords  = $cart->getExtData();
-
-        if (!$this->items && !$this->waiters) {
+        if (CartPage::isEmpty($page)) {
             $itemid = TicketstationFunctions::getSiteItemid();
 
-            Factory::getApplication()->redirect(Route::_('index.php?option=com_ticketstation&view=cart' . ($itemid ? '&Itemid=' . $itemid : ''), false));
+            Factory::getApplication()->redirect(Route::_('index.php?option=com_ticketstation&view=upcoming' . ($itemid ? '&Itemid=' . $itemid : ''), false));
         }
 
-        $this->totals     = OrderTotals::get((int) Factory::getApplication()->getSession()->get('ordercode'), true);
-        $this->paymentsOn = Shop::paymentsOn();
-        $this->methods    = PaymentStarter::methods();
+        $this->page         = $page;
+        $this->items        = $page->items;
+        $this->customerNote = $page->customerNote;
 
         $this->setLayout('onepage');
     }

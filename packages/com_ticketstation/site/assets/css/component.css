@@ -1561,3 +1561,15 @@
         order: 1;
     }
 }
+
+.ticketstation .ts-checkout .ts-message[hidden] {
+    display: none;
+}
+
+.ticketstation .ts-checkout__order .ts-coupon {
+    margin: 1.25rem 0 0;
+}
+
+.ticketstation .ts-checkout__order .ts-table {
+    margin-bottom: 0;
+}

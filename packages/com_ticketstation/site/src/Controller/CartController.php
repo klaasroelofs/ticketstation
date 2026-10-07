@@ -23,6 +23,7 @@ use Ticketstation\Component\Ticketstation\Administrator\Helper\CustomerNote;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Order;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Ticket;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\TicketstationFunctions;
+use Ticketstation\Component\Ticketstation\Site\Service\CartPage;
 
 /**
  * Ticketstation Cart Controller
@@ -69,7 +70,19 @@ class CartController extends BaseController
         exit();
     }
 
-    
+    /**
+     * The cart lines and the payment block as they are now, for the combined checkout page to
+     * swap in after a change in the background. Read-only.
+     *
+     * @since 2.26.0
+     */
+    function refresh()
+    {
+        // The notes of the change that was just made ("ticket removed") are not worth showing;
+        // a problem is.
+        CartPage::respond(true, ['error', 'warning']);
+    }
+
     /**
      * Saving the remark to the database.
      *

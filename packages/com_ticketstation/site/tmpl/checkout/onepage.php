@@ -12,34 +12,36 @@ use Joomla\CMS\HTML\HTMLHelper;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\Layout\LayoutHelper;
 use Joomla\CMS\Router\Route;
+use Joomla\CMS\Session\Session;
+use Joomla\CMS\Uri\Uri;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\TicketstationFunctions;
+use Ticketstation\Component\Ticketstation\Site\Service\CartPage;
 
 // No direct access to this file
 defined('_JEXEC') or die('Restricted Access');
 
-## The combined checkout: the details, the order and the payment on one page (Configuration >
-## Checkout layout). Chosen by the Checkout view when that setting is on.
+## The combined checkout: the cart, the details and the payment on one page (Configuration >
+## Checkout layout). Chosen by the Checkout view when that setting is on. After a change of the
+## cart or a coupon the script (checkout.js) swaps in fresh cart lines and a fresh payment block.
 
 $app      = Factory::getApplication();
 $document = $app->getDocument();
 $document->setTitle(Text::_('COM_TICKETSTATION_CHECKOUT_PAGE_TITLE') . ' - ' . $app->get('sitename'));
 TicketstationFunctions::addSiteStylesheet();
 $document->addScript('components/com_ticketstation/assets/javascripts/emailsuggest.js', ['version' => 'auto'], ['defer' => true]);
+$document->addScript('components/com_ticketstation/assets/javascripts/checkout.js', ['version' => 'auto'], ['defer' => true]);
 
-$itemid    = TicketstationFunctions::getSiteItemid();
-$gotocart  = Route::_('index.php?option=com_ticketstation&view=cart' . ($itemid ? '&Itemid=' . $itemid : ''));
-$render    = fn ($layout, $data) => LayoutHelper::render($layout, $data, null, ['component' => 'com_ticketstation', 'client' => 0]);
-$price     = fn ($amount) => (new TicketstationFunctions)->showprice($this->config->priceformat, $amount, $this->config->valuta);
-
-$ordertotal   = $this->totals->total;
-$hasItems     = count($this->items) > 0;
-$waitingCount = count($this->waiters);
+$itemid   = TicketstationFunctions::getSiteItemid();
+$shop_on  = Route::_('index.php?option=com_ticketstation&view=upcoming' . ($itemid ? '&Itemid=' . $itemid : ''));
+$render   = fn ($layout, $data) => LayoutHelper::render($layout, $data, null, ['component' => 'com_ticketstation', 'client' => 0]);
+$page     = $this->page;
+$base     = Uri::root(true) . '/index.php?option=com_ticketstation';
 
 ?>
 
 <div class="ticketstation ticketstation--checkout ticketstation--onepage">
 
-    <?php echo $render('steps', ['current' => 3]); ?>
+    <?php echo $render('steps', ['current' => 2]); ?>
 
     <div class="page-header">
         <h1 class="ts-page-title"><?php echo Text::_('COM_TICKETSTATION_CHECKOUT_PAGE_TITLE'); ?></h1>
@@ -47,29 +49,42 @@ $waitingCount = count($this->waiters);
 
     <?php echo $render('checkout_notices', ['view' => $this]); ?>
 
-    <div class="ts-checkout">
+    <div class="ts-checkout"
+         data-refresh-url="<?php echo htmlspecialchars($base . '&controller=cart&task=refresh&format=raw', ENT_QUOTES, 'UTF-8'); ?>"
+         data-buy-url="<?php echo htmlspecialchars($base . '&controller=order&task=buyticket&format=raw', ENT_QUOTES, 'UTF-8'); ?>"
+         data-coupon-url="<?php echo htmlspecialchars($base . '&controller=checkout&task=coupon&format=raw', ENT_QUOTES, 'UTF-8'); ?>"
+         data-token="<?php echo htmlspecialchars(Session::getFormToken(), ENT_QUOTES, 'UTF-8'); ?>"
+         data-ordercode="<?php echo (int) $page->ordercode; ?>"
+         data-failed="<?php echo htmlspecialchars(Text::_('COM_TICKETSTATION_REQUEST_FAILED'), ENT_QUOTES, 'UTF-8'); ?>">
 
         <aside class="ts-checkout__aside" aria-labelledby="ts-checkout-order">
             <section class="ts-card ts-checkout__order">
                 <h2 class="ts-subtitle" id="ts-checkout-order"><?php echo Text::_('COM_TICKETSTATION_YOUR_ORDER'); ?></h2>
 
-                <?php if ($hasItems) {
-                    echo $render('order_summary', ['items' => $this->items, 'coords' => $this->coords ?? [], 'config' => $this->config, 'totals' => $this->totals]);
-                } ?>
+                <!-- Problems from a change in the background; don't remove -->
+                <div id="ts-cart-message" class="ts-message" role="status" aria-live="polite" hidden></div>
 
-                <?php if ($waitingCount) { ?>
-                    <div class="ts-alert ts-alert--warning ts-waitinglist-notice">
-                        <p><strong><?php echo Text::_($hasItems ? 'COM_TICKETSTATION_PLEASE_CONFIRM_WAITINGLIST_TIKETS' : 'COM_TICKETSTATION_ITEMS_ON_WAITINGLIST'); ?></strong></p>
-                        <p><?php echo Text::_($hasItems ? 'COM_TICKETSTATION_PLEASE_CONFIRM_WAITINGLIST_TIKETS_DESC' : 'COM_TICKETSTATION_A_PAYMENT_REQUEST_WILL_BE_SENT'); ?></p>
-                        <ul class="ts-checkout__waiting">
-                            <?php foreach ($this->waiters as $row) { ?>
-                                <li><?php echo htmlspecialchars($row->eventname . ' - ' . $row->ticketname, ENT_QUOTES, 'UTF-8'); ?></li>
-                            <?php } ?>
-                        </ul>
-                    </div>
+                <?php echo CartPage::renderLines($page); ?>
+
+                <?php if ($this->config->use_coupons) { ?>
+                    <form action="<?php echo Route::_('index.php?option=com_ticketstation' . ($itemid ? '&Itemid=' . $itemid : '')); ?>" method="post" id="ts-coupon-form" class="ts-coupon">
+                        <label class="ts-label" for="couponcode"><?php echo Text::_('COM_TICKETSTATION_COUPON_CODE'); ?></label>
+
+                        <div class="ts-inline-form">
+                            <input name="couponcode" id="couponcode" type="text" class="ts-input" maxlength="50" autocomplete="off" aria-describedby="ts-coupon-message" />
+                            <button type="submit" class="ts-btn ts-btn--secondary"><?php echo Text::_('COM_TICKETSTATION_SUBMIT_COUPON'); ?></button>
+                        </div>
+
+                        <div id="ts-coupon-message" class="ts-message" role="status" aria-live="polite" hidden></div>
+
+                        <input type="hidden" name="task" value="coupon" />
+                        <input type="hidden" name="controller" value="checkout" />
+                        <input type="hidden" name="option" value="com_ticketstation" />
+                        <?php echo HTMLHelper::_('form.token'); ?>
+                    </form>
                 <?php } ?>
 
-                <p class="ts-checkout__change"><a href="<?php echo $gotocart; ?>"><?php echo Text::_('COM_TICKETSTATION_CHECKOUT_CHANGE_ORDER'); ?></a></p>
+                <p class="ts-checkout__change"><a href="<?php echo $shop_on; ?>"><?php echo Text::_('COM_TICKETSTATION_CONTINUE_SHOPPING'); ?></a></p>
             </section>
         </aside>
 
@@ -81,39 +96,15 @@ $waitingCount = count($this->waiters);
 
                 <?php echo $render('checkout_fields', ['view' => $this]); ?>
 
-                <?php if ($hasItems && $ordertotal > 0 && $this->paymentsOn && $this->methods) { ?>
-                    <div class="ts-checkout__payment">
-                        <?php echo $render('payment_methods', ['methods' => $this->methods]); ?>
+                <?php if ($this->config->show_remark_field == 1) { ?>
+                    <div class="ts-field ts-remarks">
+                        <label class="ts-label" for="remarks"><?php echo Text::_('COM_TICKETSTATION_ENTER_REMARKS'); ?></label>
+                        <textarea class="ts-textarea" rows="3" id="remarks" name="remarks" maxlength="255"><?php echo htmlspecialchars($this->customerNote, ENT_QUOTES, 'UTF-8'); ?></textarea>
+                        <p id="chars-remaining" class="ts-field__hint ts-chars-remaining" aria-live="polite"><?php echo Text::_('COM_TICKETSTATION_REMAINING'); ?> <?php echo 255 - mb_strlen($this->customerNote); ?></p>
                     </div>
                 <?php } ?>
 
-                <?php if ($hasItems) {
-                    echo $render('payment_terms', ['config' => $this->config]);
-                } ?>
-
-                <?php if ($hasItems && $ordertotal == 0) { ?>
-                    <p class="ts-note"><?php echo Text::sprintf('COM_TICKETSTATION_ZERO_TOTAL', $price(0)); ?></p>
-                <?php } ?>
-
-                <?php if ($hasItems && !$this->paymentsOn && $ordertotal > 0) { ?>
-                    <div class="ts-alert ts-alert--danger"><?php echo Text::_('COM_TICKETSTATION_ONLINE_PAYMENTS_OFF_ORDER'); ?></div>
-                <?php } ?>
-
-                <div class="ts-actions">
-                    <a class="ts-btn ts-btn--secondary ts-btn--back" href="<?php echo $gotocart; ?>">
-                        <?php echo Text::_('COM_TICKETSTATION_BACK'); ?>
-                    </a>
-
-                    <?php if (!$hasItems) { ?>
-                        <button type="submit" class="ts-btn ts-btn--primary ts-btn--next" id="ts-checkout-submit"><?php echo Text::_('COM_TICKETSTATION_JOIN_WAITINGLIST'); ?></button>
-                    <?php } elseif ($ordertotal > 0 && !$this->paymentsOn) { ?>
-                        <?php ## Paid tickets while online payments are off: nothing to pay with. ?>
-                    <?php } elseif ($ordertotal > 0) { ?>
-                        <button type="submit" class="ts-btn ts-btn--primary ts-btn--next" id="ts-checkout-submit"><?php echo Text::sprintf('COM_TICKETSTATION_PAY_AMOUNT', $price($ordertotal)); ?></button>
-                    <?php } else { ?>
-                        <button type="submit" class="ts-btn ts-btn--primary ts-btn--next" id="ts-checkout-submit"><?php echo Text::_('COM_TICKETSTATION_PLACE_ORDER'); ?></button>
-                    <?php } ?>
-                </div>
+                <?php echo CartPage::renderPay($page); ?>
 
                 <input type="hidden" name="option" value="com_ticketstation" />
                 <input type="hidden" name="controller" value="checkout" />
@@ -127,22 +118,3 @@ $waitingCount = count($this->waiters);
     </div>
 
 </div>
-
-<script>
-    // One click only: a double click on the pay button must not place the order twice.
-    document.addEventListener('DOMContentLoaded', function () {
-        var form   = document.getElementById('general');
-        var button = document.getElementById('ts-checkout-submit');
-
-        if (!form || !button) { return; }
-
-        form.addEventListener('submit', function () {
-            setTimeout(function () { button.disabled = true; }, 0);
-        });
-
-        // Back button after the payment provider: the page returns from the cache with the button off
-        window.addEventListener('pageshow', function (event) {
-            if (event.persisted) { button.disabled = false; }
-        });
-    });
-</script>

@@ -27,6 +27,7 @@ use Ticketstation\Component\Ticketstation\Administrator\Helper\TicketstationFunc
 use Ticketstation\Component\Ticketstation\Administrator\Helper\User;
 use Ticketstation\Component\Ticketstation\Administrator\Payment\PaymentStarter;
 use Ticketstation\Component\Ticketstation\Site\Model\CheckoutModel;
+use Ticketstation\Component\Ticketstation\Site\Service\CartPage;
 
 /**
  * Ticketstation Checkout Controller
@@ -63,7 +64,9 @@ class CheckoutController extends BaseController
     }
 
     /**
-     * Check and set a coupon code.
+     * Check and set a coupon code. The combined checkout page asks for it in the background
+     * (format=raw) and gets the refreshed cart back; the cart page asks with a plain form and goes
+     * back to the cart.
      *
      * @return bool
      *
@@ -71,10 +74,10 @@ class CheckoutController extends BaseController
      */
     function coupon()
     {
-
-        $app    = Factory::getApplication();
-        $jinput = $app->getInput();
+        $app        = Factory::getApplication();
+        $jinput     = $app->getInput();
         $couponcode = $jinput->get('couponcode', 'NONE', 'STRING');
+        $inPage     = $jinput->getCmd('format', '') === 'raw';
 
         // The cart's note field travels along with the coupon form: the page reloads after a
         // coupon, and a note typed before it would otherwise be lost.
@@ -83,40 +86,31 @@ class CheckoutController extends BaseController
             (new CustomerNote)->save($this->ordercode, $jinput->post->get('remarks', '', 'raw'));
         }
 
-        $itemid = TicketstationFunctions::getSiteItemid();
-        $cartUrl = 'index.php?option=com_ticketstation&view=cart' . ($itemid ? '&Itemid=' . $itemid : '');
-
         if ($couponcode == '')
         {
             $app->enqueueMessage(Text::_('COM_TICKETSTATION_EMPTY_COUPON'), 'error');
-            $this->setRedirect(Route::_($cartUrl));
+            $applied = false;
+        }
+        else
+        {
+            $applied = (new CheckoutModel())->checkCoupon($app->getInput()->post->getArray());
 
-        } else {
-
-            $post  = $app->getInput()->post->getArray();
-            //$model = $this->getModel('checkout');
-            $model = new CheckoutModel();
-
-            if ($model->checkCoupon($post))
+            if ($applied)
             {
                 $app->enqueueMessage(Text::_('COM_TICKETSTATION_COUPON_APPLIED_TO_CART'));
-                //$this->setRedirect(JRoute::_('index.php?option=com_ticketmaster&view=checkout'));
-                $this->setRedirect(Route::_($cartUrl));
             }
-            else
-            {
-                //$app->enqueueMessage(Text::_('COM_TICKETSTATION_INVALID_COUPON'), 'error');
-                $this->setRedirect(Route::_($cartUrl));
-            }
-
-            return true;
-
         }
 
+        if ($inPage)
+        {
+            CartPage::respond($applied, ['error', 'warning', 'message', 'info']);
+        }
 
+        $itemid = TicketstationFunctions::getSiteItemid();
+        $this->setRedirect(Route::_('index.php?option=com_ticketstation&view=cart' . ($itemid ? '&Itemid=' . $itemid : '')));
+
+        return $applied;
     }
-
-
 
     function save()
     {
@@ -128,8 +122,15 @@ class CheckoutController extends BaseController
         // Seats that leave a single empty seat: back to the seat-picking page.
         SeatOrphans::guard();
 
+        // The note of the combined page travels with the form. It is saved first, so it is kept
+        // when the form comes back with errors (the page shows the saved note again).
+        if ($jinput->post->exists('remarks') && (int) (new Config)->get(['show_remark_field'])->show_remark_field === 1)
+        {
+            (new CustomerNote)->save($this->ordercode, $jinput->post->get('remarks', '', 'raw'));
+        }
+
         // Getting the configuration
-        $config = (new Config)->get(['use_automatic_login', 'auto_username', 'show_birthday', 'show_phone', 'show_country', 'show_address', 'show_secondaddress', 'show_thirdaddress', 'show_zipcode', 'show_city', 'show_salutation']);
+        $config = (new Config)->get(['use_automatic_login','auto_username', 'show_birthday', 'show_phone', 'show_country', 'show_address', 'show_secondaddress', 'show_thirdaddress', 'show_zipcode', 'show_city', 'show_salutation']);
 
         // Validating the form: on errors back to the form, which shows them next to the fields
         // and keeps what the customer typed.
