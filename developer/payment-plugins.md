@@ -159,7 +159,20 @@ The example plugin accepts a signed report, so the whole flow can be tried by ha
 1. Install the plugin (zip the contents of `examples/plg_ticketstationpayment_example`), switch it on,
    set a secret, and choose it under *Online payments* on the Payments screen.
 2. Order a ticket on the website and press *Place order*. You land on the "checking your payment" page.
-3. Report the payment:
+3. Report the payment, either with the test script or by hand.
+
+**With the test script.** `examples/webhook_test.php` is a small form that builds the body, signs it
+and sends the report for you. Start it locally and open it in your browser:
+
+```bash
+php -S localhost:8081 examples/webhook_test.php
+```
+
+Fill in the site URL, the order code, the plugin's secret and the amount, choose a status
+(paid, failed, cancelled or expired) and press *Send report*. It shows the HTTP status, the answer
+of your site, the body and the signature that were sent. It refuses to run on anything but localhost.
+
+**By hand.** The same report with `curl`:
 
 ```bash
 BODY='{"id":"ex_26001","order":26001,"status":"paid","amount":"12.50","currency":"EUR","method":"example"}'
