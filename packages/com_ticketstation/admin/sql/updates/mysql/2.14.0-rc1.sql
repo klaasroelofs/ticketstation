@@ -1,3 +1,3 @@
 -- Bypass mode is removed: Reservations cover booking tickets without an online payment, and
 -- a free order still completes without Mollie.
-ALTER TABLE `#__ticketstation_mollie` DROP COLUMN `bypass_mode` /** CAN FAIL **/;
+-- No longer run (the table #__ticketstation_mollie is removed since 2.26.0): ALTER TABLE ... DROP COLUMN `bypass_mode`

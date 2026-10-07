@@ -1,3 +1,3 @@
 -- The Mollie payment methods offered at checkout, comma-separated Mollie method ids.
 -- Existing sites keep iDEAL only, which is what they offered until now.
-ALTER TABLE `#__ticketstation_mollie` ADD COLUMN `payment_methods` varchar(255) NOT NULL DEFAULT 'ideal' /** CAN FAIL **/;
+-- No longer run (the table #__ticketstation_mollie is removed since 2.26.0): ALTER TABLE ... ADD COLUMN `payment_methods` varchar(255) NOT NULL DEFAULT 'ideal'

@@ -35,4 +35,4 @@ ALTER TABLE `#__ticketstation_config` DROP COLUMN `send_multi_ticket_only` /** C
 ALTER TABLE `#__ticketstation_config` DROP COLUMN `send_multi_ticket_admin` /** CAN FAIL **/;
 ALTER TABLE `#__ticketstation_config` DROP COLUMN `admin_receivers_multi_ticket` /** CAN FAIL **/;
 ALTER TABLE `#__ticketstation_config` DROP COLUMN `use_euros_in_pdf` /** CAN FAIL **/;
-ALTER TABLE `#__ticketstation_mollie` DROP COLUMN `trans_cost` /** CAN FAIL **/;
+-- No longer run (the table #__ticketstation_mollie is removed since 2.26.0): ALTER TABLE ... DROP COLUMN `trans_cost`

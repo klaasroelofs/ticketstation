@@ -149,20 +149,20 @@ class pkg_ticketstationInstallerScript extends InstallerScript
 
             if ($old) {
                 $params = [
-                    'api_key'         => (string) $old->api_key,
-                    'api_key_test'    => (string) $old->api_key_test,
-                    'test_mode'       => (int) $old->test_mode,
-                    'payment_methods' => array_values(array_filter(explode(',', (string) $old->payment_methods))) ?: ['ideal'],
-                    'description'     => (string) $old->description,
-                    'locale'          => (string) ($old->mollie_language ?: 'en_GB'),
-                    'mark_pending'    => (int) $old->change_payment_state,
+                    'api_key'         => (string) ($old->api_key ?? ''),
+                    'api_key_test'    => (string) ($old->api_key_test ?? ''),
+                    'test_mode'       => (int) ($old->test_mode ?? 0),
+                    'payment_methods' => array_values(array_filter(explode(',', (string) ($old->payment_methods ?? 'ideal')))) ?: ['ideal'],
+                    'description'     => (string) ($old->description ?? 'Ordernumber:'),
+                    'locale'          => (string) (($old->mollie_language ?? '') ?: 'en_GB'),
+                    'mark_pending'    => (int) ($old->change_payment_state ?? 1),
                 ];
 
                 $db->setQuery(
                     $db->getQuery(true)
                         ->update($db->quoteName('#__ticketstation_config'))
-                        ->set($db->quoteName('payment_provider') . ' = ' . $db->quote($old->enabled == 1 ? 'mollie' : ''))
-                        ->set($db->quoteName('payment_currency') . ' = ' . $db->quote(strtoupper((string) ($old->currency ?: 'EUR'))))
+                        ->set($db->quoteName('payment_provider') . ' = ' . $db->quote(($old->enabled ?? 1) == 1 ? 'mollie' : ''))
+                        ->set($db->quoteName('payment_currency') . ' = ' . $db->quote(strtoupper((string) (($old->currency ?? '') ?: 'EUR'))))
                         ->where($db->quoteName('configid') . ' = 1')
                 )->execute();
             }
