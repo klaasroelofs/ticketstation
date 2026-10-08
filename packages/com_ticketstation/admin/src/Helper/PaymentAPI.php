@@ -406,12 +406,7 @@ class PaymentAPI
 
         $orders = '<ul>';
 
-        for ($i = 0, $n = count($this->orderData); $i < $n; $i++) {
-
-            $row = $this->orderData[$i];
-
-            $orders .= $this->orderListItem($row, $row->ticketprice, $config);
-        }
+        $orders .= $this->orderListItems('ticketprice', $config);
 
         $orders .= '</ul>';
 
@@ -459,11 +454,7 @@ class PaymentAPI
 
         $orders = '<ul>';
 
-        for ($i = 0, $n = count($this->orderData); $i < $n; $i++) {
-            $row = $this->orderData[$i];
-
-            $orders .= $this->orderListItem($row, $row->price, $config);
-        }
+        $orders .= $this->orderListItems('price', $config);
 
         $orders .= '</ul>';
 
@@ -471,23 +462,51 @@ class PaymentAPI
     }
 
     /**
-     * One line of {orderlist}: "Event - Ticket (date) - price", with the seat added for a
-     * seated ticket. A child ticket is named with its parent, as elsewhere in the component.
+     * The items of {orderlist}, like the lines of the checkout: one item per ticket type. Tickets
+     * without a seat get their quantity ("3 x price"); a seated ticket is named once, with the
+     * booked seats in a list below it. A child ticket is named with its parent, as elsewhere in
+     * the component.
+     *
+     * @param   string  $priceField  The row field holding the price of one ticket
      */
-    private function orderListItem(object $row, $price, object $config): string
+    private function orderListItems(string $priceField, object $config): string
     {
-        $ticketname = empty($row->parent_ticketname) ? $row->ticketname : $row->parent_ticketname . ' - ' . $row->ticketname;
-        $ticketdate = date($config->dateformat, strtotime($row->startdate));
+        $groups = [];
 
-        $line = htmlspecialchars($row->eventname . ' - ' . $ticketname, ENT_QUOTES, 'UTF-8')
-            . ' (' . $ticketdate . ') - '
-            . TicketstationFunctions::showprice($config->priceformat, $price, $config->valuta);
-
-        if (!empty($row->seatid)) {
-            $line .= ' - ' . TicketLanguage::_('COM_TICKETSTATION_SEAT_NR') . ' ' . htmlspecialchars($row->row_name . $row->seatid, ENT_QUOTES, 'UTF-8');
+        foreach ($this->orderData as $row) {
+            $groups[$row->eventid . '-' . $row->ticketid][] = $row;
         }
 
-        return '<li>' . $line . '</li>';
+        $format = fn ($amount) => TicketstationFunctions::showprice($config->priceformat, $amount, $config->valuta);
+        $html   = '';
+
+        foreach ($groups as $rows) {
+            $row        = $rows[0];
+            $ticketname = empty($row->parent_ticketname) ? $row->ticketname : $row->parent_ticketname . ' - ' . $row->ticketname;
+            $ticketdate = date($config->dateformat, strtotime($row->startdate));
+            $total      = array_sum(array_map(fn ($r) => (float) $r->$priceField, $rows));
+            $seats      = array_filter($rows, fn ($r) => !empty($r->seatid));
+
+            $line = htmlspecialchars($row->eventname . ' - ' . $ticketname, ENT_QUOTES, 'UTF-8') . ' (' . $ticketdate . ') - ';
+
+            if ($seats) {
+                $line .= $format($total) . '<ul>';
+
+                foreach ($seats as $seat) {
+                    $line .= '<li>' . TicketLanguage::_('COM_TICKETSTATION_SEAT_NR') . ' ' . htmlspecialchars($seat->row_name . $seat->seatid, ENT_QUOTES, 'UTF-8') . '</li>';
+                }
+
+                $line .= '</ul>';
+            } elseif (count($rows) > 1) {
+                $line .= count($rows) . ' x ' . $format($row->$priceField) . ' = ' . $format($total);
+            } else {
+                $line .= $format($total);
+            }
+
+            $html .= '<li>' . $line . '</li>';
+        }
+
+        return $html;
     }
 
     public function getPaymentStateForEmails()
