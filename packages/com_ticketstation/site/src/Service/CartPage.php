@@ -15,6 +15,7 @@ use Joomla\CMS\Factory;
 use Joomla\CMS\Layout\LayoutHelper;
 use Joomla\CMS\Router\Route;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\OrderTotals;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\SeatOrphans;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Shop;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\TicketstationFunctions;
 use Ticketstation\Component\Ticketstation\Administrator\Payment\PaymentStarter;
@@ -101,6 +102,20 @@ final class CartPage
     public static function fragments(): array
     {
         $data = self::data();
+
+        ## Seats that leave a single empty seat: back to the seat-picking page. The page cannot do
+        ## this itself after a background change, so it is told to move on, as for an empty cart.
+        $violation = SeatOrphans::violation($data->ordercode);
+
+        if ($violation)
+        {
+            $itemid = TicketstationFunctions::getSiteItemid();
+
+            return [
+                'empty'    => true,
+                'redirect' => Route::_('index.php?option=com_ticketstation&view=seatedevent&cid=' . $violation[0] . '&orphans=1' . ($itemid ? '&Itemid=' . $itemid : ''), false),
+            ];
+        }
 
         if (self::isEmpty($data))
         {

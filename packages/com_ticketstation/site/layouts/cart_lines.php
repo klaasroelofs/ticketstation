@@ -174,7 +174,7 @@ $trashIcon = '<svg class="ts-icon" viewBox="0 0 16 16" aria-hidden="true"><path 
                                            href="<?php echo $task('task=remove&orderid=' . (int) $seatLine->rows[0]->orderid); ?>"
                                            title="<?php echo Text::_('COM_TICKETSTATION_REMOVE'); ?>">
                                             <?php echo $trashIcon; ?>
-                                            <span class="ts-visually-hidden"><?php echo Text::sprintf('COM_TICKETSTATION_REMOVE_SEAT', $seatName); ?></span>
+                                            <span class="ts-visually-hidden"><?php echo Text::sprintf('COM_TICKETSTATION_REMOVE_SEAT_NAMED', $seatName); ?></span>
                                         </a>
                                     </li>
                                 <?php } ?>

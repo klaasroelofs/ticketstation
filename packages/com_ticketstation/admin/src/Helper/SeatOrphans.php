@@ -102,8 +102,10 @@ class SeatOrphans
             }
         }
 
+        $avoidable = self::avoidable($segments, $seats);
+
         foreach ($segments as $segment) {
-            foreach (self::orphansIn($segment) as $orphan) {
+            foreach (self::orphansIn($segment, $avoidable) as $orphan) {
                 if (!self::freeOpposite($orphan, $seats)) {
                     $orphans[] = $orphan;
                 }
@@ -121,7 +123,7 @@ class SeatOrphans
      * centres less than half a seat apart) and at most two seats away sideways. Rows on either
      * side of an aisle lie in line, not across, so theatre rows aren't affected.
      */
-    private static function freeOpposite(object $seat, array $seats): bool
+    private static function freeOpposite(object $seat, array $seats, array $ignore = []): bool
     {
         $cx = $seat->x_pos + $seat->width / 2;
         $cy = $seat->y_pos + $seat->height / 2;
@@ -130,7 +132,7 @@ class SeatOrphans
         $directions = $seat->direction === null ? [false, true] : [$seat->direction];
 
         foreach ($seats as $other) {
-            if ($other === $seat || $other->state !== self::FREE || $other->segment === $seat->segment
+            if ($other === $seat || $other->state !== self::FREE || isset($ignore[$other->id]) || $other->segment === $seat->segment
                 || (string) $other->row_name !== (string) $seat->row_name) {
                 continue;
             }
@@ -329,11 +331,74 @@ class SeatOrphans
     }
 
     /**
+     * Whether the order's seats could be spread over the blocks it already has seats in without
+     * leaving an orphan: a block takes none, all, or any number but one fewer than it has, unless the seat
+     * that is left has a free seat across from it in a block the order leaves alone (freeOpposite()). Only when that is impossible
+     * is an orphan forgiven, so a customer cannot leave one by choosing a seat in a pair of free
+     * seats while the other seats chosen could just as well fill a larger block.
+     *
+     * @param   array[]   $segments
+     * @param   object[]  $seats
+     */
+    private static function avoidable(array $segments, array $seats): bool
+    {
+        $total   = 0;
+        $blocks  = [];
+        $touched = [];
+
+        foreach ($segments as $segment) {
+            $block = [];
+
+            foreach (array_merge($segment, [null]) as $seat) {
+                if ($seat !== null && $seat->state !== self::TAKEN) {
+                    $block[] = $seat;
+                    $total  += $seat->state === self::MINE ? 1 : 0;
+                    continue;
+                }
+
+                ## Only blocks the customer chose seats in: the seats are not moved to other parts of the chart.
+                if ($block && array_filter($block, fn ($s) => $s->state === self::MINE)) {
+                    $blocks[] = $block;
+
+                    foreach ($block as $taken) {
+                        $touched[$taken->id] = true;
+                    }
+                }
+
+                $block = [];
+            }
+        }
+
+        ## Subset sum over what each block can take.
+        $reach = [0 => true];
+
+        foreach ($blocks as $block) {
+            $size = count($block);
+
+            ## Taking all but one leaves the seat at one end: fine when that seat has a free seat across.
+            $leftOk = $size > 1 && (self::freeOpposite($block[0], $seats, $touched) || self::freeOpposite($block[$size - 1], $seats, $touched));
+            $next   = [];
+
+            foreach (array_keys($reach) as $sum) {
+                for ($take = 0; $take <= $size; $take++) {
+                    if ($take === 0 || $take !== $size - 1 || $leftOk) {
+                        $next[$sum + $take] = true;
+                    }
+                }
+            }
+
+            $reach = $next;
+        }
+
+        return isset($reach[$total]);
+    }
+
+    /**
      * The orphans of one ordered segment that are caused by this order.
      *
      * @return  object[]
      */
-    private static function orphansIn(array $segment): array
+    private static function orphansIn(array $segment, bool $avoidable): array
     {
         $orphans = [];
         $n       = count($segment);
@@ -353,8 +418,9 @@ class SeatOrphans
 
             $mine = count(array_filter($block, fn ($s) => $s->state === self::MINE));
 
-            ## None of this order's seats, or no placement without one seat left over.
-            if ($mine === 0 || count($block) - $mine === 1) {
+            ## None of this order's seats, or (when the order cannot be placed without an orphan
+            ## anywhere on the chart) no placement without one seat left over.
+            if ($mine === 0 || (!$avoidable && count($block) - $mine === 1)) {
                 continue;
             }
 
