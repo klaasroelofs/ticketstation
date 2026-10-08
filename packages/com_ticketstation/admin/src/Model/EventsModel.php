@@ -17,6 +17,7 @@ use Joomla\CMS\MVC\Model\AdminModel;
 use Joomla\CMS\MVC\Model\BaseDatabaseModel;
 use Joomla\CMS\MVC\Model\ListModel;
 use Joomla\CMS\Pagination\Pagination;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\Availability;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Refund;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Tickets;
 use Ticketstation\Component\Ticketstation\Administrator\Model\Mixin\ListState;
@@ -124,14 +125,27 @@ class EventsModel extends ListModel
 
         $query = $db->getQuery(true);
 
-        $query->select(array('eventid', 'SUM(starting_total_tickets) AS total'));
+        $query->select(array('eventid', 'ticketid'));
         $query->from($db->quoteName('#__ticketstation_tickets'));
-        $query->group($db->quoteName('eventid'));
+        $query->where($db->quoteName('parent') . ' = 0');
 
         $db->setQuery($query);
-        $data = $db->loadObjectList();
 
-        return $data;
+        ## The capacity per top-level ticket comes from Availability: the seats on the chart for
+        ## a seated ticket, the Capacity (or the sum over the variants) for a quantity ticket.
+        $totals = array();
+
+        foreach ($db->loadObjectList() as $ticket)
+        {
+            if (!isset($totals[$ticket->eventid]))
+            {
+                $totals[$ticket->eventid] = (object) array('eventid' => $ticket->eventid, 'total' => 0);
+            }
+
+            $totals[$ticket->eventid]->total += Availability::summary((int) $ticket->ticketid)->capacity;
+        }
+
+        return array_values($totals);
     }
 
     function getUnfinished()
