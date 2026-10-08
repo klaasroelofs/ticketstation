@@ -36,6 +36,8 @@ use Ticketstation\Component\Ticketstation\Administrator\Helper\WaitingList;
  *                            'config'    => the Configuration
  *                            'totals'    => OrderTotals::get() of the cart
  *                            'ordercode' => the cart's ordercode
+ *                            'showDate'  => show the date and time under each line (default true; the
+ *                                           combined checkout leaves it out to keep the summary short)
  */
 
 $app       = Factory::getApplication();
@@ -44,6 +46,7 @@ $waitRows  = $displayData['waiters'];
 $config    = $displayData['config'];
 $totals    = $displayData['totals'];
 $ordercode = (int) $displayData['ordercode'];
+$showDate  = $displayData['showDate'] ?? true;
 
 $fees     = $totals->fees;
 $discount = $totals->discount;
@@ -129,7 +132,9 @@ $trashIcon = '<svg class="ts-icon" viewBox="0 0 16 16" aria-hidden="true"><path 
                             <?php } ?>
                         </span>
 
-                        <span class="ts-summary__date"><?php echo Date::long($row->startdate, true); ?></span>
+                        <?php if ($showDate) { ?>
+                            <span class="ts-summary__date"><?php echo Date::long($row->startdate, true); ?></span>
+                        <?php } ?>
 
                         <?php if (!$line->seated) { ?>
                             <span class="ts-qty" role="group" aria-label="<?php echo Text::_('COM_TICKETSTATION_QUANTITY'); ?>">
@@ -187,7 +192,9 @@ $trashIcon = '<svg class="ts-icon" viewBox="0 0 16 16" aria-hidden="true"><path 
                     <td>
                         <span class="ts-summary__name"><?php echo $waitName; ?></span>
 
-                        <span class="ts-summary__date"><?php echo Date::long($wait->startdate, true); ?></span>
+                        <?php if ($showDate) { ?>
+                            <span class="ts-summary__date"><?php echo Date::long($wait->startdate, true); ?></span>
+                        <?php } ?>
 
                         <span class="ts-qty" role="group" aria-label="<?php echo Text::_('COM_TICKETSTATION_QUANTITY'); ?>">
                             <?php if ($canDecrease) { ?>

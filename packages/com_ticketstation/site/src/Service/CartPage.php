@@ -73,6 +73,7 @@ final class CartPage
             'config'    => $data->config,
             'totals'    => $data->totals,
             'ordercode' => $data->ordercode,
+            'showDate'  => false,
         ]);
     }
 
