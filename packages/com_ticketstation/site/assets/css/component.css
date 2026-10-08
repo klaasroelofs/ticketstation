@@ -975,6 +975,52 @@
     color: var(--ts-muted);
 }
 
+/* The seats of one ticket type on one cart line; the list folds out */
+.ticketstation .ts-seats {
+    margin-top: .5rem;
+}
+
+.ticketstation .ts-seats__summary {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: .25rem .5rem;
+    cursor: pointer;
+}
+
+.ticketstation .ts-seats__count {
+    font-weight: 600;
+}
+
+.ticketstation .ts-seats__preview {
+    flex-basis: 100%;
+    font-size: .875rem;
+    color: var(--ts-muted);
+}
+
+.ticketstation .ts-seats[open] .ts-seats__preview {
+    display: none;
+}
+
+/* The total sits at the top, not in the middle of the folded-out list */
+.ticketstation .ts-summary__item--seats > .ts-price {
+    vertical-align: top;
+}
+
+.ticketstation .ts-seats__list {
+    margin: .5rem 0 0;
+    padding: 0;
+    list-style: none;
+}
+
+.ticketstation .ts-seats__item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: .75rem;
+    padding: .25rem 0;
+}
+
 .ticketstation #ts-cart-lines[aria-busy="true"] {
     opacity: .6;
     transition: opacity .15s ease;

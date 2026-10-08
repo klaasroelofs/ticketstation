@@ -66,7 +66,20 @@
         var chosen = pay ? pay.querySelector('input[name="method"]:checked') : null;
         var chosenValue = chosen ? chosen.value : null;
 
+        // A folded-out seat list stays open, so several seats can be removed in a row
+        var openSeats = Array.prototype.map.call(document.querySelectorAll('#ts-cart-lines details[open][data-seats]'), function (details) {
+            return details.dataset.seats;
+        });
+
         document.getElementById('ts-cart-lines').outerHTML = data.lines;
+
+        openSeats.forEach(function (id) {
+            var details = document.querySelector('#ts-cart-lines details[data-seats="' + id + '"]');
+
+            if (details) {
+                details.open = true;
+            }
+        });
         pay.outerHTML = data.pay;
 
         // The payment methods come back unchosen: keep the customer's choice

@@ -149,6 +149,11 @@ if ($items == 0 && $waiters == 0) {
                     return;
                 }
 
+                // A folded-out seat list stays open, so several seats can be removed in a row
+                $('#ts-cart-lines details[open][data-seats]').each(function () {
+                    $(fresh).find('details[data-seats="' + $(this).data('seats') + '"]').prop('open', true);
+                });
+
                 $('#ts-cart-lines').replaceWith(fresh);
                 busy = false;
             });

@@ -68,6 +68,23 @@ $lines = Order::cartLines($itemRows, $displayData['coords'] ?? []);
 ## Until when the tickets stay reserved (only while the cart has rows the Ticketcleaner removes)
 $reservedUntil = Ticketcleaner::reservedUntil($ordercode);
 
+## The seats of one ticket type share one cart line (their list folds out), so many seats do not
+## make the cart endless. The lines are sorted, so those seats sit together. A single seat stays a
+## line of its own.
+$entries = [];
+
+foreach ($lines as $line) {
+    $last = $entries ? $entries[count($entries) - 1] : null;
+
+    if ($line->seated && $last && $last->seated
+        && $last->lines[0]->rows[0]->ticketid == $line->rows[0]->ticketid
+        && $last->lines[0]->rows[0]->eventid == $line->rows[0]->eventid) {
+        $last->lines[] = $line;
+    } else {
+        $entries[] = (object) ['seated' => (bool) $line->seated, 'lines' => [$line]];
+    }
+}
+
 if ($reservedUntil) {
     $local = Factory::getDate('@' . $reservedUntil)->setTimezone(new DateTimeZone($app->get('offset') ?: 'UTC'));
     $today = Factory::getDate('now')->setTimezone(new DateTimeZone($app->get('offset') ?: 'UTC'))->format('Y-m-d', true);
@@ -102,8 +119,9 @@ $trashIcon = '<svg class="ts-icon" viewBox="0 0 16 16" aria-hidden="true"><path 
         <?php } ?>
 
         <tbody>
-            <?php foreach ($lines as $line) {
+            <?php foreach ($entries as $entry) {
 
+                $line      = $entry->lines[0];
                 $row       = $line->rows[0];
                 $quantity  = $line->quantity;
                 $lineTotal = $line->total;
@@ -121,6 +139,54 @@ $trashIcon = '<svg class="ts-icon" viewBox="0 0 16 16" aria-hidden="true"><path 
                     : 'index.php?option=com_ticketstation&view=event&id=' . $owner) . ($itemid ? '&Itemid=' . $itemid : ''));
                 $ticketTip = Text::_((int) ($row->owner_seatplans ?? 0) === 1 ? 'COM_TICKETSTATION_CART_TO_SEATPLAN' : 'COM_TICKETSTATION_CART_TO_TICKETPAGE');
                 ?>
+
+                <?php if (count($entry->lines) > 1) {
+                    $seatLines = $entry->lines;
+                    $seatCount = count($seatLines);
+                    $seatTotal = array_sum(array_column($seatLines, 'total'));
+                    $seatNames = array_map(fn ($seat) => htmlspecialchars($seat->seat, ENT_QUOTES, 'UTF-8'), $seatLines);
+                    $preview   = implode(', ', array_slice($seatNames, 0, 4)) . ($seatCount > 4 ? ', &hellip;' : '');
+                    ?>
+
+                <tr class="ts-summary__item ts-summary__item--seats">
+                    <td>
+                        <span class="ts-summary__name">
+                            <a class="ts-summary__link" href="<?php echo $ticketUrl; ?>" title="<?php echo $ticketTip; ?>"><?php echo $name; ?></a>
+                        </span>
+
+                        <?php if ($showDate) { ?>
+                            <span class="ts-summary__date"><?php echo Date::long($row->startdate, true); ?></span>
+                        <?php } ?>
+
+                        <details class="ts-seats" data-seats="<?php echo (int) $row->ticketid; ?>">
+                            <summary class="ts-seats__summary">
+                                <span class="ts-seats__count"><?php echo Text::plural('COM_TICKETSTATION_CART_SEATS', $seatCount); ?></span>
+                                <span class="ts-qty__unit">&times; <?php echo $price($row->price); ?></span>
+                                <span class="ts-seats__preview"><?php echo $preview; ?></span>
+                            </summary>
+
+                            <ul class="ts-seats__list">
+                                <?php foreach ($seatLines as $seatLine) {
+                                    $seatName = htmlspecialchars($seatLine->seat, ENT_QUOTES, 'UTF-8'); ?>
+                                    <li class="ts-seats__item">
+                                        <span class="ts-seats__label"><?php echo Text::_('COM_TICKETSTATION_SEATNUMBER') . ': ' . $seatName; ?></span>
+                                        <a class="ts-btn ts-btn--danger ts-btn--icon ts-btn--remove" data-cart-remove
+                                           href="<?php echo $task('task=remove&orderid=' . (int) $seatLine->rows[0]->orderid); ?>"
+                                           title="<?php echo Text::_('COM_TICKETSTATION_REMOVE'); ?>">
+                                            <?php echo $trashIcon; ?>
+                                            <span class="ts-visually-hidden"><?php echo Text::sprintf('COM_TICKETSTATION_REMOVE_SEAT', $seatName); ?></span>
+                                        </a>
+                                    </li>
+                                <?php } ?>
+                            </ul>
+                        </details>
+                    </td>
+                    <td class="ts-price">
+                        <span class="ts-summary__amount"><?php echo $price($seatTotal); ?></span>
+                    </td>
+                </tr>
+
+                <?php continue; } ?>
 
                 <tr class="ts-summary__item">
                     <td>
