@@ -156,6 +156,65 @@ class ReservationModel extends BaseDatabaseModel
         return (int) $table->orderid;
     }
 
+    /**
+     * A seat's order row in this reservation by its orderid, or null when it belongs to
+     * another ordercode.
+     */
+    public function getOrderRow(string $ordercode, int $orderid)
+    {
+        $db = Factory::getContainer()->get('DatabaseDriver');
+
+        $query = $db->getQuery(true)
+            ->select(['orderid', 'ticketid', 'seat_sector'])
+            ->from($db->quoteName('#__ticketstation_orders'))
+            ->where($db->quoteName('orderid') . ' = ' . (int) $orderid)
+            ->where($db->quoteName('ordercode') . ' = ' . $db->quote($ordercode));
+
+        $db->setQuery($query);
+
+        return $db->loadObject();
+    }
+
+    /**
+     * Sells an order row as another ticket (the price category of a free seat), with the new
+     * ticket's price and VAT.
+     */
+    public function changeOrderTicket(int $orderid, array $fields): bool
+    {
+        $db = Factory::getContainer()->get('DatabaseDriver');
+
+        $query = $db->getQuery(true)->update($db->quoteName('#__ticketstation_orders'));
+
+        foreach ($fields as $column => $value)
+        {
+            $query->set($db->quoteName($column) . ' = ' . $db->quote($value));
+        }
+
+        $query->where($db->quoteName('orderid') . ' = ' . (int) $orderid);
+
+        $db->setQuery($query);
+
+        return (bool) $db->execute();
+    }
+
+    /**
+     * Removes the rows without a seat of one ticket type from this reservation.
+     */
+    public function deleteTicketRows(string $ordercode, int $ticketid): bool
+    {
+        $db = Factory::getContainer()->get('DatabaseDriver');
+
+        $query = $db->getQuery(true)
+            ->delete($db->quoteName('#__ticketstation_orders'))
+            ->where($db->quoteName('ordercode') . ' = ' . $db->quote($ordercode))
+            ->where($db->quoteName('ticketid') . ' = ' . (int) $ticketid)
+            ->where($db->quoteName('seat_sector') . ' = 0');
+
+        $db->setQuery($query);
+
+        return (bool) $db->execute();
+    }
+
     public function deleteOrderRow(int $orderid): bool
     {
         $db = Factory::getContainer()->get('DatabaseDriver');
@@ -277,6 +336,93 @@ class ReservationModel extends BaseDatabaseModel
         $db->setQuery($query);
 
         return $db->loadObjectList();
+    }
+
+    /**
+     * The reservation as display lines, like the cart of the checkout: one line per ticket type,
+     * with a quantity for tickets without a seat and the seats listed under a seated ticket.
+     * Sorted per event, per parent ticket (earliest date first), tickets without a seat before
+     * seats, seats most expensive first and by seat number within a ticket type.
+     *
+     * @return  array  objects with eventname, ticketname, date, owner, ticketid, seated, unit,
+     *                 quantity, total, seats (orderid, sector, label, free, ticketid) and rows
+     */
+    public function getReservationLines(string $ordercode): array
+    {
+        $db = Factory::getContainer()->get('DatabaseDriver');
+
+        $query = $db->getQuery(true)
+            ->select([
+                'a.orderid', 'a.ticketid', 'a.eventid', 'a.price', 'a.seat_sector',
+                "IF(p.ticketid IS NULL, t.ticketname, CONCAT(p.ticketname, ' - ', t.ticketname)) AS ticketname",
+                't.ticketprice', 'e.eventname',
+                'IFNULL(p.ticketid, t.ticketid) AS owner_ticketid',
+                'IFNULL(p.startdate, t.startdate) AS owner_startdate',
+                'sc.row_name AS seat_row_name', 'sc.seatid AS seat_number', 'sc.parent AS seat_parent',
+            ])
+            ->from($db->quoteName('#__ticketstation_orders', 'a'))
+            ->join('LEFT', $db->quoteName('#__ticketstation_events', 'e') . ' ON ' . $db->quoteName('e.eventid') . ' = ' . $db->quoteName('a.eventid'))
+            ->join('LEFT', $db->quoteName('#__ticketstation_tickets', 't') . ' ON ' . $db->quoteName('t.ticketid') . ' = ' . $db->quoteName('a.ticketid'))
+            ->join('LEFT', $db->quoteName('#__ticketstation_tickets', 'p') . ' ON ' . $db->quoteName('p.ticketid') . ' = ' . $db->quoteName('t.parent') . ' AND ' . $db->quoteName('t.parent') . ' > 0')
+            ->join('LEFT', $db->quoteName('#__ticketstation_seatplancoords', 'sc') . ' ON ' . $db->quoteName('sc.id') . ' = ' . $db->quoteName('a.seat_sector'))
+            ->where($db->quoteName('a.ordercode') . ' = ' . $db->quote($ordercode))
+            ->order($db->quoteName('a.orderid'));
+
+        $db->setQuery($query);
+
+        $lines      = [];
+        $eventOrder = [];
+
+        foreach ($db->loadObjectList() as $row)
+        {
+            $seated = (int) $row->seat_sector !== 0;
+            $key    = ($seated ? 'seat' : 'ticket') . $row->ticketid;
+
+            $eventOrder[$row->eventid] ??= count($eventOrder);
+
+            $lines[$key] ??= (object) [
+                'event'     => $eventOrder[$row->eventid],
+                'eventname' => $row->eventname,
+                'ticketname' => $row->ticketname,
+                'date'      => (string) $row->owner_startdate,
+                'owner'     => (int) $row->owner_ticketid,
+                'ticketid'  => (int) $row->ticketid,
+                'seated'    => $seated,
+                'unit'      => (float) $row->price,
+                'seats'     => [],
+                'quantity'  => 0,
+                'total'     => 0.0,
+                'position'  => count($lines),
+            ];
+
+            $line = $lines[$key];
+            $line->quantity++;
+            $line->total += (float) $row->price;
+
+            if ($seated)
+            {
+                $line->seats[] = (object) [
+                    'orderid'  => (int) $row->orderid,
+                    'sector'   => (int) $row->seat_sector,
+                    'label'    => $row->seat_row_name . $row->seat_number,
+                    // A free seat (not a section's) can be switched between price categories.
+                    'free'     => (int) $row->seat_parent === 0,
+                    'ticketid' => (int) $row->ticketid,
+                ];
+            }
+        }
+
+        $key = fn ($line) => [$line->event, $line->date, $line->owner, $line->seated,
+            $line->seated ? -$line->unit : $line->position, $line->ticketid];
+
+        usort($lines, fn ($a, $b) => $key($a) <=> $key($b));
+
+        foreach ($lines as $line)
+        {
+            usort($line->seats, fn ($a, $b) => strnatcasecmp($a->label, $b->label));
+        }
+
+        return $lines;
     }
 
     /**

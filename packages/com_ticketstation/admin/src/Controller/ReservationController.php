@@ -13,11 +13,13 @@ defined('_JEXEC') or die;
 
 use Joomla\CMS\Factory;
 use Joomla\CMS\Language\Text;
+use Joomla\CMS\Layout\LayoutHelper;
 use Joomla\CMS\MVC\Controller\BaseController;
 use Joomla\CMS\Uri\Uri;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\AclGate;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Amount;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Availability;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\Config;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Order;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Ordercode;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\OrderTotals;
@@ -337,6 +339,115 @@ class ReservationController extends BaseController
         $model->freeSeatCoords($coordId);
 
         echo json_encode(['error' => '0', 'msg' => Text::_('COM_TICKETSTATION_THIS_SEAT_IS_REMOVED'), 'id' => $coordId]);
+        $app->close();
+    }
+
+    /**
+     * Removes a line of the reservation from any step (link with token): a seat by its
+     * orderid, or the rows without a seat of one ticket type by its ticketid. Then back to the
+     * step the admin was on.
+     */
+    public function removeRow()
+    {
+        $app       = Factory::getApplication();
+        $jinput    = $app->getInput();
+        $model     = $this->getModel('Reservation');
+        $ordercode = (string) $this->getOrdercode();
+        $orderid   = $jinput->getInt('orderid', 0);
+        $ticketid  = $jinput->getInt('ticketid', 0);
+
+        if ($orderid)
+        {
+            $order = $model->getOrderRow($ordercode, $orderid);
+
+            if ($order)
+            {
+                $model->deleteOrderRow((int) $order->orderid);
+
+                if ($order->seat_sector)
+                {
+                    $model->freeSeatCoords((int) $order->seat_sector);
+                }
+            }
+        }
+        elseif ($ticketid)
+        {
+            $model->deleteTicketRows($ordercode, $ticketid);
+        }
+
+        // Steps 3 and 4 need tickets: with none left, back to step 1 (not the "expired" notice).
+        $layout = $jinput->getCmd('return', 'default');
+
+        if (! in_array($layout, ['quantity', 'seatplan', 'customer', 'confirm'], true)
+            || (in_array($layout, ['customer', 'confirm'], true) && ! $model->getOrderSummary($ordercode)))
+        {
+            $layout = 'default';
+        }
+
+        $this->setRedirect(Uri::base() . 'index.php?option=com_ticketstation&view=reservation' . ($layout === 'default' ? '' : '&layout=' . $layout));
+    }
+
+    /**
+     * Step 2b (AJAX): sells a free seat of this reservation in another price category, as
+     * site/src/Controller/OrderseatedController.php::updateSeat() does for the storefront.
+     */
+    public function updateSeat()
+    {
+        $app    = Factory::getApplication();
+        $jinput = $app->getInput();
+        $model  = $this->getModel('Reservation');
+
+        $order = $model->getOrderRow((string) $this->getOrdercode(), $jinput->getInt('orderid', 0));
+        $seat  = ($order && $order->seat_sector) ? SeatplanSettings::forSeat((int) $order->seat_sector) : null;
+
+        // Only a price category of the seat's chart is valid, and only for a free seat.
+        $categoryId = $jinput->getInt('categoryid', 0);
+        $ticket     = null;
+
+        if ($seat && (int) $seat->parent === 0 && $categoryId && SeatplanSettings::ticketForSeat($seat, $categoryId) === $categoryId)
+        {
+            $ticket = (new Ticket)->getTicketDetailsById($categoryId);
+        }
+
+        if (! $ticket)
+        {
+            echo json_encode(['error' => '1', 'msg' => Text::_('COM_TICKETSTATION_RESERVATION_SAVE_FAILED')]);
+            $app->close();
+        }
+
+        $pricing = (new Amount)->calculateVatFromPrice($ticket->ticketprice, $ticket->vat_percentage);
+
+        $saved = $model->changeOrderTicket((int) $order->orderid, [
+            'ticketid'            => $ticket->ticketid,
+            'price'               => $ticket->ticketprice,
+            'vat'                 => $pricing['vat_amount'],
+            'price_excluding_vat' => $pricing['price_excluding_vat'],
+            'vat_percentage'      => $pricing['vat_percentage'],
+        ]);
+
+        echo json_encode($saved
+            ? ['error' => '0', 'msg' => Text::_('COM_TICKETSTATION_RESERVATION_SEAT_CHANGED')]
+            : ['error' => '1', 'msg' => Text::_('COM_TICKETSTATION_RESERVATION_SAVE_FAILED')]);
+        $app->close();
+    }
+
+    /**
+     * AJAX: the reservation so far as grouped lines (layouts/lines.php), for the seat chart to
+     * show after each change.
+     */
+    public function lines()
+    {
+        $app   = Factory::getApplication();
+        $chart = (int) ($this->getState()['ticketid'] ?? 0);
+
+        echo LayoutHelper::render('lines', [
+            'lines'      => $this->getModel('Reservation')->getReservationLines((string) $this->getOrdercode()),
+            'config'     => (new Config)->get(['priceformat', 'valuta']),
+            'chart'      => $chart,
+            'categories' => $chart ? SeatplanSettings::priceCategories($chart) : [],
+            'return'     => 'seatplan',
+        ], JPATH_ADMINISTRATOR . '/components/com_ticketstation/tmpl/reservation/layouts');
+
         $app->close();
     }
 

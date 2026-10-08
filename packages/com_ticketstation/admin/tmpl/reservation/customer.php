@@ -9,6 +9,7 @@
 
 use Joomla\CMS\Factory;
 use Joomla\CMS\Language\Text;
+use Joomla\CMS\Layout\LayoutHelper;
 use \Joomla\CMS\HTML\HTMLHelper;
 use Joomla\CMS\Router\Route;
 
@@ -34,19 +35,7 @@ $csrfTokenParam = \Joomla\CMS\Session\Session::getFormToken() . '=1';
 <div class="card mt-3 rounded-to">
     <h3 class="card-header"><?= Text::_('COM_TICKETSTATION_RESERVATION_CART_TITLE') ?></h3>
     <div class="card-body">
-        <ul>
-            <?php foreach ($this->summary as $row) : ?>
-                <?php $seat = $row->seat_sector ? ($row->seat_row_name !== '' ? $row->seat_row_name . $row->seat_number : $row->seat_number) : null; ?>
-                <li>
-                    <?= htmlspecialchars($row->eventname, ENT_QUOTES, 'UTF-8') ?>
-                    &mdash; <?= htmlspecialchars($row->ticketname, ENT_QUOTES, 'UTF-8') ?>
-                    <?php if ($seat !== null) : ?>
-                        &mdash; <?= Text::_('COM_TICKETSTATION_RESERVATION_SEAT') ?> <?= htmlspecialchars($seat, ENT_QUOTES, 'UTF-8') ?>
-                    <?php endif; ?>
-                </li>
-            <?php endforeach; ?>
-        </ul>
-        <p><?= count($this->summary) ?> <?= Text::_('COM_TICKETSTATION_RESERVATION_TICKETS_IN_CART') ?></p>
+        <?= LayoutHelper::render('lines', ['lines' => $this->lines, 'config' => $this->config, 'total' => true, 'return' => 'customer'], __DIR__ . '/layouts') ?>
     </div>
 </div>
 

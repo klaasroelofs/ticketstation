@@ -108,6 +108,7 @@ class HtmlView extends BaseHtmlView
         Docs::toolbarButton('reservation');
 
         $this->ordercode = $ordercode;
+        $this->lines     = $model->getReservationLines((string) $ordercode);
         $this->config    = (new Config)->get(['priceformat', 'valuta']);
 
         switch ($layout)
@@ -140,8 +141,19 @@ class HtmlView extends BaseHtmlView
                 break;
 
             default:
-                $eventid       = $app->getInput()->getInt('eventid', 0);
-                $this->events  = $model->getUpcomingEvents();
+                $this->events = $model->getUpcomingEvents();
+
+                // Coming back (Back button, or another ticket for the same event) the event of
+                // the ticket chosen last is selected again. A chosen event, also "none", wins.
+                $eventid = $app->getInput()->get('eventid', null) !== null
+                    ? $app->getInput()->getInt('eventid', 0)
+                    : (int) ($state['eventid'] ?? 0);
+
+                if (! in_array($eventid, array_map('intval', array_column($this->events, 'eventid')), true))
+                {
+                    $eventid = 0;
+                }
+
                 $this->eventid = $eventid;
                 $this->tickets = $eventid ? $model->getTicketsForEvent($eventid) : [];
                 break;

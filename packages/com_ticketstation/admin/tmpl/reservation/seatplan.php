@@ -17,6 +17,7 @@
 use Joomla\CMS\Factory;
 use Joomla\CMS\HTML\HTMLHelper;
 use Joomla\CMS\Language\Text;
+use Joomla\CMS\Layout\LayoutHelper;
 use Joomla\CMS\Router\Route;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\SeatChart;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\TicketstationFunctions;
@@ -159,19 +160,18 @@ $chartCanvas     = SeatChart::canvas($chartSettings, $this->seats, $chartBackgro
 
             <div class="col-xl-4">
                 <h4><?= Text::_('COM_TICKETSTATION_RESERVATION_CART_TITLE') ?></h4>
-                <ul id="cart-list" class="list-group mb-3">
-                    <?php foreach ($this->summary as $row) : ?>
-                        <?php if ($row->seat_sector) : ?>
-                            <?php $seat = $row->seat_row_name !== '' ? $row->seat_row_name . $row->seat_number : $row->seat_number; ?>
-                            <li class="list-group-item d-flex justify-content-between align-items-center" id="cart-item-<?= (int) $row->seat_sector ?>" data-id="<?= (int) $row->seat_sector ?>">
-                                <?= htmlspecialchars($seat, ENT_QUOTES, 'UTF-8') ?>
-                                <a href="#" class="remove-seat btn btn-sm btn-outline-danger" data-id="<?= (int) $row->seat_sector ?>">&times;</a>
-                            </li>
-                        <?php endif; ?>
-                    <?php endforeach; ?>
-                </ul>
+                <div id="cart-list">
+                    <?= LayoutHelper::render('lines', [
+                        'lines'      => $this->lines,
+                        'config'     => $this->config,
+                        'chart'      => $chartOwner,
+                        'return'     => 'seatplan',
+                        'categories' => $this->categories,
+                        'total'      => true,
+                    ], __DIR__ . '/layouts') ?>
+                </div>
 
-                <a id="finish-seats-btn" class="btn btn-primary <?= count($mySeats) < 1 ? 'disabled' : '' ?>"
+                <a id="finish-seats-btn" class="btn btn-primary <?= ! $this->lines ? 'disabled' : '' ?>"
                    href="<?= Route::_('index.php?option=com_ticketstation&controller=reservation&task=finishSeats') ?>">
                     <?= Text::_('COM_TICKETSTATION_RESERVATION_CONTINUE') ?>
                 </a>
@@ -190,13 +190,23 @@ $chartCanvas     = SeatChart::canvas($chartSettings, $this->seats, $chartBackgro
             setTimeout(function () { $('#ajaxMessage').hide(); }, 4000);
         }
 
-        function updateFinishButton() {
-            var count = $('#cart-list li').length;
-            $('#finish-seats-btn').toggleClass('disabled', count < 1);
-        }
-
         // CSRF token name/value pair for this session, sent with every write request below.
         var csrfTokenName = '<?php echo \Joomla\CMS\Session\Session::getFormToken(); ?>';
+
+        // The reservation so far is rendered by the server (grouped per ticket type, like the
+        // checkout), so it is fetched again after every change.
+        function refreshLines() {
+            return $.ajax({
+                type: 'post',
+                url: 'index.php?option=com_ticketstation&controller=reservation&task=lines&format=raw',
+                data: {[csrfTokenName]: 1}
+            }).done(function (html) {
+                $('#cart-list').html(html);
+                $('#finish-seats-btn').toggleClass('disabled', $('#reservation-lines').data('rows') < 1);
+            }).fail(function () {
+                showMessage(<?= json_encode(Text::_('COM_TICKETSTATION_RESERVATION_SAVE_FAILED')) ?>);
+            });
+        }
 
         $(document).ready(function () {
 
@@ -221,12 +231,7 @@ $chartCanvas     = SeatChart::canvas($chartSettings, $this->seats, $chartBackgro
                 }).done(function (result) {
                     if (result.error === '0') {
                         $seat.addClass('seat-mine').data('mine', 1);
-                        $('#cart-list').append(
-                            '<li class="list-group-item d-flex justify-content-between align-items-center" id="cart-item-' + id + '" data-id="' + id + '">'
-                            + $('<div>').text(result.seatid).html()
-                            + ' <a href="#" class="remove-seat btn btn-sm btn-outline-danger" data-id="' + id + '">&times;</a></li>'
-                        );
-                        updateFinishButton();
+                        refreshLines();
                     } else {
                         showMessage(result.msg);
                     }
@@ -248,11 +253,27 @@ $chartCanvas     = SeatChart::canvas($chartSettings, $this->seats, $chartBackgro
                 }).done(function (result) {
                     if (result.error === '0') {
                         $('#seat-' + id).removeClass('seat-mine').data('mine', 0);
-                        $('#cart-item-' + id).remove();
-                        updateFinishButton();
+                        refreshLines();
                     } else {
                         showMessage(result.msg);
                     }
+                }).fail(function () {
+                    showMessage('<?= Text::_('COM_TICKETSTATION_RESERVATION_SAVE_FAILED') ?>');
+                });
+            });
+
+            // A free seat can still be switched to another price category after it was clicked.
+            $('#cart-list').on('change', '.seat-category', function () {
+                $.ajax({
+                    type: 'post',
+                    url: 'index.php?option=com_ticketstation&controller=reservation&task=updateSeat&format=raw',
+                    data: {orderid: $(this).data('orderid'), categoryid: $(this).val(), [csrfTokenName]: 1},
+                    dataType: 'json'
+                }).done(function (result) {
+                    if (result.error !== '0') {
+                        showMessage(result.msg);
+                    }
+                    refreshLines();
                 }).fail(function () {
                     showMessage('<?= Text::_('COM_TICKETSTATION_RESERVATION_SAVE_FAILED') ?>');
                 });

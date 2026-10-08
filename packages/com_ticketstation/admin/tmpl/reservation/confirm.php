@@ -9,6 +9,7 @@
 
 use Joomla\CMS\Factory;
 use Joomla\CMS\Language\Text;
+use Joomla\CMS\Layout\LayoutHelper;
 use \Joomla\CMS\HTML\HTMLHelper;
 use Joomla\CMS\Router\Route;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\AclGate;
@@ -18,13 +19,6 @@ use Ticketstation\Component\Ticketstation\Administrator\Helper\TicketstationFunc
 defined('_JEXEC') or die('Restricted Access');
 
 $csrfTokenParam = \Joomla\CMS\Session\Session::getFormToken() . '=1';
-
-$total = 0;
-
-foreach ($this->summary as $row)
-{
-    $total += (float) $row->price + (float) $row->fees;
-}
 
 // A No/Yes switch set to Yes, with the markup of Joomla's own joomla.form.field.radio.switcher
 // layout so it looks like the switches in Joomla's forms. A switch that depends on the one above
@@ -88,33 +82,7 @@ $switcher = function (string $name, string $label, string $description, int $lev
     <h3 class="card-header"><?= Text::_('COM_TICKETSTATION_RESERVATION_STEP4_TITLE') ?></h3>
     <div class="card-body">
 
-        <table class="table table-striped">
-            <thead>
-                <tr>
-                    <th><?= Text::_('COM_TICKETSTATION_EVENT') ?></th>
-                    <th><?= Text::_('COM_TICKETSTATION_TICKETNAME') ?></th>
-                    <th><?= Text::_('COM_TICKETSTATION_RESERVATION_SEAT') ?></th>
-                    <th><?= Text::_('COM_TICKETSTATION_PRICES') ?></th>
-                </tr>
-            </thead>
-            <tbody>
-            <?php foreach ($this->summary as $row) : ?>
-                <?php $seat = $row->seat_sector ? ($row->seat_row_name !== '' ? $row->seat_row_name . $row->seat_number : $row->seat_number) : ''; ?>
-                <tr>
-                    <td><?= htmlspecialchars($row->eventname, ENT_QUOTES, 'UTF-8') ?></td>
-                    <td><?= htmlspecialchars($row->ticketname, ENT_QUOTES, 'UTF-8') ?></td>
-                    <td><?= htmlspecialchars($seat, ENT_QUOTES, 'UTF-8') ?></td>
-                    <td><?= TicketstationFunctions::showprice($this->config->priceformat, $row->price + $row->fees, $this->config->valuta) ?></td>
-                </tr>
-            <?php endforeach; ?>
-            </tbody>
-            <tfoot>
-                <tr>
-                    <th colspan="3"><?= Text::_('COM_TICKETSTATION_ORDER_TOTAL') ?></th>
-                    <th><?= TicketstationFunctions::showprice($this->config->priceformat, $total, $this->config->valuta) ?></th>
-                </tr>
-            </tfoot>
-        </table>
+        <?= LayoutHelper::render('lines', ['lines' => $this->lines, 'config' => $this->config, 'total' => true, 'return' => 'confirm'], __DIR__ . '/layouts') ?>
 
         <form action="<?= Route::_('index.php?option=com_ticketstation&controller=reservation&task=complete') ?>" method="post">
 

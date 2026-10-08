@@ -9,6 +9,7 @@
 
 use Joomla\CMS\Factory;
 use Joomla\CMS\Language\Text;
+use Joomla\CMS\Layout\LayoutHelper;
 use \Joomla\CMS\HTML\HTMLHelper;
 use Joomla\CMS\Router\Route;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\TicketstationFunctions;
@@ -54,3 +55,12 @@ $csrfTokenParam = \Joomla\CMS\Session\Session::getFormToken() . '=1';
 
     </div>
 </div>
+
+<?php if ($this->lines) : ?>
+<div class="card mt-3 rounded-to">
+    <h3 class="card-header"><?= Text::_('COM_TICKETSTATION_RESERVATION_CART_TITLE') ?></h3>
+    <div class="card-body">
+        <?= LayoutHelper::render('lines', ['lines' => $this->lines, 'config' => $this->config, 'return' => 'quantity'], __DIR__ . '/layouts') ?>
+    </div>
+</div>
+<?php endif; ?>
