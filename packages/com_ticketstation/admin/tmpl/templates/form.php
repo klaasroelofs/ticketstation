@@ -23,6 +23,8 @@ $document->setTitle(Text::sprintf('COM_TICKETSTATION_VIEW_EDIT_TEMPLATES_TITLE',
 $user = $this->getCurrentUser();
 $editor = Editor::getInstance($user->getParam('editor', Factory::getConfig()->get('editor')));
 
+$document->getWebAssetManager()->registerAndUseStyle('ticketstation', Uri::base() . 'components\com_ticketstation\assets\css\ticketstation.css');
+
 // The preview opens in a Bootstrap modal, whose script Joomla only loads when asked
 $document->getWebAssetManager()->useScript('bootstrap.modal');
 
@@ -108,16 +110,16 @@ $required     = eTicketsMessage::requiredPlaceholders($mailid);
 
 <?php // Opened by assets/js/templates.js when "Preview" is clicked ?>
 <div class="modal fade" id="ts-template-preview-modal" tabindex="-1" aria-labelledby="ts-template-preview-label" aria-hidden="true">
-    <div class="modal-dialog modal-xl ts-template-preview-dialog">
-        <div class="modal-content">
+    <div class="modal-dialog modal-xl ts-template-preview-dialog" style="height: calc(100vh - 3.5rem);">
+        <div class="modal-content" style="height: 100%;">
             <div class="modal-header">
                 <h5 class="modal-title" id="ts-template-preview-label"><?= Text::_('COM_TICKETSTATION_TEMPLATE_PREVIEW_TITLE'); ?></h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="<?= Text::_('JCLOSE'); ?>"></button>
             </div>
-            <div class="modal-body d-flex flex-column">
+            <div class="modal-body d-flex flex-column p-3" style="min-height: 0;">
                 <p class="mb-3"><span class="text-muted"><?= Text::_('COM_TICKETSTATION_TEMPLATE_MAILSUBJECT'); ?>:</span> <strong id="ts-template-preview-subject"></strong></p>
                 <div id="ts-template-preview-error" class="alert alert-danger d-none" role="alert"><?= Text::_('COM_TICKETSTATION_TEMPLATE_PREVIEW_FAILED'); ?></div>
-                <iframe id="ts-template-preview-frame" class="ts-template-preview-frame" sandbox="" title="<?= Text::_('COM_TICKETSTATION_TEMPLATE_PREVIEW_TITLE'); ?>"></iframe>
+                <iframe id="ts-template-preview-frame" class="ts-template-preview-frame" style="flex: 1 1 auto; width: 100%; min-height: 200px;" sandbox="" title="<?= Text::_('COM_TICKETSTATION_TEMPLATE_PREVIEW_TITLE'); ?>"></iframe>
                 <p class="small text-muted mb-0 mt-3"><?= Text::_('COM_TICKETSTATION_TEMPLATE_PREVIEW_NOTE'); ?></p>
             </div>
             <div class="modal-footer">
