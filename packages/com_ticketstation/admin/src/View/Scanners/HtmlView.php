@@ -17,6 +17,7 @@ use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\View\HtmlView as BaseHtmlView;
 use Joomla\CMS\Toolbar\ToolbarHelper;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Docs;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\YesNoSwitch;
 
 /**
  * Ticketstation Scanners Admin View
@@ -77,28 +78,15 @@ class HtmlView extends BaseHtmlView
         $lists['users'] = HTMLHelper::_('select.genericlist',  $users, 'userid', 'class="form-select required" required','id',
             'name', !empty($data->userid) ? $data->userid : '' );
 
-        $yesno = array(
-            '1' => array('value' => '1', 'text' => Text::_( 'COM_TICKETSTATION_YES' )),
-            '0' => array('value' => '0', 'text' => Text::_( 'COM_TICKETSTATION_NO' )),
-        );
+        $lists['totals_visible'] = YesNoSwitch::render('totals_visible', 'totals_visible', Text::_('COM_TICKETSTATION_SCANNING_TOTALS_VISIBLE'),
+            $data->totals_visible ?? 0);
 
-        $lists['totals_visible'] = HTMLHelper::_('select.genericList', $yesno, 'totals_visible', ' class="form-select" ','value', 'text',
-            isset($data->totals_visible)?$data->totals_visible:0 );
+        $lists['manual_entry'] = YesNoSwitch::render('manual_entry', 'manual_entry', Text::_('COM_TICKETSTATION_SCANNING_MANUAL_ENTRY'),
+            $data->manual_entry ?? 0);
 
-        $lists['manual_entry'] = HTMLHelper::_('select.genericList', $yesno, 'manual_entry', ' class="form-select" ','value', 'text',
-            isset($data->manual_entry)?$data->manual_entry:0 );
-
-        if (!empty($data->events)) {
-            $assigned_events = json_decode($data->events);
-        } else {
-            $assigned_events = 0;
-        }
-
-        if (!empty($data->tickets)) {
-            $assigned_tickets = json_decode($data->tickets);
-        } else {
-            $assigned_tickets = 0;
-        }
+        // The ids stored as JSON, as a clean list of integers (empty for a new scanner)
+        $assigned_events  = array_map('intval', (array) json_decode($data->events ?? '[]'));
+        $assigned_tickets = array_map('intval', (array) json_decode($data->tickets ?? '[]'));
 
         // Prepare API key display - it's a read-only field shown to help configure scanner apps
         $apikey = isset($data->apikey) ? $data->apikey : '';

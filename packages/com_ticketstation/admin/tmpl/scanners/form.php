@@ -12,6 +12,7 @@ use \Joomla\CMS\HTML\HTMLHelper;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\Router\Route;
 use Joomla\CMS\Editor\Editor;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\YesNoSwitch;
 
 // No direct access to this file
 defined('_JEXEC') or die('Restricted Access');
@@ -84,57 +85,61 @@ HTMLHelper::_('behavior.formvalidator');
             <?= Text::_('COM_TICKETSTATION_SCANNING_SELECT_EVENTS_TICKETS') ?>
         </h3>
         <div class="card-body">
+            <style>
+                /* Joomla gives the switch a fixed width of 18rem; shrink it so it fits the list. */
+                #ts-scanner-list .switcher { width: 7rem; }
+                #ts-scanner-list .switcher label { min-width: 2.5rem; }
+            </style>
             <div class="row mb-3">
-                <table class="table" style="max-width: 370px;table-layout: fixed;overflow: hidden;">
+                <table class="table" id="ts-scanner-list" style="max-width: 560px;">
                     <thead>
-                        <th style="width:75%;"><div style="font-size:120%;"><?= Text::_('COM_TICKETSTATION_EVENT'); ?></div><small class="form-text"><?= Text::_('COM_TICKETSTATION_SCANNING_WARNING_EVENT') ?></small></th>
-                        <th></th>
+                        <th><div style="font-size:120%;"><?= Text::_('COM_TICKETSTATION_EVENT'); ?></div><small class="form-text"><?= Text::_('COM_TICKETSTATION_SCANNING_WARNING_EVENT') ?></small></th>
+                        <th style="width: 8rem;"></th>
                     </thead>
-                    <?php
-
-                    for ($i = 0, $n = count($this->events); $i < $n; $i++ ){
-
-                        ## Give give $row the this->item[$i]
-                        $row        = $this->events[$i];
-
-                        ?>
+                    <?php foreach ($this->events as $row) { ?>
                         <tr>
                             <td>
-                                <?php echo $row->eventname; ?> (<?php echo $row->eventcode; ?>)
+                                <?= $this->escape($row->eventname); ?> (<?= $this->escape($row->eventcode); ?>)
                             </td>
                             <td>
-                                <input type="checkbox" id="ev<?php echo $i; ?>" name="event[]" value="<?php echo $row->eventid ?>" <?php if(!empty($this->data->id)){echo (in_array($row->eventid, $this->assigned_events) ? 'checked' : '');}?>>
+                                <?= YesNoSwitch::render('ev' . (int) $row->eventid, 'event[' . (int) $row->eventid . ']', $row->eventname, in_array((int) $row->eventid, $this->assigned_events, true)); ?>
                             </td>
                         </tr>
-
                     <?php } ?>
-
 
                     <thead>
                     <th><div style="font-size:120%;"><?= Text::_('COM_TICKETSTATION_TICKET'); ?></div><small class="form-text"><?= Text::_('COM_TICKETSTATION_SCANNING_NOTE_PARENT_TICKET') ?></small></th>
                     <th></th>
                     </thead>
-                    <?php
+                    <?php foreach ($this->tickets as $row) { ?>
+                        <?php
+                        $ticketid = (int) $row->ticketid;
+                        $onNow    = in_array($ticketid, $this->assigned_tickets, true);
 
-                    for ($i = 0, $n = count($this->tickets); $i < $n; $i++ ){
-
-                        ## Give give $row the this->item[$i]
-                        $row        = $this->tickets[$i];
-
+                        // A child ticket follows its parent: it has no switch, only a note that shows while its parent is on.
+                        // A child that was assigned on its own before, without its parent, keeps its switch so that
+                        // setting isn't dropped unseen.
+                        $parentOn      = $row->child && in_array((int) $row->parent, $this->assigned_tickets, true);
+                        $followsParent = $row->child && (!$onNow || $parentOn);
                         ?>
                         <tr>
                             <?php // A child ticket sits indented below its parent, as in the Tickets list ?>
                             <td<?= $row->child ? ' class="ps-4"' : ''; ?>>
-                                <label for="ti<?= $i; ?>">
-                                    <?php if ($row->child) { ?>
-                                        &ndash; <?= $this->escape($row->ticketname); ?>
-                                    <?php } else { ?>
-                                        <?= $this->escape($row->eventcode); ?> | <?= $row->parentname ? $this->escape($row->parentname) . ' &ndash; ' : ''; ?><?= $this->escape($row->ticketname); ?>
-                                    <?php } ?>
-                                </label>
+                                <?php if ($row->child) { ?>
+                                    &ndash; <?= $this->escape($row->ticketname); ?>
+                                <?php } else { ?>
+                                    <?= $this->escape($row->eventcode); ?> | <?= $row->parentname ? $this->escape($row->parentname) . ' &ndash; ' : ''; ?><?= $this->escape($row->ticketname); ?>
+                                <?php } ?>
                             </td>
                             <td>
-                                <input type="checkbox" id="ti<?php echo $i; ?>" name="ticket[]" value="<?php echo $row->ticketid ?>" <?php if(!empty($this->data->id)){echo (in_array($row->ticketid, $this->assigned_tickets) ? 'checked' : '');}?>>
+                                <?php if ($followsParent) { ?>
+                                    <span class="badge bg-success ts-child-included" data-parent="ti<?= (int) $row->parent; ?>"<?= $parentOn ? '' : ' hidden'; ?>><?= Text::_('COM_TICKETSTATION_SCANNING_CHILD_INCLUDED'); ?></span>
+                                <?php } else { ?>
+                                    <?= YesNoSwitch::render('ti' . $ticketid, 'ticket[' . $ticketid . ']', $row->ticketname, $onNow); ?>
+                                    <?php if ($row->child) { ?>
+                                        <small class="form-text d-block"><?= Text::_('COM_TICKETSTATION_SCANNING_CHILD_SEPARATE'); ?></small>
+                                    <?php } ?>
+                                <?php } ?>
                             </td>
                         </tr>
 
@@ -142,6 +147,21 @@ HTMLHelper::_('behavior.formvalidator');
 
                 </table>
             </div>
+            <script>
+                // The note of a child ticket shows while its parent is switched on
+                document.addEventListener('DOMContentLoaded', function () {
+                    document.querySelectorAll('.ts-child-included').forEach(function (note) {
+                        var parent = document.getElementById(note.dataset.parent);
+
+                        if (parent) {
+                            parent.addEventListener('change', function () {
+                                var checked = parent.querySelector('input:checked');
+                                note.hidden = !checked || checked.value !== '1';
+                            });
+                        }
+                    });
+                });
+            </script>
         </div>
     </div>
 

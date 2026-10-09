@@ -105,6 +105,34 @@ class Scanner
     }
 
     /**
+     * The given tickets without the children of another ticket in the list: an assigned parent
+     * already covers them, so the scanner only stores the parent.
+     *
+     * @param   int[]  $ticketids
+     *
+     * @return  int[]
+     */
+    public static function withoutCoveredChildren(array $ticketids): array
+    {
+        $ticketids = array_values(array_unique(array_map('intval', $ticketids)));
+
+        if (!$ticketids) {
+            return [];
+        }
+
+        $db    = Factory::getContainer()->get('DatabaseDriver');
+        $query = $db->getQuery(true)
+            ->select($db->quoteName('ticketid'))
+            ->from($db->quoteName('#__ticketstation_tickets'))
+            ->whereIn($db->quoteName('ticketid'), $ticketids)
+            ->whereIn($db->quoteName('parent'), $ticketids);
+
+        $db->setQuery($query);
+
+        return array_values(array_diff($ticketids, array_map('intval', $db->loadColumn())));
+    }
+
+    /**
      * The ticket followed by its child tickets: everything that scanning for this ticket accepts
      * and counts.
      *

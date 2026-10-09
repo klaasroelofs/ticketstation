@@ -16,6 +16,7 @@ use Joomla\CMS\Language\Text;
 use Joomla\CMS\Uri\Uri;
 use Joomla\Utilities\ArrayHelper;
 use Ticketstation\Component\Ticketstation\Administrator\Controller\Mixin\RegisterControllerTasks;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\Scanner;
 use Joomla\CMS\Application\CMSApplication;
 use Joomla\CMS\MVC\Controller\BaseController;
 use Joomla\CMS\MVC\Factory\MVCFactoryInterface;
@@ -96,8 +97,16 @@ class ScannersController extends BaseController
         $model	    = $this->getModel('scanners');
         $data   	= $jinput->post->getArray();
 
-        $data['events'] = json_encode($this->input->get('event', array(), 'int'));
-        $data['tickets'] = json_encode($this->input->get('ticket', array(), 'int'));
+        // The form posts a 0/1 switch per event and ticket, as event[<id>] and ticket[<id>]
+        $chosen = function (string $field) {
+            return array_map('intval', array_keys(array_filter(
+                (array) $this->input->get($field, array(), 'array'),
+                function ($on) { return (int) $on === 1; }
+            )));
+        };
+
+        $data['events']  = json_encode($chosen('event'));
+        $data['tickets'] = json_encode(Scanner::withoutCoveredChildren($chosen('ticket')));
 
         // Every scanner needs a user of its own. The form validator already asks for one and the user
         // list leaves out users of other scanners; this also catches a request that skipped both.
