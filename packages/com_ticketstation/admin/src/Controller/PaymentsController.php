@@ -89,7 +89,9 @@ class PaymentsController extends BaseController
 
         $this->setRedirect(
             Uri::base() . 'index.php?option=com_ticketstation',
-            Text::_($on ? 'COM_TICKETSTATION_TESTMODE_SWITCHED_ON' : 'COM_TICKETSTATION_TESTMODE_SWITCHED_OFF')
+            Text::_($on ? 'COM_TICKETSTATION_TESTMODE_SWITCHED_ON' : 'COM_TICKETSTATION_TESTMODE_SWITCHED_OFF'),
+            // Test mode is the state that needs attention (orange), live is the normal one (green).
+            $on ? 'warning' : 'message'
         );
     }
 
