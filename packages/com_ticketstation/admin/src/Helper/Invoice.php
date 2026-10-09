@@ -232,6 +232,7 @@ class Invoice
         $invoice->fees             = $amount->fees;
         $invoice->coupon_code      = $amount->coupon !== '' ? $amount->coupon : null;
         $invoice->payment_provider = ! empty($transaction->type) ? $transaction->type : null;
+        $invoice->test             = TestData::ofOrder($ordercode);
 
         if ( ! $db->insertObject('#__ticketstation_invoices', $invoice))
         {

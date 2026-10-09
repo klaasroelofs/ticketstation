@@ -255,7 +255,8 @@ class Refund
             return null;
         }
 
-        $provider = ProviderRegistry::get((string) $attempt->provider);
+        ## The payment sits in the environment of its order: a test order is refunded in the provider's test environment.
+        $provider = ProviderRegistry::get((string) $attempt->provider, TestData::isTestOrder($ordercode));
 
         if ($provider === null) {
             throw new \RuntimeException(Text::sprintf('COM_TICKETSTATION_REFUND_ERROR_PROVIDER_UNAVAILABLE', (string) $attempt->provider));

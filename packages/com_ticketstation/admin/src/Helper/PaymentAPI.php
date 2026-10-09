@@ -38,6 +38,8 @@ class PaymentAPI
         $transaction->userid = (int)$userid;
         $transaction->ordercode = (int)$this->ordercode;
         $transaction->processed = 0;
+        // The payment is made in the mode of its order, whatever mode the shop is in by the time it is reported.
+        $transaction->test = TestData::ofOrder($this->ordercode);
         // Generate a cryptographically random token for this payment attempt (not guessable from ordercode)
         $transaction->return_token = bin2hex(random_bytes(32));
 
@@ -212,6 +214,7 @@ class PaymentAPI
         $transaction->type = $type;
         $transaction->provider = $provider;
         $transaction->orderid = (int)$this->ordercode;
+        $transaction->test = TestData::ofOrder($this->ordercode);
 
         $result = Factory::getContainer()->get('DatabaseDriver')
             ->insertObject('#__ticketstation_transactions', $transaction);

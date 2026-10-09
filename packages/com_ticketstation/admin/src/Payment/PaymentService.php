@@ -19,6 +19,7 @@ use Ticketstation\Component\Ticketstation\Administrator\Helper\PaymentCurrencies
 use Ticketstation\Component\Ticketstation\Administrator\Helper\PaymentAPI;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Refund;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Shop;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\TestData;
 
 defined('_JEXEC') or die;
 
@@ -68,6 +69,11 @@ final class PaymentService
         ## Never real money in test mode (PaymentStarter tells the customer why before it gets here).
         if (Shop::testPaymentsBlocked()) {
             throw new PaymentException(Text::sprintf('COM_TICKETSTATION_TESTMODE_NO_TEST_ENVIRONMENT', $provider->getTitle()));
+        }
+
+        ## An order is paid in the mode it was made in (PaymentStarter tells the customer why before it gets here).
+        if (TestData::ofOrder($ordercode) !== TestData::mode()) {
+            throw new PaymentException(Text::_(TestData::mode() === 1 ? 'COM_TICKETSTATION_TESTMODE_ORDER_IS_LIVE' : 'COM_TICKETSTATION_TESTMODE_ORDER_IS_TEST'));
         }
 
         $db = \Joomla\CMS\Factory::getContainer()->get('DatabaseDriver');
@@ -157,18 +163,28 @@ final class PaymentService
     {
         PaymentLog::add('IPN script called by ' . $provider->getTitle());
 
-        try {
-            $update = $provider->handleWebhook($input, $rawBody);
-        } catch (WebhookRejectedException $e) {
-            // Not genuine or incomplete: repeating it can't help.
-            PaymentLog::add($provider->getTitle() . ' webhook rejected: ' . $e->getMessage());
+        $update = self::readWebhook($provider, $input, $rawBody);
 
-            return [400, 'The report was not accepted.'];
-        } catch (\RuntimeException $e) {
-            // The service can't be reached, or has an error: answering with an error makes it call again.
-            PaymentLog::add($provider->getTitle() . ' error while fetching payment: ' . $e->getMessage());
+        ## The report may be about a payment made in the other environment: a test payment that is
+        ## reported after the shop went live, or the other way round. Its credentials and signature
+        ## are those of that environment, so ask the provider as it works there.
+        if (is_array($update) && $provider instanceof TestModeAwareInterface) {
+            $other = ProviderRegistry::get($provider->getId(), !$provider->isTestMode());
 
-            return [503, 'Unable to retrieve payment from ' . $provider->getTitle() . '.'];
+            if ($other instanceof TestModeAwareInterface && $other->isTestMode() !== $provider->isTestMode()) {
+                $second = self::readWebhook($other, $input, $rawBody);
+
+                if (!is_array($second)) {
+                    PaymentLog::add($provider->getTitle() . ' report is about a payment in the ' . ($other->isTestMode() ? 'test' : 'live') . ' environment.');
+
+                    $provider = $other;
+                    $update   = $second;
+                }
+            }
+        }
+
+        if (is_array($update)) {
+            return $update;
         }
 
         if ($update->state === PaymentUpdate::IGNORE) {
@@ -179,6 +195,15 @@ final class PaymentService
 
         $order_id = $update->ordercode;
         PaymentLog::add('Sent ordercode: ' . $order_id);
+
+        ## A payment is only processed for an order of the same mode: test money never completes a live
+        ## order, and a test order is never completed by a live payment.
+        if ($provider instanceof TestModeAwareInterface && (int) $provider->isTestMode() !== TestData::ofOrder($order_id)) {
+            PaymentLog::add('Payment ' . $update->providerPaymentId . ' was made in the ' . ($provider->isTestMode() ? 'test' : 'live') . ' environment, but order ' . $order_id . ' was made in ' . (TestData::isTestOrder($order_id) ? 'test' : 'live') . ' mode. Not processed.');
+            History::log($order_id, 'payment_wrong_mode', 'A ' . ($provider->isTestMode() ? 'test' : 'live') . ' payment (transaction ' . $update->providerPaymentId . ') was reported for an order made in ' . (TestData::isTestOrder($order_id) ? 'test' : 'live') . ' mode; it was not processed', ['provider_payment_id' => $update->providerPaymentId]);
+
+            return [200, ''];
+        }
 
         ## Start the API to process everything.
         $newPayment = new PaymentAPI($order_id);
@@ -313,6 +338,28 @@ final class PaymentService
         }
 
         return [200, ''];
+    }
+
+    /**
+     * Asks a provider what a call is about.
+     *
+     * @return  PaymentUpdate|array  What the call is about, or [HTTP status, text to answer with] when it can't be read.
+     */
+    private static function readWebhook(PaymentProviderInterface $provider, Input $input, string $rawBody)
+    {
+        try {
+            return $provider->handleWebhook($input, $rawBody);
+        } catch (WebhookRejectedException $e) {
+            // Not genuine or incomplete: repeating it can't help.
+            PaymentLog::add($provider->getTitle() . ' webhook rejected: ' . $e->getMessage());
+
+            return [400, 'The report was not accepted.'];
+        } catch (\RuntimeException $e) {
+            // The service can't be reached, or has an error: answering with an error makes it call again.
+            PaymentLog::add($provider->getTitle() . ' error while fetching payment: ' . $e->getMessage());
+
+            return [503, 'Unable to retrieve payment from ' . $provider->getTitle() . '.'];
+        }
     }
 
     /**

@@ -250,6 +250,7 @@ class WaitingList
                 $process->price_excluding_vat = $pricing['price_excluding_vat'];
                 $process->userid 		= $row->userid;
                 $process->ordercode 	= $row->ordercode;
+                $process->test          = (int) $row->test;
                 $process->eventid		= $row->eventid;
                 $process->ticketid		= $row->ticketid;
                 $process->paid			= 3;

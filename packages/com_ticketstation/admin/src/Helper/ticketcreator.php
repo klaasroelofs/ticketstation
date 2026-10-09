@@ -51,10 +51,18 @@ class ticketcreator
      */
     function doPDF($newCode = false, $into = null)
     {
-        ## Is the shop in test mode? Then the tickets are recognisable test tickets.
+        ## Was the order made in test mode? Then the tickets are recognisable test tickets, whatever
+        ## mode the shop is in now.
         $db = Factory::getContainer()->get('DatabaseDriver');
 
-        $mollie_test = Shop::inTestMode() ? 1 : 0;
+        $query = $db->getQuery(true)
+            ->select($db->quoteName('test'))
+            ->from($db->quoteName('#__ticketstation_orders'))
+            ->where($db->quoteName('orderid') . ' = ' . (int) $this->eid);
+
+        $db->setQuery($query);
+
+        $mollie_test = (int) $db->loadResult() === 1 ? 1 : 0;
 
         ## Load Ticketstation config
         $query = $db->getQuery(true);

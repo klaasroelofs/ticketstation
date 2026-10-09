@@ -170,6 +170,7 @@ CREATE TABLE IF NOT EXISTS `#__ticketstation_transactions` (
   `type` varchar(50) NOT NULL,
   `provider` varchar(50) NOT NULL DEFAULT '',
   `orderid` int(10) NOT NULL DEFAULT '0',
+  `test` tinyint(1) NOT NULL DEFAULT 0,
   PRIMARY KEY (`pid`)
 )  ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 DEFAULT COLLATE=utf8mb4_unicode_ci;
 
@@ -188,6 +189,7 @@ CREATE TABLE IF NOT EXISTS `#__ticketstation_transactions_temp` (
   `errorcode` tinyint(1) DEFAULT NULL,
   `message` varchar(255) DEFAULT NULL,
   `amounts` varchar(255) DEFAULT NULL,
+  `test` tinyint(1) NOT NULL DEFAULT 0,
   PRIMARY KEY (`id`),
   UNIQUE KEY `idx_return_token` (`return_token`)
 )  DEFAULT CHARSET=utf8;
@@ -281,6 +283,7 @@ CREATE TABLE IF NOT EXISTS `#__ticketstation_orders` (
   `validation_token` varchar(64) NOT NULL,
   `refund_state` tinyint(1) NOT NULL DEFAULT '0',
   `refund_id` int(11) NOT NULL DEFAULT '0',
+  `test` tinyint(1) NOT NULL DEFAULT 0,
   PRIMARY KEY (`orderid`),
   KEY `ordercode` (`ordercode`),
   KEY `idx_barcode` (`barcode`),
@@ -396,6 +399,7 @@ CREATE TABLE IF NOT EXISTS `#__ticketstation_waitinglist` (
   `requires_seat` tinyint(1) NOT NULL,
   `date_sent` datetime DEFAULT NULL,
   `validation_token` varchar(64) NOT NULL,
+  `test` tinyint(1) NOT NULL DEFAULT 0,
   PRIMARY KEY (`id`),
   UNIQUE KEY `idx_validation_token_waitinglist` (`validation_token`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 DEFAULT COLLATE=utf8mb4_unicode_ci;
@@ -583,6 +587,7 @@ CREATE TABLE IF NOT EXISTS `#__ticketstation_invoices` (
   `payment_provider` varchar(50) DEFAULT NULL,
   `sent` tinyint(1) NOT NULL DEFAULT '0',
   `date_sent` datetime DEFAULT NULL,
+  `test` tinyint(1) NOT NULL DEFAULT 0,
   PRIMARY KEY (`invoiceid`),
   KEY `ordercode` (`ordercode`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 DEFAULT COLLATE=utf8mb4_unicode_ci;

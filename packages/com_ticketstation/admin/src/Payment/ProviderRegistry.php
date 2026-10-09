@@ -29,8 +29,8 @@ final class ProviderRegistry
     /** The plugin group providers live in. */
     public const GROUP = 'ticketstationpayment';
 
-    /** @var PaymentProviderInterface[]|null  id => provider */
-    private static ?array $providers = null;
+    /** @var array<int, PaymentProviderInterface[]>  test mode (0 or 1) => id => provider */
+    private static array $providers = [];
 
     /** @var object|null  payment_provider, payment_currency and test_mode */
     private static ?object $settings = null;
@@ -38,29 +38,35 @@ final class ProviderRegistry
     /**
      * All providers, by id.
      *
+     * @param   bool|null  $testMode  The environment the providers work in; null for the mode the
+     *                                shop is in. A payment is always handled in the environment it
+     *                                was made in, which is the mode of its order (TestData::ofOrder()).
+     *
      * @return  PaymentProviderInterface[]
      */
-    public static function all(): array
+    public static function all(?bool $testMode = null): array
     {
-        if (self::$providers === null) {
-            self::$providers = [];
+        $mode = (int) ($testMode ?? self::testMode());
+
+        if (!isset(self::$providers[$mode])) {
+            self::$providers[$mode] = [];
 
             PluginHelper::importPlugin(self::GROUP);
 
-            $event = new CollectProvidersEvent(self::testMode());
+            $event = new CollectProvidersEvent($mode === 1);
             Factory::getApplication()->getDispatcher()->dispatch(CollectProvidersEvent::NAME, $event);
 
             foreach ($event->getProviders() as $provider) {
-                self::$providers[$provider->getId()] = $provider;
+                self::$providers[$mode][$provider->getId()] = $provider;
             }
         }
 
-        return self::$providers;
+        return self::$providers[$mode];
     }
 
-    public static function get(string $id): ?PaymentProviderInterface
+    public static function get(string $id, ?bool $testMode = null): ?PaymentProviderInterface
     {
-        return self::all()[$id] ?? null;
+        return self::all($testMode)[$id] ?? null;
     }
 
     /**
@@ -133,7 +139,7 @@ final class ProviderRegistry
      */
     public static function reset(): void
     {
-        self::$providers = null;
+        self::$providers = [];
         self::$settings  = null;
     }
 

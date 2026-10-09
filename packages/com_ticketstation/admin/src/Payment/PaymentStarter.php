@@ -15,6 +15,7 @@ use Joomla\CMS\Router\Route;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\OrderTotals;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\PaymentAPI;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Shop;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\TestData;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\TicketstationFunctions;
 
 defined('_JEXEC') or die;
@@ -94,6 +95,14 @@ final class PaymentStarter
         if ($orderamount > 0 && !Shop::paymentsOn())
         {
             $app->enqueueMessage(Text::_('COM_TICKETSTATION_ONLINE_PAYMENTS_OFF_ORDER'), 'error');
+            $app->redirect(self::url('cart'));
+        }
+
+        ## An order is paid in the mode it was made in: a test order never takes live money, and a live
+        ## order is never "paid" with test money (the shop was switched between test and live meanwhile).
+        if ($orderamount != 0 && TestData::ofOrder($ordercode) !== TestData::mode())
+        {
+            $app->enqueueMessage(Text::_(TestData::mode() === 1 ? 'COM_TICKETSTATION_TESTMODE_ORDER_IS_LIVE' : 'COM_TICKETSTATION_TESTMODE_ORDER_IS_TEST'), 'error');
             $app->redirect(self::url('cart'));
         }
 
