@@ -43,7 +43,7 @@ $wa->registerAndUseStyle('ticketstation', Uri::base() . 'components\com_ticketst
                         </td>
                         <th scope="col" class="w-1 text-center"><?php echo Text::_( 'COM_TICKETSTATION_PUBLISHING_STATE' ); ?></th>
                         <th scope="col"><?php echo Text::_( 'COM_TICKETSTATION_TICKETNAME' ); ?></th>
-                        <th scope="col"><?php echo Text::_( 'COM_TICKETSTATION_VENUE' ); ?></th>
+                        <th scope="col" class="d-none d-md-table-cell"><?php echo Text::_( 'COM_TICKETSTATION_VENUE' ); ?></th>
                         <th scope="col" class="text-center"><?php echo Text::_( 'COM_TICKETSTATION_SEATCHARTS' ); ?></th>
                         <th scope="col" class="w-10"></th>
                     </tr>
@@ -73,14 +73,17 @@ $wa->registerAndUseStyle('ticketstation', Uri::base() . 'components\com_ticketst
                                 <strong><?= $row->eventname; ?></strong><br />
                                 <?= $row->ticketname; ?> <small>(<?= $row->ticketcode; ?>)</small>
                             </td>
-                            <td><?= htmlspecialchars((string) $row->venuename, ENT_QUOTES, 'UTF-8'); ?></td>
+                            <td class="d-none d-md-table-cell"><?= htmlspecialchars((string) $row->venuename, ENT_QUOTES, 'UTF-8'); ?></td>
                             <td class="text-center">
                                 <?= (int) $row->seats; ?>
                                 <?php if ($row->sold > 0) { ?><br><small class="text-muted"><?= Text::sprintf('COM_TICKETSTATION_SEATPLANS_SOLD', (int) $row->sold); ?></small><?php } ?>
                             </td>
                             <td class="text-center">
-                                <a href="<?= $link_seatchart; ?>" class="btn btn-primary">
-                                    <?= Text::_( 'COM_TICKETSTATION_SEATPLAN_EDIT' ); ?>
+                                <?php // On a phone only the icon: the button would not fit its text ?>
+                                <a href="<?= $link_seatchart; ?>" class="btn btn-primary" title="<?= $this->escape(Text::_('COM_TICKETSTATION_SEATPLAN_EDIT')); ?>">
+                                    <span class="icon-edit d-md-none" aria-hidden="true"></span>
+                                    <span class="d-none d-md-inline"><?= Text::_( 'COM_TICKETSTATION_SEATPLAN_EDIT' ); ?></span>
+                                    <span class="visually-hidden d-md-none"><?= Text::_( 'COM_TICKETSTATION_SEATPLAN_EDIT' ); ?></span>
                                 </a>
                             </td>
                         </tr>

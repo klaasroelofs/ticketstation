@@ -18,6 +18,12 @@
         overflow-wrap: anywhere;
     }
 
+    /* But a button keeps its text together; it would otherwise break letter by letter. */
+    body.com_ticketstation table.itemList td .btn {
+        overflow-wrap: normal;
+        white-space: nowrap;
+    }
+
     /* A list with many pages wraps its page links instead of running off the screen. */
     body.com_ticketstation ul.pagination {
         flex-wrap: wrap;
