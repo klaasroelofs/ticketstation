@@ -111,8 +111,13 @@ $contactLink  = '<a href="mailto:' . $contactEmail . '">' . $contactEmail . '</a
         <section class="ts-card ts-result ts-result--success">
             <h2 class="ts-card__title"><?php echo Text::_('COM_TICKETSTATION_PAYMENTRESULT_ORDER_PROCESSED'); ?></h2>
             <p><?php echo Text::sprintf('COM_TICKETSTATION_PAYMENTRESULT_ORDER_NUMBER', '<strong class="ts-order-code">' . $this->ordercode . '</strong>'); ?></p>
-            <p><?php echo Text::sprintf('COM_TICKETSTATION_PAYMENTRESULT_MAIL_SOON', '<strong>' . htmlspecialchars($this->data[0]->emailaddress, ENT_QUOTES, 'UTF-8') . '</strong>'); ?></p>
-            <p><?php echo Text::sprintf('COM_TICKETSTATION_PAYMENTRESULT_CHECK_SPAM', $contactLink); ?></p>
+            <?php if ($this->ticketsSent) { ?>
+                <p><?php echo Text::sprintf('COM_TICKETSTATION_PAYMENTRESULT_MAIL_SOON', '<strong>' . htmlspecialchars($this->data[0]->emailaddress, ENT_QUOTES, 'UTF-8') . '</strong>'); ?></p>
+                <p><?php echo Text::sprintf('COM_TICKETSTATION_PAYMENTRESULT_CHECK_SPAM', $contactLink); ?></p>
+            <?php } else { ?>
+                <p><?php echo Text::sprintf('COM_TICKETSTATION_PAYMENTRESULT_MAIL_LATER', '<strong>' . htmlspecialchars($this->data[0]->emailaddress, ENT_QUOTES, 'UTF-8') . '</strong>'); ?></p>
+                <p><?php echo Text::sprintf('COM_TICKETSTATION_PAYMENTRESULT_QUESTIONS', $contactLink); ?></p>
+            <?php } ?>
 
             <?php if ($this->hasCalendar) {
                 ## Unrouted, like the other task links: the SEF router would drop the order parameter
@@ -138,6 +143,7 @@ $contactLink  = '<a href="mailto:' . $contactEmail . '">' . $contactEmail . '</a
         $lost_notice   = Text::sprintf('COM_TICKETSTATION_PAYMENTRESULT_DOWNLOADED', '<a href="' . $lost_link . '">' . Text::_('COM_TICKETSTATION_PAYMENTRESULT_EMAIL_AGAIN') . '</a>');
         ?>
 
+        <?php if ($this->ticketsSent) { ?>
         <section class="ts-card ts-download" id="ts-download">
             <h2 class="ts-card__title"><?php echo Text::_('COM_TICKETSTATION_PAYMENTRESULT_DOWNLOAD'); ?></h2>
 
@@ -155,6 +161,7 @@ $contactLink  = '<a href="mailto:' . $contactEmail . '">' . $contactEmail . '</a
 
             <p class="ts-download__done"<?php echo $downloaded ? '' : ' hidden'; ?>><?php echo $lost_notice; ?></p>
         </section>
+        <?php } ?>
 
         <?php if ($this->walletButtons !== '') { ?>
             <section class="ts-card ts-wallet" id="ts-wallet">
@@ -163,7 +170,7 @@ $contactLink  = '<a href="mailto:' . $contactEmail . '">' . $contactEmail . '</a
             </section>
         <?php } ?>
 
-        <?php if (!$downloaded) { ?>
+        <?php if ($this->ticketsSent && !$downloaded) { ?>
             <script>
                 // The tickets can be downloaded once: after the click, say where to get them again.
                 document.getElementById('download_button').addEventListener('click', function () {

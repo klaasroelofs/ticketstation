@@ -23,6 +23,7 @@ use Ticketstation\Component\Ticketstation\Administrator\Helper\eTicketsMessage;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Tickets;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\PaymentAPI;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\TicketstationFunctions;
+use Ticketstation\Component\Ticketstation\Administrator\Payment\PaymentService;
 use Ticketstation\Component\Ticketstation\Site\View\Paymentresult\HtmlView;
 
 /**
@@ -57,6 +58,14 @@ class PaymentresultController extends BaseController
         if ($authorized_ordercode === null || (int) $authorized_ordercode !== $ordercode)
         {
             exit(Text::sprintf('COM_TICKETSTATION_DOWNLOAD_NOT_AUTHORIZED', (new Config)->getContactEmail()));
+        }
+
+        // With "Send tickets directly" off the customer doesn't get the tickets here either
+        if (!PaymentService::sendTicketsDirectly())
+        {
+            $itemid = TicketstationFunctions::getSiteItemid();
+            Factory::getApplication()->redirect(Route::_('index.php?option=com_ticketstation&view=paymentresult&ordercode=' . $ordercode . ($itemid ? '&Itemid=' . $itemid : '')));
+            exit();
         }
 
         // Get orderid's from the database.

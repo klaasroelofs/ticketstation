@@ -17,6 +17,7 @@ use Ticketstation\Component\Ticketstation\Administrator\Helper\Calendar;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Config;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\PaymentAPI;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Wallet;
+use Ticketstation\Component\Ticketstation\Administrator\Payment\PaymentService;
 
 
 
@@ -66,14 +67,19 @@ class HtmlView extends BaseHtmlView {
             // "Add to calendar" only when the order has dated events
             $this->hasCalendar = Calendar::events($ordercode) !== [];
 
+            // With "Send tickets directly" off the tickets are not handed out here: no email is
+            // announced, and no download or wallet buttons (the Box Office sends them later)
+            $this->ticketsSent = PaymentService::sendTicketsDirectly();
+
             // "Add to Apple/Google Wallet" once the order is paid and its tickets exist
-            $this->walletButtons = $this->unpaid->total > 0
+            $this->walletButtons = $this->unpaid->total > 0 || !$this->ticketsSent
                 ? ''
                 : Wallet::buttons($ordercode, false, Factory::getApplication()->getLanguage()->getTag());
         } else {
             $this->data          = [];
             $this->unpaid        = null;
             $this->hasCalendar   = false;
+            $this->ticketsSent   = false;
             $this->walletButtons = '';
         }
 
