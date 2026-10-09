@@ -32,13 +32,14 @@ use Ticketstation\Component\Ticketstation\Administrator\Payment\ProviderNotConfi
 use Ticketstation\Component\Ticketstation\Administrator\Payment\ProviderRefund;
 use Ticketstation\Component\Ticketstation\Administrator\Payment\RefundCapableInterface;
 use Ticketstation\Component\Ticketstation\Administrator\Payment\RefundCheck;
+use Ticketstation\Component\Ticketstation\Administrator\Payment\TestModeAwareInterface;
 use Ticketstation\Plugin\TicketstationPayment\Mollie\Helper\MollieCurrencies;
 use Ticketstation\Plugin\TicketstationPayment\Mollie\Helper\MolliePaymentMethods;
 
 /**
  * Mollie, through Mollie's PHP library. Its settings are the parameters of the plugin.
  */
-final class MollieProvider implements PaymentProviderInterface, RefundCapableInterface, MethodAwareInterface, CurrencyAwareInterface
+final class MollieProvider implements PaymentProviderInterface, RefundCapableInterface, MethodAwareInterface, CurrencyAwareInterface, TestModeAwareInterface
 {
     public const ID = 'mollie';
 
@@ -47,9 +48,15 @@ final class MollieProvider implements PaymentProviderInterface, RefundCapableInt
 
     private Registry $params;
 
-    public function __construct(Registry $params)
+    private bool $testMode;
+
+    /**
+     * @param   bool  $testMode  Whether the shop is in test mode (CollectProvidersEvent::isTestMode()).
+     */
+    public function __construct(Registry $params, bool $testMode = false)
     {
-        $this->params = $params;
+        $this->params   = $params;
+        $this->testMode = $testMode;
     }
 
     public function getId(): string
@@ -67,9 +74,13 @@ final class MollieProvider implements PaymentProviderInterface, RefundCapableInt
         return trim((string) $this->params->get('api_key', '')) !== '';
     }
 
+    /**
+     * Whether Mollie's test API is used: exactly while the shop is in test mode (the switch on the
+     * control panel, passed in by the plugin).
+     */
     public function isTestMode(): bool
     {
-        return $this->params->get('test_mode', 0) == 1;
+        return $this->testMode;
     }
 
     public function marksOrderPendingOnStart(): bool
@@ -82,8 +93,14 @@ final class MollieProvider implements PaymentProviderInterface, RefundCapableInt
         $warnings = [];
         $key      = (string) $this->params->get('api_key', '');
 
+        // The shop is in test mode (the control panel says so): only the test key is used, so a
+        // missing one is the problem. The live key is checked when the shop goes live.
         if ($this->isTestMode()) {
-            $warnings[] = ['key' => 'PLG_TICKETSTATIONPAYMENT_MOLLIE_ATTENTION_TEST', 'level' => 'danger'];
+            if (trim((string) $this->params->get('api_key_test', '')) === '') {
+                $warnings[] = ['key' => 'PLG_TICKETSTATIONPAYMENT_MOLLIE_ATTENTION_TEST_KEY_MISSING', 'level' => 'danger'];
+            }
+
+            return $warnings;
         }
 
         if ($key == '') {

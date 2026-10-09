@@ -13,18 +13,22 @@ defined('_JEXEC') or die('Restricted access');
 
 use Joomla\CMS\Factory;
 use Ticketstation\Component\Ticketstation\Administrator\Payment\ProviderRegistry;
+use Ticketstation\Component\Ticketstation\Administrator\Payment\TestModeAwareInterface;
 
 /**
  * Who may see and order tickets on the website.
  *
- * The payment provider's test mode is for trying the shop out, never for customers: while it is on, only
- * users with the permission "In test mode, order on the website" (Manager and Administrator by default,
- * see admin/access.xml) see tickets and can order them. Anonymous visitors get the same answer as for an unpublished ticket, but still
- * see the events whose sale is about to start (the countdown in the upcoming-events list).
+ * Test mode is for trying the shop out, never for customers. It is one switch for the whole shop
+ * (the control panel); the payment provider follows it, see TestModeAwareInterface. While it is on,
+ * only users with the permission "In test mode, order on the website" (Manager and Administrator by
+ * default, see admin/access.xml) see tickets and can order them. Anonymous visitors get the same
+ * answer as for an unpublished ticket, but still see the events whose sale is about to start (the
+ * countdown in the upcoming-events list).
  *
- * With online payments switched off (Mollie settings) the website only sells free tickets: an
- * order of nothing never goes to Mollie. Paid tickets are sold through Reservations and the
- * Box Office, and the website says so. Test mode doesn't apply then.
+ * With online payments switched off (Payments screen) the website only sells free tickets: an
+ * order of nothing never goes to a payment provider. Paid tickets are sold through Reservations and
+ * the Box Office, and the website says so. Test mode applies then too: the free tickets of a shop in
+ * test mode are test tickets as well.
  */
 class Shop
 {
@@ -39,11 +43,28 @@ class Shop
     }
 
     /**
-     * Whether the payment provider's test mode is on.
+     * Whether the shop is in test mode (the switch on the control panel).
      */
     public static function inTestMode(): bool
     {
-        return self::paymentsOn() && ProviderRegistry::active()->isTestMode();
+        return ProviderRegistry::testMode();
+    }
+
+    /**
+     * Whether the shop is in test mode and the payment provider that takes payments can't take a
+     * test payment: it has no test environment (it does not implement TestModeAwareInterface), or
+     * it does not use it although the shop is in test mode. Paid orders would then cost real money,
+     * so they are not sent to the provider.
+     */
+    public static function testPaymentsBlocked(): bool
+    {
+        if (!self::inTestMode()) {
+            return false;
+        }
+
+        $provider = ProviderRegistry::active();
+
+        return $provider !== null && !($provider instanceof TestModeAwareInterface && $provider->isTestMode());
     }
 
     /**

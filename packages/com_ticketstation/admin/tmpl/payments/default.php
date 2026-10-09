@@ -86,6 +86,20 @@ $off = $this->config->payment_provider === '';
                 </div>
             </div>
 
+            <div class="row mb-3">
+                <div class="col-sm-3 col-form-label">
+                    <?= Text::_('COM_TICKETSTATION_PAYMENTS_TESTMODE') ?>
+                </div>
+                <div class="col-sm-9 pt-2">
+                    <span class="badge <?= $this->testMode ? 'bg-warning text-dark' : 'bg-success'; ?>">
+                        <?= Text::_($this->testMode ? 'COM_TICKETSTATION_PAYMENTS_TESTMODE_ON' : 'COM_TICKETSTATION_PAYMENTS_TESTMODE_OFF') ?>
+                    </span>
+                    <small class="form-text d-block">
+                        <?= Text::sprintf('COM_TICKETSTATION_PAYMENTS_TESTMODE_DESC', '<a href="' . Route::_('index.php?option=com_ticketstation') . '">' . Text::_('COM_TICKETSTATION_VIEW_CPANEL_TITLE_SHORT') . '</a>') ?>
+                    </small>
+                </div>
+            </div>
+
         </div>
     </div>
 

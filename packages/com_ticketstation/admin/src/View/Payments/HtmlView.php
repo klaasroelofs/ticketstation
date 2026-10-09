@@ -40,6 +40,9 @@ class HtmlView extends BaseHtmlView
     /** @var bool  Whether the chosen provider's plugin is off or gone. */
     public $providerMissing = false;
 
+    /** @var bool  Whether the shop is in test mode (switched on the control panel). */
+    public $testMode = false;
+
     /** @var bool  Whether to advise the admin to show prices without decimals. */
     public $decimalsHint = false;
 
@@ -60,6 +63,8 @@ class HtmlView extends BaseHtmlView
         $this->config  = $model->getData();
         $this->plugins = $model->getPlugins();
         $this->pending = $model->getPending();
+
+        $this->testMode = ProviderRegistry::testMode();
 
         // A currency without decimals shows prices without them only when Configuration > Prices says so.
         $this->decimalsHint = PaymentCurrencies::digits($this->config->payment_currency) === 0

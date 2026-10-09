@@ -18,6 +18,7 @@ use Ticketstation\Component\Ticketstation\Administrator\Helper\OrderTotals;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\PaymentCurrencies;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\PaymentAPI;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Refund;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\Shop;
 
 defined('_JEXEC') or die;
 
@@ -64,6 +65,11 @@ final class PaymentService
      */
     public static function start(PaymentProviderInterface $provider, int $ordercode, float $orderamount, ?string $method = null): string
     {
+        ## Never real money in test mode (PaymentStarter tells the customer why before it gets here).
+        if (Shop::testPaymentsBlocked()) {
+            throw new PaymentException(Text::sprintf('COM_TICKETSTATION_TESTMODE_NO_TEST_ENVIRONMENT', $provider->getTitle()));
+        }
+
         $db = \Joomla\CMS\Factory::getContainer()->get('DatabaseDriver');
 
         ## Force total of the order in this format: the decimals of the currency, a point.

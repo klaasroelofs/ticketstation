@@ -140,6 +140,23 @@ class PaymentsModel extends BaseDatabaseModel
     }
 
     /**
+     * Switches the whole shop into or out of test mode. The payment provider follows: its plugin
+     * gets the state in the CollectProvidersEvent and uses its test or live environment.
+     */
+    public function setTestMode(bool $on): void
+    {
+        $db    = $this->getDatabase();
+        $query = $db->getQuery(true)
+            ->update($db->quoteName('#__ticketstation_config'))
+            ->set($db->quoteName('test_mode') . ' = ' . ($on ? 1 : 0))
+            ->where($db->quoteName('configid') . ' = 1');
+
+        $db->setQuery($query)->execute();
+
+        ProviderRegistry::reset();
+    }
+
+    /**
      * Switches a payment plugin on or off, as Joomla's own plugin manager does.
      *
      * @throws  \RuntimeException

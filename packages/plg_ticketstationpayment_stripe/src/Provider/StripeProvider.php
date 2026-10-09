@@ -27,6 +27,7 @@ use Ticketstation\Component\Ticketstation\Administrator\Payment\ProviderNotConfi
 use Ticketstation\Component\Ticketstation\Administrator\Payment\ProviderRefund;
 use Ticketstation\Component\Ticketstation\Administrator\Payment\RefundCapableInterface;
 use Ticketstation\Component\Ticketstation\Administrator\Payment\RefundCheck;
+use Ticketstation\Component\Ticketstation\Administrator\Payment\TestModeAwareInterface;
 use Ticketstation\Component\Ticketstation\Administrator\Payment\WebhookRejectedException;
 use Ticketstation\Plugin\TicketstationPayment\Stripe\Api\StripeClient;
 use Ticketstation\Plugin\TicketstationPayment\Stripe\Api\StripeNotFoundException;
@@ -42,7 +43,7 @@ use Ticketstation\Plugin\TicketstationPayment\Stripe\Helper\StripeMethods;
  * to. Starting a payment only knows the Checkout Session ("cs_..."); the webhook that reports the
  * payment carries the PaymentIntent, and that is what Ticketstation stores.
  */
-final class StripeProvider implements PaymentProviderInterface, RefundCapableInterface, CurrencyAwareInterface, MethodAwareInterface
+final class StripeProvider implements PaymentProviderInterface, RefundCapableInterface, CurrencyAwareInterface, MethodAwareInterface, TestModeAwareInterface
 {
     public const ID = 'stripe';
 
@@ -51,14 +52,18 @@ final class StripeProvider implements PaymentProviderInterface, RefundCapableInt
 
     private Registry $params;
 
+    private bool $testMode;
+
     private ?\Closure $transport;
 
     /**
+     * @param   bool           $testMode   Whether the shop is in test mode (CollectProvidersEvent::isTestMode()).
      * @param   \Closure|null  $transport  Replaces the HTTP call to Stripe (see StripeClient), for tests.
      */
-    public function __construct(Registry $params, ?\Closure $transport = null)
+    public function __construct(Registry $params, bool $testMode = false, ?\Closure $transport = null)
     {
         $this->params    = $params;
+        $this->testMode  = $testMode;
         $this->transport = $transport;
     }
 
@@ -78,9 +83,13 @@ final class StripeProvider implements PaymentProviderInterface, RefundCapableInt
             && $this->webhookSecret(false) !== '';
     }
 
+    /**
+     * Whether Stripe's test environment is used: exactly while the shop is in test mode (the
+     * switch on the control panel, passed in by the plugin).
+     */
     public function isTestMode(): bool
     {
-        return $this->params->get('test_mode', 0) == 1;
+        return $this->testMode;
     }
 
     public function marksOrderPendingOnStart(): bool
@@ -94,7 +103,10 @@ final class StripeProvider implements PaymentProviderInterface, RefundCapableInt
         $test     = $this->isTestMode();
 
         if ($test) {
-            $warnings[] = ['key' => 'PLG_TICKETSTATIONPAYMENT_STRIPE_ATTENTION_TEST', 'level' => 'danger'];
+            // The shop is in test mode (the control panel says so): only the test key is used.
+            if (trim((string) $this->params->get('secret_key_test', '')) === '') {
+                $warnings[] = ['key' => 'PLG_TICKETSTATIONPAYMENT_STRIPE_ATTENTION_TEST_KEY_MISSING', 'level' => 'danger'];
+            }
         } else {
             $key = trim((string) $this->params->get('secret_key', ''));
 

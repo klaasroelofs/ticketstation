@@ -20,8 +20,9 @@ defined('_JEXEC') or die;
  *
  * Providers come from the enabled plugins of the group "ticketstationpayment": each one adds its
  * provider to the CollectProvidersEvent. A plugin that is switched off or uninstalled offers no
- * provider. Which provider takes new payments, and the currency, are settings of Ticketstation
- * (#__ticketstation_config.payment_provider and payment_currency).
+ * provider. Which provider takes new payments, the currency and test mode are settings of
+ * Ticketstation (#__ticketstation_config.payment_provider, payment_currency and test_mode); test
+ * mode reaches the plugins in the event.
  */
 final class ProviderRegistry
 {
@@ -31,7 +32,7 @@ final class ProviderRegistry
     /** @var PaymentProviderInterface[]|null  id => provider */
     private static ?array $providers = null;
 
-    /** @var object|null  payment_provider and payment_currency */
+    /** @var object|null  payment_provider, payment_currency and test_mode */
     private static ?object $settings = null;
 
     /**
@@ -46,7 +47,7 @@ final class ProviderRegistry
 
             PluginHelper::importPlugin(self::GROUP);
 
-            $event = new CollectProvidersEvent();
+            $event = new CollectProvidersEvent(self::testMode());
             Factory::getApplication()->getDispatcher()->dispatch(CollectProvidersEvent::NAME, $event);
 
             foreach ($event->getProviders() as $provider) {
@@ -83,6 +84,15 @@ final class ProviderRegistry
     }
 
     /**
+     * Whether the shop is in test mode: the switch on the control panel. It decides for the whole
+     * shop, the payment provider included.
+     */
+    public static function testMode(): bool
+    {
+        return (int) self::settings()->test_mode === 1;
+    }
+
+    /**
      * The currency payments are made in, an ISO 4217 code.
      */
     public static function currency(): string
@@ -116,13 +126,13 @@ final class ProviderRegistry
         if (self::$settings === null) {
             $db    = Factory::getContainer()->get('DatabaseDriver');
             $query = $db->getQuery(true)
-                ->select($db->quoteName(['payment_provider', 'payment_currency']))
+                ->select($db->quoteName(['payment_provider', 'payment_currency', 'test_mode']))
                 ->from($db->quoteName('#__ticketstation_config'))
                 ->where($db->quoteName('configid') . ' = 1');
 
             $db->setQuery($query);
 
-            self::$settings = $db->loadObject() ?: (object) ['payment_provider' => '', 'payment_currency' => PaymentCurrencies::DEFAULT];
+            self::$settings = $db->loadObject() ?: (object) ['payment_provider' => '', 'payment_currency' => PaymentCurrencies::DEFAULT, 'test_mode' => 0];
         }
 
         return self::$settings;

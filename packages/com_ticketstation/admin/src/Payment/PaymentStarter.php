@@ -97,6 +97,13 @@ final class PaymentStarter
             $app->redirect(self::url('cart'));
         }
 
+        ## In test mode a provider without a test environment would take real money.
+        if ($orderamount != 0 && Shop::testPaymentsBlocked())
+        {
+            $app->enqueueMessage(Text::sprintf('COM_TICKETSTATION_TESTMODE_NO_TEST_ENVIRONMENT', ProviderRegistry::active()->getTitle()), 'error');
+            $app->redirect(self::url('cart'));
+        }
+
         if ($orderamount != 0)
         {
             ## Only set up the provider when the order actually goes there: a provider without

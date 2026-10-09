@@ -71,6 +71,7 @@ class AclGate
             'save'   => 'core.options',
             'publish'   => 'core.options',
             'unpublish' => 'core.options',
+            'testmode'  => 'core.options',
             'cancel' => self::MANAGE,
         ],
         'templates' => [

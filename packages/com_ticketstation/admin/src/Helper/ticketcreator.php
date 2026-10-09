@@ -21,7 +21,6 @@ use Joomla\CMS\Factory;
 use Joomla\Filesystem\File;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\Uri\Uri;
-use Ticketstation\Component\Ticketstation\Administrator\Payment\ProviderRegistry;
 
 defined('_JEXEC') or die;
 
@@ -52,11 +51,10 @@ class ticketcreator
      */
     function doPDF($newCode = false, $into = null)
     {
-        ## Is the payment provider in test mode? Then the tickets are recognisable test tickets.
+        ## Is the shop in test mode? Then the tickets are recognisable test tickets.
         $db = Factory::getContainer()->get('DatabaseDriver');
 
-        $provider    = ProviderRegistry::active();
-        $mollie_test = $provider !== null && $provider->isTestMode() ? 1 : 0;
+        $mollie_test = Shop::inTestMode() ? 1 : 0;
 
         ## Load Ticketstation config
         $query = $db->getQuery(true);

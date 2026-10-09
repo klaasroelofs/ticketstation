@@ -24,9 +24,25 @@ final class CollectProvidersEvent extends Event
     /** @var PaymentProviderInterface[] */
     private array $providers = [];
 
-    public function __construct()
+    private bool $testMode;
+
+    /**
+     * @param   bool  $testMode  Whether the shop is in test mode (the switch on the control panel).
+     */
+    public function __construct(bool $testMode = false)
     {
         parent::__construct(self::NAME);
+
+        $this->testMode = $testMode;
+    }
+
+    /**
+     * Whether the shop is in test mode. A provider with a test environment (TestModeAwareInterface)
+     * uses it exactly then.
+     */
+    public function isTestMode(): bool
+    {
+        return $this->testMode;
     }
 
     public function addProvider(PaymentProviderInterface $provider): void

@@ -10,6 +10,8 @@
 use Joomla\CMS\Factory;
 use Joomla\CMS\HTML\HTMLHelper;
 use Joomla\CMS\Language\Text;
+use Joomla\CMS\Layout\LayoutHelper;
+use Joomla\CMS\Router\Route;
 use Joomla\CMS\Uri\Uri;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\AclGate;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Price;
@@ -82,6 +84,61 @@ $sum28     = array_sum(array_column($this->dailySales, 'tickets'));
 ?>
 
 <div class="container ticketstation-cpanel">
+
+    <?php // TEST MODE: one switch for the whole shop, the payment provider follows. Small, top right; the explanation is the tooltip. ?>
+    <?php
+    $modeTip = $this->testMode
+        ? trim(Text::_('COM_TICKETSTATION_CPANEL_TESTMODE_ON_TITLE') . '. ' . Text::_('COM_TICKETSTATION_CPANEL_TESTMODE_ON_TEXT')
+            . ($this->providerTitle !== '' && !$this->testBlocked ? ' ' . Text::sprintf('COM_TICKETSTATION_CPANEL_TESTMODE_ON_PROVIDER', $this->providerTitle) : '')
+            . ($this->testBlocked ? ' ' . Text::sprintf('COM_TICKETSTATION_CPANEL_TESTMODE_NO_TEST_ENVIRONMENT', $this->providerTitle) : ''))
+        : Text::_('COM_TICKETSTATION_CPANEL_TESTMODE_OFF_TEXT');
+    $modeTip = strip_tags($modeTip);
+
+    // Joomla's own two-way switch: Live | Test. Changing it asks for confirmation, then saves.
+    $confirms = [
+        '0' => Text::_('COM_TICKETSTATION_CPANEL_TESTMODE_CONFIRM_LIVE'),
+        '1' => Text::_('COM_TICKETSTATION_CPANEL_TESTMODE_CONFIRM_TEST'),
+    ];
+    ?>
+    <div class="d-flex flex-wrap justify-content-end align-items-center gap-2 mb-2">
+        <?php if ($this->testBlocked) { ?>
+            <small class="text-danger"><span class="fa fa-exclamation-triangle me-1" aria-hidden="true"></span><?= Text::sprintf('COM_TICKETSTATION_CPANEL_TESTMODE_NO_TEST_ENVIRONMENT', $this->escape($this->providerTitle)) ?></small>
+        <?php } ?>
+        <form action="<?= Route::_('index.php?option=com_ticketstation&view=payments'); ?>" method="post" id="ts-testmode-form"
+            class="d-inline-flex align-items-center gap-2 m-0" title="<?= $this->escape($modeTip) ?>">
+            <input type="hidden" name="option" value="com_ticketstation" />
+            <input type="hidden" name="controller" value="payments" />
+            <input type="hidden" name="task" value="testmode" />
+            <?= HTMLHelper::_('form.token'); ?>
+            <span class="fa fa-flask <?= $this->testMode ? 'text-warning' : 'text-muted'; ?>" aria-hidden="true"></span>
+            <?= LayoutHelper::render('joomla.form.field.radio.switcher', [
+                'id'            => 'ts-testmode',
+                'name'          => 'test_mode',
+                'label'         => Text::_('COM_TICKETSTATION_PAYMENTS_TESTMODE'),
+                'value'         => $this->testMode ? '1' : '0',
+                'options'       => [
+                    (object) ['value' => '0', 'text' => Text::_('COM_TICKETSTATION_TESTMODE_LIVE')],
+                    (object) ['value' => '1', 'text' => Text::_('COM_TICKETSTATION_TESTMODE_TEST')],
+                ],
+                'onchange'      => 'tsTestModeChanged(event)',
+                'dataAttribute' => '',
+                'class'         => '',
+                'readonly'      => false,
+                'disabled'      => !$this->canSwitchMode,
+            ]) ?>
+        </form>
+    </div>
+    <script>
+        function tsTestModeChanged(event) {
+            var confirms = <?= json_encode($confirms, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP) ?>;
+            if (confirm(confirms[event.target.value])) {
+                document.getElementById('ts-testmode-form').submit();
+            } else {
+                // Back to the saved state.
+                window.location.reload();
+            }
+        }
+    </script>
 
     <?php // URGENT ITEMS ?>
     <?php if ($urgent) { ?>

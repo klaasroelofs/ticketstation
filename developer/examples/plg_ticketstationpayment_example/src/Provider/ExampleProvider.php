@@ -19,6 +19,7 @@ use Ticketstation\Component\Ticketstation\Administrator\Payment\PaymentRedirect;
 use Ticketstation\Component\Ticketstation\Administrator\Payment\PaymentRequest;
 use Ticketstation\Component\Ticketstation\Administrator\Payment\PaymentUpdate;
 use Ticketstation\Component\Ticketstation\Administrator\Payment\ProviderNotConfiguredException;
+use Ticketstation\Component\Ticketstation\Administrator\Payment\TestModeAwareInterface;
 use Ticketstation\Component\Ticketstation\Administrator\Payment\WebhookRejectedException;
 
 /**
@@ -35,16 +36,26 @@ use Ticketstation\Component\Ticketstation\Administrator\Payment\WebhookRejectedE
  * A real provider replaces createPayment() with a call to the payment service, and
  * handleWebhook() with the way that service proves a report is genuine.
  *
- * Only the required interface is implemented. Add RefundCapableInterface to make and report refunds
- * and chargebacks, and MethodAwareInterface to let the customer choose a payment method.
+ * The required interface plus TestModeAwareInterface, as the example pretends its payment service has
+ * a test environment. Leave TestModeAwareInterface out when yours has none: while the shop is in test
+ * mode Ticketstation then does not send paid orders to your provider. Add RefundCapableInterface to
+ * make and report refunds and chargebacks, and MethodAwareInterface to let the customer choose a
+ * payment method.
  */
-final class ExampleProvider implements PaymentProviderInterface
+final class ExampleProvider implements PaymentProviderInterface, TestModeAwareInterface
 {
     private Registry $params;
 
-    public function __construct(Registry $params)
+    private bool $testMode;
+
+    /**
+     * @param   bool  $testMode  Whether the shop is in test mode: the plugin passes on what it got
+     *                           from CollectProvidersEvent::isTestMode().
+     */
+    public function __construct(Registry $params, bool $testMode = false)
     {
-        $this->params = $params;
+        $this->params   = $params;
+        $this->testMode = $testMode;
     }
 
     /**
@@ -69,12 +80,15 @@ final class ExampleProvider implements PaymentProviderInterface
     }
 
     /**
-     * Test mode is for staff: the shop is closed to the public while it is on, and tickets made
-     * in it are marked as test tickets.
+     * Test mode is one switch for the whole shop (on the control panel): the shop is closed to the
+     * public while it is on, and tickets made in it are marked as test tickets. The provider has no
+     * setting for it; it uses its test environment (test keys, a sandbox address) exactly when the
+     * shop is in test mode, and Ticketstation checks that the answer here matches before it starts
+     * a payment.
      */
     public function isTestMode(): bool
     {
-        return $this->params->get('test_mode', 1) == 1;
+        return $this->testMode;
     }
 
     /**
@@ -86,14 +100,14 @@ final class ExampleProvider implements PaymentProviderInterface
     }
 
     /**
-     * Shown under "Needs attention" on the control panel while this provider takes payments.
-     * The keys are language keys of this plugin.
+     * Shown under "Needs attention" on the control panel while this provider takes payments, for
+     * example a missing key of the mode the shop is in. The keys are language keys of this plugin:
+     * [['key' => 'PLG_TICKETSTATIONPAYMENT_EXAMPLE_ATTENTION_KEY', 'level' => 'danger']].
+     * The shop being in test mode is not something to report: the control panel shows that itself.
      */
     public function getHealthWarnings(): array
     {
-        return $this->isTestMode()
-            ? [['key' => 'PLG_TICKETSTATIONPAYMENT_EXAMPLE_ATTENTION_TEST', 'level' => 'danger']]
-            : [];
+        return [];
     }
 
     /**
@@ -109,7 +123,8 @@ final class ExampleProvider implements PaymentProviderInterface
         }
 
         // A real provider would call the payment service here with $request->amount,
-        // $request->currency, $request->ordercode, $request->returnUrl and $request->webhookUrl.
+        // $request->currency, $request->ordercode, $request->returnUrl and $request->webhookUrl;
+        // in test mode ($this->isTestMode()) at the sandbox address and with the test credentials.
         return new PaymentRedirect($request->returnUrl, 'ex_' . $request->ordercode);
     }
 

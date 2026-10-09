@@ -31,6 +31,6 @@ final class Stripe extends CMSPlugin implements SubscriberInterface
 
     public function collect(CollectProvidersEvent $event): void
     {
-        $event->addProvider(new StripeProvider($this->params));
+        $event->addProvider(new StripeProvider($this->params, $event->isTestMode()));
     }
 }

@@ -49,6 +49,14 @@ $bullets = function (string $prefix, int $count) {
             </div>
         </details>
 
+        <details id="docs-payments-testmode" class="mb-3 border rounded p-3">
+            <summary class="h5 mb-0"><span class="fa fa-flask me-2" aria-hidden="true"></span><?= Text::_('COM_TICKETSTATION_PAYMENTS_DOCS_TESTMODE_TITLE') ?></summary>
+            <div class="mt-3">
+                <p><?= Text::_('COM_TICKETSTATION_PAYMENTS_DOCS_TESTMODE_INTRO') ?></p>
+                <?php $bullets('COM_TICKETSTATION_PAYMENTS_DOCS_TESTMODE_', 4); ?>
+            </div>
+        </details>
+
         <details id="docs-payments-mollie-account" class="mb-3 border rounded p-3">
             <summary class="h5 mb-0"><span class="fa fa-user-plus me-2" aria-hidden="true"></span><?= Text::_('COM_TICKETSTATION_PAYMENTS_DOCS_MOLLIE_ACCOUNT_TITLE') ?></summary>
             <div class="mt-3">
@@ -108,7 +116,7 @@ $bullets = function (string $prefix, int $count) {
         <details id="docs-payments-gotchas" class="border rounded p-3">
             <summary class="h5 mb-0"><span class="fa fa-exclamation-circle me-2" aria-hidden="true"></span><?= Text::_('COM_TICKETSTATION_PAYMENTS_DOCS_GOTCHAS_TITLE') ?></summary>
             <div class="mt-3">
-                <?php $bullets('COM_TICKETSTATION_PAYMENTS_DOCS_GOTCHA_', 8); ?>
+                <?php $bullets('COM_TICKETSTATION_PAYMENTS_DOCS_GOTCHA_', 9); ?>
             </div>
         </details>
     </div>

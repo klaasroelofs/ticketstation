@@ -19,7 +19,8 @@ defined('_JEXEC') or die;
  * order, its tickets and its mails. A provider only talks to the payment service and reports back
  * in the value objects of this namespace.
  *
- * Optional abilities are separate interfaces (RefundCapableInterface, MethodAwareInterface).
+ * Optional abilities are separate interfaces (RefundCapableInterface, MethodAwareInterface,
+ * TestModeAwareInterface for a service with a test environment).
  * Whether a provider exists is the plugin's published state; which provider takes new payments is
  * a setting of the core. A provider keeps its own settings in the parameters of its plugin.
  */
@@ -47,11 +48,6 @@ interface PaymentProviderInterface
      * setup steps on the control panel.
      */
     public function isConfigured(): bool;
-
-    /**
-     * Whether the provider is in test mode. Test mode is for staff only.
-     */
-    public function isTestMode(): bool;
 
     /**
      * Whether an order is marked as waiting for payment (paid = 3) as soon as the customer is

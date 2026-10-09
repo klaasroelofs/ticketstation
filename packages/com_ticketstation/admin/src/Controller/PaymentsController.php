@@ -79,6 +79,21 @@ class PaymentsController extends BaseController
     }
 
     /**
+     * Switches test mode of the whole shop on or off (the switch on the control panel).
+     */
+    public function testmode()
+    {
+        $on = Factory::getApplication()->getInput()->post->getInt('test_mode', 0) === 1;
+
+        $this->getModel('Payments')->setTestMode($on);
+
+        $this->setRedirect(
+            Uri::base() . 'index.php?option=com_ticketstation',
+            Text::_($on ? 'COM_TICKETSTATION_TESTMODE_SWITCHED_ON' : 'COM_TICKETSTATION_TESTMODE_SWITCHED_OFF')
+        );
+    }
+
+    /**
      * Switches a payment plugin on.
      */
     public function publish()

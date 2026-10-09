@@ -30,9 +30,9 @@ class MethodsField extends FormField
         $chosen   = MolliePaymentMethods::fromConfig($this->value);
         $currency = class_exists(ProviderRegistry::class) ? ProviderRegistry::currency() : 'EUR';
 
-        // Ask Mollie with the key the checkout uses, so a chosen method that is not activated in the
-        // Mollie Dashboard can be flagged (Mollie would refuse it).
-        $testMode = $this->form->getValue('test_mode', 'params', 0) == 1;
+        // Ask Mollie with the key the checkout uses (the test key while the shop is in test mode), so a
+        // chosen method that is not activated in the Mollie Dashboard can be flagged (Mollie would refuse it).
+        $testMode = class_exists(ProviderRegistry::class) && ProviderRegistry::testMode();
         $key      = (string) $this->form->getValue($testMode ? 'api_key_test' : 'api_key', 'params', '');
         $active   = MolliePaymentMethods::activeInMollie(trim($key));
 

@@ -33,6 +33,7 @@ final class Example extends CMSPlugin implements SubscriberInterface
     public function collect(CollectProvidersEvent $event): void
     {
         // $this->params are the settings of this plugin, as the admin saved them.
-        $event->addProvider(new ExampleProvider($this->params));
+        // $event->isTestMode() is whether the shop is in test mode; the provider follows it.
+        $event->addProvider(new ExampleProvider($this->params, $event->isTestMode()));
     }
 }

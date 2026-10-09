@@ -31,6 +31,6 @@ final class Mollie extends CMSPlugin implements SubscriberInterface
 
     public function collect(CollectProvidersEvent $event): void
     {
-        $event->addProvider(new MollieProvider($this->params));
+        $event->addProvider(new MollieProvider($this->params, $event->isTestMode()));
     }
 }

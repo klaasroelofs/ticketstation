@@ -8,8 +8,8 @@ which needs no library: a good model for a service with a plain REST API and sig
 working skeleton is in
 [`examples/plg_ticketstationpayment_example`](examples/plg_ticketstationpayment_example).
 
-Requires Ticketstation 2.25 or later, Joomla 5.4 / 6 and PHP 8.3. The provider API version is
-`PaymentProviderInterface::API_VERSION` (1).
+Requires Ticketstation 2.25 or later (2.29 for test mode, see below), Joomla 5.4 / 6 and PHP 8.3. The
+provider API version is `PaymentProviderInterface::API_VERSION` (1).
 
 ## What belongs where
 
@@ -63,7 +63,6 @@ switches it on or off (its published state), opens its settings and chooses it u
 | `getId()` | Machine name stored with every payment. Use the plugin's element. |
 | `getTitle()` | Name for the admin. |
 | `isConfigured()` | Has what it needs for real payments (live credentials). Drives the setup step on the control panel. |
-| `isTestMode()` | Test mode is for staff: the shop is closed to the public while it is on, tickets get a test mark. |
 | `marksOrderPendingOnStart()` | Whether the order gets the status "waiting for payment" when the customer is sent away. |
 | `getHealthWarnings()` | `[['key' => language key, 'level' => 'danger'\|'warning']]`, shown under *Needs attention* while this provider takes payments. |
 | `createPayment(PaymentRequest)` | Start a payment. Returns a `PaymentRedirect` (where the customer goes, and the service's id of the payment). |
@@ -111,6 +110,50 @@ What the webhook answers decides whether the service calls again, so choose the 
 | nothing | 200, empty | Handled (also a repeat of a report that was handled before) |
 | `WebhookRejectedException` | 400 | Not genuine or incomplete: a wrong signature, a payment the service doesn't know. Repeating it can't help. |
 | any other `PaymentException` (or `ProviderNotConfiguredException`) | 503 | You couldn't check it now: the service can't be reached or has an error. A service that retries on 5xx gets it again later. |
+
+### Test mode
+
+Test mode is **one switch for the whole shop**, at the top of Ticketstation's control panel. It closes
+the shop to the public, marks tickets as test tickets, and makes the payment provider use its test
+environment. Your plugin has **no test mode setting of its own**: it follows the shop, so the admin
+cannot leave the shop in test mode and the provider live, or the other way round.
+
+The shop's state reaches you in the event:
+
+```php
+public function collect(CollectProvidersEvent $event): void
+{
+    $event->addProvider(new MyProvider($this->params, $event->isTestMode()));
+}
+```
+
+Your provider then uses the test environment (test keys, a sandbox address, a test signing secret for
+webhooks) when it got `true`, and the live one otherwise. It does so for everything it does: starting
+payments, reading webhooks, and refunds. Declare this by implementing `TestModeAwareInterface`
+(`isTestMode(): bool`, which returns what the plugin passed in). Before it starts a payment,
+Ticketstation checks that a shop in test mode has a provider that answers `true`, and refuses the
+payment otherwise.
+
+**A service without a test environment.** Some services only have a live environment. Do not implement
+`TestModeAwareInterface` then. While the shop is in test mode, Ticketstation does not send paid orders
+to such a provider, because that would be real money: the staff member who tries it gets a message
+saying so, the control panel shows it, and free tickets can still be tested. Everything else works as
+usual. There is no special case to code. A provider that does not implement the interface, or one that
+says `false` in test mode, is treated the same way.
+
+Things to keep in mind:
+
+- Don't show "test mode" as a warning in `getHealthWarnings()`: the control panel shows the shop's
+  state itself. Do warn about a missing key *of the mode the shop is in* (Mollie and Stripe warn about a
+  missing test key in test mode and a missing or wrong live key otherwise).
+- A report about a payment made in live mode can't be read while the shop is in test mode (the test
+  environment doesn't know it), so such payments can't be refunded from the Box Office until the shop is
+  live again. That is the same for every provider with a separate test environment.
+- Before Ticketstation 2.29 `isTestMode()` was part of `PaymentProviderInterface` and a plugin had its own
+  Test Mode setting. A plugin written then keeps loading, but it is not `TestModeAwareInterface`: it only
+  gets paid orders while the shop is live. To follow the shop, remove the setting, implement the interface,
+  and pass `$event->isTestMode()` to the provider as above. A site that had test mode on in its payment
+  plugin when it updated to 2.29 has the shop's test mode switched on automatically.
 
 ### Optional: refunds and chargebacks
 

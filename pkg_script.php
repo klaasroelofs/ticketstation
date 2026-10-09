@@ -75,6 +75,12 @@ class pkg_ticketstationInstallerScript extends InstallerScript
             $this->setUpMolliePlugin($db);
         }
 
+        // Test mode used to be a setting of each payment plugin; it is one switch for the whole shop
+        // now (since 2.29.0-rc1). A shop that had it on in the plugin that takes payments keeps it on.
+        if ($this->oldVersion !== null && version_compare($this->oldVersion, '2.29.0-rc1', '<')) {
+            $this->moveTestMode($db);
+        }
+
         // The old Mollie settings table is not used any more (since 2.25.0-rc3), and Joomla's database
         // check reports its columns against the old update files. Removed once its settings are safe.
         $this->dropOldMollieTable($db);
@@ -181,6 +187,54 @@ class pkg_ticketstationInstallerScript extends InstallerScript
                 ->clean();
         } catch (\Throwable $e) {
             Factory::getApplication()->enqueueMessage('The Mollie settings could not be moved to the Mollie plugin: ' . $e->getMessage(), 'warning');
+        }
+    }
+
+    /**
+     * Moves test mode from the plugin of the payment provider that takes payments to the shop's
+     * own switch (#__ticketstation_config.test_mode). Only that provider counts: the test mode of
+     * a plugin that was not taking payments never closed the shop. The plugin's own setting stays
+     * in its parameters, unused; it disappears when the plugin is saved.
+     */
+    private function moveTestMode($db)
+    {
+        try {
+            $provider = (string) $db->setQuery(
+                $db->getQuery(true)
+                    ->select($db->quoteName('payment_provider'))
+                    ->from($db->quoteName('#__ticketstation_config'))
+                    ->where($db->quoteName('configid') . ' = 1')
+            )->loadResult();
+
+            if ($provider === '') {
+                return;
+            }
+
+            $params = json_decode((string) $db->setQuery(
+                $db->getQuery(true)
+                    ->select($db->quoteName('params'))
+                    ->from($db->quoteName('#__extensions'))
+                    ->where($db->quoteName('type') . ' = ' . $db->quote('plugin'))
+                    ->where($db->quoteName('folder') . ' = ' . $db->quote('ticketstationpayment'))
+                    ->where($db->quoteName('element') . ' = ' . $db->quote($provider))
+            )->loadResult(), true);
+
+            if ((int) ($params['test_mode'] ?? 0) !== 1) {
+                return;
+            }
+
+            $db->setQuery(
+                $db->getQuery(true)
+                    ->update($db->quoteName('#__ticketstation_config'))
+                    ->set($db->quoteName('test_mode') . ' = 1')
+                    ->where($db->quoteName('configid') . ' = 1')
+            )->execute();
+        } catch (\Throwable $e) {
+            Factory::getApplication()->enqueueMessage(
+                'The test mode of the payment plugin could not be moved to the Ticketstation control panel: ' . $e->getMessage()
+                . ' Check the switch at the top of the control panel: the shop may be live.',
+                'warning'
+            );
         }
     }
 

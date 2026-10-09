@@ -153,6 +153,7 @@ CREATE TABLE IF NOT EXISTS `#__ticketstation_config` (
   `price_symbol_after` tinyint(1) NOT NULL DEFAULT 0,
   `payment_provider` varchar(50) NOT NULL DEFAULT '',
   `payment_currency` varchar(3) NOT NULL DEFAULT 'EUR',
+  `test_mode` tinyint(1) NOT NULL DEFAULT 0,
   `checkout_field_map` varchar(1000) NOT NULL DEFAULT '',
   `checkout_layout` tinyint(1) NOT NULL DEFAULT 0,
   PRIMARY KEY (`configid`)
