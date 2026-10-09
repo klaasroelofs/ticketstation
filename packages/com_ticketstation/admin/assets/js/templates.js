@@ -81,25 +81,36 @@
         });
     });
 
-    const card = document.getElementById('ts-template-preview-card');
+    const modalElement = document.getElementById('ts-template-preview-modal');
     const frame = document.getElementById('ts-template-preview-frame');
     const previewSubject = document.getElementById('ts-template-preview-subject');
+    const previewError = document.getElementById('ts-template-preview-error');
 
-    document.getElementById('ts-template-preview-close')?.addEventListener('click', () => {
-        card.hidden = true;
-    });
+    // Fetches the mail as it is typed now and shows it in the frame of the modal
+    const loadPreview = () => {
+        previewError.classList.add('d-none');
 
-    document.getElementById('ts-template-preview')?.addEventListener('click', () => {
-        request('preview')
+        return request('preview')
             .then((answer) => {
                 previewSubject.textContent = answer.subject;
                 // The sandbox keeps scripts and forms in the mail out of the admin
                 frame.srcdoc = '<div style="font-family:sans-serif">' + answer.body + '</div>';
-                card.hidden = false;
-                card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
             })
-            .catch(() => notify('error', options.previewError));
+            .catch(() => {
+                frame.srcdoc = '';
+                previewError.classList.remove('d-none');
+            });
+    };
+
+    document.getElementById('ts-template-preview')?.addEventListener('click', () => {
+        if (window.bootstrap && bootstrap.Modal) {
+            bootstrap.Modal.getOrCreateInstance(modalElement).show();
+        }
+
+        loadPreview();
     });
+
+    document.getElementById('ts-template-preview-refresh')?.addEventListener('click', loadPreview);
 
     document.getElementById('ts-template-testmail')?.addEventListener('click', (event) => {
         const button = event.currentTarget;

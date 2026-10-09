@@ -266,10 +266,9 @@ a.badge:focus {
 /* Mail templates: the preview of the edit screen */
 .ts-template-preview-frame {
     width: 100%;
-    min-height: 360px;
+    height: 65vh;
     border: 1px solid var(--bs-border-color, #dee2e6);
     background: #fff;
-    resize: vertical;
 }
 .ts-templates code {
     white-space: normal;

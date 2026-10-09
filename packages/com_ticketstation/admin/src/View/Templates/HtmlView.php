@@ -91,7 +91,6 @@ class HtmlView extends BaseHtmlView {
         $document->addScriptOptions('com_ticketstation.templates', [
             'url'          => Route::_('index.php?option=com_ticketstation', false),
             'confirmReset' => Text::_('COM_TICKETSTATION_TEMPLATE_RESET_CONFIRM'),
-            'previewError' => Text::_('COM_TICKETSTATION_TEMPLATE_PREVIEW_FAILED'),
             'failed'       => Text::_('COM_TICKETSTATION_TEMPLATE_TESTMAIL_FAILED'),
         ]);
         $document->getWebAssetManager()->registerAndUseScript(

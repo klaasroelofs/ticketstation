@@ -23,6 +23,9 @@ $document->setTitle(Text::sprintf('COM_TICKETSTATION_VIEW_EDIT_TEMPLATES_TITLE',
 $user = $this->getCurrentUser();
 $editor = Editor::getInstance($user->getParam('editor', Factory::getConfig()->get('editor')));
 
+// The preview opens in a Bootstrap modal, whose script Joomla only loads when asked
+$document->getWebAssetManager()->useScript('bootstrap.modal');
+
 $language     = $app->getLanguage();
 $mailid       = (int) ($this->data->mailid ?? 0);
 $placeholders = eTicketsMessage::placeholders($mailid);
@@ -31,19 +34,6 @@ $required     = eTicketsMessage::requiredPlaceholders($mailid);
 ?>
 
 <form action = "<?php echo Route::_('index.php?option=com_ticketstation&view=templates'); ?>" method="post" name="adminForm" id="adminForm" enctype="multipart/form-data">
-
-    <?php // Filled by assets/js/templates.js when "Preview" is clicked ?>
-    <div class="card mb-3" id="ts-template-preview-card" hidden>
-        <div class="card-header d-flex justify-content-between align-items-center">
-            <strong><?= Text::_('COM_TICKETSTATION_TEMPLATE_PREVIEW_TITLE'); ?></strong>
-            <button type="button" class="btn-close" id="ts-template-preview-close" aria-label="<?= Text::_('JCLOSE'); ?>"></button>
-        </div>
-        <div class="card-body">
-            <p class="mb-2"><span class="text-muted"><?= Text::_('COM_TICKETSTATION_TEMPLATE_MAILSUBJECT'); ?>:</span> <strong id="ts-template-preview-subject"></strong></p>
-            <iframe id="ts-template-preview-frame" class="ts-template-preview-frame" sandbox="" title="<?= Text::_('COM_TICKETSTATION_TEMPLATE_PREVIEW_TITLE'); ?>"></iframe>
-            <p class="small text-muted mb-0 mt-2"><?= Text::_('COM_TICKETSTATION_TEMPLATE_PREVIEW_NOTE'); ?></p>
-        </div>
-    </div>
 
     <div class="card">
         <div class="card-body">
@@ -115,3 +105,25 @@ $required     = eTicketsMessage::requiredPlaceholders($mailid);
     <input type="hidden" name="mailid" value="<?= $this->data->mailid; ?>" />
     <?= HTMLHelper::_( 'form.token' ); ?>
 </form>
+
+<?php // Opened by assets/js/templates.js when "Preview" is clicked ?>
+<div class="modal fade" id="ts-template-preview-modal" tabindex="-1" aria-labelledby="ts-template-preview-label" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="ts-template-preview-label"><?= Text::_('COM_TICKETSTATION_TEMPLATE_PREVIEW_TITLE'); ?></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="<?= Text::_('JCLOSE'); ?>"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-3"><span class="text-muted"><?= Text::_('COM_TICKETSTATION_TEMPLATE_MAILSUBJECT'); ?>:</span> <strong id="ts-template-preview-subject"></strong></p>
+                <div id="ts-template-preview-error" class="alert alert-danger d-none" role="alert"><?= Text::_('COM_TICKETSTATION_TEMPLATE_PREVIEW_FAILED'); ?></div>
+                <iframe id="ts-template-preview-frame" class="ts-template-preview-frame" sandbox="" title="<?= Text::_('COM_TICKETSTATION_TEMPLATE_PREVIEW_TITLE'); ?>"></iframe>
+                <p class="small text-muted mb-0 mt-3"><?= Text::_('COM_TICKETSTATION_TEMPLATE_PREVIEW_NOTE'); ?></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" id="ts-template-preview-refresh"><span class="icon-refresh" aria-hidden="true"></span> <?= Text::_('COM_TICKETSTATION_TEMPLATE_PREVIEW_UPDATE'); ?></button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><?= Text::_('JCLOSE'); ?></button>
+            </div>
+        </div>
+    </div>
+</div>
