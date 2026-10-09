@@ -264,9 +264,17 @@ a.badge:focus {
 }
 
 /* Mail templates: the preview of the edit screen */
+/* The preview fills the window: the frame takes the height the header, subject and footer leave */
+.ts-template-preview-dialog {
+    height: calc(100vh - 3.5rem);
+}
+.ts-template-preview-dialog .modal-content {
+    height: 100%;
+}
 .ts-template-preview-frame {
+    flex: 1 1 auto;
     width: 100%;
-    height: 65vh;
+    min-height: 200px;
     border: 1px solid var(--bs-border-color, #dee2e6);
     background: #fff;
 }

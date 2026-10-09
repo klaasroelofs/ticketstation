@@ -29,14 +29,6 @@ $text = function (string $key, string $fallback) use ($language) {
     return $language->hasKey($key) ? Text::_($key) : $fallback;
 };
 
-// The body is HTML written in the editor: show a plain-text excerpt, never the markup itself.
-$excerpt = function (string $html) {
-    $plain = html_entity_decode(strip_tags(preg_replace('#<(br|/p|/li|/div|/h\d)[^>]*>#i', ' ', $html)), ENT_QUOTES, 'UTF-8');
-    $plain = trim(preg_replace('/\s+/u', ' ', $plain));
-
-    return mb_strimwidth($plain, 0, 180, '…', 'UTF-8');
-};
-
 ?>
 
 <form action="<?= Route::_('index.php?option=com_ticketstation&view=templates'); ?>" method="POST" name="adminForm" id="adminForm">
@@ -46,9 +38,8 @@ $excerpt = function (string $html) {
         <caption class="visually-hidden"><?= Text::_('COM_TICKETSTATION_VIEW_TEMPLATES_TITLE') ?></caption>
         <thead>
             <tr>
-                <th scope="col" class="w-25"><?= Text::_('COM_TICKETSTATION_TEMPLATE') ?></th>
-                <th scope="col" class="w-25"><?= Text::_('COM_TICKETSTATION_TEMPLATE_MAILSUBJECT') ?></th>
-                <th scope="col"><?= Text::_('COM_TICKETSTATION_TEMPLATE_MAILBODY') ?></th>
+                <th scope="col" class="w-50"><?= Text::_('COM_TICKETSTATION_TEMPLATE') ?></th>
+                <th scope="col"><?= Text::_('COM_TICKETSTATION_TEMPLATE_MAILSUBJECT') ?></th>
             </tr>
         </thead>
         <tbody>
@@ -65,7 +56,6 @@ $excerpt = function (string $html) {
                     <?php } ?>
                 </th>
                 <td><code class="text-break"><?= htmlspecialchars((string) $row->mailsubject, ENT_QUOTES, 'UTF-8') ?></code></td>
-                <td class="small text-muted"><?= htmlspecialchars($excerpt((string) $row->mailbody), ENT_QUOTES, 'UTF-8') ?></td>
             </tr>
         <?php } ?>
         </tbody>

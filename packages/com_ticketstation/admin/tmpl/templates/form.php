@@ -108,13 +108,13 @@ $required     = eTicketsMessage::requiredPlaceholders($mailid);
 
 <?php // Opened by assets/js/templates.js when "Preview" is clicked ?>
 <div class="modal fade" id="ts-template-preview-modal" tabindex="-1" aria-labelledby="ts-template-preview-label" aria-hidden="true">
-    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+    <div class="modal-dialog modal-xl ts-template-preview-dialog">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="ts-template-preview-label"><?= Text::_('COM_TICKETSTATION_TEMPLATE_PREVIEW_TITLE'); ?></h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="<?= Text::_('JCLOSE'); ?>"></button>
             </div>
-            <div class="modal-body">
+            <div class="modal-body d-flex flex-column">
                 <p class="mb-3"><span class="text-muted"><?= Text::_('COM_TICKETSTATION_TEMPLATE_MAILSUBJECT'); ?>:</span> <strong id="ts-template-preview-subject"></strong></p>
                 <div id="ts-template-preview-error" class="alert alert-danger d-none" role="alert"><?= Text::_('COM_TICKETSTATION_TEMPLATE_PREVIEW_FAILED'); ?></div>
                 <iframe id="ts-template-preview-frame" class="ts-template-preview-frame" sandbox="" title="<?= Text::_('COM_TICKETSTATION_TEMPLATE_PREVIEW_TITLE'); ?>"></iframe>
