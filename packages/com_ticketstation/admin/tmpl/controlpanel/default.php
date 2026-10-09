@@ -136,6 +136,9 @@ $sum28     = array_sum(array_column($this->dailySales, 'tickets'));
     <style>
         /* Joomla's switch is green when its second position is on. Here Live is the normal state (green)
            and Test is the one that needs attention (amber). */
+        /* Joomla gives the switch a fixed width of 18rem; shrink it to the switch and its label so it lines up with the tiles. */
+        #ts-testmode .switcher { width: 7rem; }
+        #ts-testmode .switcher label { min-width: 2.5rem; }
         #ts-testmode .switcher .toggle-outside { background: #2f7d32; }
         #ts-testmode .switcher input ~ input:checked ~ .toggle-outside { background: #e0a100; }
     </style>
