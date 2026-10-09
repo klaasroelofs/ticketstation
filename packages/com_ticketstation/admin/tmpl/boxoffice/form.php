@@ -128,6 +128,12 @@ $progress = function (int $done) use ($status) {
                             <td><?= $this->escape($this->paymentMethod); ?></td>
                         </tr>
                     <?php } ?>
+                    <?php if ($this->paymentProvider !== '') { ?>
+                        <tr>
+                            <th scope="row" class="fw-normal"><?= Text::_('COM_TICKETSTATION_PAYMENT_PROVIDER') ?></th>
+                            <td><?= $this->escape($this->paymentProvider); ?></td>
+                        </tr>
+                    <?php } ?>
                     <tr>
                         <th scope="row" class="fw-normal"><?= Text::_('COM_TICKETSTATION_BOXOFFICE_INVOICE') ?></th>
                         <td>

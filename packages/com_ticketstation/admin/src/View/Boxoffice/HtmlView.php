@@ -330,6 +330,7 @@ class HtmlView extends BaseHtmlView
         $this->orderprice    = $orderprice;
         $this->transaction   = $transaction;
         $this->paymentMethod = $transaction && $transaction->type !== '' ? ProviderRegistry::methodLabel(strtolower($transaction->type), (string) ($transaction->provider ?? '')) : '';
+        $this->paymentProvider = $transaction ? ProviderRegistry::providerLabel((string) ($transaction->provider ?? '')) : '';
         $this->invoice       = $invoice;
         $this->invoiceNumber = $invoice ? (new Invoice)->getInvoiceNumber($invoice->invoiceid, $config->invoice_prefix) : '';
         $this->invoiceFile   = $invoice ? (new Invoice)->getPdfFilename($invoice->invoiceid) : '';

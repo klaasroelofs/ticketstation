@@ -113,6 +113,22 @@ final class ProviderRegistry
     }
 
     /**
+     * The name of the provider a payment went through, from the id stored with the transaction.
+     * Empty for a payment without one (box office sales); a provider that is no longer available
+     * gives its stored id with a capital.
+     */
+    public static function providerLabel(string $providerId): string
+    {
+        if ($providerId === '') {
+            return '';
+        }
+
+        $provider = self::get($providerId);
+
+        return $provider !== null ? $provider->getTitle() : ucfirst($providerId);
+    }
+
+    /**
      * Forgets what was loaded, so the next call looks again. For tests and for after a setting changed.
      */
     public static function reset(): void

@@ -20,7 +20,7 @@ class StripeMethods
 {
     private const LABELS = [
         'card'             => 'Card',
-        'ideal'            => 'iDEAL',
+        'ideal'            => 'iDEAL | Wero',
         'bancontact'       => 'Bancontact',
         'sepa_debit'       => 'SEPA Direct Debit',
         'sofort'           => 'Sofort',

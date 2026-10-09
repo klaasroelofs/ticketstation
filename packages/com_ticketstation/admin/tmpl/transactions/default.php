@@ -12,6 +12,7 @@ use Joomla\CMS\Factory;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\Router\Route;
 use Joomla\CMS\Uri\Uri;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\Date;
 use \Ticketstation\Component\Ticketstation\Administrator\Helper\TicketstationFunctions;
 use Ticketstation\Component\Ticketstation\Administrator\Payment\ProviderRegistry;
 
@@ -67,6 +68,7 @@ $wa->registerAndUseStyle('searchtools', Uri::root() . 'media/templates/administr
                             <th scope="col"><?php echo Text::_( 'COM_TICKETSTATION_CLIENT' ); ?></th>
                             <th scope="col" class="w-10 d-none d-md-table-cell"><?php echo Text::_( 'COM_TICKETSTATION_ORDERCODE' ); ?></th>
                             <th scope="col" class="w-10 d-none d-lg-table-cell"><?php echo Text::_( 'COM_TICKETSTATION_PAYMENT_TYPE' ); ?></th>
+                            <th scope="col" class="w-10 d-none d-lg-table-cell"><?php echo Text::_( 'COM_TICKETSTATION_PAYMENT_PROVIDER' ); ?></th>
                             <th scope="col" class="w-10 d-none d-lg-table-cell"><?php echo Text::_( 'COM_TICKETSTATION_TRANSACTION_AMOUNT' ); ?></th>
                         </tr>
                     </thead>
@@ -86,10 +88,11 @@ $wa->registerAndUseStyle('searchtools', Uri::root() . 'media/templates/administr
                         <tr class="row<?php echo $i;?>">
                             <td class="text-center"><?php echo $checked; ?></td>
                             <td><a href="<?php echo $link; ?>"><?php echo $row->pid; ?></a></td>
-                            <td><?php echo date ($this->data->dateformat.' '.$this->data->time_format, strtotime($row->date)); ?></td>
+                            <td><?= $this->escape(Date::screen($row->date, $this->data->dateformat . ' ' . $this->data->time_format)); ?></td>
                             <td><a href="<?php echo $linkuser; ?>"><?php echo $this->escape($row->name); ?></a></td>
                             <td class="d-none d-md-table-cell"><a href="<?php echo $linkorder; ?>"><?php echo $row->orderid; ?></a></td>
                             <td class="small d-none d-lg-table-cell"><?= htmlspecialchars(ProviderRegistry::methodLabel(strtolower((string) $row->type), (string) ($row->provider ?? '')), ENT_QUOTES, 'UTF-8'); ?></td>
+                            <td class="small d-none d-lg-table-cell"><?= htmlspecialchars(ProviderRegistry::providerLabel((string) ($row->provider ?? '')), ENT_QUOTES, 'UTF-8'); ?></td>
                             <td class="small d-none d-lg-table-cell"><?php echo TicketstationFunctions::showprice($this->data->priceformat ,$row->amount, $this->data->valuta); ?></td>
                         </tr>
                     <?php } ?>
