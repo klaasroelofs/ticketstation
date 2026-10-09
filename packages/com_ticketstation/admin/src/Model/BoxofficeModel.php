@@ -1070,6 +1070,29 @@ class BoxofficeModel extends ListModel
     }
 
     /**
+     * What the payment provider sent with the payment of the order (the latest transaction), as
+     * stored: a query string. Empty without a transaction.
+     */
+    function getTransactionDetails(): string
+    {
+        $transaction = $this->getTransaction();
+
+        if (!$transaction) {
+            return '';
+        }
+
+        $db    = Factory::getContainer()->get('DatabaseDriver');
+        $query = $db->getQuery(true)
+            ->select($db->quoteName('details'))
+            ->from($db->quoteName('#__ticketstation_transactions'))
+            ->where($db->quoteName('pid') . ' = ' . (int) $transaction->pid);
+
+        $db->setQuery($query);
+
+        return (string) $db->loadResult();
+    }
+
+    /**
      * The invoice of the order, if it has one.
      *
      * @return  object|null

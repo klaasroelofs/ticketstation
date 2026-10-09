@@ -35,14 +35,10 @@ class TransactionsModel extends BaseDatabaseModel
     {
         parent::__construct();
 
-        $app 	= Factory::getApplication();
-
         $this->populateListState('transactions', [
             'search' => ['searchbox', '', 'string'],
         ]);
 
-        $array = $app->getInput()->get('cid', array(0), 'array');
-        $this->id = (int)$array[0];
 
 
     }
@@ -105,23 +101,6 @@ class TransactionsModel extends BaseDatabaseModel
         return $data;
     }
 
-    function getData() {
-
-        $db = Factory::getContainer()->get('DatabaseDriver');
-
-        $query = $db->getQuery(true);
-
-        $query->select('*');
-        $query->from($db->quoteName('#__ticketstation_transactions', 't'));
-        $query->join('LEFT', $db->quoteName('#__ticketstation_clients', 'c') . ' ON (' . $db->quoteName('c.clientid') . ' = ' . $db->quoteName('t.userid') . ')');
-        $query->where($db->quoteName('t.pid') . ' = '. $db->quote((int) $this->id));
-
-        $db->setQuery($query);
-        $this->data = $db->loadObject();
-
-        return $this->data;
-    }
-
     function getConfig() {
 
         $db = Factory::getContainer()->get('DatabaseDriver');
@@ -137,42 +116,5 @@ class TransactionsModel extends BaseDatabaseModel
 
         return $data;
     }
-
-    function remove($cid){
-
-        ## Count the cids
-        if (count( $cid )) {
-
-            $db = Factory::getContainer()->get('DatabaseDriver');
-
-            ## Make cids safe, against SQL injections
-            ArrayHelper::toInteger($cid);
-
-            ## Implode cids for more actions (when more selected)
-            $cids = implode( ',', $cid );
-
-            $query = $db->getQuery(true);
-
-            // delete all custom keys for user 1001.
-            $conditions = array(
-                $db->quoteName('pid') . ' IN ( '.$cids.' )',
-            );
-
-            $query->delete($db->quoteName('#__ticketstation_transactions'));
-            $query->where($conditions);
-
-            $db->setQuery($query);
-
-            $result = $db->execute();
-
-            if(!$result){
-                return false;
-            }
-
-            return true;
-
-        }
-    }
-
 
 }

@@ -53,7 +53,7 @@ class CsrfGate
         'venues'           => ['display', 'edit', 'cancel', 'controlpanel', 'exporttemplate'],
         'waitinglist'      => ['display', 'controlpanel'],
         'docs'             => ['main', 'controlpanel'],
-        'transactions'     => ['display', 'edit', 'cancel', 'controlpanel'],
+        'transactions'     => ['display', 'cancel', 'controlpanel'],
         'reservation'      => ['start', 'finishseats'],
         'ticket'           => ['display', 'cancel', 'ticketlayout', 'previewticket'],
         'event'            => ['display', 'cancel'],

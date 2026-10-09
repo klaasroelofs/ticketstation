@@ -98,11 +98,7 @@ $progress = function (int $done) use ($status) {
                     <tr>
                         <th scope="row" class="fw-normal"><?= Text::_('COM_TICKETSTATION_BOXOFFICE_TOTAL_REGULAR_PRICE') ?></th>
                         <td>
-                            <?php if ($this->transaction && (float) $this->transaction->amount > 0 && AclGate::can('ticketstation.finance')) { ?>
-                                <a href="index.php?option=com_ticketstation&controller=transactions&task=edit&cid=<?= (int) $this->transaction->pid; ?>"><?= Price::format($this->orderprice, $valuta); ?></a>
-                            <?php } else { ?>
-                                <?= Price::format($this->orderprice, $valuta); ?>
-                            <?php } ?>
+                            <?= Price::format($this->orderprice, $valuta); ?>
                         </td>
                     </tr>
                     <tr>
@@ -131,7 +127,40 @@ $progress = function (int $done) use ($status) {
                     <?php if ($this->paymentProvider !== '') { ?>
                         <tr>
                             <th scope="row" class="fw-normal"><?= Text::_('COM_TICKETSTATION_PAYMENT_PROVIDER') ?></th>
-                            <td><?= $this->escape($this->paymentProvider); ?></td>
+                            <td>
+                                <?= $this->escape($this->paymentProvider); ?>
+                                <?php if ($this->providerMode !== '') { ?>
+                                    <span class="badge <?= $this->providerMode === 'test' ? 'bg-warning text-dark' : 'bg-success'; ?> ms-1"><?= Text::_('COM_TICKETSTATION_TRANSACTION_MODE_' . strtoupper($this->providerMode)); ?></span>
+                                <?php } ?>
+                            </td>
+                        </tr>
+                    <?php } ?>
+                    <?php if ($this->paymentProvider !== '' && $this->providerPayment !== '') { ?>
+                        <tr>
+                            <th scope="row" class="fw-normal"><?= Text::_('COM_TICKETSTATION_TRANSACTION_PROVIDER_PAYMENT_ID') ?></th>
+                            <td><code><?= $this->escape($this->providerPayment); ?></code></td>
+                        </tr>
+                    <?php } ?>
+                    <?php if ($this->providerData) { ?>
+                        <tr>
+                            <th scope="row" class="fw-normal"><?= Text::_('COM_TICKETSTATION_MOLLIE_INFORMATION') ?></th>
+                            <td>
+                                <details>
+                                    <summary><?= Text::sprintf('COM_TICKETSTATION_TRANSACTION_PROVIDER_DATA_SHOW', count($this->providerData)) ?></summary>
+                                    <div class="table-responsive mt-2">
+                                        <table class="table table-sm mb-0">
+                                            <tbody>
+                                                <?php foreach ($this->providerData as $key => $value) { ?>
+                                                    <tr>
+                                                        <th scope="row" class="fw-normal w-25"><?= $this->escape($key); ?></th>
+                                                        <td class="text-break"><?= $this->escape($value); ?></td>
+                                                    </tr>
+                                                <?php } ?>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </details>
+                            </td>
                         </tr>
                     <?php } ?>
                     <tr>

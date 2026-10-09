@@ -21,6 +21,7 @@ use Ticketstation\Component\Ticketstation\Administrator\Helper\AclGate;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\CustomerNote;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Invoice;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\PaymentCurrencies;
+use Ticketstation\Component\Ticketstation\Administrator\Payment\PaymentDetails;
 use Ticketstation\Component\Ticketstation\Administrator\Payment\ProviderRegistry;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\OrderTotals;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Refund;
@@ -331,6 +332,12 @@ class HtmlView extends BaseHtmlView
         $this->transaction   = $transaction;
         $this->paymentMethod = $transaction && $transaction->type !== '' ? ProviderRegistry::methodLabel(strtolower($transaction->type), (string) ($transaction->provider ?? '')) : '';
         $this->paymentProvider = $transaction ? ProviderRegistry::providerLabel((string) ($transaction->provider ?? '')) : '';
+
+        // What the provider sent with the payment can hold the payer's name and account number:
+        // only for those who may see transactions.
+        $this->providerData = $transaction && AclGate::can('ticketstation.finance') ? PaymentDetails::rows($model->getTransactionDetails()) : [];
+        $this->providerMode = PaymentDetails::mode($this->providerData);
+
         $this->invoice       = $invoice;
         $this->invoiceNumber = $invoice ? (new Invoice)->getInvoiceNumber($invoice->invoiceid, $config->invoice_prefix) : '';
         $this->invoiceFile   = $invoice ? (new Invoice)->getPdfFilename($invoice->invoiceid) : '';

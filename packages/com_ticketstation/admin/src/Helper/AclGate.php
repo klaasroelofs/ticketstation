@@ -264,9 +264,6 @@ class AclGate
         ],
         'transactions' => [
             ''             => self::FINANCE,
-            'add'          => self::FINANCE,
-            'edit'         => self::FINANCE,
-            'remove'       => self::FINANCE,
             'cancel'       => self::MANAGE,
             'controlpanel' => self::MANAGE,
         ],

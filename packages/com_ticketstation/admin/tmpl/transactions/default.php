@@ -60,9 +60,6 @@ $wa->registerAndUseStyle('searchtools', Uri::root() . 'media/templates/administr
                 <table class="table itemList">
                     <thead>
                         <tr>
-                            <td class="w-1 text-center">
-                                <input class="form-check-input" type="checkbox" name="checkall-toggle" value="" title="<?= Text::_('JGLOBAL_CHECK_ALL'); ?>" onclick="Joomla.checkAll(this)">
-                            </td>
                             <th scope="col"><?php echo Text::_( 'COM_TICKETSTATION_DATE' ); ?></th>
                             <th scope="col"><?php echo Text::_( 'COM_TICKETSTATION_CLIENT' ); ?></th>
                             <th scope="col" class="w-10 d-none d-md-table-cell"><?php echo Text::_( 'COM_TICKETSTATION_ORDERCODE' ); ?></th>
@@ -77,17 +74,14 @@ $wa->registerAndUseStyle('searchtools', Uri::root() . 'media/templates/administr
                     for ($i = 0, $n = count($this->items); $i < $n; $i++ ){
 
                         $row        = $this->items[$i];
-                        $checked    = HTMLHelper::_('grid.id', $i, $row->pid );
-                        $link 		= 'index.php?option=com_ticketstation&controller=transactions&task=edit&cid='.$row->pid;
                         $linkuser	= 'index.php?option=com_ticketstation&controller=clients&task=edit&cid='.$row->userid;
                         $linkorder	= 'index.php?option=com_ticketstation&controller=boxoffice&task=edit&cid='.$row->orderid;
 
                         ?>
 
                         <tr class="row<?php echo $i;?>">
-                            <td class="text-center"><?php echo $checked; ?></td>
                             <th scope="row">
-                                <a href="<?php echo $link; ?>" class="fw-bold"><span class="icon-edit me-1" aria-hidden="true"></span><?= $this->escape(Date::screen($row->date, $this->data->dateformat . ' ' . $this->data->time_format)); ?></a>
+                                <a href="<?php echo $linkorder; ?>" class="fw-bold"><span class="icon-edit me-1" aria-hidden="true"></span><?= $this->escape(Date::screen($row->date, $this->data->dateformat . ' ' . $this->data->time_format)); ?></a>
                                 <div class="small text-muted fw-normal mt-1"><?= Text::_('COM_TICKETSTATION_PID'); ?> <?= (int) $row->pid; ?></div>
                             </th>
                             <td><a href="<?php echo $linkuser; ?>"><?php echo $this->escape($row->name); ?></a></td>
@@ -105,14 +99,13 @@ $wa->registerAndUseStyle('searchtools', Uri::root() . 'media/templates/administr
     <table width="100%" align="center" class="adminlist">
         <tfoot>
         <tr>
-            <td colspan="7"><div align="center"><?php echo $this->pagination->getListFooter(); ?></div></td>
+            <td colspan="6"><div align="center"><?php echo $this->pagination->getListFooter(); ?></div></td>
         </tr>
         </tfoot>
     </table>
 
     <input name="option" type="hidden" value="com_ticketstation" />
     <input name="task" type="hidden" value="" />
-    <input name="boxchecked" type="hidden" value="0"/>
     <input name ="controller" type="hidden" value="transactions"/>
     <?= HTMLHelper::_( 'form.token' ); ?>
 </form>
