@@ -66,6 +66,33 @@ class TicketLanguage
     }
 
     /**
+     * Translates one of the example texts of the mail preview and test mail
+     * (COM_TICKETSTATION_TEMPLATE_SAMPLE_*, kept in the admin language files) into the site
+     * language, as a real mail reads. A language object of its own, so the admin strings can't
+     * replace the site strings of the ticket PDFs that share a key.
+     *
+     * @param   string  $key
+     *
+     * @return  string
+     */
+    public static function sample($key)
+    {
+        static $language;
+
+        if ($language === null)
+        {
+            $tag      = ComponentHelper::getParams('com_languages')->get('site', 'en-GB');
+            $language = Factory::getContainer()->get(LanguageFactoryInterface::class)->createLanguage($tag);
+
+            $language->load('com_ticketstation', JPATH_ADMINISTRATOR, $tag, true)
+                || $language->load('com_ticketstation', JPATH_ADMINISTRATOR . '/components/com_ticketstation', $tag, true);
+            $language->load('com_ticketstation', JPATH_SITE, $tag, true)
+                || $language->load('com_ticketstation', JPATH_SITE . '/components/com_ticketstation', $tag, true);
+        }
+
+        return $language->_($key);
+    }
+    /**
      * Translates a key into the site language and fills in its placeholders.
      *
      * @param   string  $key

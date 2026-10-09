@@ -196,27 +196,35 @@ class eTicketsMessage
         $message->template = (object) ['mailid' => $mailid, 'mailsubject' => $subject, 'mailbody' => $body];
         $message->setSenderVariables();
 
-        $name     = trim($name) !== '' ? trim($name) : Text::_('COM_TICKETSTATION_TEMPLATE_SAMPLE_NAME');
+        $name     = trim($name) !== '' ? trim($name) : TicketLanguage::sample('COM_TICKETSTATION_TEMPLATE_SAMPLE_NAME');
         $customer = [
             'name'         => $name,
             'emailaddress' => $email,
             'phonenumber'  => '0123 456789',
-            'address'      => Text::_('COM_TICKETSTATION_TEMPLATE_SAMPLE_ADDRESS'),
+            'address'      => TicketLanguage::sample('COM_TICKETSTATION_TEMPLATE_SAMPLE_ADDRESS'),
             'zipcode'      => '1234 AB',
-            'city'         => Text::_('COM_TICKETSTATION_TEMPLATE_SAMPLE_CITY'),
+            'city'         => TicketLanguage::sample('COM_TICKETSTATION_TEMPLATE_SAMPLE_CITY'),
         ];
 
         $link   = rtrim(Uri::root(), '/') . '/#sample';
-        $event  = Text::_('COM_TICKETSTATION_TEMPLATE_SAMPLE_EVENT');
-        $orders = '<ul><li>2 &times; ' . Text::_('COM_TICKETSTATION_TEMPLATE_SAMPLE_TICKET_ADULT') . '</li>'
-            . '<li>1 &times; ' . Text::_('COM_TICKETSTATION_TEMPLATE_SAMPLE_TICKET_CHILD') . '</li></ul>';
+        $event  = TicketLanguage::sample('COM_TICKETSTATION_TEMPLATE_SAMPLE_EVENT');
+        // The same shape as getOrderList(): a ticket without a seat as one line with its
+        // quantity, a seated ticket named once with its seats below it.
+        $date   = date('d-m-Y', strtotime('+30 days'));
+        $price  = fn ($amount) => Price::format($amount, $message->getConfig()->valuta);
+        $adult  = TicketLanguage::sample('COM_TICKETSTATION_TEMPLATE_SAMPLE_TICKET_ADULT');
+        $stalls = TicketLanguage::sample('COM_TICKETSTATION_TEMPLATE_SAMPLE_TICKET_SEATED');
+        $seat   = TicketLanguage::sample('COM_TICKETSTATION_SEAT_NR');
+        $orders = '<ul><li>' . $event . ' - ' . $adult . ' (' . $date . ') - 2 x ' . $price(15) . ' = ' . $price(30) . '</li>'
+            . '<li>' . $event . ' - ' . $stalls . ' (' . $date . ') - ' . $price(15)
+            . '<ul><li>' . $seat . ' B7</li><li>' . $seat . ' B8</li></ul></li></ul>';
 
         $message->variables(array_merge($customer, [
             'ordercode'        => '123456',
             'orderdate'        => date('d-m-Y'),
             'orderlist'        => $orders,
             'price'            => Price::format(45, $message->getConfig()->valuta),
-            'walletbuttons'    => '<p><em>' . Text::_('COM_TICKETSTATION_TEMPLATE_SAMPLE_WALLET') . '</em></p>',
+            'walletbuttons'    => '<p><em>' . TicketLanguage::sample('COM_TICKETSTATION_TEMPLATE_SAMPLE_WALLET') . '</em></p>',
             'paymentlink'      => '<a href="' . $link . '">' . $link . '</a>',
             'confirmationlink' => '<a href="' . $link . '">' . $link . '</a>',
             'ticketlink'       => $link,
@@ -226,9 +234,9 @@ class eTicketsMessage
             'eventdate'        => date('d-m-Y', strtotime('+30 days')),
             'eventtime'        => '20:00',
             'doorsopen'        => '19:30',
-            'location'         => Text::_('COM_TICKETSTATION_TEMPLATE_SAMPLE_VENUE'),
-            'subject'          => Text::sprintf('COM_TICKETSTATION_TEMPLATE_SAMPLE_SUBJECT', $event),
-            'message'          => Text::_('COM_TICKETSTATION_TEMPLATE_SAMPLE_MESSAGE'),
+            'location'         => TicketLanguage::sample('COM_TICKETSTATION_TEMPLATE_SAMPLE_VENUE'),
+            'subject'          => sprintf(TicketLanguage::sample('COM_TICKETSTATION_TEMPLATE_SAMPLE_SUBJECT'), $event),
+            'message'          => TicketLanguage::sample('COM_TICKETSTATION_TEMPLATE_SAMPLE_MESSAGE'),
         ]));
 
         // send() wants a customer to send to

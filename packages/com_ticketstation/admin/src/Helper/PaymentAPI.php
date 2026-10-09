@@ -487,6 +487,9 @@ class PaymentAPI
             $total      = array_sum(array_map(fn ($r) => (float) $r->$priceField, $rows));
             $seats      = array_filter($rows, fn ($r) => !empty($r->seatid));
 
+            // By seat number ("A2" before "A10"), not in the order the seats were booked
+            usort($seats, fn ($a, $b) => strnatcasecmp($a->row_name . $a->seatid, $b->row_name . $b->seatid));
+
             $line = htmlspecialchars($row->eventname . ' - ' . $ticketname, ENT_QUOTES, 'UTF-8') . ' (' . $ticketdate . ') - ';
 
             if ($seats) {
