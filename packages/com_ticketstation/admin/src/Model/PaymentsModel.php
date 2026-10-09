@@ -213,6 +213,7 @@ class PaymentsModel extends BaseDatabaseModel
      */
     public function setTestMode(bool $on): void
     {
+        $wasOn = ProviderRegistry::testMode();
         $db    = $this->getDatabase();
         $query = $db->getQuery(true)
             ->update($db->quoteName('#__ticketstation_config'))
@@ -222,6 +223,12 @@ class PaymentsModel extends BaseDatabaseModel
         $db->setQuery($query)->execute();
 
         ProviderRegistry::reset();
+        TestData::reset();
+
+        // The seats of test orders are free again once the shop is live; the orders keep their seat number.
+        if ($wasOn && !$on) {
+            TestData::releaseSeats();
+        }
     }
 
     /**

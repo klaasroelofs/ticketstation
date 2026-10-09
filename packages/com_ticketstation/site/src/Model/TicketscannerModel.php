@@ -15,6 +15,7 @@ use Joomla\CMS\Factory;
 use Joomla\CMS\MVC\Model\BaseDatabaseModel;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Refund;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Scanner;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\TestData;
 
 /**
  * Ticketstation Ticketscanner Model
@@ -74,6 +75,7 @@ class TicketscannerModel extends BaseDatabaseModel
         $query = $db->getQuery(true)
             ->select('COUNT(orderid)')
             ->from($db->quoteName('#__ticketstation_orders'))
+            ->where(TestData::condition('test'))
             ->where($db->quoteName('paid') . ' = ' . $db->quote(1))
             ->where(Refund::heldSql())
             ->where($db->quoteName('eventid') . ' = '. $db->quote((int) $this->eventid));
@@ -90,6 +92,7 @@ class TicketscannerModel extends BaseDatabaseModel
         $query = $db->getQuery(true)
             ->select('COUNT(orderid)')
             ->from($db->quoteName('#__ticketstation_orders'))
+            ->where(TestData::condition('test'))
             ->where($db->quoteName('paid') . ' = ' . $db->quote(1))
             ->where(Refund::heldSql())
             ->whereIn($db->quoteName('ticketid'), Scanner::ticketGroup((int) $this->ticketid));

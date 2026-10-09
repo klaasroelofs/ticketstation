@@ -32,6 +32,11 @@ defined('_JEXEC') or die('Restricted access');
 class Invoice
 {
     /**
+     * What the number of an invoice made in test mode starts with, instead of the invoice prefix.
+     */
+    public const TEST_PREFIX = 'TEST-';
+
+    /**
      * Creates (if not already created) and optionally sends the invoice for an order. Safe to
      * call more than once for the same order - reuses the existing invoice row and PDF instead
      * of creating duplicates.
@@ -182,7 +187,7 @@ class Invoice
         $db->setQuery($query);
         $db->execute();
 
-        $pdfPath = $this->getPdfPath($invoice->invoiceid);
+        $pdfPath = $this->getPdfPath($invoice);
 
         if (file_exists($pdfPath))
         {
@@ -234,7 +239,25 @@ class Invoice
         $invoice->payment_provider = ! empty($transaction->type) ? $transaction->type : null;
         $invoice->test             = TestData::ofOrder($ordercode);
 
-        if ( ! $db->insertObject('#__ticketstation_invoices', $invoice))
+        // The number comes from the series of the mode the order was made in. Two invoices made at
+        // the same moment may pick the same one; the unique key refuses the second, which then tries again.
+        $stored = false;
+
+        for ($try = 0; $try < 5 && ! $stored; $try++)
+        {
+            $invoice->invoice_no = $this->nextInvoiceNumber((int) $invoice->test);
+
+            try
+            {
+                $stored = (bool) $db->insertObject('#__ticketstation_invoices', $invoice);
+            }
+            catch (\RuntimeException $e)
+            {
+                $stored = false;
+            }
+        }
+
+        if ( ! $stored)
         {
             return false;
         }
@@ -319,7 +342,7 @@ class Invoice
         $db->setQuery($query)->execute();
 
         $prefix = (new Config)->getPartialConfig(['invoice_prefix'])->invoice_prefix;
-        History::log($ordercode, 'invoice_created', 'Invoice ' . $this->getInvoiceNumber($invoiceid, $prefix) . ' created');
+        History::log($ordercode, 'invoice_created', 'Invoice ' . $this->getInvoiceNumber($invoice, $prefix) . ' created');
 
         return $invoiceid;
     }
@@ -400,7 +423,7 @@ class Invoice
         $pdf->Write(0, PdfEncoding::toLatin1(Text::_('COM_TICKETSTATION_ORDER_ID')));
 
         $pdf->SetXY(34, 65);
-        $pdf->Write(0, ': ' . $this->getInvoiceNumber($invoice->invoiceid, $config->invoice_prefix));
+        $pdf->Write(0, ': ' . $this->getInvoiceNumber($invoice, $config->invoice_prefix));
         $pdf->SetXY(34, 70);
         // Date::_() (not plain date()/strtotime()) - this component stores dates in UTC (PHP's
         // own default timezone in this Joomla environment) and relies on Date::_() to convert
@@ -561,7 +584,7 @@ class Invoice
             Folder::create($dir);
         }
 
-        $pdf->Output($this->getPdfPath($invoice->invoiceid), 'F');
+        $pdf->Output($this->getPdfPath($invoice), 'F');
 
         return true;
     }
@@ -584,20 +607,20 @@ class Invoice
         // The order placeholders (see eTicketsMessage::TEMPLATE_FIELDS), with {price} as the
         // invoice total.
         $variables = array_merge(eTicketsMessage::orderVariables((int) $invoice->ordercode), [
-            'invoice_id' => $this->getInvoiceNumber($invoice->invoiceid, $config->invoice_prefix),
+            'invoice_id' => $this->getInvoiceNumber($invoice, $config->invoice_prefix),
             'price'      => TicketstationFunctions::showprice($config->priceformat, $invoice->netto + $invoice->fees, $config->valuta),
         ]);
 
         $sent = $message->id(5)
             ->user($invoice->userid)
-            ->attachment($this->getPdfPath($invoice->invoiceid))
+            ->attachment($this->getPdfPath($invoice))
             ->variables($variables)
             ->send();
 
         // Matches how PaymentAPI::sendTickets() logs "Tickets sent to <email>".
         $client = $this->getClient($invoice->userid);
         $email  = is_object($client) ? $client->emailaddress : null;
-        $number = $this->getInvoiceNumber($invoice->invoiceid, $config->invoice_prefix);
+        $number = $this->getInvoiceNumber($invoice, $config->invoice_prefix);
 
         // A mail that didn't go out leaves the invoice "Not Sent", so it can be sent again.
         if ( ! $sent)
@@ -625,39 +648,112 @@ class Invoice
     }
 
     /**
+     * @param   object|int  $invoice  The invoice, or its invoiceid.
+     *
      * @return string
      *
      * @since 2.0.11
      */
-    public function getPdfPath($invoiceid)
+    public function getPdfPath($invoice)
     {
-        return JPATH_ADMINISTRATOR . '/components/com_ticketstation/invoices/' . $this->getPdfFilename($invoiceid);
+        return JPATH_ADMINISTRATOR . '/components/com_ticketstation/invoices/' . $this->getPdfFilename($invoice);
     }
 
     /**
-     * The filename (not full path) an invoice PDF is stored/downloaded under, including the
-     * configured invoice prefix so it matches the number printed on the invoice itself.
+     * The filename (not full path) an invoice PDF is stored/downloaded under, the same as the
+     * number printed on the invoice itself.
+     *
+     * @param   object|int  $invoice  The invoice, or its invoiceid.
      *
      * @since 2.0.11
      */
-    public function getPdfFilename($invoiceid)
+    public function getPdfFilename($invoice)
     {
-        $config = (new Config)->getPartialConfig(['invoice_prefix']);
+        $invoice = $this->resolve($invoice);
 
-        return $this->getInvoiceNumber($invoiceid, $config->invoice_prefix) . '.pdf';
+        if ($invoice === null)
+        {
+            return '';
+        }
+
+        $config   = (new Config)->getPartialConfig(['invoice_prefix']);
+        $filename = $this->getInvoiceNumber($invoice, $config->invoice_prefix) . '.pdf';
+
+        // A test invoice from before test and live were kept apart is stored under the number it
+        // had then: the prefix and its invoiceid.
+        $legacy = $config->invoice_prefix . str_pad((string) $invoice->invoiceid, 5, '0', STR_PAD_LEFT) . '.pdf';
+        $folder = JPATH_ADMINISTRATOR . '/components/com_ticketstation/invoices/';
+
+        if ((int) $invoice->test === 1 && ! is_file($folder . $filename) && is_file($folder . $legacy))
+        {
+            return $legacy;
+        }
+
+        return $filename;
     }
 
     /**
      * The invoice number as printed on the invoice/used in the filename: the configured prefix
-     * followed by the raw invoiceid zero-padded to 5 digits, so the very first invoice reads
-     * "00001" rather than "1". The underlying invoiceid (the real auto-increment primary key)
-     * is never changed - this is purely a display/filename format.
+     * followed by the invoice's own number zero-padded to 5 digits, so the very first invoice
+     * reads "00001" rather than "1". Live invoices are numbered one after the other; the
+     * invoices made in test mode have a series of their own, "TEST-00001", so they can be tried
+     * out without leaving a gap in the live numbers.
+     *
+     * @param   object|int  $invoice  The invoice, or its invoiceid.
      *
      * @since 2.0.12
      */
-    public function getInvoiceNumber($invoiceid, $prefix = '')
+    public function getInvoiceNumber($invoice, $prefix = '')
     {
-        return $prefix . str_pad((string) $invoiceid, 5, '0', STR_PAD_LEFT);
+        $invoice = $this->resolve($invoice);
+
+        if ($invoice === null)
+        {
+            return '';
+        }
+
+        $number = (int) $invoice->invoice_no > 0 ? (int) $invoice->invoice_no : (int) $invoice->invoiceid;
+
+        return ((int) $invoice->test === 1 ? self::TEST_PREFIX : $prefix) . str_pad((string) $number, 5, '0', STR_PAD_LEFT);
+    }
+
+    /**
+     * An invoice row from the row itself or its invoiceid.
+     *
+     * @param   object|int  $invoice
+     *
+     * @return  object|null
+     */
+    private function resolve($invoice)
+    {
+        if (is_object($invoice))
+        {
+            return $invoice;
+        }
+
+        return $this->getInvoiceById((int) $invoice) ?: null;
+    }
+
+    /**
+     * The next number in the series of the live or the test invoices. It comes from a counter that
+     * only goes up (so the number of a removed invoice is never used again), and is never lower
+     * than the highest number in use.
+     */
+    private function nextInvoiceNumber(int $test): int
+    {
+        $db      = Factory::getContainer()->get('DatabaseDriver');
+        $counter = $test === 1 ? 'invoice_counter_test' : 'invoice_counter_live';
+
+        $db->setQuery(
+            'UPDATE ' . $db->quoteName('#__ticketstation_config')
+            . ' SET ' . $db->quoteName($counter) . ' = LAST_INSERT_ID(GREATEST(' . $db->quoteName($counter) . ' + 1, '
+            . '(SELECT COALESCE(MAX(i.invoice_no), 0) + 1 FROM ' . $db->quoteName('#__ticketstation_invoices', 'i') . ' WHERE i.test = ' . $test . ')))'
+            . ' WHERE ' . $db->quoteName('configid') . ' = 1'
+        )->execute();
+
+        $db->setQuery('SELECT LAST_INSERT_ID()');
+
+        return (int) $db->loadResult();
     }
 
     /**

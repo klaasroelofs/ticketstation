@@ -16,6 +16,7 @@ use Joomla\CMS\MVC\Model\BaseDatabaseModel;
 use Joomla\CMS\Pagination\Pagination;
 use Joomla\Database\DatabaseQuery;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\SeatplanSettings;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\TestData;
 
 /**
  * Ticketstation Scanchart Model
@@ -44,7 +45,7 @@ class ScanchartModel extends BaseDatabaseModel
                 INNER JOIN #__ticketstation_tickets AS t ON t.ticketid = c.ticketid
                 INNER JOIN #__ticketstation_events AS e ON e.eventid = t.eventid'
             . SeatplanSettings::JOINS . '
-                LEFT JOIN #__ticketstation_orders AS o ON o.seat_sector = c.id
+                LEFT JOIN #__ticketstation_orders AS o ON o.seat_sector = c.id AND ' . TestData::condition('o.test') . '
                 WHERE (c.ticketid = '.(int)$this->id.' OR c.parent = '.(int)$this->id.')';
 
         $db->setQuery($sql);

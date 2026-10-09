@@ -35,7 +35,7 @@ $bullets = function (string $prefix, int $count) {
         <details id="docs-controlpanel-testmode" class="mb-3 border rounded p-3">
             <summary class="h5 mb-0"><span class="fa fa-flask me-2" aria-hidden="true"></span><?= Text::_('COM_TICKETSTATION_CONTROLPANEL_DOCS_TESTMODE_TITLE') ?></summary>
             <div class="mt-3">
-                <?php $bullets('COM_TICKETSTATION_CONTROLPANEL_DOCS_TESTMODE_', 2); ?>
+                <?php $bullets('COM_TICKETSTATION_CONTROLPANEL_DOCS_TESTMODE_', 3); ?>
             </div>
         </details>
 

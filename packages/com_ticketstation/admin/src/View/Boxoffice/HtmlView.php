@@ -339,8 +339,8 @@ class HtmlView extends BaseHtmlView
         $this->providerMode = PaymentDetails::mode($this->providerData);
 
         $this->invoice       = $invoice;
-        $this->invoiceNumber = $invoice ? (new Invoice)->getInvoiceNumber($invoice->invoiceid, $config->invoice_prefix) : '';
-        $this->invoiceFile   = $invoice ? (new Invoice)->getPdfFilename($invoice->invoiceid) : '';
+        $this->invoiceNumber = $invoice ? (new Invoice)->getInvoiceNumber($invoice, $config->invoice_prefix) : '';
+        $this->invoiceFile   = $invoice ? (new Invoice)->getPdfFilename($invoice) : '';
         $this->history       = $this->get('history');
         $this->refunds       = $refunds;
 

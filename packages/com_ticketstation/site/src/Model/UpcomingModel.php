@@ -17,6 +17,7 @@ use Joomla\CMS\Pagination\Pagination;
 use Joomla\Database\DatabaseQuery;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Date;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Refund;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\TestData;
 
 /**
  * Ticketstation Upcoming Model
@@ -188,6 +189,7 @@ class UpcomingModel extends BaseDatabaseModel {
         $query = $db->getQuery(true)
             ->select(['eventid', 'ticketid', 'COUNT(orderid) AS soldtickets'])
             ->from($db->quoteName('#__ticketstation_orders'))
+            ->where(TestData::condition('test'))
             ->where(Refund::heldSql())
             ->group($db->quoteName('ticketid'));
 

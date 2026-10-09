@@ -387,6 +387,7 @@ class Order
         $query = $db->getQuery(true)
             ->select('COUNT(orderid)')
             ->from($db->quoteName('#__ticketstation_orders'))
+            ->where(TestData::condition('test'))
             ->where($db->quoteName('scanned') . ' = ' . $db->quote(1));
 
         // $ticket is one ticket id or a list of them (a parent ticket with its child tickets)

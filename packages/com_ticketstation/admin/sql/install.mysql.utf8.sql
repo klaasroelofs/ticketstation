@@ -157,6 +157,8 @@ CREATE TABLE IF NOT EXISTS `#__ticketstation_config` (
   `test_mode` tinyint(1) NOT NULL DEFAULT 0,
   `checkout_field_map` varchar(1000) NOT NULL DEFAULT '',
   `checkout_layout` tinyint(1) NOT NULL DEFAULT 0,
+  `invoice_counter_live` int(11) NOT NULL DEFAULT 0,
+  `invoice_counter_test` int(11) NOT NULL DEFAULT 0,
   PRIMARY KEY (`configid`)
 )  ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 DEFAULT COLLATE=utf8mb4_unicode_ci;
 
@@ -589,7 +591,9 @@ CREATE TABLE IF NOT EXISTS `#__ticketstation_invoices` (
   `sent` tinyint(1) NOT NULL DEFAULT '0',
   `date_sent` datetime DEFAULT NULL,
   `test` tinyint(1) NOT NULL DEFAULT 0,
+  `invoice_no` int(11) NOT NULL DEFAULT 0,
   PRIMARY KEY (`invoiceid`),
+  UNIQUE KEY `idx_invoice_no` (`test`, `invoice_no`),
   KEY `ordercode` (`ordercode`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 DEFAULT COLLATE=utf8mb4_unicode_ci;
 

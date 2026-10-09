@@ -754,7 +754,9 @@ class Refund
         $query = $db->getQuery(true)
             ->select([$db->quoteName('id'), $db->quoteName('ordercode'), $db->quoteName('attention')])
             ->from($db->quoteName('#__ticketstation_refunds'))
-            ->where($db->quoteName('attention') . ' > 0');
+            ->where($db->quoteName('attention') . ' > 0')
+            // Only refunds of orders of the mode the shop is in.
+            ->where('EXISTS (SELECT 1 FROM ' . $db->quoteName('#__ticketstation_orders', 'ro') . ' WHERE ro.ordercode = ' . $db->quoteName('#__ticketstation_refunds.ordercode') . ' AND ' . TestData::condition('ro.test') . ')');
 
         $db->setQuery($query);
 

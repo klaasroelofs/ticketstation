@@ -57,7 +57,7 @@ $wa->registerAndUseStyle('ticketstation', Uri::base() . 'components\com_ticketst
 
                         ?>
                         <tr class="row<?= $i;?>">
-                            <td><?php echo (new Invoice)->getInvoiceNumber($row->invoiceid, $this->config->invoice_prefix); ?></td>
+                            <td><?php echo (new Invoice)->getInvoiceNumber($row, $this->config->invoice_prefix); ?></td>
                             <td><a href="<?php echo $orderlink; ?>"><?php echo (int) $row->ordercode; ?></a></td>
                             <td><a href="<?php echo $clientlink; ?>"><?= $this->escape($row->client_name) ?></a><br/><small><?= $row->client_email ?></small></td>
                             <td class="d-none d-md-table-cell text-center"><?php echo TicketstationFunctions::showprice($this->config->priceformat, $row->netto + $row->fees, $this->config->valuta); ?></td>
@@ -70,7 +70,7 @@ $wa->registerAndUseStyle('ticketstation', Uri::base() . 'components\com_ticketst
                                 <?php } ?>
                             </td>
                             <td class="d-none d-md-table-cell text-center">
-                                <a class="btn btn-sm btn-secondary" target="blank" href="<?php echo Uri::root() . 'administrator/components/com_ticketstation/invoices/' . (new Invoice)->getPdfFilename($row->invoiceid); ?>">
+                                <a class="btn btn-sm btn-secondary" target="blank" href="<?php echo Uri::root() . 'administrator/components/com_ticketstation/invoices/' . (new Invoice)->getPdfFilename($row); ?>">
                                     <span class="fa fa-download"></span>
                                 </a>
                             </td>

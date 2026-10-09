@@ -665,6 +665,12 @@ class eTicketsMessage
 
         $this->replaceVariables($string);
 
+        // A mail about a test order says so, so nobody takes it for the real thing.
+        if ( ! empty($this->variables['ordercode']) && TestData::isTestOrder($this->variables['ordercode']))
+        {
+            $string = '[TEST] ' . $string;
+        }
+
         return $string;
     }
 

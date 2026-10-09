@@ -15,6 +15,7 @@ use Ticketstation\Component\Ticketstation\Administrator\Helper\Barcode;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Order;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Refund;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Scanner;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\TestData;
 
 defined('_JEXEC') or die;
 
@@ -134,6 +135,14 @@ class CodescannerController extends BaseController
 		}
 
 		$order         = $data->ordercode . '-' . $data->orderid;
+
+		// A test ticket is only scanned while the shop is in test mode (to try the scanner out),
+		// and a live ticket never then: it would be marked as used.
+		if ((int) ($data->test ?? 0) !== TestData::mode())
+		{
+			return $this->result(0, Text::_((int) ($data->test ?? 0) === 1 ? 'COM_TICKETSTATION_TICKETSCANNING_TEST_TICKET' : 'COM_TICKETSTATION_TICKETSCANNING_LIVE_TICKET'), $order);
+		}
+
 		$orderEventid  = (int) $data->eventid;
 		$orderTicketid = (int) $data->ticketid;
 

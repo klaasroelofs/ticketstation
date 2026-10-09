@@ -145,6 +145,27 @@ final class TestData
     }
 
     /**
+     * Frees the seats held by test orders, for when the shop goes live: a seat is held by one
+     * order at a time, and a test order must not keep a seat from the customers. The test orders
+     * stay, with their seat number; only the seat on the chart is let go.
+     *
+     * @return  int  The number of seats freed.
+     */
+    public static function releaseSeats(): int
+    {
+        $db = Factory::getContainer()->get('DatabaseDriver');
+
+        $db->setQuery(
+            'UPDATE ' . $db->quoteName('#__ticketstation_seatplancoords', 'c')
+            . ' INNER JOIN ' . $db->quoteName('#__ticketstation_orders', 'o') . ' ON o.orderid = c.orderid'
+            . ' SET c.booked = c.blocked, c.orderid = 0'
+            . ' WHERE o.test = 1'
+        )->execute();
+
+        return $db->getAffectedRows();
+    }
+
+    /**
      * The notice at the top of a screen that lists orders, customers or payments, so nobody takes
      * test data for live data: empty while the shop is live.
      */

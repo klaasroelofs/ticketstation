@@ -62,6 +62,7 @@ class Ticket
 
         $query->select('COUNT(orderid) AS total_tickets_sold');
         $query->from($db->quoteName('#__ticketstation_orders'));
+        $query->where(TestData::condition('test'));
         $query->where($db->quoteName('ticketid') . " = " . (int ) $ticketid);
         $query->where(Refund::heldSql());
 

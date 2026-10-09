@@ -151,6 +151,7 @@ class WaitingList
         $query = $db->getQuery(true)
             ->select($db->quoteName('ordercode'))
             ->from($db->quoteName('#__ticketstation_waitinglist'))
+            ->where(TestData::condition('test'))
             ->where($db->quoteName('confirmed') . ' = 1')
             ->where($db->quoteName('processed') . ' = 0')
             ->whereIn($db->quoteName('ticketid'), $family)

@@ -256,6 +256,7 @@ class Availability
         $query = $db->getQuery(true)
             ->select('COUNT(*)')
             ->from($db->quoteName('#__ticketstation_orders'))
+            ->where(TestData::condition('test'))
             ->whereIn($db->quoteName('ticketid'), $ticketids)
             ->where(Refund::heldSql());
 
@@ -297,6 +298,7 @@ class Availability
         $query = $db->getQuery(true)
             ->select(['ticketid', 'COUNT(*) AS sold'])
             ->from($db->quoteName('#__ticketstation_orders'))
+            ->where(TestData::condition('test'))
             ->whereIn($db->quoteName('ticketid'), $ids)
             ->where(Refund::heldSql())
             ->group($db->quoteName('ticketid'));

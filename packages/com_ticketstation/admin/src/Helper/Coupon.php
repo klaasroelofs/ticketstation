@@ -134,12 +134,13 @@ class Coupon
     /**
      * usage() as an SQL expression, for lists of coupons: pass the qualified column that holds
      * the coupon code (e.g. "c.coupon_code"). An order whose rows are all gone but whose
-     * ordertotals row wasn't swept yet doesn't count.
+     * ordertotals row wasn't swept yet doesn't count. Only the orders of the mode the shop is in
+     * count: a coupon tried out in test mode is not used up live.
      */
     public static function usageSql(string $codeColumn): string
     {
         return '(SELECT COUNT(*) FROM #__ticketstation_ordertotals AS uot WHERE uot.coupon = ' . $codeColumn
-            . ' AND EXISTS (SELECT 1 FROM #__ticketstation_orders AS uo WHERE uo.ordercode = uot.ordercode))';
+            . ' AND EXISTS (SELECT 1 FROM #__ticketstation_orders AS uo WHERE uo.ordercode = uot.ordercode AND ' . TestData::condition('uo.test') . '))';
     }
 
     /**
