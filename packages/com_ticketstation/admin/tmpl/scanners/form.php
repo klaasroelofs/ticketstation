@@ -89,9 +89,12 @@ HTMLHelper::_('behavior.formvalidator');
                 /* Joomla gives the switch a fixed width of 18rem; shrink it so it fits the list. */
                 #ts-scanner-list .switcher { width: 7rem; }
                 #ts-scanner-list .switcher label { min-width: 2.5rem; }
+                /* Joomla keeps header cells on one line; the notes under the headings have to wrap on a phone. */
+                #ts-scanner-list th { white-space: normal; }
             </style>
-            <div class="row mb-3">
-                <table class="table" id="ts-scanner-list" style="max-width: 560px;">
+            <?php // No Bootstrap row around the list: its negative margins push the table out of the card on a phone ?>
+            <div class="mb-3">
+                <table class="table w-100" id="ts-scanner-list" style="max-width: 560px;">
                     <thead>
                         <th><div style="font-size:120%;"><?= Text::_('COM_TICKETSTATION_EVENT'); ?></div><small class="form-text"><?= Text::_('COM_TICKETSTATION_SCANNING_WARNING_EVENT') ?></small></th>
                         <th style="width: 8rem;"></th>
