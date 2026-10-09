@@ -100,6 +100,13 @@ $sum28     = array_sum(array_column($this->dailySales, 'tickets'));
         '1' => Text::_('COM_TICKETSTATION_CPANEL_TESTMODE_CONFIRM_TEST'),
     ];
     ?>
+    <?php
+    // Joomla's confirmation dialog, as the delete buttons use it.
+    Factory::getApplication()->getDocument()->getWebAssetManager()->useScript('joomla.dialog');
+    Text::script('WARNING');
+    Text::script('JYES');
+    Text::script('JNO');
+    ?>
     <?php ob_start(); ?>
     <div class="d-flex flex-wrap justify-content-end align-items-center gap-2 mb-3">
         <?php if ($this->testBlocked) { ?>
@@ -108,7 +115,7 @@ $sum28     = array_sum(array_column($this->dailySales, 'tickets'));
         <?php if ($this->canSwitchMode && ($this->testData->orders > 0 || $this->testData->customers > 0 || $this->testData->waiting > 0)) { ?>
             <form action="<?= Route::_('index.php?option=com_ticketstation&view=controlpanel'); ?>" method="post" id="ts-testdata-form"
                 class="d-inline-flex align-items-center gap-2 m-0 me-2"
-                onsubmit="return confirm(<?= $this->escape(json_encode(Text::_('COM_TICKETSTATION_TESTDATA_DELETE_CONFIRM'), JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP)) ?>);">
+                onsubmit="return tsConfirmSubmit(event, <?= $this->escape(json_encode(Text::_('COM_TICKETSTATION_TESTDATA_DELETE_CONFIRM'), JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP)) ?>);">
                 <input type="hidden" name="option" value="com_ticketstation" />
                 <input type="hidden" name="controller" value="payments" />
                 <input type="hidden" name="task" value="deletetestdata" />
@@ -179,14 +186,37 @@ $sum28     = array_sum(array_column($this->dailySales, 'tickets'));
             });
         })();
 
+        // Asks in Joomla's own confirmation dialog (Yes / No), like the delete buttons elsewhere; falls back to the browser's.
+        function tsConfirm(message) {
+            return import('joomla.dialog')
+                .then(function (m) { return m.default.confirm(message, Joomla.Text._('WARNING', 'Warning')); })
+                .catch(function () { return window.confirm(message); });
+        }
+
+        function tsConfirmSubmit(event, message) {
+            event.preventDefault();
+            var form = event.target;
+
+            tsConfirm(message).then(function (ok) {
+                if (ok) {
+                    form.submit();
+                }
+            });
+
+            return false;
+        }
+
         function tsTestModeChanged(event) {
             var confirms = <?= json_encode($confirms, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP) ?>;
-            if (confirm(confirms[event.target.value])) {
-                document.getElementById('ts-testmode-form').submit();
-            } else {
-                // Back to the saved state.
-                window.location.reload();
-            }
+
+            tsConfirm(confirms[event.target.value]).then(function (ok) {
+                if (ok) {
+                    document.getElementById('ts-testmode-form').submit();
+                } else {
+                    // Back to the saved state.
+                    window.location.reload();
+                }
+            });
         }
     </script>
 
