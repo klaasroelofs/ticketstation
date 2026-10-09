@@ -215,7 +215,7 @@ class eTicketsMessage
             'ordercode'        => '123456',
             'orderdate'        => date('d-m-Y'),
             'orderlist'        => $orders,
-            'price'            => '45,00',
+            'price'            => Price::format(45, $message->getConfig()->valuta),
             'walletbuttons'    => '<p><em>' . Text::_('COM_TICKETSTATION_TEMPLATE_SAMPLE_WALLET') . '</em></p>',
             'paymentlink'      => '<a href="' . $link . '">' . $link . '</a>',
             'confirmationlink' => '<a href="' . $link . '">' . $link . '</a>',
