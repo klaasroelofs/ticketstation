@@ -63,7 +63,6 @@ $wa->registerAndUseStyle('searchtools', Uri::root() . 'media/templates/administr
                             <td class="w-1 text-center">
                                 <input class="form-check-input" type="checkbox" name="checkall-toggle" value="" title="<?= Text::_('JGLOBAL_CHECK_ALL'); ?>" onclick="Joomla.checkAll(this)">
                             </td>
-                            <th scope="col" class="w-1 text-center"><?php echo Text::_( 'COM_TICKETSTATION_PID' ); ?></th>
                             <th scope="col"><?php echo Text::_( 'COM_TICKETSTATION_DATE' ); ?></th>
                             <th scope="col"><?php echo Text::_( 'COM_TICKETSTATION_CLIENT' ); ?></th>
                             <th scope="col" class="w-10 d-none d-md-table-cell"><?php echo Text::_( 'COM_TICKETSTATION_ORDERCODE' ); ?></th>
@@ -87,8 +86,10 @@ $wa->registerAndUseStyle('searchtools', Uri::root() . 'media/templates/administr
 
                         <tr class="row<?php echo $i;?>">
                             <td class="text-center"><?php echo $checked; ?></td>
-                            <td><a href="<?php echo $link; ?>"><?php echo $row->pid; ?></a></td>
-                            <td><?= $this->escape(Date::screen($row->date, $this->data->dateformat . ' ' . $this->data->time_format)); ?></td>
+                            <th scope="row">
+                                <a href="<?php echo $link; ?>" class="fw-bold"><span class="icon-edit me-1" aria-hidden="true"></span><?= $this->escape(Date::screen($row->date, $this->data->dateformat . ' ' . $this->data->time_format)); ?></a>
+                                <div class="small text-muted fw-normal mt-1"><?= Text::_('COM_TICKETSTATION_PID'); ?> <?= (int) $row->pid; ?></div>
+                            </th>
                             <td><a href="<?php echo $linkuser; ?>"><?php echo $this->escape($row->name); ?></a></td>
                             <td class="d-none d-md-table-cell"><a href="<?php echo $linkorder; ?>"><?php echo $row->orderid; ?></a></td>
                             <td class="small d-none d-lg-table-cell"><?= htmlspecialchars(ProviderRegistry::methodLabel(strtolower((string) $row->type), (string) ($row->provider ?? '')), ENT_QUOTES, 'UTF-8'); ?></td>
