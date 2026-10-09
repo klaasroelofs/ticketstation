@@ -143,6 +143,30 @@ $sum28     = array_sum(array_column($this->dailySales, 'tickets'));
         #ts-testmode .switcher input ~ input:checked ~ .toggle-outside { background: #e0a100; }
     </style>
     <script>
+        // The "test mode is on / off" message after switching goes away by itself; other messages (errors) stay.
+        (function () {
+            var texts = <?= json_encode([Text::_('COM_TICKETSTATION_TESTMODE_SWITCHED_ON'), Text::_('COM_TICKETSTATION_TESTMODE_SWITCHED_OFF')], JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP) ?>;
+
+            function mark(root) {
+                root.querySelectorAll('joomla-alert').forEach(function (alert) {
+                    if (!alert.hasAttribute('auto-dismiss') && texts.some(function (text) { return alert.textContent.indexOf(text) !== -1; })) {
+                        alert.setAttribute('auto-dismiss', 5000);
+                    }
+                });
+            }
+
+            document.addEventListener('DOMContentLoaded', function () {
+                var container = document.getElementById('system-message-container');
+
+                if (!container) {
+                    return;
+                }
+
+                mark(container);
+                new MutationObserver(function () { mark(container); }).observe(container, {childList: true, subtree: true});
+            });
+        })();
+
         function tsTestModeChanged(event) {
             var confirms = <?= json_encode($confirms, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP) ?>;
             if (confirm(confirms[event.target.value])) {
