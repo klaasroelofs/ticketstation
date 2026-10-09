@@ -85,7 +85,7 @@ $sum28     = array_sum(array_column($this->dailySales, 'tickets'));
 
 <div class="container ticketstation-cpanel">
 
-    <?php // TEST MODE: one switch for the whole shop, the payment provider follows. Small, top right; the explanation is the tooltip. ?>
+    <?php // TEST MODE: one switch for the whole shop, the payment provider follows. Shown on the line of the key figures heading below; the explanation is the tooltip. ?>
     <?php
     $modeTip = $this->testMode
         ? trim(Text::_('COM_TICKETSTATION_CPANEL_TESTMODE_ON_TITLE') . '. ' . Text::_('COM_TICKETSTATION_CPANEL_TESTMODE_ON_TEXT')
@@ -100,7 +100,8 @@ $sum28     = array_sum(array_column($this->dailySales, 'tickets'));
         '1' => Text::_('COM_TICKETSTATION_CPANEL_TESTMODE_CONFIRM_TEST'),
     ];
     ?>
-    <div class="d-flex flex-wrap justify-content-end align-items-center gap-2 mb-2">
+    <?php ob_start(); ?>
+    <div class="d-flex flex-wrap justify-content-end align-items-center gap-2">
         <?php if ($this->testBlocked) { ?>
             <small class="text-danger"><span class="fa fa-exclamation-triangle me-1" aria-hidden="true"></span><?= Text::sprintf('COM_TICKETSTATION_CPANEL_TESTMODE_NO_TEST_ENVIRONMENT', $this->escape($this->providerTitle)) ?></small>
         <?php } ?>
@@ -110,7 +111,10 @@ $sum28     = array_sum(array_column($this->dailySales, 'tickets'));
             <input type="hidden" name="controller" value="payments" />
             <input type="hidden" name="task" value="testmode" />
             <?= HTMLHelper::_('form.token'); ?>
-            <span class="fa fa-flask <?= $this->testMode ? 'text-warning' : 'text-muted'; ?>" aria-hidden="true"></span>
+            <span class="d-inline-flex align-items-center gap-1 small fw-semibold text-uppercase <?= $this->testMode ? 'text-warning-emphasis' : 'text-muted'; ?>" style="letter-spacing: .04em;">
+                <span class="fa fa-flask <?= $this->testMode ? 'text-warning' : ''; ?>" aria-hidden="true"></span>
+                <?= Text::_('COM_TICKETSTATION_TESTMODE_SHOP_MODE') ?>
+            </span>
             <?= LayoutHelper::render('joomla.form.field.radio.switcher', [
                 'id'            => 'ts-testmode',
                 'name'          => 'test_mode',
@@ -128,6 +132,7 @@ $sum28     = array_sum(array_column($this->dailySales, 'tickets'));
             ]) ?>
         </form>
     </div>
+    <?php $modeSwitch = ob_get_clean(); ?>
     <script>
         function tsTestModeChanged(event) {
             var confirms = <?= json_encode($confirms, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP) ?>;
@@ -181,8 +186,13 @@ $sum28     = array_sum(array_column($this->dailySales, 'tickets'));
     <?php } ?>
 
     <?php // KEY FIGURES ?>
-    <h2 class="mb-0"><span class="fa fa-chart-line text-primary me-2" aria-hidden="true"></span><?= Text::_('COM_TICKETSTATION_CPANEL_STATS_TITLE') ?></h2>
-    <p class="text-muted"><?= Text::sprintf('COM_TICKETSTATION_CPANEL_STATS_SUBTITLE', HTMLHelper::_('date', 'now', 'W'), HTMLHelper::_('date', 'now', 'F Y')) ?></p>
+    <div class="d-flex flex-wrap justify-content-between align-items-start gap-2">
+        <div>
+            <h2 class="mb-0"><span class="fa fa-chart-line text-primary me-2" aria-hidden="true"></span><?= Text::_('COM_TICKETSTATION_CPANEL_STATS_TITLE') ?></h2>
+            <p class="text-muted"><?= Text::sprintf('COM_TICKETSTATION_CPANEL_STATS_SUBTITLE', HTMLHelper::_('date', 'now', 'W'), HTMLHelper::_('date', 'now', 'F Y')) ?></p>
+        </div>
+        <?= $modeSwitch ?>
+    </div>
 
     <div class="row">
         <div class="col-12 col-sm-6 col-xl-3 mb-3">

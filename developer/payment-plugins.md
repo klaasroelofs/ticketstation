@@ -113,7 +113,7 @@ What the webhook answers decides whether the service calls again, so choose the 
 
 ### Test mode
 
-Test mode is **one switch for the whole shop**, at the top of Ticketstation's control panel. It closes
+Test mode is **one switch for the whole shop**, a Live | Test switch on Ticketstation's control panel. It closes
 the shop to the public, marks tickets as test tickets, and makes the payment provider use its test
 environment. Your plugin has **no test mode setting of its own**: it follows the shop, so the admin
 cannot leave the shop in test mode and the provider live, or the other way round.
