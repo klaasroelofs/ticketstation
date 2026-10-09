@@ -1,0 +1,25 @@
+/* Ticketstation's backend screens on a phone. Loaded on every screen by the Dispatcher. */
+
+@media (max-width: 767.98px) {
+    /* Atum keeps table header cells on one line (.table thead th), so a heading such as
+       "Payment Status" or "Couponcode" pushes a list wider than the screen. Let them wrap. */
+    body.com_ticketstation table th,
+    body.com_ticketstation .table thead th {
+        white-space: normal;
+    }
+
+    /* Tighter cells, and long words such as an email address may break, so a list fits the screen. */
+    body.com_ticketstation table.itemList > :not(caption) > * > * {
+        padding-left: .4rem;
+        padding-right: .4rem;
+    }
+
+    body.com_ticketstation table.itemList td {
+        overflow-wrap: anywhere;
+    }
+
+    /* A list with many pages wraps its page links instead of running off the screen. */
+    body.com_ticketstation ul.pagination {
+        flex-wrap: wrap;
+    }
+}

@@ -166,12 +166,14 @@ class Dispatcher extends ComponentDispatcher
             return;
         }
 
-        /*
-        $webAssetManager = $document->getWebAssetManager();
+        // The small stylesheet every backend screen shares (phone layout); the version follows the file
+        $file = JPATH_ADMINISTRATOR . '/components/com_ticketstation/assets/css/admin.css';
 
-        $webAssetManager
-            ->addInlineStyle(Uri::base() . 'components/com_ticketstation/assets/css/ticketstation.css');
-        */
+        $document->getWebAssetManager()->registerAndUseStyle(
+            'com_ticketstation.admin',
+            Uri::base() . 'components/com_ticketstation/assets/css/admin.css',
+            ['version' => is_file($file) ? (string) filemtime($file) : 'auto']
+        );
     }
 
     private function applyViewAndController(): void
