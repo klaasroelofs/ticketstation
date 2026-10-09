@@ -33,6 +33,7 @@ $history_icons = [
     'payment_failed'          => ['fa-times-circle', 'danger'],
     'payment_cancelled'       => ['fa-ban', 'secondary'],
     'payment_expired'         => ['fa-hourglass-end', 'secondary'],
+    'payment_pending'         => ['fa-hourglass-half', 'warning'],
     'payment_duplicate'       => ['fa-exclamation-triangle', 'danger'],
     'payment_refund_reported' => ['fa-reply', 'warning'],
     'tickets_generated'       => ['fa-ticket-alt', 'secondary'],

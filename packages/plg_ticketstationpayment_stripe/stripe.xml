@@ -89,6 +89,14 @@
 				/>
 
 				<field
+					name="methods_note"
+					type="note"
+					class="alert alert-warning"
+					label="PLG_TICKETSTATIONPAYMENT_STRIPE_METHODS_NOTE"
+					description="PLG_TICKETSTATIONPAYMENT_STRIPE_METHODS_NOTE_DESC"
+				/>
+
+				<field
 					name="description"
 					type="text"
 					label="PLG_TICKETSTATIONPAYMENT_STRIPE_DESCRIPTION"

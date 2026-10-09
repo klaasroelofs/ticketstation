@@ -276,6 +276,14 @@ final class PaymentService
                 break;
 
             case PaymentUpdate::PENDING:
+                ## The customer has done their part but the money isn't confirmed yet (a delayed payment
+                ## method). The order stays pending until the provider reports it; the automatic cleanup
+                ## removes it when that takes longer than "Remove Unpaid/Pending Orders after". Logged
+                ## once: a provider may repeat the report.
+                if ((int) $tmpTransaction->processed !== 4) {
+                    History::log($order_id, 'payment_pending', 'Payment at ' . $provider->getTitle() . ' is not confirmed yet' . ($update->method !== '' ? ' (payment method: ' . $update->method . ')' : '') . '; the tickets are created once it is. If it takes longer than the removal days in the Configuration, the order is removed by the automatic cleanup (transaction ' . $update->providerPaymentId . ')', [$idKey => $update->providerPaymentId, 'method' => $update->method]);
+                }
+
                 $newPayment->updateTempTransaction($return_token, '4');
                 break;
 

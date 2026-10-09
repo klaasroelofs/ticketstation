@@ -78,7 +78,7 @@ $bullets = function (string $prefix, int $count) {
                 <p><?= Text::_('COM_TICKETSTATION_PAYMENTS_DOCS_STRIPE_SETTINGS_INTRO') ?></p>
                 <?php $bullets('COM_TICKETSTATION_PAYMENTS_DOCS_STRIPE_SETTINGS_', 6); ?>
                 <h3 class="h6 mt-3"><?= Text::_('COM_TICKETSTATION_PAYMENTS_DOCS_STRIPE_NOTES_TITLE') ?></h3>
-                <?php $bullets('COM_TICKETSTATION_PAYMENTS_DOCS_STRIPE_NOTES_', 2); ?>
+                <?php $bullets('COM_TICKETSTATION_PAYMENTS_DOCS_STRIPE_NOTES_', 3); ?>
             </div>
         </details>
 
