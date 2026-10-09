@@ -32,6 +32,19 @@ $required     = eTicketsMessage::requiredPlaceholders($mailid);
 
 <form action = "<?php echo Route::_('index.php?option=com_ticketstation&view=templates'); ?>" method="post" name="adminForm" id="adminForm" enctype="multipart/form-data">
 
+    <?php // Filled by assets/js/templates.js when "Preview" is clicked ?>
+    <div class="card mb-3" id="ts-template-preview-card" hidden>
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <strong><?= Text::_('COM_TICKETSTATION_TEMPLATE_PREVIEW_TITLE'); ?></strong>
+            <button type="button" class="btn-close" id="ts-template-preview-close" aria-label="<?= Text::_('JCLOSE'); ?>"></button>
+        </div>
+        <div class="card-body">
+            <p class="mb-2"><span class="text-muted"><?= Text::_('COM_TICKETSTATION_TEMPLATE_MAILSUBJECT'); ?>:</span> <strong id="ts-template-preview-subject"></strong></p>
+            <iframe id="ts-template-preview-frame" class="ts-template-preview-frame" sandbox="" title="<?= Text::_('COM_TICKETSTATION_TEMPLATE_PREVIEW_TITLE'); ?>"></iframe>
+            <p class="small text-muted mb-0 mt-2"><?= Text::_('COM_TICKETSTATION_TEMPLATE_PREVIEW_NOTE'); ?></p>
+        </div>
+    </div>
+
     <div class="card">
         <div class="card-body">
             <div class="row">
@@ -45,23 +58,15 @@ $required     = eTicketsMessage::requiredPlaceholders($mailid);
                             Route::_('index.php?option=com_ticketstation&view=configuration')
                         ) ?>
                     </div>
-                    <label for="mailsubject" class="col-sm-3 col-form-label"
-                           rel="popover"
-                           title="<?= Text::_('COM_TICKETSTATION_TEMPLATE_MAILSUBJECT') ?>">
-                        <?= Text::_('COM_TICKETSTATION_TEMPLATE_MAILSUBJECT') ?>
-                    </label>
-                    <div class="col-sm-9">
+                    <div class="mb-3">
+                        <label for="mailsubject" class="form-label"><?= Text::_('COM_TICKETSTATION_TEMPLATE_MAILSUBJECT') ?></label>
                         <input type="text" name="mailsubject" id="mailsubject"
-                               class="form-control"
+                               class="form-control" maxlength="255"
                                value="<?= htmlspecialchars($this->data->mailsubject ?? '', ENT_QUOTES, 'UTF-8'); ?>"/>
                     </div>
-                    <label for="mailbody" class="col-sm-3 col-form-label"
-                           rel="popover"
-                           title="<?= Text::_('COM_TICKETSTATION_TEMPLATE_MAILBODY') ?>">
-                        <?= Text::_('COM_TICKETSTATION_TEMPLATE_MAILBODY') ?>
-                    </label>
-                    <div class="col-sm-9">
-                        <?= $editor->display('mailbody', $this->data->mailbody, '500', '500', '', '', false); ?>
+                    <div class="mb-3">
+                        <label for="mailbody" class="form-label"><?= Text::_('COM_TICKETSTATION_TEMPLATE_MAILBODY') ?></label>
+                        <?= $editor->display('mailbody', $this->data->mailbody, '100%', '450', '', '', false); ?>
                     </div>
                 </div>
                 <div class="col-lg-6">
@@ -69,7 +74,8 @@ $required     = eTicketsMessage::requiredPlaceholders($mailid);
                         <?= Text::_('COM_TICKETSTATION_TEMPLATE_DYNAMIC_FIELDS'); ?>
                     </h3>
 
-                    <p class="mt-3"><?= Text::_('COM_TICKETSTATION_TEMPLATE_DYNAMIC_FIELDS_DESC'); ?></p>
+                    <p class="mt-3 mb-1"><?= Text::_('COM_TICKETSTATION_TEMPLATE_DYNAMIC_FIELDS_DESC'); ?></p>
+                    <p class="small text-muted"><?= Text::_('COM_TICKETSTATION_TEMPLATE_CLICK_TO_INSERT'); ?></p>
 
                     <?php // Exactly the placeholders the code that sends this mail fills in (eTicketsMessage::placeholders()) ?>
                     <?php foreach ($placeholders as $group => $tags) { ?>
@@ -82,7 +88,10 @@ $required     = eTicketsMessage::requiredPlaceholders($mailid);
                                     $key = $language->hasKey($key . '_' . $mailid) ? $key . '_' . $mailid : $key;
                                     ?>
                                     <tr>
-                                        <td class="w-50"><code>{<?= $tag ?>}</code></td>
+                                        <td class="w-50">
+                                            <button type="button" class="btn btn-link p-0 ts-template-insert" data-tag="{<?= $tag ?>}"
+                                                    title="<?= Text::_('COM_TICKETSTATION_TEMPLATE_INSERT'); ?>"><code>{<?= $tag ?>}</code></button>
+                                        </td>
                                         <td>
                                             <?= Text::_($key); ?>
                                             <?php if (in_array($tag, $required, true)) { ?>

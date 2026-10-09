@@ -42,7 +42,7 @@ $bullets = function (string $prefix, int $count) {
         <details id="docs-templates-edit" class="mb-3 border rounded p-3">
             <summary class="h5 mb-0"><span class="fa fa-edit me-2" aria-hidden="true"></span><?= Text::_('COM_TICKETSTATION_TEMPLATES_DOCS_EDIT_TITLE') ?></summary>
             <div class="mt-3">
-                <?php $bullets('COM_TICKETSTATION_TEMPLATES_DOCS_EDIT_', 4); ?>
+                <?php $bullets('COM_TICKETSTATION_TEMPLATES_DOCS_EDIT_', 5); ?>
             </div>
         </details>
 

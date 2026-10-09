@@ -159,8 +159,16 @@ class eTicketsMessage
     public function id($alias)
     {
         $this->setTemplate($alias);
+        $this->setSenderVariables();
 
-        // The sender is configured centrally; fall back on the company details when left empty
+        return $this;
+    }
+
+    /**
+     * The sender is configured centrally; falls back on the company details when left empty.
+     */
+    private function setSenderVariables()
+    {
         $config = $this->getConfig();
 
         $variables = [
@@ -169,8 +177,64 @@ class eTicketsMessage
         ];
 
         $this->variables = array_merge($this->variables, $variables);
+    }
 
-        return $this;
+    /**
+     * A message made of the given (unsaved) subject and body, filled with example details
+     * instead of those of a real order: the preview and the test mail of the edit screen.
+     * The result renders and sends like any other message.
+     *
+     * @param   int     $mailid   The template the texts belong to (not used for the texts themselves).
+     * @param   string  $subject  The subject as typed in the form.
+     * @param   string  $body     The body as typed in the form.
+     * @param   string  $email    Address and
+     * @param   string  $name     name the example customer gets, so a test mail reaches the admin.
+     */
+    public static function sample(int $mailid, string $subject, string $body, string $email = '', string $name = ''): self
+    {
+        $message           = new self;
+        $message->template = (object) ['mailid' => $mailid, 'mailsubject' => $subject, 'mailbody' => $body];
+        $message->setSenderVariables();
+
+        $name     = trim($name) !== '' ? trim($name) : Text::_('COM_TICKETSTATION_TEMPLATE_SAMPLE_NAME');
+        $customer = [
+            'name'         => $name,
+            'emailaddress' => $email,
+            'phonenumber'  => '0123 456789',
+            'address'      => Text::_('COM_TICKETSTATION_TEMPLATE_SAMPLE_ADDRESS'),
+            'zipcode'      => '1234 AB',
+            'city'         => Text::_('COM_TICKETSTATION_TEMPLATE_SAMPLE_CITY'),
+        ];
+
+        $link   = rtrim(Uri::root(), '/') . '/#sample';
+        $event  = Text::_('COM_TICKETSTATION_TEMPLATE_SAMPLE_EVENT');
+        $orders = '<ul><li>2 &times; ' . Text::_('COM_TICKETSTATION_TEMPLATE_SAMPLE_TICKET_ADULT') . '</li>'
+            . '<li>1 &times; ' . Text::_('COM_TICKETSTATION_TEMPLATE_SAMPLE_TICKET_CHILD') . '</li></ul>';
+
+        $message->variables(array_merge($customer, [
+            'ordercode'        => '123456',
+            'orderdate'        => date('d-m-Y'),
+            'orderlist'        => $orders,
+            'price'            => '45,00',
+            'walletbuttons'    => '<p><em>' . Text::_('COM_TICKETSTATION_TEMPLATE_SAMPLE_WALLET') . '</em></p>',
+            'paymentlink'      => '<a href="' . $link . '">' . $link . '</a>',
+            'confirmationlink' => '<a href="' . $link . '">' . $link . '</a>',
+            'ticketlink'       => $link,
+            'invoice_id'       => '2026-0001',
+            'removal_days'     => '7',
+            'eventname'        => $event,
+            'eventdate'        => date('d-m-Y', strtotime('+30 days')),
+            'eventtime'        => '20:00',
+            'doorsopen'        => '19:30',
+            'location'         => Text::_('COM_TICKETSTATION_TEMPLATE_SAMPLE_VENUE'),
+            'subject'          => Text::sprintf('COM_TICKETSTATION_TEMPLATE_SAMPLE_SUBJECT', $event),
+            'message'          => Text::_('COM_TICKETSTATION_TEMPLATE_SAMPLE_MESSAGE'),
+        ]));
+
+        // send() wants a customer to send to
+        $message->user = (object) $customer;
+
+        return $message;
     }
 
     /*

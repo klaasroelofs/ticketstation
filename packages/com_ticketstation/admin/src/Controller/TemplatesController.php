@@ -16,6 +16,7 @@ use Joomla\CMS\Language\Text;
 use Joomla\CMS\Uri\Uri;
 use Ticketstation\Component\Ticketstation\Administrator\Controller\Mixin\RegisterControllerTasks;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\eTicketsMessage;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\TemplateDefaults;
 use Joomla\CMS\Application\CMSApplication;
 use Joomla\CMS\MVC\Controller\BaseController;
 use Joomla\CMS\MVC\Factory\MVCFactoryInterface;
@@ -115,6 +116,93 @@ class TemplatesController extends BaseController {
         {
             $this->setRedirect(Uri::base() . 'index.php?option=com_ticketstation&view=templates', Text::_('COM_TICKETSTATION_TEMPLATES_SAVED'));
         }
+    }
+
+    /**
+     * AJAX (assets/js/templates.js): the subject and body as typed in the form, filled with
+     * example details. Nothing is saved.
+     */
+    public function preview()
+    {
+        $message = $this->sampleFromForm();
+
+        $this->respond(['subject' => $message->getSubject(), 'body' => $message->getBody()]);
+    }
+
+    /**
+     * AJAX (assets/js/templates.js): sends the mail as typed in the form, filled with example
+     * details, to the logged-in admin. Nothing is saved; the attachments are left out.
+     */
+    public function testmail()
+    {
+        $app      = Factory::getApplication();
+        $identity = $app->getIdentity();
+        $message  = $this->sampleFromForm($identity->email, $identity->name);
+
+        // Marks the mail as a test; the placeholders in the subject are still filled in on sending
+        $message->template->mailsubject = '[' . Text::_('COM_TICKETSTATION_TEMPLATE_TESTMAIL_PREFIX') . '] ' . $message->template->mailsubject;
+        $sent = $message->send();
+
+        // send() reports a failure through the message queue, which would only show up on the
+        // next page; the answer to this request carries it instead.
+        $app->getMessageQueue(true);
+
+        $this->respond($sent
+            ? ['ok' => true, 'message' => Text::sprintf('COM_TICKETSTATION_TEMPLATE_TESTMAIL_SENT', $identity->email)]
+            : ['ok' => false, 'message' => Text::_('COM_TICKETSTATION_TEMPLATE_TESTMAIL_FAILED')]);
+    }
+
+    /**
+     * Puts the texts a fresh installation starts with back in the form. Nothing is saved until
+     * the admin saves, so cancelling keeps the current texts.
+     */
+    public function resetdefault()
+    {
+        $app     = Factory::getApplication();
+        $mailid  = $app->getInput()->getInt('cid', 0);
+        $default = TemplateDefaults::get($mailid);
+        $editUrl = Uri::base() . 'index.php?option=com_ticketstation&controller=templates&task=edit&cid=' . $mailid;
+
+        if (!$default) {
+            $this->setRedirect($editUrl, Text::_('COM_TICKETSTATION_TEMPLATE_NO_DEFAULT'), 'error');
+
+            return false;
+        }
+
+        $app->setUserState('com_ticketstation.edit.template.data', [
+            'mailid'      => $mailid,
+            'mailsubject' => $default['mailsubject'],
+            'mailbody'    => $default['mailbody'],
+        ]);
+        $this->setRedirect($editUrl, Text::_('COM_TICKETSTATION_TEMPLATE_DEFAULT_LOADED'), 'warning');
+
+        return true;
+    }
+
+    /**
+     * The message the form describes: the subject and body as typed, with example details.
+     */
+    private function sampleFromForm(string $email = '', string $name = ''): eTicketsMessage
+    {
+        $input = Factory::getApplication()->getInput();
+
+        return eTicketsMessage::sample(
+            $input->getInt('cid', 0),
+            $input->get('mailsubject', '', 'string'),
+            $input->get('mailbody', '', 'raw'),
+            $email,
+            $name
+        );
+    }
+
+    /**
+     * Ends the request with a JSON answer.
+     */
+    private function respond(array $data): void
+    {
+        header('Content-Type: application/json; charset=utf-8');
+        echo json_encode($data);
+        Factory::getApplication()->close();
     }
 
     public function cancel($cachable = false, $urlparams = [])

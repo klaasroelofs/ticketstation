@@ -79,6 +79,9 @@ class AclGate
             'apply'        => 'core.options',
             'save'         => 'core.options',
             'cancel'       => 'core.options',
+            'preview'      => 'core.options',
+            'testmail'     => 'core.options',
+            'resetdefault' => 'core.options',
             'controlpanel' => self::MANAGE,
         ],
 

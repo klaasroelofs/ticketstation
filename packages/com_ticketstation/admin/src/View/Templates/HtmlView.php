@@ -15,8 +15,12 @@ use Joomla\CMS\Factory;
 use Joomla\CMS\HTML\HTMLHelper;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\View\HtmlView as BaseHtmlView;
+use Joomla\CMS\Router\Route;
+use Joomla\CMS\Toolbar\Toolbar;
 use Joomla\CMS\Toolbar\ToolbarHelper;
+use Joomla\CMS\Uri\Uri;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Docs;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\TemplateDefaults;
 
 /**
  * Ticketstation Mollie Admin View
@@ -31,6 +35,9 @@ class HtmlView extends BaseHtmlView {
      */
 
     public $config = [];
+
+    /** @var bool Whether the template being edited has a default text to go back to. */
+    public $hasDefault = false;
 
     function display($tpl = null) {
 
@@ -57,11 +64,43 @@ class HtmlView extends BaseHtmlView {
         ToolBarHelper::apply();
         ToolBarHelper::save();
         ToolBarHelper::cancel();
-        Docs::toolbarButton('templates-edit');
 
         $model = $this->getModel('Templates');
 
         $this->data = $model->getData();
+
+        // Preview, test mail and "put the default text back" work on what is typed in the form
+        // (assets/js/templates.js); nothing is saved by them.
+        $this->hasDefault = (bool) TemplateDefaults::get((int) ($this->data->mailid ?? 0));
+        $toolbar          = Toolbar::getInstance('toolbar');
+        $button           = function (string $id, string $icon, string $label) {
+            return '<joomla-toolbar-button><button type="button" id="' . $id . '" class="btn btn-outline-primary">'
+                . '<span class="' . $icon . '" aria-hidden="true"></span> ' . Text::_($label) . '</button></joomla-toolbar-button>';
+        };
+
+        $toolbar->customButton('ts-template-preview')->html($button('ts-template-preview', 'icon-eye', 'COM_TICKETSTATION_TEMPLATE_PREVIEW'));
+        $toolbar->customButton('ts-template-testmail')->html($button('ts-template-testmail', 'icon-mail', 'COM_TICKETSTATION_TEMPLATE_TESTMAIL'));
+
+        if ($this->hasDefault) {
+            $toolbar->customButton('ts-template-reset')->html($button('ts-template-reset', 'icon-undo', 'COM_TICKETSTATION_TEMPLATE_RESET'));
+        }
+
+        Docs::toolbarButton('templates-edit');
+
+        $document = $this->getDocument();
+        $document->addScriptOptions('com_ticketstation.templates', [
+            'url'          => Route::_('index.php?option=com_ticketstation', false),
+            'confirmReset' => Text::_('COM_TICKETSTATION_TEMPLATE_RESET_CONFIRM'),
+            'previewError' => Text::_('COM_TICKETSTATION_TEMPLATE_PREVIEW_FAILED'),
+            'failed'       => Text::_('COM_TICKETSTATION_TEMPLATE_TESTMAIL_FAILED'),
+        ]);
+        $document->getWebAssetManager()->registerAndUseScript(
+            'com_ticketstation.templates',
+            Uri::base() . 'components/com_ticketstation/assets/js/templates.js',
+            [],
+            ['defer' => true],
+            ['core']
+        );
 
         // After a refused save (a required placeholder missing) show what was typed, not the
         // stored text (see TemplatesController::apply()).

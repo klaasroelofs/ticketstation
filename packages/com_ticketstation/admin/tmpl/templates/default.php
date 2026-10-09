@@ -21,66 +21,58 @@ $document->setTitle(Text::_('COM_TICKETSTATION_VIEW_TEMPLATES_TITLE') . ' - ' . 
 $wa = $document->getWebAssetManager();
 $wa->registerAndUseStyle('ticketstation', Uri::base() . 'components\com_ticketstation\assets\css\ticketstation.css');
 
+$language = $app->getLanguage();
+
+// A mail the code knows gets its own name and a line about when it is sent; anything else
+// (a mail added by hand) falls back on its alias.
+$text = function (string $key, string $fallback) use ($language) {
+    return $language->hasKey($key) ? Text::_($key) : $fallback;
+};
+
+// The body is HTML written in the editor: show a plain-text excerpt, never the markup itself.
+$excerpt = function (string $html) {
+    $plain = html_entity_decode(strip_tags(preg_replace('#<(br|/p|/li|/div|/h\d)[^>]*>#i', ' ', $html)), ENT_QUOTES, 'UTF-8');
+    $plain = trim(preg_replace('/\s+/u', ' ', $plain));
+
+    return mb_strimwidth($plain, 0, 180, '…', 'UTF-8');
+};
+
 ?>
 
-<form action="<?= Route::_('index.php?option=com_ticketstation&view=templates'); ?>" method="POST" name="adminForm" id="adminForm" enctype="multipart/form-data">
-    <?php // Main area ?>
+<form action="<?= Route::_('index.php?option=com_ticketstation&view=templates'); ?>" method="POST" name="adminForm" id="adminForm">
+    <p class="text-muted"><?= Text::_('COM_TICKETSTATION_TEMPLATES_LIST_INTRO') ?></p>
 
-    <div class="row">
-        <?php // LEFT COLUMN (66% desktop width) ?>
-
-        <?php
-
-            for ($i = 0, $n = count($this->items); $i < $n; $i++ ) {
-
-            $row        = $this->items[$i];
-            $link		= 'index.php?option=com_ticketstation&controller=templates&task=edit&cid=' . $row->mailid;
-
-        ?>
-            <div class="col col-lg-6">
-                <div class="card mb-2">
-                    <h3 class="card-header bg-primary text-white">
-                        <?= Text::_('COM_TICKETSTATION_TEMPLATE_FOR') ?>&nbsp;<i style="color: yellow;"><?= $row->alias; ?></i>
-                    </h3>
-                    <div class="card-body">
-                        <div class="subhead mb-3 shadow-sm" style="position: relative; z-index: 100;">
-                            <div class="row">
-                                <div class="col-md-12">
-                                    <nav aria-label="<?= Text::_('JTOOLBAR'); ?>">
-                                        <div class="btn-toolbar d-flex" role="toolbar" id="toolbar">
-                                            <joomla-toolbar-button id="toolbar-edit" task="">
-                                                <button class="button-edit btn btn-primary" type="button" onClick="location.href='<?= $link; ?>'">
-                                                    <span class="icon-edit" aria-hidden="true"></span>
-                                                    <?= Text::_('JACTION_EDIT'); ?>
-                                                </button>
-                                            </joomla-toolbar-button>
-                                        </div>
-                                    </nav>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-sm-3 templates-title">
-                            <?= Text::_('COM_TICKETSTATION_TEMPLATE_MAILSUBJECT') ?>
-                        </div>
-                        <div class="col-sm-9 templates-content">
-                            <code><?= $row->mailsubject; ?></code>
-                        </div>
-                        <hr/>
-                        <div class="col-sm-3 templates-title">
-                            <?= Text::_('COM_TICKETSTATION_TEMPLATE_MAILBODY') ?>
-                        </div>
-                        <div class="col-sm-9 templates-content">
-                            <code><?= $row->mailbody; ?></code>
-                        </div>
-                    </div>
-                </div>
-            </div>
+    <table class="table table-striped align-middle ts-templates">
+        <caption class="visually-hidden"><?= Text::_('COM_TICKETSTATION_VIEW_TEMPLATES_TITLE') ?></caption>
+        <thead>
+            <tr>
+                <th scope="col" class="w-25"><?= Text::_('COM_TICKETSTATION_TEMPLATE') ?></th>
+                <th scope="col" class="w-25"><?= Text::_('COM_TICKETSTATION_TEMPLATE_MAILSUBJECT') ?></th>
+                <th scope="col"><?= Text::_('COM_TICKETSTATION_TEMPLATE_MAILBODY') ?></th>
+            </tr>
+        </thead>
+        <tbody>
+        <?php foreach ($this->items as $row) {
+            $link = Route::_('index.php?option=com_ticketstation&controller=templates&task=edit&cid=' . (int) $row->mailid);
+            $name = $text('COM_TICKETSTATION_TEMPLATE_NAME_' . (int) $row->mailid, (string) $row->alias);
+            $when = $text('COM_TICKETSTATION_TEMPLATE_WHEN_' . (int) $row->mailid, '');
+            ?>
+            <tr>
+                <th scope="row">
+                    <a href="<?= $link ?>" class="fw-bold"><span class="icon-edit me-1" aria-hidden="true"></span><?= htmlspecialchars($name, ENT_QUOTES, 'UTF-8') ?></a>
+                    <?php if ($when !== '') { ?>
+                        <div class="small text-muted fw-normal mt-1"><?= $when ?></div>
+                    <?php } ?>
+                </th>
+                <td><code class="text-break"><?= htmlspecialchars((string) $row->mailsubject, ENT_QUOTES, 'UTF-8') ?></code></td>
+                <td class="small text-muted"><?= htmlspecialchars($excerpt((string) $row->mailbody), ENT_QUOTES, 'UTF-8') ?></td>
+            </tr>
         <?php } ?>
-    </div>
+        </tbody>
+    </table>
 
-
-    <input name = "option" type="hidden" value="com_ticketstation" />
-    <input name = "controller" type="hidden" value="templates"/>
-    <input name = "task" type="hidden" value="" />
-    <?= HTMLHelper::_( 'form.token' ); ?>
+    <input name="option" type="hidden" value="com_ticketstation" />
+    <input name="controller" type="hidden" value="templates"/>
+    <input name="task" type="hidden" value="" />
+    <?= HTMLHelper::_('form.token'); ?>
 </form>
