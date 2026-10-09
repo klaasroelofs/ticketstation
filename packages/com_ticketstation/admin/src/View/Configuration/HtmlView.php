@@ -59,10 +59,17 @@ class HtmlView extends BaseHtmlView {
         $model = $this->getModel('Configuration', 'Administrator');
         $config = $model->getData();
 
-        $yesno = [
-            '0' => ['value' => '0', 'text' => Text::_('COM_TICKETSTATION_NO')],
-            '1' => ['value' => '1', 'text' => Text::_('COM_TICKETSTATION_YES')],
-        ];
+        // A Yes/No setting is a Joomla switcher, like the on/off settings in Joomla's own configuration.
+        // This screen binds its fields by hand, so every switcher is rendered by a one-field Form of its own.
+        $switch = function (string $name, $value): string {
+            $form = new Form('com_ticketstation.configuration.' . $name);
+            $form->load('<form><field name="' . $name . '" type="radio" layout="joomla.form.field.radio.switcher" default="0">'
+                . '<option value="0">COM_TICKETSTATION_NO</option><option value="1">COM_TICKETSTATION_YES</option>'
+                . '</field></form>');
+            $form->bind([$name => (int) $value]);
+
+            return $form->getField($name)->input;
+        };
 
         $variablefixed = [
             '0' => ['value' => '0', 'text' => Text::_('COM_TICKETSTATION_FIXED')],
@@ -73,47 +80,34 @@ class HtmlView extends BaseHtmlView {
 
         $lists = [];
 
-        $lists['show_thirdaddress'] = HTMLHelper::_('select.genericList', $yesno, 'show_thirdaddress', ' class="form-select" ' . '',
-            'value', 'text', $config->show_thirdaddress);
+        $lists['show_thirdaddress'] = $switch('show_thirdaddress', $config->show_thirdaddress);
         
-        $lists['show_secondaddress'] = HTMLHelper::_('select.genericList', $yesno, 'show_secondaddress', ' class="form-select" ' . '',
-            'value', 'text', $config->show_secondaddress);
+        $lists['show_secondaddress'] = $switch('show_secondaddress', $config->show_secondaddress);
 
-        $lists['payments_on'] = HTMLHelper::_('select.genericList', $yesno, 'payments_on', ' class="form-select" ' . '',
-            'value', 'text', $config->payments_on);
+        $lists['payments_on'] = $switch('payments_on', $config->payments_on);
 
-        $lists['man_payment'] = HTMLHelper::_('select.genericList', $yesno, 'man_payment', ' class="form-select" ' . '',
-            'value', 'text', $config->man_payment);
+        $lists['man_payment'] = $switch('man_payment', $config->man_payment);
 
-        $lists['show_cancel'] = HTMLHelper::_('select.genericList', $yesno, 'show_cancel', ' class="form-select" ' . '',
-            'value', 'text', $config->show_cancel);
+        $lists['show_cancel'] = $switch('show_cancel', $config->show_cancel);
 
         $lists['variable_transcosts'] = HTMLHelper::_('select.genericList', $variablefixed, 'variable_transcosts', ' class="form-select" ' . '',
             'value', 'text', $config->variable_transcosts);
 
-        $lists['show_available_tickets'] = HTMLHelper::_('select.genericList', $yesno, 'show_available_tickets', ' class="form-select" ' . '',
-            'value', 'text', $config->show_available_tickets);
+        $lists['show_available_tickets'] = $switch('show_available_tickets', $config->show_available_tickets);
 
-        $lists['show_quantity_eventlist'] = HTMLHelper::_('select.genericList', $yesno, 'show_quantity_eventlist', ' class="form-select" ' . '',
-            'value', 'text', $config->show_quantity_eventlist);
+        $lists['show_quantity_eventlist'] = $switch('show_quantity_eventlist', $config->show_quantity_eventlist);
 
-        $lists['show_price_eventlist'] = HTMLHelper::_('select.genericList', $yesno, 'show_price_eventlist', ' class="form-select" ' . '',
-            'value', 'text', $config->show_price_eventlist);
+        $lists['show_price_eventlist'] = $switch('show_price_eventlist', $config->show_price_eventlist);
 
-        $lists['show_venue'] = HTMLHelper::_('select.genericList', $yesno, 'show_venue', ' class="form-select" ' . '',
-            'value', 'text', $config->show_venue);
+        $lists['show_venue'] = $switch('show_venue', $config->show_venue);
 
-        $lists['show_venue_address'] = HTMLHelper::_('select.genericList', $yesno, 'show_venue_address', ' class="form-select" ' . '',
-            'value', 'text', $config->show_venue_address);
+        $lists['show_venue_address'] = $switch('show_venue_address', $config->show_venue_address);
 
-        $lists['show_venue_description'] = HTMLHelper::_('select.genericList', $yesno, 'show_venue_description', ' class="form-select" ' . '',
-            'value', 'text', $config->show_venue_description);
+        $lists['show_venue_description'] = $switch('show_venue_description', $config->show_venue_description);
 
-        $lists['show_venue_website'] = HTMLHelper::_('select.genericList', $yesno, 'show_venue_website', ' class="form-select" ' . '',
-            'value', 'text', $config->show_venue_website);
+        $lists['show_venue_website'] = $switch('show_venue_website', $config->show_venue_website);
 
-        $lists['reminder_on'] = HTMLHelper::_('select.genericList', $yesno, 'reminder_on', ' class="form-select" ' . '',
-            'value', 'text', $config->reminder_on);
+        $lists['reminder_on'] = $switch('reminder_on', $config->reminder_on);
 
         $reminderHours = [];
 
@@ -124,70 +118,50 @@ class HtmlView extends BaseHtmlView {
         $lists['reminder_hours'] = HTMLHelper::_('select.genericList', $reminderHours, 'reminder_hours', 'class="form-select"', 'value',
             'text', (string) $config->reminder_hours);
 
-        $lists['show_jsonld'] =HTMLHelper::_('select.genericList', $yesno, 'show_jsonld', ' class="form-select" ' . '',
-            'value', 'text', $config->show_jsonld);
+        $lists['show_jsonld'] =$switch('show_jsonld', $config->show_jsonld);
 
-        $lists['send_profile_mail'] = HTMLHelper::_('select.genericList', $yesno, 'send_profile_mail', ' class="form-select" ' . '',
-            'value', 'text', $config->send_profile_mail);
+        $lists['send_profile_mail'] = $switch('send_profile_mail', $config->send_profile_mail);
 
-        $lists['show_country'] = HTMLHelper::_('select.genericList', $yesno, 'show_country', ' class="form-select" ' . '',
-            'value', 'text', $config->show_country);
+        $lists['show_country'] = $switch('show_country', $config->show_country);
 
-        $lists['show_birthday'] = HTMLHelper::_('select.genericList', $yesno, 'show_birthday', ' class="form-select" ' . '',
-            'value', 'text', $config->show_birthday);
+        $lists['show_birthday'] = $switch('show_birthday', $config->show_birthday);
 
-        $lists['show_salutation'] = HTMLHelper::_('select.genericList', $yesno, 'show_salutation', ' class="form-select" ' . '',
-            'value', 'text', $config->show_salutation);
+        $lists['show_salutation'] = $switch('show_salutation', $config->show_salutation);
 
-        $lists['show_address'] = HTMLHelper::_('select.genericList', $yesno, 'show_address', ' class="form-select" ' . '',
-            'value', 'text', $config->show_address);
+        $lists['show_address'] = $switch('show_address', $config->show_address);
 
-        $lists['show_city'] = HTMLHelper::_('select.genericList', $yesno, 'show_city', ' class="form-select" ' . '',
-            'value', 'text', $config->show_city);
+        $lists['show_city'] = $switch('show_city', $config->show_city);
 
-        $lists['auto_username'] = HTMLHelper::_('select.genericList', $yesno, 'auto_username', ' class="form-select" ' . '',
-            'value', 'text', $config->auto_username);
+        $lists['auto_username'] = $switch('auto_username', $config->auto_username);
 
-        $lists['show_mailchimp_signup'] = HTMLHelper::_('select.genericList', $yesno, 'show_mailchimps', ' class="form-select" ' . '',
-            'value', 'text', $config->show_mailchimps);
+        $lists['show_mailchimp_signup'] = $switch('show_mailchimps', $config->show_mailchimps);
 
-        $lists['pro_installed'] = HTMLHelper::_('select.genericList', $yesno, 'pro_installed', ' class="form-select" ' . '',
-            'value', 'text', $config->pro_installed);
+        $lists['pro_installed'] = $switch('pro_installed', $config->pro_installed);
 
-        $lists['use_coupons'] = HTMLHelper::_('select.genericList', $yesno, 'use_coupons', ' class="form-select" ' . '',
-            'value', 'text', $config->use_coupons);
+        $lists['use_coupons'] = $switch('use_coupons', $config->use_coupons);
 
-        $lists['show_remark_field'] = HTMLHelper::_('select.genericList', $yesno, 'show_remark_field', ' class="form-select" ' . '',
-            'value', 'text', $config->show_remark_field);
+        $lists['show_remark_field'] = $switch('show_remark_field', $config->show_remark_field);
 
         $lists['checkout_layout'] = HTMLHelper::_('select.genericList', [
             ['value' => '0', 'text' => Text::_('COM_TICKETSTATION_CHECKOUT_LAYOUT_STEPS')],
             ['value' => '1', 'text' => Text::_('COM_TICKETSTATION_CHECKOUT_LAYOUT_COMBINED')],
         ], 'checkout_layout', ' class="form-select" ', 'value', 'text', (string) ($config->checkout_layout ?? 0));
 
-        $lists['show_waitinglist'] =HTMLHelper::_('select.genericList', $yesno, 'show_waitinglist', ' class="form-select" ' . '',
-            'value', 'text', $config->show_waitinglist);
+        $lists['show_waitinglist'] =$switch('show_waitinglist', $config->show_waitinglist);
 
-        $lists['show_phone'] = HTMLHelper::_('select.genericList', $yesno, 'show_phone', ' class="form-select" ' . '',
-            'value', 'text', $config->show_phone);
+        $lists['show_phone'] = $switch('show_phone', $config->show_phone);
 
-        $lists['show_zipcode'] = HTMLHelper::_('select.genericList', $yesno, 'show_zipcode', ' class="form-select" ' . '',
-            'value', 'text', $config->show_zipcode);
+        $lists['show_zipcode'] = $switch('show_zipcode', $config->show_zipcode);
 
-        $lists['remove_unfinished'] = HTMLHelper::_('select.genericList', $yesno, 'remove_unfinished', ' class="form-select" ' . '',
-            'value', 'text', $config->remove_unfinished);
+        $lists['remove_unfinished'] = $switch('remove_unfinished', $config->remove_unfinished);
 
-        $lists['load_bootstrap_tpl'] = HTMLHelper::_('select.genericList', $yesno, 'load_bootstrap_tpl', ' class="form-select" ' . '',
-            'value', 'text', $config->load_bootstrap_tpl);
+        $lists['load_bootstrap_tpl'] = $switch('load_bootstrap_tpl', $config->load_bootstrap_tpl);
 
-        $lists['load_bootstrap'] = HTMLHelper::_('select.genericList', $yesno, 'load_bootstrap', ' class="form-select" ' . '',
-            'value', 'text', $config->load_bootstrap);
+        $lists['load_bootstrap'] = $switch('load_bootstrap', $config->load_bootstrap);
 
-        $lists['send_invoice'] = HTMLHelper::_('select.genericList', $yesno, 'send_invoice', ' class="form-select" ' . '',
-            'value', 'text', $config->send_invoice);
+        $lists['send_invoice'] = $switch('send_invoice', $config->send_invoice);
 
-        $lists['send_tickets_directly'] = HTMLHelper::_('select.genericList', $yesno, 'send_tickets_directly', ' class="form-select" ' . '',
-            'value', 'text', $config->send_tickets_directly ?? 1);
+        $lists['send_tickets_directly'] = $switch('send_tickets_directly', $config->send_tickets_directly ?? 1);
 
         ## Filling the Array() for a dropdown list.
         $jquery               = [
@@ -290,17 +264,13 @@ class HtmlView extends BaseHtmlView {
         $this->companyLogoField = $logoForm->getField('company_logo')->input;
 
         // Wallet tab: the pass logo is a media picker of its own, like the company logo
-        $lists['wallet_apple_updates'] = HTMLHelper::_('select.genericList', $yesno, 'wallet_apple_updates', ' class="form-select" ',
-            'value', 'text', (int) ($config->wallet_apple_updates ?? 0));
+        $lists['wallet_apple_updates'] = $switch('wallet_apple_updates', (int) ($config->wallet_apple_updates ?? 0));
 
-        $lists['wallet_apple'] = HTMLHelper::_('select.genericList', $yesno, 'wallet_apple', ' class="form-select" ',
-            'value', 'text', (int) ($config->wallet_apple ?? 0));
+        $lists['wallet_apple'] = $switch('wallet_apple', (int) ($config->wallet_apple ?? 0));
 
-        $lists['wallet_google_updates'] = HTMLHelper::_('select.genericList', $yesno, 'wallet_google_updates', ' class="form-select" ',
-            'value', 'text', (int) ($config->wallet_google_updates ?? 0));
+        $lists['wallet_google_updates'] = $switch('wallet_google_updates', (int) ($config->wallet_google_updates ?? 0));
 
-        $lists['wallet_google'] = HTMLHelper::_('select.genericList', $yesno, 'wallet_google', ' class="form-select" ',
-            'value', 'text', (int) ($config->wallet_google ?? 0));
+        $lists['wallet_google'] = $switch('wallet_google', (int) ($config->wallet_google ?? 0));
 
         $walletLogoForm = new Form('com_ticketstation.configuration.walletlogo');
         $walletLogoForm->load('<form><field name="wallet_logo" type="media" preview="true" /></form>');

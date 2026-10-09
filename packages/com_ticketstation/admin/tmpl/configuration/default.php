@@ -27,7 +27,8 @@ $document->getWebAssetManager()->addInlineScript("
         var subOptions = document.getElementById('venue-sub-options');
         if (showVenue && subOptions) {
             var toggle = function () {
-                subOptions.style.display = showVenue.value === '1' ? '' : 'none';
+                var checked = showVenue.querySelector('input:checked');
+                subOptions.style.display = checked && checked.value === '1' ? '' : 'none';
             };
             showVenue.addEventListener('change', toggle);
             toggle();
@@ -621,7 +622,10 @@ $document->getWebAssetManager()->addInlineScript("
                     var show = document.getElementById(row.dataset.show);
 
                     if (show) {
-                        show.addEventListener('change', function () { row.hidden = show.value === '0'; });
+                        show.addEventListener('change', function () {
+                            var checked = show.querySelector('input:checked');
+                            row.hidden = !checked || checked.value === '0';
+                        });
                     }
                 });
             });
