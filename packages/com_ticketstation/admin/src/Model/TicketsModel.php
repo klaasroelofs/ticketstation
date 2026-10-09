@@ -22,6 +22,7 @@ use Joomla\Utilities\ArrayHelper;
 use Joomla\CMS\Client\ClientHelper;
 use Joomla\Filesystem\File;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Ticketcleaner;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\TestData;
 
 /**
  * Ticketstation Tickets Model
@@ -161,6 +162,7 @@ class TicketsModel extends ListModel
 
         $query->select(array('ticketid', 'COUNT(orderid) AS soldtickets'));
         $query->from($db->quoteName('#__ticketstation_orders'));
+        $query->where(TestData::condition('test'));
         //$query->where($db->quoteName('paid') . ' = 1');
         $query->where(Refund::heldSql());
         $query->group($db->quoteName('ticketid'));

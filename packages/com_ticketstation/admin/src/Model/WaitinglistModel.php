@@ -17,6 +17,7 @@ use Joomla\CMS\Pagination\Pagination;
 use Ticketstation\Component\Ticketstation\Administrator\Model\Mixin\ListState;
 use Joomla\Utilities\ArrayHelper;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\WaitingList;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\TestData;
 
 /**
  * Ticketstation Waitinglist Model
@@ -57,6 +58,7 @@ class WaitinglistModel extends BaseDatabaseModel
         return $db->getQuery(true)
             ->select(['w.*', 'e.eventname', 't.ticketname', 'c.name AS client_name', 'c.emailaddress AS client_email'])
             ->from($db->quoteName('#__ticketstation_waitinglist', 'w'))
+            ->where(TestData::condition('w.test'))
             ->join('LEFT', $db->quoteName('#__ticketstation_events', 'e') . ' ON ' . $db->quoteName('e.eventid') . ' = ' . $db->quoteName('w.eventid'))
             ->join('LEFT', $db->quoteName('#__ticketstation_tickets', 't') . ' ON ' . $db->quoteName('t.ticketid') . ' = ' . $db->quoteName('w.ticketid'))
             ->join('LEFT', $db->quoteName('#__ticketstation_clients', 'c') . ' ON ' . $db->quoteName('c.clientid') . ' = ' . $db->quoteName('w.userid'))

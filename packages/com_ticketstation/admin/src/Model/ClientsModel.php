@@ -18,6 +18,7 @@ use Joomla\CMS\Pagination\Pagination;
 use Joomla\Utilities\ArrayHelper;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\OrderTotals;
 use Ticketstation\Component\Ticketstation\Administrator\Model\Mixin\ListState;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\TestData;
 
 /**
  * Ticketstation Clients Model
@@ -77,6 +78,7 @@ class ClientsModel extends BaseDatabaseModel
 
         $query->select(array('*'));
         $query->from($db->quoteName('#__ticketstation_clients'));
+        $query->where(TestData::condition('test'));
 
         if ($search)
         {
@@ -276,6 +278,7 @@ class ClientsModel extends BaseDatabaseModel
 
         $query->select(array('a.*', 't.ticketname', 'e.eventcode', 'e.eventname', 'COUNT(a.orderid) AS totaltickets', 'r.remarks', 'tt.amount AS transaction_amount'));
         $query->from($db->quoteName('#__ticketstation_orders', 'a'));
+        $query->where(TestData::condition('a.test'));
         $query->join('LEFT', $db->quoteName('#__ticketstation_events', 'e') . ' ON (' . $db->quoteName('a.eventid') . ' = ' . $db->quoteName('e.eventid') . ')');
         $query->join('LEFT', $db->quoteName('#__ticketstation_tickets', 't') . ' ON ('.$db->quoteName('t.ticketid').' = '.$db->quoteName('a.ticketid').')');
         $query->join('LEFT', $db->quoteName('#__ticketstation_remarks', 'r') . ' ON ('.$db->quoteName('r.ordercode').' = '.$db->quoteName('a.ordercode').')');

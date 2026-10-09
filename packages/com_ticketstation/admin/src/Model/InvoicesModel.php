@@ -15,6 +15,7 @@ use Joomla\CMS\Factory;
 use Joomla\CMS\MVC\Model\BaseDatabaseModel;
 use Joomla\CMS\Pagination\Pagination;
 use Ticketstation\Component\Ticketstation\Administrator\Model\Mixin\ListState;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\TestData;
 
 /**
  * Ticketstation Invoices Model
@@ -48,6 +49,7 @@ class InvoicesModel extends BaseDatabaseModel
         return $db->getQuery(true)
             ->select(['i.*', 'c.name AS client_name', 'c.emailaddress AS client_email'])
             ->from($db->quoteName('#__ticketstation_invoices', 'i'))
+            ->where(TestData::condition('i.test'))
             ->join('LEFT', $db->quoteName('#__ticketstation_clients', 'c') . ' ON ' . $db->quoteName('c.clientid') . ' = ' . $db->quoteName('i.userid'));
     }
 

@@ -16,6 +16,7 @@ use Joomla\CMS\MVC\Model\BaseDatabaseModel;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Availability;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Date;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\SeatplanSettings;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\TestData;
 
 /**
  * Model backing the admin "new reservation" wizard.
@@ -284,6 +285,7 @@ class ReservationModel extends BaseDatabaseModel
         $query = $db->getQuery(true)
             ->select($db->quoteName('clientid'))
             ->from($db->quoteName('#__ticketstation_clients'))
+            ->where(TestData::condition('test'))
             ->where($db->quoteName('emailaddress') . ' = ' . $db->quote($data['emailaddress']));
 
         $db->setQuery($query);

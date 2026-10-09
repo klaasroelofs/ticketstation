@@ -12,6 +12,7 @@ namespace Ticketstation\Component\Ticketstation\Administrator\Helper;
 defined('_JEXEC') or die;
 
 use Joomla\CMS\Factory;
+use Joomla\CMS\Language\Text;
 use Joomla\Database\QueryInterface;
 
 /**
@@ -103,6 +104,60 @@ final class TestData
     public static function isTestOrder($ordercode): bool
     {
         return self::ofOrder($ordercode) === 1;
+    }
+
+    /**
+     * What there is of test data, for the control panel: test orders (made by a customer, so no
+     * empty carts; the orders the ticketcleaner removed count too), test customers and the
+     * signups of the waiting list made in test mode.
+     *
+     * @return  object  orders, customers, waiting
+     */
+    public static function summary(): object
+    {
+        $db = Factory::getContainer()->get('DatabaseDriver');
+
+        $query = $db->getQuery(true)
+            ->select('COUNT(DISTINCT ' . $db->quoteName('ordercode') . ')')
+            ->from($db->quoteName('#__ticketstation_orders'))
+            ->where($db->quoteName('test') . ' = 1')
+            ->where($db->quoteName('userid') . ' != 0');
+        $db->setQuery($query);
+        $orders = (int) $db->loadResult();
+
+        $orders += count(History::getAutoRemovedGhosts(null, 1));
+
+        $query = $db->getQuery(true)
+            ->select('COUNT(*)')
+            ->from($db->quoteName('#__ticketstation_clients'))
+            ->where($db->quoteName('test') . ' = 1');
+        $db->setQuery($query);
+        $customers = (int) $db->loadResult();
+
+        $query = $db->getQuery(true)
+            ->select('COUNT(*)')
+            ->from($db->quoteName('#__ticketstation_waitinglist'))
+            ->where($db->quoteName('test') . ' = 1')
+            ->where($db->quoteName('processed') . ' = 0');
+        $db->setQuery($query);
+
+        return (object) ['orders' => $orders, 'customers' => $customers, 'waiting' => (int) $db->loadResult()];
+    }
+
+    /**
+     * The notice at the top of a screen that lists orders, customers or payments, so nobody takes
+     * test data for live data: empty while the shop is live.
+     */
+    public static function banner(): string
+    {
+        if (self::mode() !== 1) {
+            return '';
+        }
+
+        return '<div class="alert alert-warning d-flex align-items-center gap-2" role="status">'
+            . '<span class="fa fa-flask" aria-hidden="true"></span>'
+            . '<span>' . htmlspecialchars(Text::_('COM_TICKETSTATION_TESTDATA_NOTICE_TEST'), ENT_QUOTES, 'UTF-8') . '</span>'
+            . '</div>';
     }
 
     /**

@@ -137,11 +137,16 @@ class History
      * @param   array|null  $ordercodes  Restrict the lookup to these ordercodes (e.g. a single
      *                                   order on the detail page). Null checks all of them,
      *                                   for the Box Office list.
+     * @param   int|null    $mode        With all ordercodes: only the orders made in this mode
+     *                                   (1 test, 0 live), by default the mode the shop is in.
+     *                                   The snapshot of an order from before the modes were
+     *                                   kept apart has no mode and counts as live. Ignored when
+     *                                   ordercodes are given.
      *
      * @return  array  Snapshot data keyed by ordercode: ['created' => ..., 'reason' => ...,
      *                  'rows' => [...]]. Skips entries whose context is missing/unreadable.
      */
-    public static function getAutoRemovedGhosts(?array $ordercodes = null)
+    public static function getAutoRemovedGhosts(?array $ordercodes = null, ?int $mode = null)
     {
         $db = Factory::getContainer()->get('DatabaseDriver');
 
@@ -173,6 +178,11 @@ class History
             $context = json_decode((string) $row->context, true);
 
             if ( ! is_array($context) || empty($context['rows']))
+            {
+                continue;
+            }
+
+            if ($ordercodes === null && (int) (((array) $context['rows'][0])['test'] ?? 0) !== ($mode ?? TestData::mode()))
             {
                 continue;
             }

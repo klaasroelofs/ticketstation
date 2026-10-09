@@ -16,6 +16,7 @@ use Joomla\CMS\MVC\Model\BaseDatabaseModel;
 use Joomla\CMS\Pagination\Pagination;
 use Joomla\Utilities\ArrayHelper;
 use Ticketstation\Component\Ticketstation\Administrator\Model\Mixin\ListState;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\TestData;
 
 /**
  * Ticketstation Transactions Model
@@ -72,6 +73,7 @@ class TransactionsModel extends BaseDatabaseModel
 
         $query->select( array('t.*', 'c.name'));
         $query->from($db->quoteName('#__ticketstation_transactions', 't'));
+        $query->where(TestData::condition('t.test'));
         $query->join('LEFT', $db->quoteName('#__ticketstation_clients', 'c') . ' ON (' . $db->quoteName('c.clientid') . ' = ' . $db->quoteName('t.userid') . ')');
 
         if ($search)

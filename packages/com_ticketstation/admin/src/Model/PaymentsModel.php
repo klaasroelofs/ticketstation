@@ -15,8 +15,12 @@ use Joomla\CMS\Factory;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\Model\BaseDatabaseModel;
 use Joomla\Registry\Registry;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\History;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\Invoice;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\PaymentCurrencies;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\Transaction;
 use Ticketstation\Component\Ticketstation\Administrator\Payment\ProviderRegistry;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\TestData;
 
 /**
  * The Payments screen: the provider that takes online payments, the payment currency and the
@@ -95,6 +99,7 @@ class PaymentsModel extends BaseDatabaseModel
         $query = $db->getQuery(true)
             ->select('COUNT(DISTINCT ' . $db->quoteName('ordercode') . ')')
             ->from($db->quoteName('#__ticketstation_orders'))
+            ->where(TestData::condition('test'))
             ->where($db->quoteName('paid') . ' = 3');
         $db->setQuery($query);
 
@@ -137,6 +142,69 @@ class PaymentsModel extends BaseDatabaseModel
         $db->setQuery($query)->execute();
 
         ProviderRegistry::reset();
+    }
+
+    /**
+     * Deletes everything that was made in test mode: the orders with their tickets, payments,
+     * invoices, remarks and refunds (the same clean-up as removing an order in the Box Office), the
+     * customers and the waiting-list signups. Live data is not touched, whatever mode the shop is in.
+     *
+     * @return  object  orders and customers: how many were deleted.
+     */
+    public function deleteTestData(): object
+    {
+        $db      = $this->getDatabase();
+        $summary = TestData::summary();
+
+        $query = $db->getQuery(true)
+            ->select('DISTINCT ' . $db->quoteName('ordercode'))
+            ->from($db->quoteName('#__ticketstation_orders'))
+            ->where($db->quoteName('test') . ' = 1');
+        $db->setQuery($query);
+
+        $codes = array_map('strval', $db->loadColumn());
+
+        // The orders the ticketcleaner removed leave only their history behind.
+        $codes = array_values(array_unique(array_merge($codes, array_map('strval', array_keys(History::getAutoRemovedGhosts(null, 1))))));
+        $codes = array_values(array_filter($codes, 'ctype_digit'));
+
+        if ($codes) {
+            $boxoffice = $this->getMVCFactory()->createModel('Boxoffice', 'Administrator', ['ignore_request' => true]);
+            $boxoffice->removeTickets($codes);
+        }
+
+        // What can be left without an order: invoices, payments and attempts of orders that were already gone.
+        foreach ([['invoices', 'ordercode'], ['transactions', 'orderid'], ['transactions_temp', 'ordercode']] as [$table, $column]) {
+            $query = $db->getQuery(true)
+                ->select('DISTINCT ' . $db->quoteName($column))
+                ->from($db->quoteName('#__ticketstation_' . $table))
+                ->where($db->quoteName('test') . ' = 1');
+            $db->setQuery($query);
+
+            foreach ($db->loadColumn() as $code) {
+                if ($table === 'invoices') {
+                    (new Invoice)->remove($code);
+                } else {
+                    (new Transaction)->remove($code);
+                }
+            }
+        }
+
+        $query = $db->getQuery(true)
+            ->delete($db->quoteName('#__ticketstation_waitinglist'))
+            ->where($db->quoteName('test') . ' = 1');
+        $db->setQuery($query)->execute();
+
+        // A test customer goes when no order refers to them any more.
+        $query = $db->getQuery(true)
+            ->delete($db->quoteName('#__ticketstation_clients'))
+            ->where($db->quoteName('test') . ' = 1')
+            ->where('NOT EXISTS (SELECT 1 FROM ' . $db->quoteName('#__ticketstation_orders', 'o') . ' WHERE ' . $db->quoteName('o.userid') . ' = ' . $db->quoteName('#__ticketstation_clients.clientid') . ')');
+        $db->setQuery($query)->execute();
+
+        TestData::reset();
+
+        return (object) ['orders' => $summary->orders, 'customers' => $summary->customers];
     }
 
     /**

@@ -96,6 +96,19 @@ class PaymentsController extends BaseController
     }
 
     /**
+     * Deletes the test data: everything that was made in test mode (the button on the control panel).
+     */
+    public function deletetestdata()
+    {
+        $deleted = $this->getModel('Payments')->deleteTestData();
+
+        $this->setRedirect(
+            Uri::base() . 'index.php?option=com_ticketstation',
+            Text::sprintf('COM_TICKETSTATION_TESTDATA_DELETED', $deleted->orders, $deleted->customers)
+        );
+    }
+
+    /**
      * Switches a payment plugin on.
      */
     public function publish()

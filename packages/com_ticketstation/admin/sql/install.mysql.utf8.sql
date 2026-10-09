@@ -26,6 +26,7 @@ CREATE TABLE IF NOT EXISTS `#__ticketstation_clients` (
   `birthday` date DEFAULT NULL,
   `country_id` int(11) NOT NULL DEFAULT '1',
   `ipaddress` varchar(60) NOT NULL,
+  `test` tinyint(1) NOT NULL DEFAULT 0,
   PRIMARY KEY (`clientid`)
 )  ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 DEFAULT COLLATE=utf8mb4_unicode_ci;
 

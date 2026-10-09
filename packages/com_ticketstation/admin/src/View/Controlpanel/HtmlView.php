@@ -18,6 +18,7 @@ use Ticketstation\Component\Ticketstation\Administrator\Helper\AclGate;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Docs;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Refund;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Shop;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\TestData;
 use Ticketstation\Component\Ticketstation\Administrator\Payment\ProviderRegistry;
 
 /**
@@ -55,6 +56,13 @@ class HtmlView extends BaseHtmlView {
     /** @var bool  Whether this user may switch test mode. */
     public $canSwitchMode = false;
 
+    /**
+     * What there is of test data (orders, customers, waiting list), see TestData::summary().
+     *
+     * @var object
+     */
+    public $testData;
+
     /** @var string  The name of the payment provider that takes payments, '' when online payments are off. */
     public $providerTitle = '';
 
@@ -83,6 +91,7 @@ class HtmlView extends BaseHtmlView {
         $this->testMode      = Shop::inTestMode();
         $this->testBlocked   = Shop::testPaymentsBlocked();
         $this->canSwitchMode = AclGate::can('core.options');
+        $this->testData      = TestData::summary();
         $provider            = ProviderRegistry::active();
         $this->providerTitle = $provider !== null ? $provider->getTitle() : '';
 

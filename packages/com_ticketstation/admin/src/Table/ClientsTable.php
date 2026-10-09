@@ -16,6 +16,8 @@ defined('_JEXEC') || die;
 
 class ClientsTable extends Table
 {
+    use StampsTestMode;
+
     public function __construct(DatabaseDriver $db)
     {
         parent::__construct('#__ticketstation_clients', 'clientid', $db);

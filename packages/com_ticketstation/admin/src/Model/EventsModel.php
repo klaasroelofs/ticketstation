@@ -25,6 +25,7 @@ use Joomla\CMS\Uri\Uri;
 use Joomla\Utilities\ArrayHelper;
 use Joomla\CMS\Client\ClientHelper;
 use Joomla\Filesystem\File;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\TestData;
 
 /**
  * Ticketstation Events Model
@@ -93,6 +94,7 @@ class EventsModel extends ListModel
 
         $query->select(array('eventid', 'COUNT(orderid) AS soldtickets'));
         $query->from($db->quoteName('#__ticketstation_orders'));
+        $query->where(TestData::condition('test'));
         $query->where($db->quoteName('paid') . ' = 1');
         $query->where(Refund::heldSql());
         $query->group($db->quoteName('eventid'));
@@ -110,6 +112,7 @@ class EventsModel extends ListModel
 
         $query->select(array('eventid', 'COUNT(orderid) AS pending_tickets'));
         $query->from($db->quoteName('#__ticketstation_orders'));
+        $query->where(TestData::condition('test'));
         $query->where($db->quoteName('paid') . ' = 3');
         $query->group($db->quoteName('eventid'));
 
@@ -156,6 +159,7 @@ class EventsModel extends ListModel
 
         $query->select(array('eventid', 'COUNT(orderid) AS unfinished_orders'));
         $query->from($db->quoteName('#__ticketstation_orders'));
+        $query->where(TestData::condition('test'));
         $query->where($db->quoteName('paid') . ' = 0');
         $query->where($db->quoteName('userid') . ' = 0');
         $query->group($db->quoteName('eventid'));

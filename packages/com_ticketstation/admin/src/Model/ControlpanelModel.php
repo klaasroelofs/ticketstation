@@ -24,6 +24,7 @@ use Ticketstation\Component\Ticketstation\Administrator\Helper\OrderTotals;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Refund;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\PaymentCurrencies;
 use Ticketstation\Component\Ticketstation\Administrator\Payment\ProviderRegistry;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\TestData;
 
 /**
  * Ticketstation ControlPanel Model
@@ -203,6 +204,7 @@ class ControlpanelModel extends BaseDatabaseModel
                 'SUM(COALESCE(price, 0) - COALESCE(discount, 0)) AS revenue',
             ])
             ->from($db->quoteName('#__ticketstation_orders'))
+            ->where(TestData::condition('test'))
             ->where($db->quoteName('paid') . ' = 1')
             ->where($db->quoteName('orderdate') . ' >= ' . $db->quote($start));
 
@@ -242,6 +244,7 @@ class ControlpanelModel extends BaseDatabaseModel
                 'MAX(' . $db->quoteName('ot.fee_fixed') . ') AS fee_fixed',
             ])
             ->from($db->quoteName('#__ticketstation_orders', 'o'))
+            ->where(TestData::condition('o.test'))
             ->join('LEFT', $db->quoteName('#__ticketstation_ordertotals', 'ot') . ' ON ' . $db->quoteName('ot.ordercode') . ' = ' . $db->quoteName('o.ordercode'))
             ->where($db->quoteName('o.paid') . ' = 1')
             ->where($db->quoteName('o.orderdate') . ' >= ' . $db->quote($start))
@@ -327,6 +330,7 @@ class ControlpanelModel extends BaseDatabaseModel
                 'SUM(COALESCE(price, 0) - COALESCE(discount, 0)) AS revenue',
             ])
             ->from($db->quoteName('#__ticketstation_orders'))
+            ->where(TestData::condition('test'))
             ->where($db->quoteName('paid') . ' = 1')
             ->where($db->quoteName('orderdate') . ' >= ' . $db->quote((clone $first)->setTimezone(new \DateTimeZone('UTC'))->format('Y-m-d H:i:s')))
             ->group($db->quoteName('orderdate'));
@@ -493,6 +497,7 @@ class ControlpanelModel extends BaseDatabaseModel
         $query = $db->getQuery(true)
             ->select('COUNT(DISTINCT ordercode)')
             ->from($db->quoteName('#__ticketstation_orders'))
+            ->where(TestData::condition('test'))
             ->where($db->quoteName('paid') . ' = 3');
         $db->setQuery($query);
         $add('COM_TICKETSTATION_CPANEL_ATTENTION_PENDING', $db->loadResult(),
@@ -516,6 +521,7 @@ class ControlpanelModel extends BaseDatabaseModel
         $query = $db->getQuery(true)
             ->select('COUNT(DISTINCT o.ordercode)')
             ->from($db->quoteName('#__ticketstation_orders', 'o'))
+            ->where(TestData::condition('o.test'))
             ->join('INNER', $db->quoteName('#__ticketstation_tickets', 't') . ' ON ' . $db->quoteName('o.ticketid') . ' = ' . $db->quoteName('t.ticketid'))
             ->where($db->quoteName('o.paid') . ' = 1')
             ->where($db->quoteName('o.pdfsent') . ' = 0')
@@ -530,6 +536,7 @@ class ControlpanelModel extends BaseDatabaseModel
             $query = $db->getQuery(true)
                 ->select('COUNT(DISTINCT ordercode)')
                 ->from($db->quoteName('#__ticketstation_orders'))
+                ->where(TestData::condition('test'))
                 ->where($db->quoteName('paid') . ' = 0');
             $db->setQuery($query);
             $add('COM_TICKETSTATION_CPANEL_ATTENTION_UNFINISHED', $db->loadResult(),
@@ -542,6 +549,7 @@ class ControlpanelModel extends BaseDatabaseModel
             $query = $db->getQuery(true)
                 ->select('COUNT(id)')
                 ->from($db->quoteName('#__ticketstation_waitinglist'))
+                ->where(TestData::condition('test'))
                 ->where($db->quoteName('confirmed') . ' = 1')
                 ->where($db->quoteName('processed') . ' = 0');
             $db->setQuery($query);

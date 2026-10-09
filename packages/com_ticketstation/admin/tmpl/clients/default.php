@@ -30,6 +30,7 @@ $wa->registerAndUseStyle('searchtools', Uri::root() . 'media/templates/administr
     <div class="row">
         <div class="col-md-12">
             <div id="j-main-container" class="j-main-container">
+                <?= \Ticketstation\Component\Ticketstation\Administrator\Helper\TestData::banner() ?>
 
                 <div class="js-stools" role="search">
                     <div class="js-stools-container-bar">

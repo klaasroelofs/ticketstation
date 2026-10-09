@@ -33,6 +33,7 @@ use Ticketstation\Component\Ticketstation\Administrator\Helper\PaymentCurrencies
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Refund;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\SendTicketCopy;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\ticketcreator;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\TestData;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Tickets;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Transaction;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\WaitingList;
@@ -298,6 +299,7 @@ class BoxofficeModel extends ListModel
             ->select('DISTINCT ' . $db->quoteName('ordercode'))
             ->from($db->quoteName('#__ticketstation_orders'))
             ->where($db->quoteName('userid') . ' != 0')
+            ->where(TestData::condition('test'))
             ->where('(' . $db->quoteName('ordercode') . ' = ' . $db->quote($search)
                 . ' OR ' . $db->quoteName('barcode') . ' = ' . $db->quote($search) . ')');
 
@@ -408,6 +410,8 @@ class BoxofficeModel extends ListModel
             ->join('LEFT', $db->quoteName('#__ticketstation_clients', 'c') . ' ON ' . $db->quoteName('c.clientid') . ' = ' . $db->quoteName('a.userid'))
             // An unfinished cart (no customer yet) isn't an order.
             ->where($db->quoteName('a.userid') . ' != 0')
+            // Test orders in test mode, live orders when live: never both.
+            ->where(TestData::condition('a.test'))
             ->group($db->quoteName('a.ordercode'));
 
         if ($counts)

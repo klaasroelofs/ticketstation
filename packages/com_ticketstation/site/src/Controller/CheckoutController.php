@@ -28,6 +28,7 @@ use Ticketstation\Component\Ticketstation\Administrator\Helper\User;
 use Ticketstation\Component\Ticketstation\Administrator\Payment\PaymentStarter;
 use Ticketstation\Component\Ticketstation\Site\Model\CheckoutModel;
 use Ticketstation\Component\Ticketstation\Site\Service\CartPage;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\TestData;
 
 /**
  * Ticketstation Checkout Controller
@@ -177,6 +178,7 @@ class CheckoutController extends BaseController
         $query = $db->getQuery(true)
             ->select($db->quoteName('clientid'))
             ->from($db->quoteName('#__ticketstation_clients'))
+            ->where(TestData::condition('test'))
             ->where($db->quoteName('emailaddress') . ' = ' . $db->quote($emailaddress));
 
         $db->setQuery($query);

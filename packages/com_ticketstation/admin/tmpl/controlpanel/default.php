@@ -105,6 +105,18 @@ $sum28     = array_sum(array_column($this->dailySales, 'tickets'));
         <?php if ($this->testBlocked) { ?>
             <small class="text-danger"><span class="fa fa-exclamation-triangle me-1" aria-hidden="true"></span><?= Text::sprintf('COM_TICKETSTATION_CPANEL_TESTMODE_NO_TEST_ENVIRONMENT', $this->escape($this->providerTitle)) ?></small>
         <?php } ?>
+        <?php if ($this->canSwitchMode && ($this->testData->orders > 0 || $this->testData->customers > 0 || $this->testData->waiting > 0)) { ?>
+            <form action="<?= Route::_('index.php?option=com_ticketstation&view=payments'); ?>" method="post" id="ts-testdata-form"
+                class="d-inline-flex align-items-center gap-2 m-0 me-2"
+                onsubmit="return confirm(<?= $this->escape(json_encode(Text::_('COM_TICKETSTATION_TESTDATA_DELETE_CONFIRM'), JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP)) ?>);">
+                <input type="hidden" name="option" value="com_ticketstation" />
+                <input type="hidden" name="controller" value="payments" />
+                <input type="hidden" name="task" value="deletetestdata" />
+                <?= HTMLHelper::_('form.token'); ?>
+                <small class="text-muted"><?= Text::sprintf('COM_TICKETSTATION_TESTDATA_COUNTS', (int) $this->testData->orders, (int) $this->testData->customers) ?></small>
+                <button type="submit" class="btn btn-sm btn-outline-danger"><span class="fa fa-trash me-1" aria-hidden="true"></span><?= Text::_('COM_TICKETSTATION_TESTDATA_DELETE') ?></button>
+            </form>
+        <?php } ?>
         <form action="<?= Route::_('index.php?option=com_ticketstation&view=payments'); ?>" method="post" id="ts-testmode-form"
             class="d-inline-flex align-items-center gap-2 m-0" title="<?= $this->escape($modeTip) ?>">
             <input type="hidden" name="option" value="com_ticketstation" />

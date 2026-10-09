@@ -29,6 +29,7 @@ $wa->registerAndUseStyle('ticketstation', Uri::base() . 'components\com_ticketst
     <div class="row">
         <div class="col-md-12">
             <div id="j-main-container" class="j-main-container">
+                <?= \Ticketstation\Component\Ticketstation\Administrator\Helper\TestData::banner() ?>
                 <table class="table itemList">
                     <thead>
                         <tr>
