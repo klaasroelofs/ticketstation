@@ -3,7 +3,9 @@
 Ticketstation takes online payments through **payment providers**. A provider is offered by a Joomla
 plugin of the group `ticketstationpayment`, so a payment service (a regional bank, PayPal, Stripe, ...)
 can be added without changing Ticketstation. Mollie is the plugin that ships with Ticketstation
-(`packages/plg_ticketstationpayment_mollie`); a small, working skeleton is in
+(`packages/plg_ticketstationpayment_mollie`), and so does Stripe (`packages/plg_ticketstationpayment_stripe`,
+which needs no library: a good model for a service with a plain REST API and signed webhooks); a small,
+working skeleton is in
 [`examples/plg_ticketstationpayment_example`](examples/plg_ticketstationpayment_example).
 
 Requires Ticketstation 2.25 or later, Joomla 5.4 / 6 and PHP 8.3. The provider API version is
@@ -91,6 +93,12 @@ Return a `PaymentUpdate`: `ordercode`, `providerPaymentId`, `state` (`PAID`, `OP
 `FAILED`, `CANCELLED`, `EXPIRED` or `UNKNOWN`), `amount` (as sent: it is compared with the order),
 `currency`, `method` (stored with the transaction), `details` (your raw data about the payment, shown
 under *Transactions*) and `hasRefunds`.
+
+A service that sends many kinds of events to one address (Stripe does) will send reports that are not
+about a payment of an order. Verify them like any other, then return `PaymentUpdate::IGNORE`: Ticketstation
+answers 200 and does nothing (the other fields are not used). Don't answer such reports with an
+exception, or the service keeps retrying. `IGNORE` exists from the release that bundled the Stripe
+plugin; a plugin that must run on older versions can test `defined(PaymentUpdate::class . '::IGNORE')`.
 
 Reports can arrive more than once, out of order, and long after the payment (refunds, chargebacks).
 Ticketstation handles that: a second report for a paid order never creates tickets twice, and a

@@ -10,6 +10,7 @@
             packages\plg_task_ticketstation.zip
             packages\plg_system_ticketstation.zip
             packages\plg_ticketstationpayment_mollie.zip
+            packages\plg_ticketstationpayment_stripe.zip
         dist\pkg_ticketstation_update.xml
 
     The update feed points at the zip as a GitHub release asset of tag v<version> and carries
@@ -37,7 +38,8 @@ $ModuleDir    = Join-Path $RepoRoot 'packages\mod_ticketstation_basket'
 $PluginDir    = Join-Path $RepoRoot 'packages\plg_task_ticketstation'
 $SystemPluginDir = Join-Path $RepoRoot 'packages\plg_system_ticketstation'
 $MolliePluginDir = Join-Path $RepoRoot 'packages\plg_ticketstationpayment_mollie'
-$DistDir      = Join-Path $RepoRoot 'dist'
+$StripePluginDir = Join-Path $RepoRoot 'packages\plg_ticketstationpayment_stripe'
+$DistDir     = Join-Path $RepoRoot 'dist'
 
 if (-not (Test-Path (Join-Path $ComponentDir 'site\vendor\autoload.php'))) {
     throw "site\vendor is missing: run 'composer install --no-dev' in packages\com_ticketstation\site first."
@@ -65,6 +67,7 @@ $versions = [ordered] @{
     'task/ticketstation.xml'      = Get-ManifestVersion (Join-Path $PluginDir 'ticketstation.xml')
     'system/ticketstation.xml'    = Get-ManifestVersion (Join-Path $SystemPluginDir 'ticketstation.xml')
     'ticketstationpayment/mollie.xml' = Get-ManifestVersion (Join-Path $MolliePluginDir 'mollie.xml')
+    'ticketstationpayment/stripe.xml' = Get-ManifestVersion (Join-Path $StripePluginDir 'stripe.xml')
 }
 if (@($versions.Values | Select-Object -Unique).Count -ne 1) {
     $list = ($versions.GetEnumerator() | ForEach-Object { "$($_.Key) $($_.Value)" }) -join ', '
@@ -201,6 +204,12 @@ try {
     $mollieVersion = Get-ManifestVersion (Join-Path $mollieStage 'mollie.xml')
     New-Zip $mollieStage (Join-Path $pkgRoot 'packages\plg_ticketstationpayment_mollie.zip')
 
+    # Stripe payment plugin: no library, it talks to Stripe through Joomla's HTTP client.
+    $stripeStage = Join-Path $staging 'plg_ticketstationpayment_stripe'
+    Copy-Tree $StripePluginDir $stripeStage
+    $stripeVersion = Get-ManifestVersion (Join-Path $stripeStage 'stripe.xml')
+    New-Zip $stripeStage (Join-Path $pkgRoot 'packages\plg_ticketstationpayment_stripe.zip')
+
     # Package
     Copy-Item (Join-Path $RepoRoot 'pkg_ticketstation.xml'), (Join-Path $RepoRoot 'pkg_script.php') $pkgRoot
     Copy-Tree (Join-Path $RepoRoot 'language') (Join-Path $pkgRoot 'language')
@@ -272,6 +281,7 @@ try {
     Write-Host "  plugin    $plgVersion"
     Write-Host "  system    $sysVersion"
     Write-Host "  mollie    $mollieVersion"
+    Write-Host "  stripe    $stripeVersion"
     Write-Host "  stability $stability"
     Write-Host "  sha256    $sha256"
     if (Test-Path -LiteralPath $notes) { Write-Host "  notes     release-notes\$pkgVersion.md" } else { Write-Host "  notes     none (release-notes\$pkgVersion.md not found)" }

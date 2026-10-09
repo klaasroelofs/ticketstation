@@ -28,6 +28,12 @@ final class PaymentUpdate
     public const UNKNOWN   = 'unknown';
 
     /**
+     * A genuine report that is not about a payment of an order (a service that sends many kinds
+     * of events): answered with 200 and otherwise ignored. The other fields are not used.
+     */
+    public const IGNORE    = 'ignore';
+
+    /**
      * @param   int     $ordercode          The order the payment belongs to.
      * @param   string  $providerPaymentId  The provider's id of the payment.
      * @param   string  $state              One of the constants above.

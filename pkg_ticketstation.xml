@@ -11,7 +11,7 @@
 	<authorUrl>https://www.huibuuke.nl</authorUrl>
 	<copyright>© 2026 Klaas Roelofs</copyright>
 	<license>GPL v3</license>
-	<version>2.27.1-rc3</version>
+	<version>2.28.0-rc1</version>
 	<description>PKG_TICKETSTATION_XML_DESCRIPTION</description>
 
 	<scriptfile>pkg_script.php</scriptfile>
@@ -27,6 +27,7 @@
 		<file type="plugin" group="task" id="ticketstation">plg_task_ticketstation.zip</file>
 		<file type="plugin" group="system" id="ticketstation">plg_system_ticketstation.zip</file>
 		<file type="plugin" group="ticketstationpayment" id="mollie">plg_ticketstationpayment_mollie.zip</file>
+		<file type="plugin" group="ticketstationpayment" id="stripe">plg_ticketstationpayment_stripe.zip</file>
 	</files>
 
 	<updateservers>

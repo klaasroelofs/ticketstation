@@ -289,7 +289,7 @@ $progress = function (int $done) use ($status) {
                                 <td>
                                     <?= Text::_($refund->type === 'chargeback' ? 'COM_TICKETSTATION_REFUND_TYPE_CHARGEBACK' : 'COM_TICKETSTATION_REFUND_TYPE_REFUND'); ?>
                                     <br /><small class="text-muted">
-                                        <?= Text::_($refund->source === 'mollie' ? 'COM_TICKETSTATION_REFUND_SOURCE_MOLLIE' : ($refund->status === 'manual' ? 'COM_TICKETSTATION_REFUND_SOURCE_MANUAL' : 'COM_TICKETSTATION_REFUND_SOURCE_TICKETSTATION')); ?>
+                                        <?= Text::_(!in_array($refund->source, ['ticketstation', ''], true) ? 'COM_TICKETSTATION_REFUND_SOURCE_MOLLIE' : ($refund->status === 'manual' ? 'COM_TICKETSTATION_REFUND_SOURCE_MANUAL' : 'COM_TICKETSTATION_REFUND_SOURCE_TICKETSTATION')); ?>
                                         <?php if ($refund->created_by_name) { ?>&middot; <?= $this->escape($refund->created_by_name); ?><?php } ?>
                                     </small>
                                     <?php if ($refund->description !== '') { ?>
@@ -299,8 +299,8 @@ $progress = function (int $done) use ($status) {
                                 <td class="text-end text-nowrap<?= $counts ? '' : ' text-decoration-line-through text-muted'; ?>"><?= Price::format((float) $refund->amount, $valuta); ?></td>
                                 <td>
                                     <span class="badge <?= $counts ? 'bg-info' : 'bg-danger'; ?>"><?= Text::_('COM_TICKETSTATION_REFUND_STATUS_' . strtoupper($refund->status)); ?></span>
-                                    <?php if ($refund->mollie_id) { ?>
-                                        <br /><small class="text-muted"><code><?= $this->escape($refund->mollie_id); ?></code></small>
+                                    <?php if ($refund->provider_refund_id) { ?>
+                                        <br /><small class="text-muted"><code><?= $this->escape($refund->provider_refund_id); ?></code></small>
                                     <?php } ?>
                                 </td>
                                 <td>

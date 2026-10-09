@@ -13,6 +13,7 @@ use Joomla\CMS\Language\Text;
 use Joomla\CMS\Router\Route;
 use Joomla\CMS\Uri\Uri;
 use \Ticketstation\Component\Ticketstation\Administrator\Helper\TicketstationFunctions;
+use Ticketstation\Component\Ticketstation\Administrator\Payment\ProviderRegistry;
 
 // No direct access to this file
 defined('_JEXEC') or die('Restricted Access');
@@ -88,7 +89,7 @@ $wa->registerAndUseStyle('searchtools', Uri::root() . 'media/templates/administr
                             <td><?php echo date ($this->data->dateformat.' '.$this->data->time_format, strtotime($row->date)); ?></td>
                             <td><a href="<?php echo $linkuser; ?>"><?php echo $this->escape($row->name); ?></a></td>
                             <td class="d-none d-md-table-cell"><a href="<?php echo $linkorder; ?>"><?php echo $row->orderid; ?></a></td>
-                            <td class="small d-none d-lg-table-cell"><?php echo $row->type; ?></td>
+                            <td class="small d-none d-lg-table-cell"><?= htmlspecialchars(ProviderRegistry::methodLabel(strtolower((string) $row->type), (string) ($row->provider ?? '')), ENT_QUOTES, 'UTF-8'); ?></td>
                             <td class="small d-none d-lg-table-cell"><?php echo TicketstationFunctions::showprice($this->data->priceformat ,$row->amount, $this->data->valuta); ?></td>
                         </tr>
                     <?php } ?>

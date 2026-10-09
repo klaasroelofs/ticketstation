@@ -105,7 +105,7 @@ $treatments = [
                         <?php } ?>
                         <tr>
                             <th scope="row" class="fw-normal"><?= Text::_('COM_TICKETSTATION_REFUND_MOLLIE_ID') ?></th>
-                            <td><code><?= $this->escape($refund->mollie_id); ?></code></td>
+                            <td><code><?= $this->escape((string) $refund->provider_refund_id); ?></code></td>
                         </tr>
                     </table>
                     <?php if ($this->proposal) { ?>

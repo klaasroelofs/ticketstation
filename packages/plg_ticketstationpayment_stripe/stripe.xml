@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="utf-8"?>
+<extension type="plugin" group="ticketstationpayment" method="upgrade">
+
+	<name>plg_ticketstationpayment_stripe</name>
+	<creationDate>2026-10-09</creationDate>
+	<author>Klaas Roelofs</author>
+	<authorEmail>klaasroelofs@huibuuke.nl</authorEmail>
+	<authorUrl>https://www.huibuuke.nl</authorUrl>
+	<copyright>© 2026 Klaas Roelofs</copyright>
+	<license>GPL v3</license>
+	<version>2.28.0-rc1</version>
+	<description>PLG_TICKETSTATIONPAYMENT_STRIPE_XML_DESCRIPTION</description>
+
+	<namespace path="src">Ticketstation\Plugin\TicketstationPayment\Stripe</namespace>
+
+	<files>
+		<folder plugin="stripe">services</folder>
+		<folder>src</folder>
+	</files>
+
+	<languages>
+		<language tag="en-GB">language/en-GB/plg_ticketstationpayment_stripe.ini</language>
+		<language tag="en-GB">language/en-GB/plg_ticketstationpayment_stripe.sys.ini</language>
+		<language tag="nl-NL">language/nl-NL/plg_ticketstationpayment_stripe.ini</language>
+		<language tag="nl-NL">language/nl-NL/plg_ticketstationpayment_stripe.sys.ini</language>
+	</languages>
+
+	<config>
+		<fields name="params">
+			<fieldset name="basic" addfieldprefix="Ticketstation\Plugin\TicketstationPayment\Stripe\Field">
+
+				<field
+					name="secret_key"
+					type="password"
+					label="PLG_TICKETSTATIONPAYMENT_STRIPE_SECRET_KEY"
+					description="PLG_TICKETSTATIONPAYMENT_STRIPE_SECRET_KEY_DESC"
+					autocomplete="off"
+					maxlength="255"
+					size="60"
+				/>
+
+				<field
+					name="webhook_secret"
+					type="password"
+					label="PLG_TICKETSTATIONPAYMENT_STRIPE_WEBHOOK_SECRET"
+					description="PLG_TICKETSTATIONPAYMENT_STRIPE_WEBHOOK_SECRET_DESC"
+					autocomplete="off"
+					maxlength="255"
+					size="60"
+				/>
+
+				<field
+					name="secret_key_test"
+					type="password"
+					label="PLG_TICKETSTATIONPAYMENT_STRIPE_SECRET_KEY_TEST"
+					description="PLG_TICKETSTATIONPAYMENT_STRIPE_SECRET_KEY_TEST_DESC"
+					autocomplete="off"
+					maxlength="255"
+					size="60"
+				/>
+
+				<field
+					name="webhook_secret_test"
+					type="password"
+					label="PLG_TICKETSTATIONPAYMENT_STRIPE_WEBHOOK_SECRET_TEST"
+					description="PLG_TICKETSTATIONPAYMENT_STRIPE_WEBHOOK_SECRET_TEST_DESC"
+					autocomplete="off"
+					maxlength="255"
+					size="60"
+				/>
+
+				<field
+					name="test_mode"
+					type="radio"
+					label="PLG_TICKETSTATIONPAYMENT_STRIPE_TEST_MODE"
+					description="PLG_TICKETSTATIONPAYMENT_STRIPE_TEST_MODE_DESC"
+					layout="joomla.form.field.radio.switcher"
+					default="0"
+					>
+					<option value="0">JOFF</option>
+					<option value="1">JON</option>
+				</field>
+
+				<field
+					name="webhook_url"
+					type="webhookurl"
+					label="PLG_TICKETSTATIONPAYMENT_STRIPE_WEBHOOK_URL"
+					description="PLG_TICKETSTATIONPAYMENT_STRIPE_WEBHOOK_URL_DESC"
+				/>
+
+				<field
+					name="description"
+					type="text"
+					label="PLG_TICKETSTATIONPAYMENT_STRIPE_DESCRIPTION"
+					description="PLG_TICKETSTATIONPAYMENT_STRIPE_DESCRIPTION_DESC"
+					default="Ordernumber:"
+					size="40"
+				/>
+
+				<field
+					name="locale"
+					type="list"
+					label="PLG_TICKETSTATIONPAYMENT_STRIPE_LANGUAGE"
+					description="PLG_TICKETSTATIONPAYMENT_STRIPE_LANGUAGE_DESC"
+					default="auto"
+					>
+					<option value="auto">PLG_TICKETSTATIONPAYMENT_STRIPE_LANGUAGE_AUTO</option>
+					<option value="nl">Nederlands</option>
+					<option value="en">English</option>
+					<option value="fr">Français</option>
+					<option value="de">Deutsch</option>
+				</field>
+
+				<field
+					name="mark_pending"
+					type="radio"
+					label="PLG_TICKETSTATIONPAYMENT_STRIPE_MARK_PENDING"
+					description="PLG_TICKETSTATIONPAYMENT_STRIPE_MARK_PENDING_DESC"
+					layout="joomla.form.field.radio.switcher"
+					default="1"
+					>
+					<option value="0">JNO</option>
+					<option value="1">JYES</option>
+				</field>
+
+			</fieldset>
+		</fields>
+	</config>
+
+</extension>

@@ -12,6 +12,7 @@ use \Joomla\CMS\HTML\HTMLHelper;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\Router\Route;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Price;
+use Ticketstation\Component\Ticketstation\Administrator\Payment\ProviderRegistry;
 
 // No direct access to this file
 defined('_JEXEC') or die('Restricted Access');
@@ -58,7 +59,7 @@ $document->setTitle(Text::_('COM_TICKETSTATION_VIEW_TRANSACTION_DETAILS') . ' - 
                 <div class="col-sm-9">
                     <input type="text" name="type" id="type"
                            class="form-control" disabled
-                           value="<?= isset($this->data->type)?$this->data->type:null; ?>"/>
+                           value="<?= isset($this->data->type) ? htmlspecialchars(ProviderRegistry::methodLabel(strtolower((string) $this->data->type), (string) ($this->data->provider ?? '')), ENT_QUOTES, 'UTF-8') : ''; ?>"/>
                 </div>
             </div>
             <div class="row mb-3">

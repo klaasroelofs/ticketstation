@@ -8,8 +8,8 @@
  */
 
 /**
- * Online payments topic on the central documentation page: the Payments screen, getting a Mollie account, the
- * settings of the Mollie plugin and how a payment flows through
+ * Online payments topic on the central documentation page: the Payments screen, setting up Mollie and Stripe,
+ * building your own payment plugin and how a payment flows through
  * site PaymentController (makepayment, webhook, return) and the Payment namespace (PaymentService, MollieProvider).
  */
 
@@ -49,18 +49,44 @@ $bullets = function (string $prefix, int $count) {
             </div>
         </details>
 
-        <details id="docs-payments-account" class="mb-3 border rounded p-3">
-            <summary class="h5 mb-0"><span class="fa fa-user-plus me-2" aria-hidden="true"></span><?= Text::_('COM_TICKETSTATION_PAYMENTS_DOCS_ACCOUNT_TITLE') ?></summary>
+        <details id="docs-payments-mollie-account" class="mb-3 border rounded p-3">
+            <summary class="h5 mb-0"><span class="fa fa-user-plus me-2" aria-hidden="true"></span><?= Text::_('COM_TICKETSTATION_PAYMENTS_DOCS_MOLLIE_ACCOUNT_TITLE') ?></summary>
             <div class="mt-3">
-                <?php $steps('COM_TICKETSTATION_PAYMENTS_DOCS_ACCOUNT_', 4); ?>
+                <?php $steps('COM_TICKETSTATION_PAYMENTS_DOCS_MOLLIE_ACCOUNT_', 4); ?>
             </div>
         </details>
 
-        <details id="docs-payments-settings" class="mb-3 border rounded p-3">
-            <summary class="h5 mb-0"><span class="fa fa-cog me-2" aria-hidden="true"></span><?= Text::_('COM_TICKETSTATION_PAYMENTS_DOCS_SETTINGS_TITLE') ?></summary>
+        <details id="docs-payments-mollie-settings" class="mb-3 border rounded p-3">
+            <summary class="h5 mb-0"><span class="fa fa-cog me-2" aria-hidden="true"></span><?= Text::_('COM_TICKETSTATION_PAYMENTS_DOCS_MOLLIE_SETTINGS_TITLE') ?></summary>
             <div class="mt-3">
-                <p><?= Text::_('COM_TICKETSTATION_PAYMENTS_DOCS_SETTINGS_INTRO') ?></p>
-                <?php $bullets('COM_TICKETSTATION_PAYMENTS_DOCS_SETTINGS_', 6); ?>
+                <p><?= Text::_('COM_TICKETSTATION_PAYMENTS_DOCS_MOLLIE_SETTINGS_INTRO') ?></p>
+                <?php $bullets('COM_TICKETSTATION_PAYMENTS_DOCS_MOLLIE_SETTINGS_', 6); ?>
+            </div>
+        </details>
+
+        <details id="docs-payments-stripe-account" class="mb-3 border rounded p-3">
+            <summary class="h5 mb-0"><span class="fa fa-user-plus me-2" aria-hidden="true"></span><?= Text::_('COM_TICKETSTATION_PAYMENTS_DOCS_STRIPE_ACCOUNT_TITLE') ?></summary>
+            <div class="mt-3">
+                <p><?= Text::_('COM_TICKETSTATION_PAYMENTS_DOCS_STRIPE_ACCOUNT_INTRO') ?></p>
+                <?php $steps('COM_TICKETSTATION_PAYMENTS_DOCS_STRIPE_ACCOUNT_', 7); ?>
+            </div>
+        </details>
+
+        <details id="docs-payments-stripe-settings" class="mb-3 border rounded p-3">
+            <summary class="h5 mb-0"><span class="fa fa-cog me-2" aria-hidden="true"></span><?= Text::_('COM_TICKETSTATION_PAYMENTS_DOCS_STRIPE_SETTINGS_TITLE') ?></summary>
+            <div class="mt-3">
+                <p><?= Text::_('COM_TICKETSTATION_PAYMENTS_DOCS_STRIPE_SETTINGS_INTRO') ?></p>
+                <?php $bullets('COM_TICKETSTATION_PAYMENTS_DOCS_STRIPE_SETTINGS_', 6); ?>
+                <h3 class="h6 mt-3"><?= Text::_('COM_TICKETSTATION_PAYMENTS_DOCS_STRIPE_NOTES_TITLE') ?></h3>
+                <?php $bullets('COM_TICKETSTATION_PAYMENTS_DOCS_STRIPE_NOTES_', 2); ?>
+            </div>
+        </details>
+
+        <details id="docs-payments-build" class="mb-3 border rounded p-3">
+            <summary class="h5 mb-0"><span class="fa fa-plug me-2" aria-hidden="true"></span><?= Text::_('COM_TICKETSTATION_PAYMENTS_DOCS_BUILD_TITLE') ?></summary>
+            <div class="mt-3">
+                <p><?= Text::_('COM_TICKETSTATION_PAYMENTS_DOCS_BUILD_INTRO') ?></p>
+                <?php $steps('COM_TICKETSTATION_PAYMENTS_DOCS_BUILD_', 8); ?>
             </div>
         </details>
 

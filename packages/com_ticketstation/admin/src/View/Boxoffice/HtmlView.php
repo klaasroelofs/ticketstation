@@ -232,7 +232,7 @@ class HtmlView extends BaseHtmlView
         // Mollie doesn't call the webhook when a refund is cancelled, so a refund whose tickets
         // wait for it is looked up at Mollie when the order is opened. The tickets change here
         // when Mollie has processed it in the meantime.
-        $waiting = array_filter($refunds, static fn ($refund) => Refund::isWaiting($refund) && $refund->mollie_id);
+        $waiting = array_filter($refunds, static fn ($refund) => Refund::isWaiting($refund) && $refund->provider_refund_id);
 
         if ($waiting)
         {

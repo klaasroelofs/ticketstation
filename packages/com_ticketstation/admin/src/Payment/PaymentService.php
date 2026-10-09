@@ -165,6 +165,12 @@ final class PaymentService
             return [503, 'Unable to retrieve payment from ' . $provider->getTitle() . '.'];
         }
 
+        if ($update->state === PaymentUpdate::IGNORE) {
+            PaymentLog::add($provider->getTitle() . ' report ignored: not about a payment of an order.');
+
+            return [200, ''];
+        }
+
         $order_id = $update->ordercode;
         PaymentLog::add('Sent ordercode: ' . $order_id);
 
