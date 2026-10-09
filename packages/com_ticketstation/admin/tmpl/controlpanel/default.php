@@ -101,7 +101,7 @@ $sum28     = array_sum(array_column($this->dailySales, 'tickets'));
     ];
     ?>
     <?php ob_start(); ?>
-    <div class="d-flex flex-wrap justify-content-end align-items-center gap-2">
+    <div class="d-flex flex-wrap justify-content-end align-items-center gap-2 mb-3">
         <?php if ($this->testBlocked) { ?>
             <small class="text-danger"><span class="fa fa-exclamation-triangle me-1" aria-hidden="true"></span><?= Text::sprintf('COM_TICKETSTATION_CPANEL_TESTMODE_NO_TEST_ENVIRONMENT', $this->escape($this->providerTitle)) ?></small>
         <?php } ?>
