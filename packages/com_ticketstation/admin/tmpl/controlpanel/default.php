@@ -133,6 +133,12 @@ $sum28     = array_sum(array_column($this->dailySales, 'tickets'));
         </form>
     </div>
     <?php $modeSwitch = ob_get_clean(); ?>
+    <style>
+        /* Joomla's switch is green when its second position is on. Here Live is the normal state (green)
+           and Test is the one that needs attention (amber). */
+        #ts-testmode .switcher .toggle-outside { background: #2f7d32; }
+        #ts-testmode .switcher input ~ input:checked ~ .toggle-outside { background: #e0a100; }
+    </style>
     <script>
         function tsTestModeChanged(event) {
             var confirms = <?= json_encode($confirms, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP) ?>;
