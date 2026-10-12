@@ -38,6 +38,7 @@ class HtmlView extends BaseHtmlView {
         $items      = $this->get('list');
         $events	    = $this->get('events');
         $upcoming	= $this->get('upcomingevents');
+        $upcomingTickets = $this->get('upcomingtickets');
         $added      = $this->get('added');
         $sold       = $this->get('sold');
         $pagination = $this->get('pagination');
@@ -72,6 +73,7 @@ class HtmlView extends BaseHtmlView {
         $this->items      = $items;
         $this->events	  = $events;
         $this->upcoming	  = $upcoming;
+        $this->upcomingTickets = $upcomingTickets;
         $this->added      = $added;
         $this->sold       = $sold;
         $this->pagination = $pagination;

@@ -34,7 +34,7 @@ defined('_JEXEC') or die('Restricted access');
             $db->quoteName('published') . ' = 0',
             $db->quoteName('publish_date_time') . ' <= ' . $db->quote( Date::localNow() ),
             ## A ticket past its end is never put on sale again; unpublishTickets() would take it off again at once.
-            'NOT ' . $this->endedSql($db)
+            'NOT ' . self::endedSql($db)
         );
 
         $query->update($db->quoteName('#__ticketstation_tickets'))->set($fields)->where($conditions);
@@ -69,7 +69,7 @@ defined('_JEXEC') or die('Restricted access');
         $conditions = array(
             $db->quoteName('published') . ' = 1',
             '((' . $db->quoteName('use_sale_stop') . ' = 1 AND ' . $db->quoteName('sale_stop') . ' < ' . $db->quote( Date::localNow() ) . ')'
-                . ' OR ' . $this->endedSql($db) . ')'
+                . ' OR ' . self::endedSql($db) . ')'
         );
 
         $query->update($db->quoteName('#__ticketstation_tickets'))->set($fields)->where($conditions);
@@ -91,11 +91,14 @@ defined('_JEXEC') or die('Restricted access');
      * SQL condition for a ticket whose end date and time has passed (site-local time). An end that
      * was never filled in (stored as 1970-01-01 by older versions) doesn't count as passed, so
      * such a ticket is not taken off sale on the strength of a date nobody entered.
+     *
+     * @param   object  $db      database driver
+     * @param   string  $column  the end date column, with a table alias when the query has one
      */
-    private function endedSql($db)
+    public static function endedSql($db, string $column = 'enddate')
     {
-        return '(' . $db->quoteName('enddate') . ' > ' . $db->quote('1970-01-02 00:00:00')
-            . ' AND ' . $db->quoteName('enddate') . ' < ' . $db->quote( Date::localNow() ) . ')';
+        return '(' . $db->quoteName($column) . ' > ' . $db->quote('1970-01-02 00:00:00')
+            . ' AND ' . $db->quoteName($column) . ' < ' . $db->quote( Date::localNow() ) . ')';
     }
 
     function unpublishEvent()

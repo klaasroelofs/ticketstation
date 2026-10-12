@@ -32,12 +32,62 @@ $document->addScript('components/com_ticketstation/assets/javascripts/countdown.
 
 ## Texts used by countdown.js (read there through Joomla.Text, which needs core.js)
 $document->getWebAssetManager()->useScript('core');
-foreach (['DAY', 'DAYS', 'HOUR', 'HOURS', 'MINUTE', 'MINUTES', 'SECOND', 'SECONDS', 'RELOADING'] as $countdownText) {
+foreach (['DAY', 'DAYS', 'HOUR', 'HOURS', 'MINUTE', 'MINUTES', 'SECOND', 'SECONDS', 'RELOADING', 'STARTED'] as $countdownText) {
     Text::script('COM_TICKETSTATION_COUNTDOWN_' . $countdownText);
 }
 
 ## Day and month names follow the active site language (e.g. "zaterdag 3 oktober 2026" / "Saturday 3 October 2026")
 $fmt = Date::formatter('EEEE d MMMM yyyy');
+
+## Tickets that are announced inside the card of their (published) event
+$announcedTickets = [];
+foreach ((array) $this->upcomingTickets as $announced) {
+    $announcedTickets[(int) $announced->eventid][] = $announced;
+}
+
+## The tile of an event or ticket whose sale has not started: the countdown ($mode 1), or only the
+## date and time ($mode 2). $key keeps the element ids of the clocks apart (e12 / t34).
+$presaleTile = function (string $key, string $title, string $start, int $mode, string $css) use ($fmt) {
+    $stamp = strtotime($start);
+    ## Seconds to go as the server sees it, so the clock doesn't depend on the visitor's clock or time zone
+    $remaining = max(0, $stamp - strtotime(Date::localNow()));
+    ?>
+    <article class="ts-ticket ts-ticket--presale<?= $css ? ' ts-ticket--has-image' : ''; ?>"<?= $css ? ' style="' . $css . '"' : ''; ?>>
+
+        <div class="ts-ticket__header">
+            <h3 class="ts-ticket__title"><?= $title; ?></h3>
+        </div>
+
+        <div class="ts-ticket__body">
+            <?php if ($mode == 2) { ?>
+                <p class="ts-countdown-title"><?= Text::sprintf('COM_TICKETSTATION_SALE_STARTS_ON', datefmt_format($fmt, $stamp), date('H:i', $stamp)); ?></p>
+            <?php } else { ?>
+                <p id="startverkooptiteldiv<?= $key; ?>" class="ts-countdown-title"><?= Text::_('COM_TICKETSTATION_SALE_STARTS_IN'); ?>:</p>
+
+                <div id="clockdiv<?= $key; ?>" class="ts-countdown">
+                    <?php foreach (['days' => 'DAYS', 'hours' => 'HOURS', 'minutes' => 'MINUTES', 'seconds' => 'SECONDS'] as $unit => $caption) { ?>
+                        <div id="<?= $unit . 'div' . $key; ?>" class="ts-countdown__unit">
+                            <span id="<?= $unit . $key; ?>" class="ts-countdown__value"></span>
+                            <span id="<?= $unit . 'caption' . $key; ?>" class="ts-countdown__label"><?= Text::_('COM_TICKETSTATION_COUNTDOWN_' . $caption); ?></span>
+                        </div>
+                    <?php } ?>
+                </div>
+
+                <div class="ts-countdown-reload" id="renewpage<?= $key; ?>"></div>
+
+                <p id="startverkoopdatumtijddiv<?= $key; ?>" class="ts-countdown-date">
+                    (<?= Text::sprintf('COM_TICKETSTATION_SALE_STARTS_AT', datefmt_format($fmt, $stamp), date('H:i', $stamp)); ?>)
+                </p>
+            <?php } ?>
+        </div>
+    </article>
+
+    <?php if ($mode != 2) { ?>
+        <script>
+            initializeClock('<?= $key; ?>', '<?= $start; ?>', <?= $remaining; ?>);
+        </script>
+    <?php }
+};
 
 ## Without online payments only free tickets are sold on the website: no transaction costs.
 $show_transaction_costs = $this->config->variable_transcosts != 2 && Shop::paymentsOn();
@@ -219,6 +269,23 @@ $backgroundStyle = [TicketstationFunctions::class, 'backgroundImageStyle'];
                             </article>
                         <?php } ?>
                     <?php endfor; ?>
+
+                    <?php
+                    ## Tickets of this event whose sale starts later and that are announced
+                    foreach ($announcedTickets[(int) $event->eventid] ?? [] as $announced) {
+                        $presaleTile(
+                            't' . $announced->ticketid,
+                            $announced->ticketname,
+                            $announced->publish_date_time,
+                            (int) $announced->presale_display,
+                            $backgroundStyle('ticket' . $announced->ticketid) ?: $backgroundStyle('event' . $event->eventid)
+                        );
+                    }
+                    ?>
+
+                    <?php if ((int) $event->published_tickets === 0 && empty($announcedTickets[(int) $event->eventid])) { ?>
+                        <p class="ts-note"><?= Text::_('COM_TICKETSTATION_EVENT_NO_TICKETS_YET'); ?></p>
+                    <?php } ?>
                 </div>
             </section>
         <?php } ?>
@@ -232,40 +299,14 @@ $backgroundStyle = [TicketstationFunctions::class, 'backgroundImageStyle'];
 
             <div class="ts-event__tickets">
                 <?php foreach ($this->upcoming as $upcoming) {
-
-                    $ticketbackgroundimage_css = $backgroundStyle('event' . $upcoming->eventid);
-                    ?>
-
-                    <article class="ts-ticket ts-ticket--presale<?= $ticketbackgroundimage_css ? ' ts-ticket--has-image' : ''; ?>"<?= $ticketbackgroundimage_css ? ' style="' . $ticketbackgroundimage_css . '"' : ''; ?>>
-
-                        <div class="ts-ticket__header">
-                            <h3 class="ts-ticket__title"><?= $upcoming->eventname; ?></h3>
-                        </div>
-
-                        <div class="ts-ticket__body">
-                            <p id="startverkooptiteldiv<?= $upcoming->eventid; ?>" class="ts-countdown-title"><?= Text::_('COM_TICKETSTATION_SALE_STARTS_IN'); ?>:</p>
-
-                            <div id="clockdiv<?= $upcoming->eventid; ?>" class="ts-countdown">
-                                <?php foreach (['days' => 'DAYS', 'hours' => 'HOURS', 'minutes' => 'MINUTES', 'seconds' => 'SECONDS'] as $unit => $caption) { ?>
-                                    <div id="<?= $unit . 'div' . $upcoming->eventid; ?>" class="ts-countdown__unit">
-                                        <span id="<?= $unit . $upcoming->eventid; ?>" class="ts-countdown__value"></span>
-                                        <span id="<?= $unit . 'caption' . $upcoming->eventid; ?>" class="ts-countdown__label"><?= Text::_('COM_TICKETSTATION_COUNTDOWN_' . $caption); ?></span>
-                                    </div>
-                                <?php } ?>
-                            </div>
-
-                            <div class="ts-countdown-reload" id="renewpage<?= $upcoming->eventid; ?>"></div>
-
-                            <p id="startverkoopdatumtijddiv<?= $upcoming->eventid; ?>" class="ts-countdown-date">
-                                (<?= Text::sprintf('COM_TICKETSTATION_SALE_STARTS_AT', datefmt_format($fmt, strtotime($upcoming->startdate)), date('H:i', strtotime($upcoming->startdate))); ?>)
-                            </p>
-                        </div>
-                    </article>
-
-                    <script>
-                        initializeClock('<?= $upcoming->eventid; ?>', '<?= $upcoming->startdate; ?>');
-                    </script>
-                <?php } ?>
+                    $presaleTile(
+                        'e' . $upcoming->eventid,
+                        $upcoming->eventname,
+                        $upcoming->startdate,
+                        (int) $upcoming->presale_display,
+                        $backgroundStyle('event' . $upcoming->eventid)
+                    );
+                } ?>
             </div>
         </section>
     <?php } ?>

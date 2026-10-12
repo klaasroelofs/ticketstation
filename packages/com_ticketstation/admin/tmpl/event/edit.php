@@ -61,6 +61,9 @@ if(isset($this->item->eventid))
                 <?= $this->form->renderField('closingdate'); ?>
             </div>
             <div class="row mb-3">
+                <?= $this->form->renderField('presale_display'); ?>
+            </div>
+            <div class="row mb-3">
                 <?php if ((isset($this->item->eventid)?$this->item->eventid:0 > 0) && ($background_img_event)) { ?>
 
                     <?php $remove_link_bg = 'index.php?option=com_ticketstation&controller=event&task=removeBackground&eventid='.$this->item->eventid.'&'.\Joomla\CMS\Session\Session::getFormToken().'=1'; ?>

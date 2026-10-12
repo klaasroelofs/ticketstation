@@ -181,6 +181,18 @@
                 filterformat="d-m-Y H:i"
         />
         <field
+                name="presale_display"
+                type="list"
+                label="COM_TICKETSTATION_PRESALE_DISPLAY"
+                description="COM_TICKETSTATION_PRESALE_DISPLAY_TICKET_DESC"
+                default="0"
+                showon="use_auto_publish:1"
+                >
+                <option value="0">COM_TICKETSTATION_PRESALE_NONE</option>
+                <option value="1">COM_TICKETSTATION_PRESALE_COUNTDOWN</option>
+                <option value="2">COM_TICKETSTATION_PRESALE_DATE</option>
+        </field>
+        <field
                 name="use_sale_stop"
                 type="radio"
                 layout="joomla.form.field.radio.switcher"

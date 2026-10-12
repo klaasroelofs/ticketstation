@@ -61,6 +61,18 @@
                 filterformat="d-m-Y H:i"
         />
         <field
+                name="presale_display"
+                type="list"
+                label="COM_TICKETSTATION_PRESALE_DISPLAY"
+                description="COM_TICKETSTATION_PRESALE_DISPLAY_EVENT_DESC"
+                default="1"
+                showon="automatic_change_state:1"
+                >
+                <option value="1">COM_TICKETSTATION_PRESALE_COUNTDOWN</option>
+                <option value="2">COM_TICKETSTATION_PRESALE_DATE</option>
+                <option value="0">COM_TICKETSTATION_PRESALE_NONE</option>
+        </field>
+        <field
                 name="waitinglist"
                 type="list"
                 label="COM_TICKETSTATION_EVENT_WAITINGLIST"
