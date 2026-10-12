@@ -233,7 +233,7 @@ class UpcomingModel extends BaseDatabaseModel {
 
     /**
      * Whether the automatic tasks (publishing, sales stops, cleaning up) are switched on:
-     * Configuration > Orders > automatic removal of unfinished orders.
+     * Configuration > General > Run automatic tasks.
      */
     private function automationOn(): bool
     {

@@ -220,6 +220,27 @@ $document->getWebAssetManager()->addInlineScript("
             </div>
         </div>
 
+        <div class="card mt-3 rounded-to">
+            <h3 class="card-header">
+                <?= Text::_('COM_TICKETSTATION_AUTOMATION_SETTINGS') ?>
+            </h3>
+            <div class="card-body">
+                <div class="row mb-3">
+                    <label for="remove_unfinished" class="col-sm-3 col-form-label"
+                           rel="popover"
+                           title="<?= Text::_('COM_TICKETSTATION_AUTOMATION_ON') ?>">
+                        <?= Text::_('COM_TICKETSTATION_AUTOMATION_ON') ?>
+                    </label>
+                    <div class="col-sm-9">
+                        <?= $this->lists['remove_unfinished']; ?>
+                        <small class="form-text">
+                            <?= Text::_('COM_TICKETSTATION_AUTOMATION_ON_DESC') ?>
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
     <?= HTMLHelper::_('uitab.endTab'); ?>
 
     <?= HTMLHelper::_('uitab.addTab', 'configTabs', 'display', Text::_('COM_TICKETSTATION_CONFIG_TAB_DISPLAY')); ?>
@@ -394,19 +415,9 @@ $document->getWebAssetManager()->addInlineScript("
                 <?= Text::_('COM_TICKETSTATION_REMOVAL_SETTINGS') ?>
             </h3>
             <div class="card-body">
-                <div class="row mb-3">
-                    <label for="remove_unfinished" class="col-sm-3 col-form-label"
-                           rel="popover"
-                           title="<?= Text::_('COM_TICKETSTATION_AUTO_REMOVE') ?>">
-                        <?= Text::_('COM_TICKETSTATION_AUTO_REMOVE') ?>
-                    </label>
-                    <div class="col-sm-9">
-                        <?= $this->lists['remove_unfinished']; ?>
-                        <small class="form-text">
-                            <?= Text::_('COM_TICKETSTATION_AUTO_REMOVE_DESC') ?>
-                        </small>
-                    </div>
-                </div>
+                <p class="form-text mb-3">
+                    <?= Text::_('COM_TICKETSTATION_REMOVAL_NEEDS_AUTOMATION') ?>
+                </p>
                 <div class="row mb-3">
                     <label for="removal_hours" class="col-sm-3 col-form-label"
                            rel="popover"
