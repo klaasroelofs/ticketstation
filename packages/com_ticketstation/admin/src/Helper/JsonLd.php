@@ -313,9 +313,10 @@ class JsonLd
     }
 
     /**
-     * The period the offer is valid: from the automatic publish date and until the sale stop of
-     * the ticket, each only when switched on and filled in. A date that was never filled in is
-     * stored as 1970-01-01 and counts as empty.
+     * The period the offer is valid: from the automatic publish date (when switched on and filled
+     * in) and until the sale stop or the end of the ticket, whichever comes first: a ticket is
+     * unpublished at the latest when its end has passed (Ticketstarter). A date that was never
+     * filled in is stored as 1970-01-01 and counts as empty.
      */
     private static function withSalePeriod(array $offer, ?object $ticket): array
     {
@@ -324,7 +325,16 @@ class JsonLd
         }
 
         $from = ($ticket->use_auto_publish ?? 0) == 1 ? self::isoDate($ticket->publish_date_time ?? null) : null;
-        $to   = ($ticket->use_sale_stop ?? 0) == 1 ? self::isoDate($ticket->sale_stop ?? null) : null;
+        $to   = null;
+
+        $stop = ($ticket->use_sale_stop ?? 0) == 1 ? self::isoDate($ticket->sale_stop ?? null) : null;
+        $end  = self::isoDate($ticket->enddate ?? null);
+
+        foreach ([$stop, $end] as $candidate) {
+            if ($candidate && ($to === null || strtotime($candidate) < strtotime($to))) {
+                $to = $candidate;
+            }
+        }
 
         if ($from) {
             $offer['validFrom'] = $from;
