@@ -618,7 +618,7 @@ class ReservationController extends BaseController
 
         if ($reference !== '')
         {
-            $this->getModel('Boxoffice')->updateinsertRemark((int) $finalOrdercode, $reference);
+            $this->getModel('Boxoffice')->saveOrderReference((int) $finalOrdercode, $reference);
         }
 
         if ($paid == 1)

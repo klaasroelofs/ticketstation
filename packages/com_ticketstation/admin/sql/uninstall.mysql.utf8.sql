@@ -11,7 +11,7 @@ DROP TABLE IF EXISTS `#__ticketstation_mollie`;
 DROP TABLE IF EXISTS `#__ticketstation_refunds`;
 DROP TABLE IF EXISTS `#__ticketstation_orders`;
 DROP TABLE IF EXISTS `#__ticketstation_ordertotals`;
-DROP TABLE IF EXISTS `#__ticketstation_remarks`;
+DROP TABLE IF EXISTS `#__ticketstation_order_references`;
 DROP TABLE IF EXISTS `#__ticketstation_scannermap`;
 DROP TABLE IF EXISTS `#__ticketstation_seatplancoords`;
 DROP TABLE IF EXISTS `#__ticketstation_seatplansettings`;

@@ -146,7 +146,7 @@ class PaymentsModel extends BaseDatabaseModel
 
     /**
      * Deletes everything that was made in test mode: the orders with their tickets, payments,
-     * invoices, remarks and refunds (the same clean-up as removing an order in the Box Office), the
+     * invoices, order references and refunds (the same clean-up as removing an order in the Box Office), the
      * customers and the waiting-list signups. Live data is not touched, whatever mode the shop is in.
      *
      * @return  object  orders and customers: how many were deleted.

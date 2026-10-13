@@ -16,7 +16,7 @@ defined('_JEXEC') or die('Restricted access');
 /**
  * The note a customer can add to an order in the cart (Configuration > show_remark_field),
  * e.g. special wishes. Kept in #__ticketstation_customer_notes, one row per ordercode, and
- * deliberately separate from the Box Office "Order Reference" (#__ticketstation_remarks),
+ * deliberately separate from the Box Office "Order Reference" (#__ticketstation_order_references),
  * which is short and printed on the tickets. The customer note is only shown in the Box Office.
  */
 class CustomerNote

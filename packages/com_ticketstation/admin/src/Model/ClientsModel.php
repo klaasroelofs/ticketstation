@@ -276,12 +276,12 @@ class ClientsModel extends BaseDatabaseModel
 
         $query = $db->getQuery(true);
 
-        $query->select(array('a.*', 't.ticketname', 'e.eventcode', 'e.eventname', 'COUNT(a.orderid) AS totaltickets', 'r.remarks', 'tt.amount AS transaction_amount'));
+        $query->select(array('a.*', 't.ticketname', 'e.eventcode', 'e.eventname', 'COUNT(a.orderid) AS totaltickets', 'r.order_reference', 'tt.amount AS transaction_amount'));
         $query->from($db->quoteName('#__ticketstation_orders', 'a'));
         $query->where(TestData::condition('a.test'));
         $query->join('LEFT', $db->quoteName('#__ticketstation_events', 'e') . ' ON (' . $db->quoteName('a.eventid') . ' = ' . $db->quoteName('e.eventid') . ')');
         $query->join('LEFT', $db->quoteName('#__ticketstation_tickets', 't') . ' ON ('.$db->quoteName('t.ticketid').' = '.$db->quoteName('a.ticketid').')');
-        $query->join('LEFT', $db->quoteName('#__ticketstation_remarks', 'r') . ' ON ('.$db->quoteName('r.ordercode').' = '.$db->quoteName('a.ordercode').')');
+        $query->join('LEFT', $db->quoteName('#__ticketstation_order_references', 'r') . ' ON ('.$db->quoteName('r.ordercode').' = '.$db->quoteName('a.ordercode').')');
         $query->join('LEFT', $db->quoteName('#__ticketstation_transactions', 'tt') . ' ON (' . $db->quoteName('a.ordercode') . ' = ' . $db->quoteName('tt.orderid') . ')');
         $query->where($db->quoteName('a.userid') . ' = '. $db->quote((int)$uid->clientid));
         $query->group('a.ordercode');

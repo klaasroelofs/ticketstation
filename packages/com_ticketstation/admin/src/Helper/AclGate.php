@@ -210,8 +210,8 @@ class AclGate
             'resetscanstate'     => self::BOXOFFICE,
             'blocked'            => self::BOXOFFICE,
             'unlock'             => self::BOXOFFICE,
-            'updateinsertremark' => self::BOXOFFICE,
-            'deleteremark'       => self::BOXOFFICE,
+            'savereference'      => self::BOXOFFICE,
+            'deletereference'    => self::BOXOFFICE,
             'publish'            => self::BOXOFFICE,
             'unpublish'          => self::BOXOFFICE,
             // Marking an order paid sends its tickets without money coming in.

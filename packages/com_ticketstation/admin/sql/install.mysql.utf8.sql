@@ -464,11 +464,11 @@ CREATE TABLE IF NOT EXISTS `#__ticketstation_seatplancoords` (
   KEY `idx_orderid` (`orderid`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 DEFAULT COLLATE=utf8mb4_unicode_ci;
 
-DROP TABLE IF EXISTS `#__ticketstation_remarks`;
-CREATE TABLE IF NOT EXISTS `#__ticketstation_remarks` (
+DROP TABLE IF EXISTS `#__ticketstation_order_references`;
+CREATE TABLE IF NOT EXISTS `#__ticketstation_order_references` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `ordercode` varchar(25) NOT NULL DEFAULT '',
-  `remarks` varchar(255) NOT NULL DEFAULT '',
+  `order_reference` varchar(255) NOT NULL DEFAULT '',
   PRIMARY KEY (`id`)
 )  ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 DEFAULT COLLATE=utf8mb4_unicode_ci;
 

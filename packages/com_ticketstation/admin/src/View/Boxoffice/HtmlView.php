@@ -324,7 +324,7 @@ class HtmlView extends BaseHtmlView
         $this->data          = $data;
         $this->events        = $events;
         $this->status        = $status;
-        $this->remark        = $this->get('remark');
+        $this->orderReference = $this->get('OrderReference');
         $this->customerNote  = (new CustomerNote)->get($items->ordercode ?? 0);
         $this->items         = $items;
         $this->config        = $config;

@@ -570,7 +570,7 @@ class BoxofficeController extends BaseController {
                 $status[(int) $row->paid] ?? '',
                 $row->scanned ? Date::display($row->scandate, $dateTime) : '',
                 $row->blacklisted ? Text::_('COM_TICKETSTATION_YES') : '',
-                $row->remarks,
+                $row->order_reference,
             ];
         }
 
@@ -862,7 +862,7 @@ class BoxofficeController extends BaseController {
     }
 
 
-    function updateinsertremark()
+    function savereference()
     {
 
         $app    = Factory::getApplication();
@@ -870,38 +870,38 @@ class BoxofficeController extends BaseController {
 
         $model 		= $this->getModel('boxoffice');
         $ordercode 	= $jinput->get('ordercode', '0', 'int');
-        $newremark	= trim((string) $jinput->get('newremark', '', 'STRING'));
+        $orderReference	= trim((string) $jinput->get('order_reference', '', 'STRING'));
 
-        if ($newremark == '')
+        if ($orderReference == '')
         {
-            $app->enqueueMessage(Text::_('COM_TICKETSTATION_REMARK_EMPTY'), 'error');
+            $app->enqueueMessage(Text::_('COM_TICKETSTATION_ORDERREFERENCE_EMPTY'), 'error');
 
         } else {
 
-            $response = $model->updateinsertRemark($ordercode, $newremark);
+            $response = $model->saveOrderReference($ordercode, $orderReference);
 
             if($response == 'FAIL_NO_DIFF')
             {
-                $app->enqueueMessage(Text::_('COM_TICKETSTATION_REMARK_NOT_CHANGED'), 'error');
+                $app->enqueueMessage(Text::_('COM_TICKETSTATION_ORDERREFERENCE_NOT_CHANGED'), 'error');
 
             } elseif ($response == 'DONE_INSERT')
             {
-                $app->enqueueMessage(Text::_('COM_TICKETSTATION_REMARK_ADDED'));
+                $app->enqueueMessage(Text::_('COM_TICKETSTATION_ORDERREFERENCE_ADDED'));
 
             } elseif($response == 'DONE_UPDATE')
             {
-                $app->enqueueMessage(Text::_('COM_TICKETSTATION_REMARK_UPDATED'));
+                $app->enqueueMessage(Text::_('COM_TICKETSTATION_ORDERREFERENCE_UPDATED'));
 
             } elseif($response == 'FAIL')
             {
-                $app->enqueueMessage(Text::_('COM_TICKETSTATION_REMARK_UPDATE_FAILED'), 'error');
+                $app->enqueueMessage(Text::_('COM_TICKETSTATION_ORDERREFERENCE_UPDATE_FAILED'), 'error');
             }
         }
 
         $this->setRedirect('index.php?option=com_ticketstation&controller=boxoffice&task=edit&cid=' . $ordercode);
     }
 
-    function deleteremark()
+    function deletereference()
     {
 
         $app    = Factory::getApplication();
@@ -910,19 +910,19 @@ class BoxofficeController extends BaseController {
         $model 		= $this->getModel('boxoffice');
         $ordercode 	= $jinput->get('ordercode', '0', 'int');
 
-        $response = $model->deleteRemark($ordercode);
+        $response = $model->deleteOrderReference($ordercode);
 
         if($response == 'NA')
         {
-            $app->enqueueMessage(Text::_('COM_TICKETSTATION_REMARK_NOT_PRESENT'), 'error');
+            $app->enqueueMessage(Text::_('COM_TICKETSTATION_ORDERREFERENCE_NOT_PRESENT'), 'error');
 
         } elseif($response == 'DONE_DELETE')
         {
-            $app->enqueueMessage(Text::_('COM_TICKETSTATION_REMARK_DELETED'));
+            $app->enqueueMessage(Text::_('COM_TICKETSTATION_ORDERREFERENCE_DELETED'));
 
         } elseif($response == 'FAIL')
         {
-            $app->enqueueMessage(Text::_('COM_TICKETSTATION_REMARK_DELETE_FAILED'), 'error');
+            $app->enqueueMessage(Text::_('COM_TICKETSTATION_ORDERREFERENCE_DELETE_FAILED'), 'error');
         }
 
         $this->setRedirect('index.php?option=com_ticketstation&controller=boxoffice&task=edit&cid=' . $ordercode);

@@ -66,8 +66,8 @@ $document->setTitle(Text::_('COM_TICKETSTATION_VIEW_CUSTOMER_DETAILS') . ' - ' .
                             <td><a href="<?= $link;?>"><?= $row->ordercode; ?></a></td>
                             <td>
                                 <?= $this->escape($row->eventcode); ?> | <?= $this->escape($row->ticketname); ?> <br />
-                                <?php if ($row->remarks != '') { ?>
-                                    <span class="badge bg-info" style="border: 1px solid #000;background-color:#f5a742;font-size:10pt;margin-top:5px;"><?= $this->escape($row->remarks); ?></span>
+                                <?php if ($row->order_reference != '') { ?>
+                                    <span class="badge bg-info" style="border: 1px solid #000;background-color:#f5a742;font-size:10pt;margin-top:5px;"><?= $this->escape($row->order_reference); ?></span>
                                 <?php } ?>
                             </td>
                             <td class="w-3 text-center" style="text-align: center;"><small><?= Date::screen($row->orderdate, $this->config->dateformat ?? 'd-m-Y'); ?></small></td>

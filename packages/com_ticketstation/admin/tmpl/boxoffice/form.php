@@ -206,17 +206,17 @@ $progress = function (int $done) use ($status) {
                         <td><?= Price::format($this->totals->vat, $valuta); ?></td>
                     </tr>
                     <tr>
-                        <th scope="row" class="fw-normal"><label for="newremark"><?= Text::_('COM_TICKETSTATION_ORDERREFERENCE') ?></label></th>
+                        <th scope="row" class="fw-normal"><label for="order_reference"><?= Text::_('COM_TICKETSTATION_ORDERREFERENCE') ?></label></th>
                         <td>
                             <div class="input-group">
-                                <input class="form-control" type="text" name="newremark" id="newremark" maxlength="35"
-                                       value="<?= $this->escape($this->remark->remarks ?? ''); ?>"
-                                       onkeydown="if (event.key === 'Enter') { event.preventDefault(); Joomla.submitbutton('updateinsertremark'); }" />
-                                <button type="button" class="btn btn-primary" onclick="Joomla.submitbutton('updateinsertremark');">
+                                <input class="form-control" type="text" name="order_reference" id="order_reference" maxlength="35"
+                                       value="<?= $this->escape($this->orderReference->order_reference ?? ''); ?>"
+                                       onkeydown="if (event.key === 'Enter') { event.preventDefault(); Joomla.submitbutton('savereference'); }" />
+                                <button type="button" class="btn btn-primary" onclick="Joomla.submitbutton('savereference');">
                                     <?= Text::_('COM_TICKETSTATION_UPDATE_ORDERREFERENCE') ?>
                                 </button>
-                                <?php if (!empty($this->remark->remarks)) { ?>
-                                    <button type="button" class="btn btn-outline-danger" onclick="Joomla.submitbutton('deleteremark');" title="<?= Text::_('COM_TICKETSTATION_REMOVE_ORDERREFERENCE') ?>">
+                                <?php if (!empty($this->orderReference->order_reference)) { ?>
+                                    <button type="button" class="btn btn-outline-danger" onclick="Joomla.submitbutton('deletereference');" title="<?= Text::_('COM_TICKETSTATION_REMOVE_ORDERREFERENCE') ?>">
                                         <span class="icon-times" aria-hidden="true"></span>
                                         <span class="visually-hidden"><?= Text::_('COM_TICKETSTATION_REMOVE_ORDERREFERENCE') ?></span>
                                     </button>

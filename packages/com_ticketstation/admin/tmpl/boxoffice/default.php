@@ -165,8 +165,8 @@ $progress = function (int $done, int $total, string $title, string $complete = '
                                         <br /><small><?= $this->escape($event->ticketnames); ?></small>
                                     </div>
                                 <?php } ?>
-                                <?php if ($row->remarks !== '') { ?>
-                                    <span class="badge bg-info" title="<?= Text::_('COM_TICKETSTATION_ORDERREFERENCE'); ?>"><?= $this->escape($row->remarks); ?></span>
+                                <?php if ($row->order_reference !== '') { ?>
+                                    <span class="badge bg-info" title="<?= Text::_('COM_TICKETSTATION_ORDERREFERENCE'); ?>"><?= $this->escape($row->order_reference); ?></span>
                                 <?php } ?>
                                 <?php if ($row->customer_note !== '') { ?>
                                     <span class="badge bg-secondary" title="<?= $this->escape($row->customer_note); ?>"><span class="icon-comment" aria-hidden="true"></span> <?= Text::_('COM_TICKETSTATION_CUSTOMER_NOTE'); ?></span>

@@ -86,7 +86,7 @@ class ticketcreator
             'e.eventcode',
             'e.eventid',
             't.ticketprice AS price',
-            'r.remarks',
+            'r.order_reference',
             'ext.seatid'
         );
 
@@ -94,7 +94,7 @@ class ticketcreator
         $query->from($db->quoteName('#__ticketstation_orders', 'o'));
 
         $query->join('LEFT', $db->quoteName('#__ticketstation_clients', 'c') . ' ON (' . $db->quoteName('c.clientid') . ' = ' . $db->quoteName('o.userid') . ')');
-        $query->join('LEFT', $db->quoteName('#__ticketstation_remarks', 'r') . ' ON (' . $db->quoteName('r.ordercode') . ' = ' . $db->quoteName('o.ordercode') . ')');
+        $query->join('LEFT', $db->quoteName('#__ticketstation_order_references', 'r') . ' ON (' . $db->quoteName('r.ordercode') . ' = ' . $db->quoteName('o.ordercode') . ')');
         $query->join('LEFT', $db->quoteName('#__ticketstation_events', 'e') . ' ON (' . $db->quoteName('e.eventid') . ' = ' . $db->quoteName('o.eventid') . ')');
         $query->join('LEFT', $db->quoteName('#__ticketstation_tickets', 't') . ' ON (' . $db->quoteName('t.ticketid') . ' = ' . $db->quoteName('o.ticketid') . ')');
         $query->join('LEFT OUTER', $db->quoteName('#__ticketstation_seatplancoords', 'ext') . ' ON (' . $db->quoteName('ext.orderid') . ' = ' . $db->quoteName('o.orderid') . ')');
@@ -255,7 +255,7 @@ class ticketcreator
         }
 
         ## ORDERREFERENCE
-        if($order->remarks != '')
+        if($order->order_reference != '')
         {
             if (strpos($order->orderreference_position, '-') !== false)
             {
@@ -267,12 +267,12 @@ class ticketcreator
                 if($order->orderreference_centered == 1)
                 {
                     $mid_x = ($pdf->GetPageWidth() / 2) - ($pdf->GetPageWidth() * 0.04); // Midden van de pagina bepalen en corrigeren met 4%
-                    $pdf->SetXY($mid_x - ($pdf->GetStringWidth($order->remarks) / 2), $position[1]);
+                    $pdf->SetXY($mid_x - ($pdf->GetStringWidth($order->order_reference) / 2), $position[1]);
                 } else {
                     $pdf->SetXY($position[0], $position[1]);
                 }
 
-                $pdf->Write(0, PdfEncoding::toLatin1($order->remarks));
+                $pdf->Write(0, PdfEncoding::toLatin1($order->order_reference));
             }
         }
 

@@ -335,7 +335,7 @@ class BoxofficeModel extends ListModel
             ->select([
                 'a.ordercode', 'a.orderid', 'a.orderdate', 'a.paid', 'a.price', 'a.scanned', 'a.scandate', 'a.blacklisted',
                 'c.name', 'c.emailaddress', 'c.phonenumber',
-                'e.eventname', 't.ticketname', 'co.row_name', 'co.seatid', 'r.remarks',
+                'e.eventname', 't.ticketname', 'co.row_name', 'co.seatid', 'r.order_reference',
             ])
             ->from($db->quoteName('#__ticketstation_orders', 'a'))
             ->join('INNER', '(' . $this->getKeyQuery() . ') AS ' . $db->quoteName('k') . ' ON ' . $db->quoteName('k.ordercode') . ' = ' . $db->quoteName('a.ordercode'))
@@ -343,8 +343,8 @@ class BoxofficeModel extends ListModel
             ->join('LEFT', $db->quoteName('#__ticketstation_events', 'e') . ' ON ' . $db->quoteName('e.eventid') . ' = ' . $db->quoteName('a.eventid'))
             ->join('LEFT', $db->quoteName('#__ticketstation_tickets', 't') . ' ON ' . $db->quoteName('t.ticketid') . ' = ' . $db->quoteName('a.ticketid'))
             ->join('LEFT', $db->quoteName('#__ticketstation_seatplancoords', 'co') . ' ON ' . $db->quoteName('co.orderid') . ' = ' . $db->quoteName('a.orderid'))
-            ->join('LEFT', '(SELECT ' . $db->quoteName('ordercode') . ', MAX(' . $db->quoteName('remarks') . ') AS ' . $db->quoteName('remarks')
-                . ' FROM ' . $db->quoteName('#__ticketstation_remarks') . ' GROUP BY ' . $db->quoteName('ordercode') . ') AS ' . $db->quoteName('r')
+            ->join('LEFT', '(SELECT ' . $db->quoteName('ordercode') . ', MAX(' . $db->quoteName('order_reference') . ') AS ' . $db->quoteName('order_reference')
+                . ' FROM ' . $db->quoteName('#__ticketstation_order_references') . ' GROUP BY ' . $db->quoteName('ordercode') . ') AS ' . $db->quoteName('r')
                 . ' ON ' . $db->quoteName('r.ordercode') . ' = ' . $db->quoteName('a.ordercode'))
             ->order([
                 $db->quoteName('e.eventdate') . ' DESC', $db->quoteName('e.eventname'), $db->quoteName('c.name'),
@@ -486,9 +486,9 @@ class BoxofficeModel extends ListModel
             $db->quoteName('c.name') . $like,
             $db->quoteName('c.emailaddress') . $like,
             $db->quoteName('c.phonenumber') . $like,
-            'EXISTS (SELECT 1 FROM ' . $db->quoteName('#__ticketstation_remarks', 'r')
+            'EXISTS (SELECT 1 FROM ' . $db->quoteName('#__ticketstation_order_references', 'r')
                 . ' WHERE ' . $db->quoteName('r.ordercode') . ' = ' . $db->quoteName('a.ordercode')
-                . ' AND ' . $db->quoteName('r.remarks') . $like . ')',
+                . ' AND ' . $db->quoteName('r.order_reference') . $like . ')',
             'EXISTS (SELECT 1 FROM ' . $db->quoteName('#__ticketstation_customer_notes', 'n')
                 . ' WHERE ' . $db->quoteName('n.ordercode') . ' = ' . $db->quoteName('a.ordercode')
                 . ' AND ' . $db->quoteName('n.note') . $like . ')',
@@ -517,11 +517,11 @@ class BoxofficeModel extends ListModel
      * Every row has: ordercode, orderdate, orderid, paid, userid, name,
      * emailaddress, o_tickets, scanned_tickets, blocked_tickets, created_tickets,
      * sent_tickets, downloaded, published, coupon, orderprice (what was paid, or else what the
-     * customer pays), transaction_pid, remarks, customer_note, events (per event: eventid,
+     * customer pays), transaction_pid, order_reference, customer_note, events (per event: eventid,
      * eventname, tickets, ticketnames) and, with the event filter on, event_tickets.
      *
      * The order rows are summed up on their own, and everything that has one row per order
-     * (customer, remark, note, the latest transaction, the service fee terms and coupon) is looked up
+     * (customer, order reference, note, the latest transaction, the service fee terms and coupon) is looked up
      * separately, so a second transaction can never count the tickets twice.
      *
      * @param   string[]  $codes
@@ -565,7 +565,7 @@ class BoxofficeModel extends ListModel
 
         $clients      = $this->loadClients(array_column($rows, 'userid'));
         $events       = $this->loadEventsPerOrder($codes);
-        $remarks      = $this->loadRemarks($codes);
+        $references   = $this->loadOrderReferences($codes);
         $notes        = $this->loadNotes($codes);
         $transactions = $this->loadTransactions($codes);
         $totals       = $this->loadOrderTotals($codes);
@@ -604,7 +604,7 @@ class BoxofficeModel extends ListModel
             $row->emailaddress    = $client->emailaddress ?? null;
             $row->orderprice      = $transaction && (float) $transaction->amount > 0 ? (float) $transaction->amount : $total;
             $row->transaction_pid = $transaction->pid ?? null;
-            $row->remarks         = $remarks[$code] ?? '';
+            $row->order_reference = $references[$code] ?? '';
             $row->customer_note   = $notes[$code] ?? '';
             $row->events          = $events[$code] ?? [];
             $row->removed_auto    = false;
@@ -718,7 +718,7 @@ class BoxofficeModel extends ListModel
         $clients   = $this->loadClients(array_column(array_column($candidates, 'first'), 'userid'));
         $eventInfo = $this->loadNames('#__ticketstation_events', 'eventid', ['eventname', 'eventdate'], array_column($allLines, 'eventid'));
         $ticketInfo = $this->loadNames('#__ticketstation_tickets', 'ticketid', ['ticketname'], array_column($allLines, 'ticketid'));
-        $remarks   = $this->loadRemarks($codes);
+        $references = $this->loadOrderReferences($codes);
         $notes     = $this->loadNotes($codes);
         $transactions = $this->loadTransactions($codes);
 
@@ -728,7 +728,7 @@ class BoxofficeModel extends ListModel
             $lines     = $candidate->lines;
             $client    = $clients[$candidate->first->userid] ?? null;
 
-            if ($search !== '' && !$this->ghostMatchesSearch($search, $ordercode, $lines, $client, $remarks[$ordercode] ?? '', $notes[$ordercode] ?? ''))
+            if ($search !== '' && !$this->ghostMatchesSearch($search, $ordercode, $lines, $client, $references[$ordercode] ?? '', $notes[$ordercode] ?? ''))
             {
                 continue;
             }
@@ -794,7 +794,7 @@ class BoxofficeModel extends ListModel
                 'coupon'          => $candidate->first->coupon ?? null,
                 'orderprice'      => $transaction && (float) $transaction->amount > 0 ? (float) $transaction->amount : round($tickets, PaymentCurrencies::decimals()),
                 'transaction_pid' => $transaction->pid ?? null,
-                'remarks'         => $remarks[$ordercode] ?? '',
+                'order_reference' => $references[$ordercode] ?? '',
                 'customer_note'   => $notes[$ordercode] ?? '',
                 'events'          => $events,
                 'event_tickets'   => $event ? count(array_filter($lines, static function ($line) use ($event) {
@@ -812,7 +812,7 @@ class BoxofficeModel extends ListModel
     /**
      * The search of getSearchConditions(), applied to a removed order in PHP.
      */
-    private function ghostMatchesSearch(string $search, string $ordercode, array $lines, $client, string $remark, string $note)
+    private function ghostMatchesSearch(string $search, string $ordercode, array $lines, $client, string $orderReference, string $note)
     {
         if (ctype_digit($search) && strpos($ordercode, $search) === 0)
         {
@@ -823,7 +823,7 @@ class BoxofficeModel extends ListModel
             trim($client->name ?? ''),
             $client->emailaddress ?? '',
             $client->phonenumber ?? '',
-            $remark,
+            $orderReference,
             $note,
         ];
 
@@ -955,18 +955,18 @@ class BoxofficeModel extends ListModel
     /**
      * @return  array  ordercode => Order Reference
      */
-    private function loadRemarks(array $codes)
+    private function loadOrderReferences(array $codes)
     {
         $db    = Factory::getContainer()->get('DatabaseDriver');
         $query = $db->getQuery(true)
-            ->select([$db->quoteName('ordercode'), 'MAX(' . $db->quoteName('remarks') . ') AS ' . $db->quoteName('remarks')])
-            ->from($db->quoteName('#__ticketstation_remarks'))
+            ->select([$db->quoteName('ordercode'), 'MAX(' . $db->quoteName('order_reference') . ') AS ' . $db->quoteName('order_reference')])
+            ->from($db->quoteName('#__ticketstation_order_references'))
             ->whereIn($db->quoteName('ordercode'), $codes, ParameterType::STRING)
             ->group($db->quoteName('ordercode'));
 
         $db->setQuery($query);
 
-        return $db->loadAssocList('ordercode', 'remarks');
+        return $db->loadAssocList('ordercode', 'order_reference');
     }
 
     /**
@@ -1227,13 +1227,13 @@ class BoxofficeModel extends ListModel
         ];
     }
 
-    function getRemark()
+    function getOrderReference()
     {
         $db = Factory::getContainer()->get('DatabaseDriver');
         $query = $db->getQuery(true);
 
         $query->select('*');
-        $query->from($db->quoteName('#__ticketstation_remarks'));
+        $query->from($db->quoteName('#__ticketstation_order_references'));
         $query->where($db->quoteName('ordercode') . ' = ' . $db->quote((int) $this->id));
 
         $db->setQuery($query);
@@ -1305,7 +1305,7 @@ class BoxofficeModel extends ListModel
             if ($remaining === 0) {
 
                 $query = $db->getQuery(true);
-                $query->delete($db->quoteName('#__ticketstation_remarks'))
+                $query->delete($db->quoteName('#__ticketstation_order_references'))
                     ->where($db->quoteName('ordercode') . ' = ' . $db->quote($affected_ordercode));
 
                 $db->setQuery($query);
@@ -1933,14 +1933,14 @@ class BoxofficeModel extends ListModel
 
                 $row = $data[$i];
 
-                // Removing the remark from the database if present:
+                // Removing the order reference from the database if present:
                 $query = $db->getQuery(true);
 
                 $conditions = [
                     $db->quoteName('ordercode') . ' = (' . $row->ordercode . ')',
                 ];
 
-                $query->delete($db->quoteName('#__ticketstation_remarks'));
+                $query->delete($db->quoteName('#__ticketstation_order_references'));
                 $query->where($conditions);
 
                 $db->setQuery($query);
@@ -2097,52 +2097,52 @@ class BoxofficeModel extends ListModel
         return (new Invoice)->create((int) $eid);
     }
 
-    function updateinsertRemark($eid, $remark)
+    function saveOrderReference($eid, $orderReference)
     {
         $db = Factory::getContainer()->get('DatabaseDriver');
 
-        //Check if there is a remark for this ordercode already
-        $remarkid = '';
+        //Check if there is an order reference for this ordercode already
+        $referenceid = '';
 
         $query = $db->getQuery(true);
 
-        $query->select('id', 'remarks');
-        $query->from($db->quoteName('#__ticketstation_remarks'));
+        $query->select('id', 'order_reference');
+        $query->from($db->quoteName('#__ticketstation_order_references'));
         $query->where($db->quoteName('ordercode') . ' = ' . $db->quote((int) $eid));
 
         $db->setQuery($query);
-        $remark_id = $db->loadResult();
+        $reference_id = $db->loadResult();
 
-        if ($remark_id == '')
+        if ($reference_id == '')
         {
-            //Remark doesn't exist, insert
-            $remarkinsert = new stdClass();
-            $remarkinsert->ordercode = $eid;
-            $remarkinsert->remarks = $remark;
+            //Order reference doesn't exist, insert
+            $referenceinsert = new stdClass();
+            $referenceinsert->ordercode = $eid;
+            $referenceinsert->order_reference = $orderReference;
 
             $result = $db
-                ->insertObject('#__ticketstation_remarks', $remarkinsert);
+                ->insertObject('#__ticketstation_order_references', $referenceinsert);
 
             if( ! $result) {
                 return 'FAIL';
             } else {
-                History::log($eid, 'remark_updated', 'Order reference set to "' . $remark . '"', ['remark' => $remark]);
+                History::log($eid, 'order_reference_updated', 'Order reference set to "' . $orderReference . '"', ['order_reference' => $orderReference]);
                 return 'DONE_INSERT';
             }
 
         } else {
 
-            //Remark exists, update if different
+            //Order reference exists, update if different
             $query = $db->getQuery(true);
 
-            $query->select('remarks');
-            $query->from($db->quoteName('#__ticketstation_remarks'));
+            $query->select('order_reference');
+            $query->from($db->quoteName('#__ticketstation_order_references'));
             $query->where($db->quoteName('ordercode') . ' = ' . $db->quote((int) $eid));
 
             $db->setQuery($query);
-            $existing_remark = $db->loadResult();
+            $existing_reference = $db->loadResult();
 
-            if ($existing_remark == $remark) {
+            if ($existing_reference == $orderReference) {
 
                 return 'FAIL_NO_DIFF';
 
@@ -2151,63 +2151,63 @@ class BoxofficeModel extends ListModel
                 $query = $db->getQuery(true);
 
                 $fields = [
-                    $db->quoteName('remarks') . ' = ' . $db->quote($remark),
+                    $db->quoteName('order_reference') . ' = ' . $db->quote($orderReference),
                 ];
 
                 $conditions = [
                     $db->quoteName('ordercode') . ' = ' . $db->quote((int) $eid),
                 ];
 
-                $query->update($db->quoteName('#__ticketstation_remarks'))->set($fields)->where($conditions);
+                $query->update($db->quoteName('#__ticketstation_order_references'))->set($fields)->where($conditions);
 
                 $db->setQuery($query);
 
                 if( ! $result = $db->execute()) {
                     return 'FAIL';
                 } else {
-                    History::log($eid, 'remark_updated', 'Order reference updated to "' . $remark . '"', ['remark' => $remark]);
+                    History::log($eid, 'order_reference_updated', 'Order reference updated to "' . $orderReference . '"', ['order_reference' => $orderReference]);
                     return 'DONE_UPDATE';
                 }
             }
         }
     }
 
-    function deleteRemark($eid)
+    function deleteOrderReference($eid)
     {
         $db = Factory::getContainer()->get('DatabaseDriver');
 
-        //Check if there is a remark for this ordercode already
-        $remarkid = '';
+        //Check if there is an order reference for this ordercode already
+        $referenceid = '';
 
         $query = $db->getQuery(true);
 
         $query->select(['id']);
-        $query->from($db->quoteName('#__ticketstation_remarks'));
+        $query->from($db->quoteName('#__ticketstation_order_references'));
         $query->where($db->quoteName('ordercode') . ' = ' . $db->quote((int) $eid));
 
         $db->setQuery($query);
-        $remarkid = $db->loadResult();
+        $referenceid = $db->loadResult();
 
-        if ($remarkid == '')
+        if ($referenceid == '')
         {
-            //Remark doesn't exist, return
+            //Order reference doesn't exist, return
             return 'NA';
 
         } else {
 
-            //Remark exists, delete
+            //Order reference exists, delete
             $query = $db->getQuery(true);
 
             $conditions = [
                 $db->quoteName('ordercode') . ' = ' . $db->quote((int) $eid),
             ];
 
-            $query->delete($db->quoteName('#__ticketstation_remarks'))->where($conditions);
+            $query->delete($db->quoteName('#__ticketstation_order_references'))->where($conditions);
 
             $db->setQuery($query);
 
             if( $result = $db->execute()) {
-                History::log($eid, 'remark_removed', 'Order reference removed');
+                History::log($eid, 'order_reference_removed', 'Order reference removed');
                 return 'DONE_DELETE';
             } else {
                 return 'FAIL';
