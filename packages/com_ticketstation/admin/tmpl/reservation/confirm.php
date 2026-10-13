@@ -73,7 +73,12 @@ $switcher = function (string $name, string $label, string $description, int $lev
             <dd class="col-sm-9"><?= htmlspecialchars($this->customerData['emailaddress'] ?? '', ENT_QUOTES, 'UTF-8') ?></dd>
 
             <dt class="col-sm-3"><?= Text::_('COM_TICKETSTATION_PHONENUMBER') ?></dt>
-            <dd class="col-sm-9 mb-0"><?= htmlspecialchars($this->customerData['phonenumber'] ?? '', ENT_QUOTES, 'UTF-8') ?></dd>
+            <dd class="col-sm-9<?= empty($this->customerData['orderreference']) ? ' mb-0' : '' ?>"><?= htmlspecialchars($this->customerData['phonenumber'] ?? '', ENT_QUOTES, 'UTF-8') ?></dd>
+
+            <?php if (!empty($this->customerData['orderreference'])) : ?>
+            <dt class="col-sm-3"><?= Text::_('COM_TICKETSTATION_ORDERREFERENCE') ?></dt>
+            <dd class="col-sm-9 mb-0"><?= htmlspecialchars($this->customerData['orderreference'], ENT_QUOTES, 'UTF-8') ?></dd>
+            <?php endif; ?>
         </dl>
     </div>
 </div>

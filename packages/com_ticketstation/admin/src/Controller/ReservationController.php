@@ -500,6 +500,8 @@ class ReservationController extends BaseController
         $name         = $jinput->getString('name', '');
         $emailaddress = $jinput->getString('emailaddress', '');
         $phonenumber  = $jinput->getString('phonenumber', '');
+        // Optional; the same 35 characters as the field on the Box Office order screen.
+        $reference    = mb_substr(trim($jinput->getString('orderreference', '')), 0, 35);
 
         $data = [
             'name'         => $name,
@@ -537,9 +539,12 @@ class ReservationController extends BaseController
         // it for review, even though findOrCreateClient() may have matched an existing client
         // whose stored name/phone could differ slightly.
         $state['customer'] = [
-            'name'         => $name,
-            'emailaddress' => $emailaddress,
-            'phonenumber'  => $phonenumber,
+            'name'           => $name,
+            'emailaddress'   => $emailaddress,
+            'phonenumber'    => $phonenumber,
+            // Stored when the reservation is completed: the order only gets its final ordercode,
+            // which the reference hangs on, in Order::update().
+            'orderreference' => $reference,
         ];
         $this->setState($state);
 
@@ -607,6 +612,14 @@ class ReservationController extends BaseController
         // A reservation never has transaction costs, also when it is paid later through a
         // payment link.
         OrderTotals::capture($finalOrdercode, false);
+
+        // Before the tickets are created below, as the ticket design can print the reference.
+        $reference = (string) ($state['customer']['orderreference'] ?? '');
+
+        if ($reference !== '')
+        {
+            $this->getModel('Boxoffice')->updateinsertRemark((int) $finalOrdercode, $reference);
+        }
 
         if ($paid == 1)
         {

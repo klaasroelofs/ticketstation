@@ -69,6 +69,16 @@ $csrfTokenParam = \Joomla\CMS\Session\Session::getFormToken() . '=1';
                 </div>
             </div>
 
+            <div class="row mb-3">
+                <label for="orderreference" class="col-sm-3 col-form-label"><?= Text::_('COM_TICKETSTATION_ORDERREFERENCE') ?></label>
+                <div class="col-sm-9">
+                    <input type="text" name="orderreference" id="orderreference" class="form-control" maxlength="35"
+                           aria-describedby="orderreference-desc"
+                           value="<?= htmlspecialchars($this->customerData['orderreference'] ?? '', ENT_QUOTES, 'UTF-8') ?>" />
+                    <small id="orderreference-desc" class="form-text"><?= Text::_('COM_TICKETSTATION_RESERVATION_ORDERREFERENCE_DESC') ?></small>
+                </div>
+            </div>
+
             <button type="submit" class="btn btn-primary"><?= Text::_('COM_TICKETSTATION_RESERVATION_CONTINUE') ?></button>
             <?= HTMLHelper::_( 'form.token' ); ?>
         </form>
