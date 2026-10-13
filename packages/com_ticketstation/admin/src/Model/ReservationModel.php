@@ -199,7 +199,8 @@ class ReservationModel extends BaseDatabaseModel
     }
 
     /**
-     * Removes the rows without a seat of one ticket type from this reservation.
+     * Removes the rows without a seat of one ticket type from this reservation. A row without a
+     * seat has seat_sector 0 or NULL (the reservation inserts it without one).
      */
     public function deleteTicketRows(string $ordercode, int $ticketid): bool
     {
@@ -209,7 +210,7 @@ class ReservationModel extends BaseDatabaseModel
             ->delete($db->quoteName('#__ticketstation_orders'))
             ->where($db->quoteName('ordercode') . ' = ' . $db->quote($ordercode))
             ->where($db->quoteName('ticketid') . ' = ' . (int) $ticketid)
-            ->where($db->quoteName('seat_sector') . ' = 0');
+            ->where('COALESCE(' . $db->quoteName('seat_sector') . ', 0) = 0');
 
         $db->setQuery($query);
 
