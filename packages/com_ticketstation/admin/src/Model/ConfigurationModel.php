@@ -13,6 +13,7 @@ defined('_JEXEC') or die;
 
 use Joomla\CMS\Factory;
 use Joomla\CMS\MVC\Model\BaseDatabaseModel;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\Config;
 
 /**
  * Ticketstation Configuration Model
@@ -60,6 +61,10 @@ class ConfigurationModel extends BaseDatabaseModel
             Factory::getApplication()->enqueueMessage($e->getMessage(), 'error');
 
             return false;
+        }
+        finally
+        {
+            Config::reset();
         }
     }
 }

@@ -763,16 +763,6 @@ $document->getWebAssetManager()->addInlineScript("
                         </small>
                     </div>
                 </div>
-                <div class="row mb-3">
-                    <label for="company_logo" class="col-sm-3 col-form-label"
-                           rel="popover"
-                           title="<?= Text::_('COM_TICKETSTATION_COMPANY_LOGO') ?>">
-                        <?= Text::_('COM_TICKETSTATION_COMPANY_LOGO') ?>
-                    </label>
-                    <div class="col-sm-9">
-                        <?= $this->companyLogoField; ?>
-                    </div>
-                </div>
             </div>
         </div>
 
@@ -903,6 +893,34 @@ $document->getWebAssetManager()->addInlineScript("
                         <input type="text" name="website" id="website"
                                class="form-control"
                                value="<?= isset($this->config->website)?$this->config->website:null; ?>"/>
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <label for="company_logo" class="col-sm-3 col-form-label"
+                           rel="popover"
+                           title="<?= Text::_('COM_TICKETSTATION_COMPANY_LOGO') ?>">
+                        <?= Text::_('COM_TICKETSTATION_COMPANY_LOGO') ?>
+                    </label>
+                    <div class="col-sm-9">
+                        <?= $this->companyLogoField; ?>
+                        <small class="form-text">
+                            <?= Text::_('COM_TICKETSTATION_COMPANY_LOGO_DESC') ?>
+                        </small>
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <label for="company_color" class="col-sm-3 col-form-label"
+                           rel="popover"
+                           title="<?= Text::_('COM_TICKETSTATION_COMPANY_COLOR') ?>">
+                        <?= Text::_('COM_TICKETSTATION_COMPANY_COLOR') ?>
+                    </label>
+                    <div class="col-sm-9">
+                        <input type="color" name="company_color" id="company_color"
+                               class="form-control form-control-color"
+                               value="<?= $this->escape($this->companyColor); ?>"/>
+                        <small class="form-text">
+                            <?= Text::_('COM_TICKETSTATION_COMPANY_COLOR_DESC') ?>
+                        </small>
                     </div>
                 </div>
                 <div class="row mb-3">

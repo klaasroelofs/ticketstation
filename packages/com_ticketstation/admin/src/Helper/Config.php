@@ -18,6 +18,14 @@ defined('_JEXEC') or die('Restricted access');
 
 class Config
 {
+    /**
+     * The configuration row, read once per request. Everything that changes the row has to call
+     * reset() afterwards (saving the Configuration, the Payments screen, the invoice counter).
+     *
+     * @var  \stdClass|null
+     */
+    private static $row = null;
+
     public function get($request = '*')
     {
         if (is_array($request))
@@ -28,32 +36,64 @@ class Config
         return $this->getFullConfig();
     }
 
-    private function getFullConfig()
+    /**
+     * Forgets the cached row, after something changed it.
+     */
+    public static function reset(): void
     {
-        $db = Factory::getContainer()->get('DatabaseDriver');
-
-        $query = $db->getQuery(true)
-            ->select('*')
-            ->from($db->quoteName('#__ticketstation_config'))
-            ->where($db->quoteName('configid') . " = 1");
-
-        $db->setQuery($query);
-
-        return $db->loadObject();
+        self::$row = null;
     }
 
+    private function getFullConfig()
+    {
+        if (self::$row === null)
+        {
+            $db = Factory::getContainer()->get('DatabaseDriver');
+
+            $query = $db->getQuery(true)
+                ->select('*')
+                ->from($db->quoteName('#__ticketstation_config'))
+                ->where($db->quoteName('configid') . " = 1");
+
+            $db->setQuery($query);
+
+            self::$row = $db->loadObject();
+        }
+
+        // A copy, so a caller that adds or changes a property doesn't change it for the others
+        return self::$row === null ? null : clone self::$row;
+    }
+
+    /**
+     * Only the requested columns, as an object. A column that doesn't exist is an error, as it
+     * was when this was a query of its own.
+     *
+     * @param   string[]  $request  Column names
+     *
+     * @return  \stdClass|null  Null when there is no configuration row
+     */
     public function getPartialConfig($request)
     {
-        $db = Factory::getContainer()->get('DatabaseDriver');
+        $row = $this->getFullConfig();
 
-        $query = $db->getQuery(true)
-            ->select($request)
-            ->from($db->quoteName('#__ticketstation_config'))
-            ->where($db->quoteName('configid') . " = 1");
+        if ($row === null)
+        {
+            return null;
+        }
 
-        $db->setQuery($query);
+        $partial = new \stdClass;
 
-        return $db->loadObject();
+        foreach ((array) $request as $column)
+        {
+            if (!property_exists($row, $column))
+            {
+                throw new \RuntimeException('Unknown configuration column: ' . $column);
+            }
+
+            $partial->$column = $row->$column;
+        }
+
+        return $partial;
     }
 
     /**
@@ -66,14 +106,38 @@ class Config
      */
     public static function combinedCheckout(): bool
     {
-        static $combined = null;
+        return (int) ((new self)->getPartialConfig(['checkout_layout'])->checkout_layout ?? 0) === 1;
+    }
 
-        if ($combined === null)
+    /**
+     * The file of the company logo (Configuration > Company), or an empty string when none has
+     * been chosen or the file isn't there.
+     *
+     * @return  string  Absolute path
+     */
+    public static function companyLogoFile(): string
+    {
+        $stored = (string) ((new self)->get()->company_logo ?? '');
+
+        // Joomla's media field stores "path#joomlaImage://adapter/path?width=..&height=.." -
+        // everything from the "#" on is picker metadata, not part of the file path.
+        $stored = trim((string) strtok($stored, '#'));
+
+        if ($stored === '')
         {
-            $combined = (int) ((new self)->getPartialConfig(['checkout_layout'])->checkout_layout ?? 0) === 1;
+            return '';
         }
 
-        return $combined;
+        $file = realpath(JPATH_ROOT . '/' . ltrim($stored, '/'));
+        $root = realpath(JPATH_ROOT);
+
+        // A file of this site only
+        if ($file === false || $root === false || strpos($file, $root) !== 0 || !is_file($file))
+        {
+            return '';
+        }
+
+        return $file;
     }
 
     /**

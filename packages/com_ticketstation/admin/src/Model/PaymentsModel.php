@@ -15,6 +15,7 @@ use Joomla\CMS\Factory;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\Model\BaseDatabaseModel;
 use Joomla\Registry\Registry;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\Config;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\History;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Invoice;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\PaymentCurrencies;
@@ -141,6 +142,7 @@ class PaymentsModel extends BaseDatabaseModel
 
         $db->setQuery($query)->execute();
 
+        Config::reset();
         ProviderRegistry::reset();
     }
 
@@ -222,6 +224,7 @@ class PaymentsModel extends BaseDatabaseModel
 
         $db->setQuery($query)->execute();
 
+        Config::reset();
         ProviderRegistry::reset();
         TestData::reset();
 

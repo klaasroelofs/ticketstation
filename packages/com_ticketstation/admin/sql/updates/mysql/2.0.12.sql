@@ -1,5 +1,5 @@
--- Adds the logo path used on invoices (config screen, new "Company Logo" field).
-ALTER TABLE `#__ticketstation_config` ADD COLUMN `invoice_logo` varchar(255) NOT NULL DEFAULT '' AFTER `invoice_eid`;
+-- (This file used to add the config column invoice_logo. Invoices use company_logo, so the column
+-- was never read and 2.33.0-rc1 drops it; the statement is gone so the Database check doesn't ask for it.)
 
 -- Transaction fees were computed (Amount::getAmount()) but never stored on the invoice, so
 -- they never made it onto the PDF even though the customer actually paid them.

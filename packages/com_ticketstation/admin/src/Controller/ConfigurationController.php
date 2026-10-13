@@ -17,6 +17,7 @@ use Joomla\CMS\Uri\Uri;
 use Ticketstation\Component\Ticketstation\Administrator\Controller\Mixin\RegisterControllerTasks;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\CheckoutFieldMap;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Config;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\DefaultTicketLayout;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Ordercode;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Wallet;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\WalletApple;
@@ -67,6 +68,15 @@ class ConfigurationController extends BaseController {
         if (array_key_exists('checkout_map', $post))
         {
             $post['checkout_field_map'] = CheckoutFieldMap::encode($post['checkout_map']);
+        }
+
+        // The company colour is only stored when it differs from the default blue; a colour input
+        // always has a value, so "empty" is the default.
+        if (array_key_exists('company_color', $post))
+        {
+            $color = DefaultTicketLayout::color($post['company_color']);
+
+            $post['company_color'] = $color === DefaultTicketLayout::color('') ? '' : $color;
         }
 
         // Notation of prices: a choice of decimals, decimal point and thousands separator
@@ -289,6 +299,7 @@ class ConfigurationController extends BaseController {
             ->where($db->quoteName('configid') . ' = 1');
 
         $db->setQuery($query)->execute();
+        Config::reset();
 
         header('Content-Type: application/pkcs10');
         header('Content-Disposition: attachment; filename="ticketstation.certSigningRequest"');

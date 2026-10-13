@@ -376,24 +376,11 @@ class Invoice
 
         $salutation = $this->getSalutation($client->gender ?? null);
 
-        // Configurable via "Company Logo" in Configuration (a native Joomla media picker,
-        // storing a path relative to the site root). company_logo already existed as a column
-        // in the schema - never wired up to anything - rather than adding a new one.
-        // Falls back to the component's own bundled logo if left empty - not "logo.jpg" (what
-        // the old, dead CreateInvoice.php assumed): that file has never actually existed here.
-        $logoPath = $config->company_logo;
-
-        if ( ! empty($logoPath))
-        {
-            // Joomla's media field stores "path#joomlaImage://adapter/path?width=..&height=.."
-            // - everything from the "#" on is picker metadata (preview dimensions etc.), not
-            // part of the actual file path.
-            $logoPath = strtok($logoPath, '#');
-        }
-
-        $logo = ! empty($logoPath)
-            ? JPATH_ROOT . '/' . ltrim($logoPath, '/')
-            : JPATH_ADMINISTRATOR . '/components/com_ticketstation/assets/images/logo_ticketstation_for_joomla.png';
+        // "Company Logo" in Configuration > Company (a native Joomla media picker, storing a path
+        // relative to the site root; Config::companyLogoFile() resolves it). Falls back to the
+        // component's own bundled logo if none has been chosen or the file is gone.
+        $logo = Config::companyLogoFile()
+            ?: JPATH_ADMINISTRATOR . '/components/com_ticketstation/assets/images/logo_ticketstation_for_joomla.png';
 
         if (file_exists($logo))
         {
@@ -750,6 +737,9 @@ class Invoice
             . '(SELECT COALESCE(MAX(i.invoice_no), 0) + 1 FROM ' . $db->quoteName('#__ticketstation_invoices', 'i') . ' WHERE i.test = ' . $test . ')))'
             . ' WHERE ' . $db->quoteName('configid') . ' = 1'
         )->execute();
+
+        // The counter is part of the cached configuration row
+        Config::reset();
 
         $db->setQuery('SELECT LAST_INSERT_ID()');
 

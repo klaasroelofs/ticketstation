@@ -20,6 +20,7 @@ use Joomla\CMS\Session\Session;
 use Joomla\CMS\Toolbar\ToolbarHelper;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\AclGate;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\CheckoutFieldMap;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\DefaultTicketLayout;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Docs;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Wallet;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\WalletApple;
@@ -262,6 +263,9 @@ class HtmlView extends BaseHtmlView {
         // this page draws its own <label> for every field already, matching the surrounding
         // markup. FormField exposes getInput()'s result through this public magic property.
         $this->companyLogoField = $logoForm->getField('company_logo')->input;
+
+        // The colour of the default ticket layout; a colour input needs a value, so the default blue shows when none is set
+        $this->companyColor = DefaultTicketLayout::color($config->company_color ?? '');
 
         // Wallet tab: the pass logo is a media picker of its own, like the company logo
         $lists['wallet_apple_updates'] = $switch('wallet_apple_updates', (int) ($config->wallet_apple_updates ?? 0));
