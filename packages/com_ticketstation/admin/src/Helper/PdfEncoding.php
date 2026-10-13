@@ -14,21 +14,20 @@ defined('_JEXEC') or die('Restricted access');
 class PdfEncoding
 {
     /**
-     * Converts a UTF-8 string to the encoding FPDF's core fonts actually use, for the legacy
-     * FPDF/FPDI PDF output. Despite the name, FPDF's built-in fonts (helvetica, etc.) are
-     * Windows-1252, not true ISO-8859-1 - the practical difference is the 0x80-0x9F range,
-     * where cp1252 defines real characters (e.g. 0x80 = "€") that ISO-8859-1 leaves undefined.
-     * Converting to true ISO-8859-1 silently turns "€" into "?" since it has no representation
-     * there at all. Replacement for the PHP 8.2-deprecated utf8_decode().
+     * A text for the PDF. Pdf prints UTF-8, so nothing is converted; what can't be UTF-8 (a
+     * stray byte in a name that came in from somewhere) is replaced, so it can't stop a ticket.
+     *
+     * Before 2.34.0 the PDF was made with FPDF, which only knows Windows-1252: this was
+     * toLatin1(), and every character outside that turned into a question mark.
      *
      * @param   string|null  $string  The UTF-8 encoded string.
      *
      * @return  string
      *
-     * @since   1.7.0
+     * @since   2.34.0
      */
-    public static function toLatin1(?string $string): string
+    public static function text(?string $string): string
     {
-        return mb_convert_encoding((string) $string, 'Windows-1252', 'UTF-8');
+        return mb_convert_encoding((string) $string, 'UTF-8', 'UTF-8');
     }
 }

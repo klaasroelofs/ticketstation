@@ -108,7 +108,7 @@ New-Item -ItemType Directory -Path (Join-Path $pkgRoot 'packages') -Force | Out-
 
 # Most bundled libraries carry no license notice in each PHP file, which the JED checker reports
 # as "PHP Headers missing GPL License Notice". Add one comment line naming the library's license
-# (all of them MIT or BSD-2-Clause, see THIRD-PARTY-NOTICES.md) to every file that has none.
+# (MIT, BSD-2-Clause or LGPL-3.0-or-later, see THIRD-PARTY-NOTICES.md) to every file that has none.
 function Add-VendorLicenseLines([string] $vendorStage) {
     $vendorLicenses = @{
         'bacon\bacon-qr-code'   = 'BSD-2-Clause'
@@ -116,8 +116,8 @@ function Add-VendorLicenseLines([string] $vendorStage) {
         'mollie\mollie-api-php' = 'BSD-2-Clause'
         'endroid\qr-code'       = 'MIT'
         'nyholm\psr7'           = 'MIT'
-        'setasign\fpdf'         = 'MIT'
         'setasign\fpdi'         = 'MIT'
+        'tecnickcom\tcpdf'      = 'LGPL-3.0-or-later'
         'composer'              = 'MIT'
     }
     $utf8 = New-Object System.Text.UTF8Encoding($false)
@@ -133,7 +133,7 @@ function Add-VendorLicenseLines([string] $vendorStage) {
             if ($relative -eq 'autoload.php') { $license = 'MIT' } else { throw "No license known for vendor file $relative" }
         }
         $content = [System.IO.File]::ReadAllText($_.FullName)
-        if ($content -match '(?im)\blicen[sc]e\b.*\b(MIT|BSD)') { return }
+        if ($content -match '(?im)\blicen[sc]e\b.*\b(MIT|BSD|LGPL)') { return }
         if ($content -notmatch '^<\?php(?<gap>[ \t]*\r?\n|[ \t]+)') { throw "Vendor file $relative does not start with <?php and white space" }
         $line = "// @license $license (third-party library, see THIRD-PARTY-NOTICES.md)"
         $eol  = if ($content.Contains("`r`n")) { "`r`n" } else { "`n" }
@@ -152,11 +152,18 @@ try {
     $comStage = Join-Path $staging 'com_ticketstation'
     Copy-Tree $ComponentDir $comStage
     Remove-Item (Join-Path $comStage 'site\composer.json'), (Join-Path $comStage 'site\composer.lock') -ErrorAction SilentlyContinue
-    # FPDF's tutorials, documentation and font converter (tutorial\makefont.php even writes files) are
-    # not used at runtime: only fpdf.php and its core fonts are. Neither is Composer's bin folder.
-    $fpdfDir = Join-Path $comStage 'site\vendor\setasign\fpdf'
-    foreach ($dir in 'tutorial', 'doc', 'makefont') {
-        Remove-Item (Join-Path $fpdfDir $dir) -Recurse -Force -ErrorAction SilentlyContinue
+    # TCPDF: at runtime only its code, the standard PDF fonts and DejaVu Sans (regular and bold, for
+    # the text the ticket fonts cannot print) are used. Its other fonts (about 24 MB), the config files
+    # (Pdf sets its own constants) and the font tools (tools\ writes files) stay out, and so does
+    # Composer's bin folder.
+    $tcpdfDir  = Join-Path $comStage 'site\vendor\tecnickcom\tcpdf'
+    $keepFonts = @('helvetica', 'helveticab', 'helveticai', 'helveticabi', 'times', 'timesb', 'timesi', 'timesbi',
+                   'courier', 'courierb', 'courieri', 'courierbi', 'dejavusans', 'dejavusansb')
+    Get-ChildItem -LiteralPath (Join-Path $tcpdfDir 'fonts') | Where-Object {
+        $_.PSIsContainer -or ($keepFonts -notcontains ($_.Name -replace '\.(ctg\.z|php|z)$', ''))
+    } | Remove-Item -Recurse -Force
+    foreach ($item in 'tools', 'config', 'Makefile', 'CHANGELOG.TXT') {
+        Remove-Item (Join-Path $tcpdfDir $item) -Recurse -Force -ErrorAction SilentlyContinue
     }
     Remove-Item (Join-Path $comStage 'site\vendor\bin') -Recurse -Force -ErrorAction SilentlyContinue
 

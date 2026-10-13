@@ -23,7 +23,8 @@ use Endroid\QrCode\QrCode;
  *
  * The editor mirrors FPDF's text placement: Write() starts the text 1 mm (the cell margin) right
  * of X, with the baseline at Y + 0.3 x the font size, and TextWithDirection('U') starts at X/Y on
- * the baseline and runs upwards. Text widths come from the same FPDF font files the PDF uses.
+ * the baseline and runs upwards (Pdf keeps that placement). Text widths come from the same font
+ * files the PDF uses.
  */
 class TicketLayoutFields
 {
@@ -52,7 +53,7 @@ class TicketLayoutFields
     ];
 
     /**
-     * FPDF's font files per family (see TicketFont): regular and bold.
+     * The font definition files per family (see TicketFont and Pdf::fontFile()): regular and bold.
      */
     const FONT_FILES = [
         'raleway'   => ['raleway', 'ralewayb'],
@@ -121,13 +122,38 @@ class TicketLayoutFields
             return $widths;
         }
 
-        ## FPDF's JSON font definition: cw holds the width of every byte, 0 to 255.
-        $font = json_decode((string) file_get_contents($path), true);
+        $font = self::definition($path);
+        $cw   = $font['cw'] ?? [];
 
-        foreach ($font['cw'] ?? [] as $byte => $width) {
-            $widths[(int) $byte] = (int) $width;
+        if (($font['type'] ?? '') === 'core') {
+            ## The standard fonts: cw holds the width of every byte, 0 to 255.
+            foreach ($cw as $byte => $width) {
+                $widths[(int) $byte] = (int) $width;
+            }
+
+            return $widths;
+        }
+
+        ## A TrueType font: cw holds the width of every Unicode character the font has. The editor
+        ## works with Windows-1252 bytes, so each byte is looked up as the character it stands for.
+        for ($byte = 32; $byte < 256; $byte++) {
+            $character = mb_ord(mb_convert_encoding(chr($byte), 'UTF-8', 'Windows-1252'), 'UTF-8');
+
+            if (isset($cw[$character])) {
+                $widths[$byte] = (int) $cw[$character];
+            }
         }
 
         return $widths;
+    }
+
+    /**
+     * The variables of a TCPDF font definition file ($type, $name, $cw, ...).
+     */
+    private static function definition(string $path): array
+    {
+        include $path;
+
+        return get_defined_vars();
     }
 }

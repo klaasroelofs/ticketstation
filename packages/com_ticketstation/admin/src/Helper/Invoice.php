@@ -22,7 +22,7 @@ use stdClass;
 defined('_JEXEC') or die('Restricted access');
 
 /**
- * Generates, stores and sends order invoices. Built on the same FPDF stack already used for
+ * Generates, stores and sends order invoices. Built on the same PDF stack (Pdf) already used for
  * ticket PDFs (setasign/fpdi, bundled with the component) - deliberately not the mPDF-based
  * approach this used to depend on, which required a separate Joomla Library install that was
  * never actually present.
@@ -348,7 +348,7 @@ class Invoice
     }
 
     /**
-     * Draws the invoice PDF with FPDF and saves it to disk.
+     * Draws the invoice PDF and saves it to disk.
      *
      * @param   object  $invoice
      *
@@ -400,14 +400,14 @@ class Invoice
         }
 
         $pdf->SetXY(7, 14);
-        $pdf->MultiCell(0, 5, PdfEncoding::toLatin1($this->buildCompanyAddress($config)), 0, 'L', 0);
+        $pdf->MultiCell(0, 5, PdfEncoding::text($this->buildCompanyAddress($config)), 0, 'L', 0);
 
         $pdf->SetXY(10, 65);
-        $pdf->Write(0, PdfEncoding::toLatin1(Text::_('COM_TICKETSTATION_INVOICE_ID')));
+        $pdf->Write(0, PdfEncoding::text(Text::_('COM_TICKETSTATION_INVOICE_ID')));
         $pdf->SetXY(10, 70);
-        $pdf->Write(0, PdfEncoding::toLatin1(Text::_('COM_TICKETSTATION_INVOICE_DATE')));
+        $pdf->Write(0, PdfEncoding::text(Text::_('COM_TICKETSTATION_INVOICE_DATE')));
         $pdf->SetXY(10, 75);
-        $pdf->Write(0, PdfEncoding::toLatin1(Text::_('COM_TICKETSTATION_ORDER_ID')));
+        $pdf->Write(0, PdfEncoding::text(Text::_('COM_TICKETSTATION_ORDER_ID')));
 
         $pdf->SetXY(34, 65);
         $pdf->Write(0, ': ' . $this->getInvoiceNumber($invoice, $config->invoice_prefix));
@@ -427,28 +427,28 @@ class Invoice
 
         $pdf->SetFont($font_name, 'B', 11);
         $pdf->SetXY(10, 100);
-        $pdf->Write(0, PdfEncoding::toLatin1(Text::_('COM_TICKETSTATION_INVOICE_FOR') . ' ' . implode(' ', $nameParts)));
+        $pdf->Write(0, PdfEncoding::text(Text::_('COM_TICKETSTATION_INVOICE_FOR') . ' ' . implode(' ', $nameParts)));
 
         $pdf->SetFont($font_name, '', $font_size);
         $pdf->SetTextColor(0, 0, 0);
         $pdf->SetXY(135, 51);
-        $pdf->MultiCell(0, 5, PdfEncoding::toLatin1($this->buildClientAddress($config->address_format_client, $client, $salutation)), 0, 'L', 0);
+        $pdf->MultiCell(0, 5, PdfEncoding::text($this->buildClientAddress($config->address_format_client, $client, $salutation)), 0, 'L', 0);
 
         $pdf->SetFont($font_name, '', $font_size);
 
         // Amounts are right-aligned in their column, ending at the right margin (x = 200).
         $amountCell = function ($x, $width, $y, $text) use ($pdf) {
             $pdf->SetXY($x, $y - 2.5);
-            $pdf->Cell($width, 5, PdfEncoding::toLatin1($text), 0, 0, 'R');
+            $pdf->Cell($width, 5, PdfEncoding::text($text), 0, 0, 'R');
         };
         $price = fn ($amount) => TicketstationFunctions::showprice($config->priceformat, $amount, $config->valuta);
 
         // Every line and the subtotal exclude VAT; the VAT follows as its own line(s), per
         // rate, and the total is what the customer paid, VAT included.
         $pdf->SetXY(10, 115);
-        $pdf->Write(0, PdfEncoding::toLatin1(Text::_('COM_TICKETSTATION_INVOICE_QUANTITY')));
+        $pdf->Write(0, PdfEncoding::text(Text::_('COM_TICKETSTATION_INVOICE_QUANTITY')));
         $pdf->SetXY(25, 115);
-        $pdf->Write(0, PdfEncoding::toLatin1(Text::_('COM_TICKETSTATION_DESCRIPTION')));
+        $pdf->Write(0, PdfEncoding::text(Text::_('COM_TICKETSTATION_DESCRIPTION')));
         $amountCell(110, 16, 115, Text::_('COM_TICKETSTATION_VAT_PERCENTAGE'));
         $amountCell(126, 26, 115, Text::_('COM_TICKETSTATION_INVOICE_PRICE_EXCL_VAT'));
         $amountCell(152, 22, 115, Text::_('COM_TICKETSTATION_DISCOUNT'));
@@ -493,14 +493,14 @@ class Invoice
                 $description = ! empty($row->eventname) ? $row->eventname . ' - ' . $row->ticketname : $row->ticketname;
             }
 
-            // FPDF's Write() doesn't clip or wrap: shrink the description to fit before the
+            // A description that is too long would run into the VAT column: shrink it to fit before the
             // VAT column.
             $description = $this->truncateToWidth($pdf, $description, 85);
 
             $pdf->SetXY(10, $height);
             $pdf->Write(0, $row->quantity);
             $pdf->SetXY(25, $height);
-            $pdf->Write(0, PdfEncoding::toLatin1($description));
+            $pdf->Write(0, PdfEncoding::text($description));
 
             $amountCell(110, 16, $height, rtrim(rtrim(number_format($rate, 2, '.', ''), '0'), '.') . '%');
             $amountCell(126, 26, $height, $price($this->excludingVat((float) $row->ticketprice, $rate)));
@@ -510,7 +510,7 @@ class Invoice
             if ( ! empty($row->couponcode))
             {
                 $pdf->SetXY(25, $height + 5);
-                $pdf->Write(0, PdfEncoding::toLatin1(Text::_('COM_TICKETSTATION_COUPON_CODE') . ': ' . $row->couponcode));
+                $pdf->Write(0, PdfEncoding::text(Text::_('COM_TICKETSTATION_COUPON_CODE') . ': ' . $row->couponcode));
             }
 
             $pdf->Line(10, $height + 10, 200, $height + 10);
@@ -523,7 +523,7 @@ class Invoice
         $height += 10;
 
         $pdf->SetXY(120, $height);
-        $pdf->Write(0, PdfEncoding::toLatin1(Text::_('COM_TICKETSTATION_INVOICE_SUBTOTAL_EXCL_VAT')));
+        $pdf->Write(0, PdfEncoding::text(Text::_('COM_TICKETSTATION_INVOICE_SUBTOTAL_EXCL_VAT')));
         $amountCell(174, 26, $height, $price($subtotal));
 
         ksort($vatRates, SORT_NUMERIC);
@@ -538,7 +538,7 @@ class Invoice
 
             $height += 5;
             $pdf->SetXY(120, $height);
-            $pdf->Write(0, PdfEncoding::toLatin1(Text::sprintf('COM_TICKETSTATION_INVOICE_VAT_RATE', rtrim(rtrim(number_format((float) $rate, 2, '.', ''), '0'), '.'))));
+            $pdf->Write(0, PdfEncoding::text(Text::sprintf('COM_TICKETSTATION_INVOICE_VAT_RATE', rtrim(rtrim(number_format((float) $rate, 2, '.', ''), '0'), '.'))));
             $amountCell(174, 26, $height, $price($vat));
         }
 
@@ -549,7 +549,7 @@ class Invoice
         $height += 7;
         $pdf->SetFont($font_name, 'B', $font_size);
         $pdf->SetXY(120, $height);
-        $pdf->Write(0, PdfEncoding::toLatin1(Text::_('COM_TICKETSTATION_GRAND_TOTAL')));
+        $pdf->Write(0, PdfEncoding::text(Text::_('COM_TICKETSTATION_GRAND_TOTAL')));
         $amountCell(174, 26, $height, $price($total));
 
         // How the order was paid, from the transaction the payment provider recorded (stored
@@ -560,7 +560,7 @@ class Invoice
             $height += 10;
             $pdf->SetFont($font_name, '', $font_size);
             $pdf->SetXY(120, $height);
-            $pdf->Write(0, PdfEncoding::toLatin1(Text::sprintf('COM_TICKETSTATION_INVOICE_PAID_VIA',
+            $pdf->Write(0, PdfEncoding::text(Text::sprintf('COM_TICKETSTATION_INVOICE_PAID_VIA',
                 ProviderRegistry::methodLabel(strtolower($invoice->payment_provider), (string) ((new Transaction)->getTransactionDetails($invoice->ordercode)->provider ?? '')))));
         }
 
@@ -748,7 +748,7 @@ class Invoice
 
     /**
      * Shrinks $text (appending "...") until it fits within $maxWidth mm in the PDF's current
-     * font/size, using FPDF's own GetStringWidth() so it stays accurate regardless of font.
+     * font/size, using the PDF's own GetStringWidth() so it stays accurate regardless of font.
      *
      * @since 2.0.12
      */
@@ -818,17 +818,17 @@ class Invoice
     {
         if ($gender == 1)
         {
-            return PdfEncoding::toLatin1(Text::_('COM_TICKETSTATION_MR'));
+            return PdfEncoding::text(Text::_('COM_TICKETSTATION_MR'));
         }
 
         if ($gender == 2)
         {
-            return PdfEncoding::toLatin1(Text::_('COM_TICKETSTATION_MRS'));
+            return PdfEncoding::text(Text::_('COM_TICKETSTATION_MRS'));
         }
 
         if ($gender == 3)
         {
-            return PdfEncoding::toLatin1(Text::_('COM_TICKETSTATION_MISS'));
+            return PdfEncoding::text(Text::_('COM_TICKETSTATION_MISS'));
         }
 
         // Unknown/unset gender: say nothing rather than guessing with a "Family" salutation.

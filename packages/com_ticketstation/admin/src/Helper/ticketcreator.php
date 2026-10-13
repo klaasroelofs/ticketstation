@@ -154,7 +154,7 @@ class ticketcreator
 
         $pdf = $into ?? new Pdf();
 
-        ## A ticket is exactly one page with fixed positions. Without this, FPDF starts a new page
+        ## A ticket is exactly one page with fixed positions. Without this, the PDF starts a new page
         ## as soon as a field is written in the bottom 2 cm (or below the ticket), and every field
         ## after it ends up on that extra page.
         $pdf->SetAutoPageBreak(false);
@@ -224,7 +224,7 @@ class ticketcreator
             $pdf->SetXY($position[0], $position[1]);
 
             ## Writing the eventname on the ticket now.
-            $pdf->Write(0, PdfEncoding::toLatin1($value_to_show));
+            $pdf->Write(0, PdfEncoding::text($value_to_show));
 
         endforeach;
 
@@ -239,7 +239,7 @@ class ticketcreator
             $pdf->SetTextColor($rgb['r'], $rgb['g'], $rgb['b']);
             $pdf->SetXY($position[0], $position[1]);
 
-            $pdf->Write(0, PdfEncoding::toLatin1($order->eventname));
+            $pdf->Write(0, PdfEncoding::text($order->eventname));
         }
 
         ## TICKETNAME
@@ -251,7 +251,7 @@ class ticketcreator
             $pdf->SetTextColor($rgb['r'], $rgb['g'], $rgb['b']);
             $pdf->SetXY($position[0], $position[1]);
 
-            $pdf->Write(0, PdfEncoding::toLatin1($order->ticketname));
+            $pdf->Write(0, PdfEncoding::text($order->ticketname));
         }
 
         ## ORDERREFERENCE
@@ -272,7 +272,7 @@ class ticketcreator
                     $pdf->SetXY($position[0], $position[1]);
                 }
 
-                $pdf->Write(0, PdfEncoding::toLatin1($order->order_reference));
+                $pdf->Write(0, PdfEncoding::text($order->order_reference));
             }
         }
 
@@ -285,7 +285,7 @@ class ticketcreator
             $pdf->SetTextColor($rgb['r'], $rgb['g'], $rgb['b']);
             $pdf->SetXY($position[0], $position[1]);
 
-            $pdf->Write(0, PdfEncoding::toLatin1($order->freetext_1));
+            $pdf->Write(0, PdfEncoding::text($order->freetext_1));
         }
 
         ## STARTDATE
@@ -309,7 +309,7 @@ class ticketcreator
             $pdf->SetTextColor($rgb['r'], $rgb['g'], $rgb['b']);
             $pdf->SetXY($position[0], $position[1]);
 
-            $pdf->Write(0, PdfEncoding::toLatin1(TicketLanguage::_('COM_TICKETSTATION_PDF_DOORS_OPEN') . ' ' . TicketLanguage::sprintf('COM_TICKETSTATION_PDF_TIME', $order->doors_open)));
+            $pdf->Write(0, PdfEncoding::text(TicketLanguage::_('COM_TICKETSTATION_PDF_DOORS_OPEN') . ' ' . TicketLanguage::sprintf('COM_TICKETSTATION_PDF_TIME', $order->doors_open)));
         }
 
         ## VENUE
@@ -321,7 +321,7 @@ class ticketcreator
             $pdf->SetTextColor($rgb['r'], $rgb['g'], $rgb['b']);
             $pdf->SetXY($position[0], $position[1]);
 
-            $pdf->Write(0, PdfEncoding::toLatin1($this->venueText($venue->venue, $venue->city)));
+            $pdf->Write(0, PdfEncoding::text($this->venueText($venue->venue, $venue->city)));
         }
 
         ## PRICE
@@ -336,7 +336,7 @@ class ticketcreator
             // Currency and price format from the Configuration, as on the invoice.
             $price = trim((new TicketstationFunctions)->showprice($config->priceformat, $order->ticketprice, $config->valuta));
 
-            $pdf->Write(0, PdfEncoding::toLatin1(TicketLanguage::_('COM_TICKETSTATION_PDF_PRICE') . ' ' . $price));
+            $pdf->Write(0, PdfEncoding::text(TicketLanguage::_('COM_TICKETSTATION_PDF_PRICE') . ' ' . $price));
         }
 
         ## ORDERDATE
@@ -350,7 +350,7 @@ class ticketcreator
 
             $orderdate = Date::_($order->orderdate, $config->dateformat);
 
-            $pdf->Write(0, PdfEncoding::toLatin1($orderdate));
+            $pdf->Write(0, PdfEncoding::text($orderdate));
         }
 
         ## CLIENTNAME
@@ -365,12 +365,12 @@ class ticketcreator
             // Bij formaat A5 wordt "Besteld door" en Clientname onder elkaar gezet, anders past het niet
             if ($order->ticket_size == 'A5') {
                 $pdf->SetFont($this->font, 'B', $order->client_fontsize + 1);
-                $pdf->Write(0, PdfEncoding::toLatin1(TicketLanguage::_('COM_TICKETSTATION_PDF_ORDERED_BY')));
+                $pdf->Write(0, PdfEncoding::text(TicketLanguage::_('COM_TICKETSTATION_PDF_ORDERED_BY')));
                 $pdf->SetFont($this->font, '', $order->client_fontsize);
                 $pdf->SetXY($position[0], $position[1] + 5);
-                $pdf->Write(0, substr(PdfEncoding::toLatin1($order->name), 0, 35)); // naam afkorten op 35 tekens, anders past het niet
+                $pdf->Write(0, mb_substr(PdfEncoding::text($order->name), 0, 35)); // naam afkorten op 35 tekens, anders past het niet
             } else {
-                $pdf->Write(0, PdfEncoding::toLatin1(TicketLanguage::_('COM_TICKETSTATION_PDF_ORDERED_BY')) . ' ' . PdfEncoding::toLatin1($order->name));
+                $pdf->Write(0, PdfEncoding::text(TicketLanguage::_('COM_TICKETSTATION_PDF_ORDERED_BY')) . ' ' . PdfEncoding::text($order->name));
             }
         }
 
@@ -506,7 +506,7 @@ class ticketcreator
             if ($mollie_test == '1') {
 
                 ## te printen tekst definiëren
-                $mark_unreadable = PdfEncoding::toLatin1(TicketLanguage::_('COM_TICKETSTATION_PDF_INVALID')); // LET OP: een langere tekst heeft tot gevolg dat ook het bijstellen van de posities enigszins aangepast moeten worden!
+                $mark_unreadable = PdfEncoding::text(TicketLanguage::_('COM_TICKETSTATION_PDF_INVALID')); // LET OP: een langere tekst heeft tot gevolg dat ook het bijstellen van de posities enigszins aangepast moeten worden!
 
                 ## startpositie bepalen, hoek linksonder in QR-code
                 ## (1 pixel ≈ 0,2646 mm / image is 96 dpi)

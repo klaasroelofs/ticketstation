@@ -300,10 +300,14 @@ class TicketController extends FormController
             TicketDesign::draw($pdf, $ticketid);
         }
 
+        ## The size first: Output() ends the document, and the PDF object with it
+        $width  = round($pdf->GetPageWidth(), 2);
+        $height = round($pdf->GetPageHeight(), 2);
+
         $response = [
             'background'  => base64_encode($pdf->Output('S')),
-            'width'       => round($pdf->GetPageWidth(), 2),
-            'height'      => round($pdf->GetPageHeight(), 2),
+            'width'       => $width,
+            'height'      => $height,
             'defaults'    => $defaults,
             'texts'       => (new TicketPreviewCreator())->sampleTexts($data),
             'invalidSize' => $invalid,

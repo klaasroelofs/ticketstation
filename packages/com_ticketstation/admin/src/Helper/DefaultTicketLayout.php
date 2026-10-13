@@ -15,7 +15,7 @@ defined('_JEXEC') or die;
  * The built-in ticket layout, used for every ticket that has no uploaded design
  * (eTicket-<ticketid>.jpg/.pdf) of its own.
  *
- * The background is drawn with FPDF primitives rather than imported from a fixed PDF, so it
+ * The background is drawn with PDF primitives rather than imported from a fixed PDF, so it
  * fits every ticket size and orientation (A4/A5, portrait/landscape, override_ticketsize)
  * instead of always being placed at 210 mm wide. If the ticket also has no field positions
  * filled in under "Ticket Layout", defaultFields() supplies a matching set, so such a ticket
@@ -84,7 +84,7 @@ class DefaultTicketLayout
         $file = Config::companyLogoFile();
         $size = $file !== '' ? @getimagesize($file) : false;
 
-        ## FPDF reads JPEG, PNG and GIF only.
+        ## The logo setting takes JPEG, PNG and GIF.
         if (!$size || $size[1] < 1 || !in_array($size[2], [IMAGETYPE_JPEG, IMAGETYPE_PNG, IMAGETYPE_GIF], true)) {
             return false;
         }
@@ -99,7 +99,7 @@ class DefaultTicketLayout
             ## Centred in the free band between the top bar and the rule at 23 mm.
             $pdf->Image($file, 10 * $s, 7 * $s + ($maxHeight - $height) / 2, $width, $height);
         } catch (\Throwable $e) {
-            ## A file FPDF can't read (an interlaced PNG, say) must not stop the ticket.
+            ## A file the PDF library can't read (an interlaced PNG, say) must not stop the ticket.
             return false;
         }
 
@@ -143,7 +143,7 @@ class DefaultTicketLayout
         $h = $pdf->GetPageHeight();
         $s = self::scale($pdf);
 
-        ## Fields near the bottom of the page must not push FPDF onto a second page.
+        ## Fields near the bottom of the page must not push the PDF onto a second page.
         $pdf->SetAutoPageBreak(false);
 
         ## Accent bars along the top and bottom edge, in the company colour.
@@ -151,7 +151,7 @@ class DefaultTicketLayout
         $pdf->Rect(0, 0, $w, 3 * $s, 'F');
         $pdf->Rect(0, $h - 3 * $s, $w, 3 * $s, 'F');
 
-        ## The company logo, or Ticketstation's own when there is none (or FPDF can't use the file).
+        ## The company logo, or Ticketstation's own when there is none (or the PDF library can't use the file).
         if (!self::drawCompanyLogo($pdf, $s)) {
             $logo = JPATH_ADMINISTRATOR . '/components/com_ticketstation/assets/images/logo_ticketstation_for_joomla.png';
 
@@ -273,7 +273,7 @@ class DefaultTicketLayout
     }
 
     /**
-     * FPDF has no dash pattern, so the perforation line is drawn as separate segments.
+     * The perforation line is drawn as separate segments.
      */
     private static function dashedLine($pdf, $x1, $y1, $x2, $y2, $dash)
     {

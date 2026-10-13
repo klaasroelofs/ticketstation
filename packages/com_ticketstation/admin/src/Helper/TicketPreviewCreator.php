@@ -90,7 +90,7 @@ class TicketPreviewCreator
                 $pdf->SetXY($position[0], $position[1]);
             }
 
-            $pdf->Write(0, PdfEncoding::toLatin1($texts['orderreference']));
+            $pdf->Write(0, PdfEncoding::text($texts['orderreference']));
         }
 
         ## STARTDATE
@@ -118,7 +118,7 @@ class TicketPreviewCreator
             $pdf->SetTextColor($rgb['r'], $rgb['g'], $rgb['b']);
             $pdf->SetXY($position[0], $position[1]);
 
-            $pdf->Write(0, PdfEncoding::toLatin1($texts['ticketprice']));
+            $pdf->Write(0, PdfEncoding::text($texts['ticketprice']));
         }
 
         ## ORDERDATE
@@ -129,7 +129,7 @@ class TicketPreviewCreator
             $pdf->SetTextColor($rgb['r'], $rgb['g'], $rgb['b']);
             $pdf->SetXY($position[0], $position[1]);
 
-            $pdf->Write(0, PdfEncoding::toLatin1($texts['orderdate']));
+            $pdf->Write(0, PdfEncoding::text($texts['orderdate']));
         }
 
         ## CLIENTNAME
@@ -143,12 +143,12 @@ class TicketPreviewCreator
 
             if (($data['ticket_size'] ?? '') == 'A5') {
                 $pdf->SetFont($this->font, 'B', $fontsize + 1);
-                $pdf->Write(0, PdfEncoding::toLatin1($texts['client_orderedby']));
+                $pdf->Write(0, PdfEncoding::text($texts['client_orderedby']));
                 $pdf->SetFont($this->font, '', $fontsize);
                 $pdf->SetXY($position[0], $position[1] + 5);
-                $pdf->Write(0, substr(PdfEncoding::toLatin1($texts['client_name']), 0, 35));
+                $pdf->Write(0, mb_substr(PdfEncoding::text($texts['client_name']), 0, 35));
             } else {
-                $pdf->Write(0, PdfEncoding::toLatin1($texts['client_orderedby'] . ' ' . $texts['client_name']));
+                $pdf->Write(0, PdfEncoding::text($texts['client_orderedby'] . ' ' . $texts['client_name']));
             }
         }
 
@@ -221,7 +221,7 @@ class TicketPreviewCreator
         $pdf->SetTextColor($rgb['r'], $rgb['g'], $rgb['b']);
         $pdf->SetXY($position[0], $position[1]);
 
-        $pdf->Write(0, PdfEncoding::toLatin1($value));
+        $pdf->Write(0, PdfEncoding::text($value));
     }
 
     /**

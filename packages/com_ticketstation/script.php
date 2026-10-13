@@ -48,6 +48,16 @@ class com_ticketstationInstallerScript extends InstallerScript
         // Own class loader for the libraries below; Composer's autoloader in site/vendor since 2.10.0.
         '/administrator/components/com_ticketstation/autoloader.php',
         '/components/com_ticketstation/autoloader.php',
+        // The PDF library is TCPDF since 2.34.0, with its own font definitions (<name>.php) instead
+        // of the FPDF ones.
+        '/administrator/components/com_ticketstation/assets/fonts/pdf/Raleway-Regular.z',
+        '/administrator/components/com_ticketstation/assets/fonts/pdf/Raleway-Bold.z',
+        '/administrator/components/com_ticketstation/assets/fonts/pdf/OpenSans-Regular.z',
+        '/administrator/components/com_ticketstation/assets/fonts/pdf/OpenSans-Bold.z',
+        '/administrator/components/com_ticketstation/assets/fonts/pdf/raleway.json',
+        '/administrator/components/com_ticketstation/assets/fonts/pdf/ralewayb.json',
+        '/administrator/components/com_ticketstation/assets/fonts/pdf/opensans.json',
+        '/administrator/components/com_ticketstation/assets/fonts/pdf/opensansb.json',
     ];
 
     protected $deleteFolders = [
@@ -64,6 +74,8 @@ class com_ticketstationInstallerScript extends InstallerScript
         '/administrator/components/com_ticketstation/src/Helper/DASPRiD',
         '/administrator/components/com_ticketstation/src/Helper/Endroid',
         '/administrator/components/com_ticketstation/src/Helper/cache',
+        // FPDF, replaced by TCPDF in 2.34.0 (FPDI stays).
+        '/components/com_ticketstation/vendor/setasign/fpdf',
     ];
 
     public function postflight($type, $parent)
