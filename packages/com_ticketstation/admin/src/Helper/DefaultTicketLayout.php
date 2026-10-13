@@ -183,7 +183,7 @@ class DefaultTicketLayout
      * The default field set matching drawBackground(), as the same column => value pairs a
      * ticket row holds, so both creators can simply merge it over the ticket's own values.
      */
-    public static function defaultFields($pdf)
+    public static function defaultFields($pdf, string $align = 'L')
     {
         $w = $pdf->GetPageWidth();
         $h = $pdf->GetPageHeight();
@@ -194,15 +194,22 @@ class DefaultTicketLayout
             $stub   = $w - 68 * $s;
             $qrSize = 50 * $s;
             $qrX    = $stub + 9 * $s;
+            $right  = $stub - 10 * $s;
             $qrY    = 20 * $s;
             $indexY = $qrY + $qrSize + 10 * $s;
             $y      = ['eventname' => 35, 'ticketname' => 46, 'ticketdate' => 56, 'venue' => 64, 'seatnumber' => 72, 'client' => 84, 'ticketprice' => 98, 'orderreference' => 107];
         } else {
             $qrSize = 62 * $s;
+            $right  = $w - 10 * $s;
             $qrX    = ($w - $qrSize) / 2;
             $qrY    = 114 * $s;
             $indexY = $qrY + $qrSize + 8 * $s;
             $y      = ['eventname' => 33, 'ticketname' => 42, 'ticketdate' => 50, 'venue' => 57, 'seatnumber' => 64, 'client' => 75, 'ticketprice' => 88, 'orderreference' => 96];
+        }
+
+        ## With the text alignment on Right the texts end at the position: the same margin, on the other side
+        if ($align === 'R') {
+            $x = $right;
         }
 
         $fields = [

@@ -30,6 +30,7 @@ class ticketcreator
 
     private $eid;
     private $font;
+    private $align = TicketTextAlign::LEFT;
     private $orderid;
 
     function __construct($eid)
@@ -108,6 +109,9 @@ class ticketcreator
         ## The font chosen on the ticket's Ticket Layout tab
         $this->font = TicketFont::family($order->ticket_font ?? null);
 
+        ## Whether the positions are where the text starts (left) or where it ends (right)
+        $this->align = TicketTextAlign::of($order->ticket_textalign ?? null);
+
         $query = $db->getQuery(true);
 
         $query->select('*');
@@ -171,7 +175,7 @@ class ticketcreator
 
             if(!DefaultTicketLayout::hasFields($order))
             {
-                foreach(DefaultTicketLayout::defaultFields($pdf) as $key => $value)
+                foreach(DefaultTicketLayout::defaultFields($pdf, $this->align) as $key => $value)
                 {
                     $order->$key = $value;
                 }
@@ -239,7 +243,7 @@ class ticketcreator
             $pdf->SetTextColor($rgb['r'], $rgb['g'], $rgb['b']);
             $pdf->SetXY($position[0], $position[1]);
 
-            $pdf->Write(0, PdfEncoding::text($order->eventname));
+            $this->printText($pdf, PdfEncoding::text($order->eventname));
         }
 
         ## TICKETNAME
@@ -251,7 +255,7 @@ class ticketcreator
             $pdf->SetTextColor($rgb['r'], $rgb['g'], $rgb['b']);
             $pdf->SetXY($position[0], $position[1]);
 
-            $pdf->Write(0, PdfEncoding::text($order->ticketname));
+            $this->printText($pdf, PdfEncoding::text($order->ticketname));
         }
 
         ## ORDERREFERENCE
@@ -272,7 +276,8 @@ class ticketcreator
                     $pdf->SetXY($position[0], $position[1]);
                 }
 
-                $pdf->Write(0, PdfEncoding::text($order->order_reference));
+                // A centred reference is placed by its own width, so it is never aligned to the right
+                $this->printText($pdf, PdfEncoding::text($order->order_reference), $order->orderreference_centered == 1 ? TicketTextAlign::LEFT : null);
             }
         }
 
@@ -285,7 +290,7 @@ class ticketcreator
             $pdf->SetTextColor($rgb['r'], $rgb['g'], $rgb['b']);
             $pdf->SetXY($position[0], $position[1]);
 
-            $pdf->Write(0, PdfEncoding::text($order->freetext_1));
+            $this->printText($pdf, PdfEncoding::text($order->freetext_1));
         }
 
         ## STARTDATE
@@ -297,7 +302,7 @@ class ticketcreator
             $pdf->SetTextColor($rgb['r'], $rgb['g'], $rgb['b']);
             $pdf->SetXY($position[0], $position[1]);
 
-            $pdf->Write(0, TicketLanguage::_('COM_TICKETSTATION_PDF_DATE') . ' ' . date("d-m-Y", strtotime($order->startdate)) . ' || ' . TicketLanguage::_('COM_TICKETSTATION_PDF_START') . ' ' . TicketLanguage::sprintf('COM_TICKETSTATION_PDF_TIME', date("H:i", strtotime($order->startdate))));
+            $this->printText($pdf, TicketLanguage::_('COM_TICKETSTATION_PDF_DATE') . ' ' . date("d-m-Y", strtotime($order->startdate)) . ' || ' . TicketLanguage::_('COM_TICKETSTATION_PDF_START') . ' ' . TicketLanguage::sprintf('COM_TICKETSTATION_PDF_TIME', date("H:i", strtotime($order->startdate))));
         }
 
         ## DOORS OPEN
@@ -309,7 +314,7 @@ class ticketcreator
             $pdf->SetTextColor($rgb['r'], $rgb['g'], $rgb['b']);
             $pdf->SetXY($position[0], $position[1]);
 
-            $pdf->Write(0, PdfEncoding::text(TicketLanguage::_('COM_TICKETSTATION_PDF_DOORS_OPEN') . ' ' . TicketLanguage::sprintf('COM_TICKETSTATION_PDF_TIME', $order->doors_open)));
+            $this->printText($pdf, PdfEncoding::text(TicketLanguage::_('COM_TICKETSTATION_PDF_DOORS_OPEN') . ' ' . TicketLanguage::sprintf('COM_TICKETSTATION_PDF_TIME', $order->doors_open)));
         }
 
         ## VENUE
@@ -321,7 +326,7 @@ class ticketcreator
             $pdf->SetTextColor($rgb['r'], $rgb['g'], $rgb['b']);
             $pdf->SetXY($position[0], $position[1]);
 
-            $pdf->Write(0, PdfEncoding::text($this->venueText($venue->venue, $venue->city)));
+            $this->printText($pdf, PdfEncoding::text($this->venueText($venue->venue, $venue->city)));
         }
 
         ## PRICE
@@ -336,7 +341,7 @@ class ticketcreator
             // Currency and price format from the Configuration, as on the invoice.
             $price = trim((new TicketstationFunctions)->showprice($config->priceformat, $order->ticketprice, $config->valuta));
 
-            $pdf->Write(0, PdfEncoding::text(TicketLanguage::_('COM_TICKETSTATION_PDF_PRICE') . ' ' . $price));
+            $this->printText($pdf, PdfEncoding::text(TicketLanguage::_('COM_TICKETSTATION_PDF_PRICE') . ' ' . $price));
         }
 
         ## ORDERDATE
@@ -350,7 +355,7 @@ class ticketcreator
 
             $orderdate = Date::_($order->orderdate, $config->dateformat);
 
-            $pdf->Write(0, PdfEncoding::text($orderdate));
+            $this->printText($pdf, PdfEncoding::text($orderdate));
         }
 
         ## CLIENTNAME
@@ -365,12 +370,12 @@ class ticketcreator
             // Bij formaat A5 wordt "Besteld door" en Clientname onder elkaar gezet, anders past het niet
             if ($order->ticket_size == 'A5') {
                 $pdf->SetFont($this->font, 'B', $order->client_fontsize + 1);
-                $pdf->Write(0, PdfEncoding::text(TicketLanguage::_('COM_TICKETSTATION_PDF_ORDERED_BY')));
+                $this->printText($pdf, PdfEncoding::text(TicketLanguage::_('COM_TICKETSTATION_PDF_ORDERED_BY')));
                 $pdf->SetFont($this->font, '', $order->client_fontsize);
                 $pdf->SetXY($position[0], $position[1] + 5);
-                $pdf->Write(0, mb_substr(PdfEncoding::text($order->name), 0, 35)); // naam afkorten op 35 tekens, anders past het niet
+                $this->printText($pdf, mb_substr(PdfEncoding::text($order->name), 0, 35)); // naam afkorten op 35 tekens, anders past het niet
             } else {
-                $pdf->Write(0, PdfEncoding::text(TicketLanguage::_('COM_TICKETSTATION_PDF_ORDERED_BY')) . ' ' . PdfEncoding::text($order->name));
+                $this->printText($pdf, PdfEncoding::text(TicketLanguage::_('COM_TICKETSTATION_PDF_ORDERED_BY')) . ' ' . PdfEncoding::text($order->name));
             }
         }
 
@@ -384,10 +389,10 @@ class ticketcreator
 
             if ($order->orderticketindex_prependtext_print == '1') {
                 $pdf->SetFont($this->font, 'B', $order->orderticketindex_fontsize);
-                $pdf->Write(0, $order->orderticketindex_prependtext . ' ' . $ticket_volgnummer . '/' . $tickets_in_order);
+                $this->printText($pdf, $order->orderticketindex_prependtext . ' ' . $ticket_volgnummer . '/' . $tickets_in_order);
             } else {
                 $pdf->SetFont($this->font, '', $order->orderticketindex_fontsize);
-                $pdf->Write(0, $ticket_volgnummer . '/' . $tickets_in_order);
+                $this->printText($pdf, $ticket_volgnummer . '/' . $tickets_in_order);
             }
         }
 
@@ -424,7 +429,7 @@ class ticketcreator
                 $rgb = $this->hexToRgb($order->seatnumber_fontcolor);
                 $pdf->SetTextColor($rgb['r'], $rgb['g'], $rgb['b']);
                 $pdf->SetXY($position[0], $position[1]);
-                $pdf->Write(0, TicketLanguage::_('COM_TICKETSTATION_PDF_SEAT_NUMBER') . ' ' . $seat->row_name . $seat->seatid);
+                $this->printText($pdf, TicketLanguage::_('COM_TICKETSTATION_PDF_SEAT_NUMBER') . ' ' . $seat->row_name . $seat->seatid);
             }
         }
 
@@ -658,6 +663,15 @@ class ticketcreator
     /**
      * The text of the "Venue" field: the venue name and city, e.g. "De Oosterpoort, Groningen".
      */
+    /**
+     * Prints a text at the position the cursor was put on, from there to the right (or to the left
+     * up to it, with the ticket's text alignment on right). $align overrides the ticket's setting.
+     */
+    private function printText($pdf, string $text, ?string $align = null): void
+    {
+        $pdf->WriteAligned($text, $align ?? $this->align);
+    }
+
     function venueText($name, $city)
     {
         return implode(', ', array_filter([trim((string) $name), trim((string) $city)], 'strlen'));

@@ -354,6 +354,34 @@ class Pdf extends TcpdfFpdi
     }
 
     /**
+     * Text at the current position, to the right of it like Write() (align L), or ending at it
+     * (align R): the right-to-left way, for a text in Arabic or Persian. The 1 mm cell margin is kept
+     * on the side where the text ends, so left and right are each other's mirror image. A text that
+     * ends at the position is never wrapped.
+     */
+    public function WriteAligned(string $txt, string $align = 'L'): void
+    {
+        if ($align !== 'R')
+        {
+            $this->Write(0, $txt);
+
+            return;
+        }
+
+        $txt = $this->plain($txt);
+
+        if ($txt === '')
+        {
+            return;
+        }
+
+        $width = $this->GetStringWidth($txt);
+
+        $this->x -= $width + $this->cell_padding['L'] + $this->cell_padding['R'];
+        $this->Cell($width, 0, $txt, 0, 0, 'L');
+    }
+
+    /**
      * Text in a block of the width $w, with lines of the height $h, like FPDF's MultiCell(): lines
      * break at "\n" and at a space where the text doesn't fit. A width of 0 runs to the right margin.
      * Afterwards the position is at the left margin under the block. Align is L, R or C, a

@@ -485,6 +485,10 @@ if(isset($this->item->ticketid))
                     names.push('ticket_font');
                 }
 
+                if (data.ticket_textalign) {
+                    names.push('ticket_textalign');
+                }
+
                 names.forEach(function (name) {
                     var input = document.getElementById('jform_' + name);
 

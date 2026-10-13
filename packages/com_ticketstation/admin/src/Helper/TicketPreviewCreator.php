@@ -31,6 +31,7 @@ defined('_JEXEC') or die;
 class TicketPreviewCreator
 {
     private $font = 'raleway';
+    private $align = TicketTextAlign::LEFT;
 
     /**
      * @param   int    $ticketid  The ticket being edited (used to find its uploaded background).
@@ -54,6 +55,7 @@ class TicketPreviewCreator
 
         $orientation = ($data['ticket_orientation'] ?? '') ?: 'P';
         $this->font  = TicketFont::family($data['ticket_font'] ?? null);
+        $this->align = TicketTextAlign::of($data['ticket_textalign'] ?? null);
 
         $pdf = new Pdf();
         ## One page with fixed positions, same as ticketcreator::doPDF()
@@ -65,7 +67,7 @@ class TicketPreviewCreator
             DefaultTicketLayout::drawBackground($pdf);
 
             if (!DefaultTicketLayout::hasFields($data)) {
-                $data = array_merge($data, DefaultTicketLayout::defaultFields($pdf));
+                $data = array_merge($data, DefaultTicketLayout::defaultFields($pdf, $this->align));
             }
         } else {
             TicketDesign::draw($pdf, $ticketid);
@@ -90,7 +92,7 @@ class TicketPreviewCreator
                 $pdf->SetXY($position[0], $position[1]);
             }
 
-            $pdf->Write(0, PdfEncoding::text($texts['orderreference']));
+            $this->printText($pdf, PdfEncoding::text($texts['orderreference']), ($data['orderreference_centered'] ?? '0') == 1 ? TicketTextAlign::LEFT : null);
         }
 
         ## STARTDATE
@@ -101,7 +103,7 @@ class TicketPreviewCreator
             $pdf->SetTextColor($rgb['r'], $rgb['g'], $rgb['b']);
             $pdf->SetXY($position[0], $position[1]);
 
-            $pdf->Write(0, $texts['ticketdate']);
+            $this->printText($pdf, $texts['ticketdate']);
         }
 
         ## DOORS OPEN
@@ -118,7 +120,7 @@ class TicketPreviewCreator
             $pdf->SetTextColor($rgb['r'], $rgb['g'], $rgb['b']);
             $pdf->SetXY($position[0], $position[1]);
 
-            $pdf->Write(0, PdfEncoding::text($texts['ticketprice']));
+            $this->printText($pdf, PdfEncoding::text($texts['ticketprice']));
         }
 
         ## ORDERDATE
@@ -129,7 +131,7 @@ class TicketPreviewCreator
             $pdf->SetTextColor($rgb['r'], $rgb['g'], $rgb['b']);
             $pdf->SetXY($position[0], $position[1]);
 
-            $pdf->Write(0, PdfEncoding::text($texts['orderdate']));
+            $this->printText($pdf, PdfEncoding::text($texts['orderdate']));
         }
 
         ## CLIENTNAME
@@ -143,12 +145,12 @@ class TicketPreviewCreator
 
             if (($data['ticket_size'] ?? '') == 'A5') {
                 $pdf->SetFont($this->font, 'B', $fontsize + 1);
-                $pdf->Write(0, PdfEncoding::text($texts['client_orderedby']));
+                $this->printText($pdf, PdfEncoding::text($texts['client_orderedby']));
                 $pdf->SetFont($this->font, '', $fontsize);
                 $pdf->SetXY($position[0], $position[1] + 5);
-                $pdf->Write(0, mb_substr(PdfEncoding::text($texts['client_name']), 0, 35));
+                $this->printText($pdf, mb_substr(PdfEncoding::text($texts['client_name']), 0, 35));
             } else {
-                $pdf->Write(0, PdfEncoding::text($texts['client_orderedby'] . ' ' . $texts['client_name']));
+                $this->printText($pdf, PdfEncoding::text($texts['client_orderedby'] . ' ' . $texts['client_name']));
             }
         }
 
@@ -161,10 +163,10 @@ class TicketPreviewCreator
 
             if (($data['orderticketindex_prependtext_print'] ?? '0') == '1') {
                 $pdf->SetFont($this->font, 'B', ($data['orderticketindex_fontsize'] ?? '') ?: 10);
-                $pdf->Write(0, ($data['orderticketindex_prependtext'] ?? '') . ' ' . $texts['orderticketindex']);
+                $this->printText($pdf, ($data['orderticketindex_prependtext'] ?? '') . ' ' . $texts['orderticketindex']);
             } else {
                 $pdf->SetFont($this->font, '', ($data['orderticketindex_fontsize'] ?? '') ?: 10);
-                $pdf->Write(0, $texts['orderticketindex']);
+                $this->printText($pdf, $texts['orderticketindex']);
             }
         }
 
@@ -184,7 +186,7 @@ class TicketPreviewCreator
             $rgb = $creator->hexToRgb(($data['seatnumber_fontcolor'] ?? '') ?: '000000');
             $pdf->SetTextColor($rgb['r'], $rgb['g'], $rgb['b']);
             $pdf->SetXY($position[0], $position[1]);
-            $pdf->Write(0, $texts['seatnumber']);
+            $this->printText($pdf, $texts['seatnumber']);
         }
 
         ## QR CODE - a fixed dummy payload, never a real barcode, and never stored on an order.
@@ -204,6 +206,15 @@ class TicketPreviewCreator
         return $pdf->Output('S');
     }
 
+    /**
+     * Prints a text at the position the cursor was put on, from there to the right (or to the left
+     * up to it, with the ticket's text alignment on right). $align overrides the ticket's setting.
+     */
+    private function printText($pdf, string $text, ?string $align = null): void
+    {
+        $pdf->WriteAligned($text, $align ?? $this->align);
+    }
+
     private function hasPosition(array $data, $key)
     {
         return !empty($data[$key]) && strpos($data[$key], '-') !== false;
@@ -221,7 +232,7 @@ class TicketPreviewCreator
         $pdf->SetTextColor($rgb['r'], $rgb['g'], $rgb['b']);
         $pdf->SetXY($position[0], $position[1]);
 
-        $pdf->Write(0, PdfEncoding::text($value));
+        $this->printText($pdf, PdfEncoding::text($value));
     }
 
     /**

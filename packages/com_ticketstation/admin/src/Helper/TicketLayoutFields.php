@@ -81,6 +81,61 @@ class TicketLayoutFields
     }
 
     /**
+     * The width of the texts the editor shows that the PDF prints in DejaVu Sans, because they have a
+     * character outside Windows-1252 (Arabic, Persian, Cyrillic, Greek, a Polish or Turkish letter).
+     * The editor has the tables of the ticket fonts, but not of DejaVu Sans, and the width of
+     * shaped Arabic can only be had from the PDF library itself.
+     *
+     * The lines the editor makes of the texts are measured as a whole, so this knows how they are
+     * put together: the client's two lines on A5 and the one line on A4, and the ticket index with
+     * its prepend text.
+     *
+     * @param   array   $texts    The texts of TicketPreviewCreator::sampleTexts().
+     * @param   string  $prepend  The prepend text of the ticket index, as in the form.
+     *
+     * @return  array  text => [width regular, width bold] in mm at a font size of 1000 pt
+     */
+    public static function measure(array $texts, string $prepend = ''): array
+    {
+        $candidates = array_values(array_filter($texts, 'is_string'));
+        $orderedby  = (string) ($texts['client_orderedby'] ?? '');
+        $name       = (string) ($texts['client_name'] ?? '');
+        $index      = (string) ($texts['orderticketindex'] ?? '');
+
+        $candidates[] = $orderedby . ' ' . $name;
+        $candidates[] = mb_substr($name, 0, 35);
+        $candidates[] = $prepend . ' ' . $index;
+
+        $widths = [];
+        $pdf    = null;
+
+        foreach (array_unique($candidates) as $text)
+        {
+            ## The same test as Pdf::covers() makes for the standard fonts
+            $plain = preg_replace('/[\x{200B}-\x{200F}\x{202A}-\x{202E}\x{2066}-\x{2069}\x{FEFF}]/u', '', $text) ?? $text;
+
+            if ($plain === '' || mb_convert_encoding(mb_convert_encoding($plain, 'Windows-1252', 'UTF-8'), 'UTF-8', 'Windows-1252') === $plain)
+            {
+                continue;
+            }
+
+            $pdf ??= new Pdf();
+
+            $pair = [];
+
+            foreach (['', 'B'] as $style)
+            {
+                $pdf->SetFont(Pdf::FALLBACK_FONT, $style, 1000);
+                $pair[] = round($pdf->GetStringWidth(PdfEncoding::text($text)), 3);
+            }
+
+            $widths[$text] = $pair;
+        }
+
+        return $widths;
+    }
+
+    /**
      * The modules of a QR code like the one on a real ticket, as one string of 0/1 per row.
      *
      * A ticket's code is 32 random hex characters (ticketcreator::doPDF()), encoded like

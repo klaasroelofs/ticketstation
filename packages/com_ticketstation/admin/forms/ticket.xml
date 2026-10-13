@@ -254,6 +254,17 @@
             <option value="times">Times</option>
             <option value="courier">Courier</option>
         </field>
+        <field
+                name="ticket_textalign"
+                type="list"
+                label="COM_TICKETSTATION_TICKET_TEXTALIGN"
+                description="COM_TICKETSTATION_TICKET_TEXTALIGN_DESC"
+                default="L"
+                validate="options"
+        >
+            <option value="L">COM_TICKETSTATION_TICKET_TEXTALIGN_LEFT</option>
+            <option value="R">COM_TICKETSTATION_TICKET_TEXTALIGN_RIGHT</option>
+        </field>
     </fieldset>
 
     <fieldset name="ticket_layout_2">

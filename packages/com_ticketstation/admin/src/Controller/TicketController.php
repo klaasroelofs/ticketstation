@@ -22,7 +22,9 @@ use Ticketstation\Component\Ticketstation\Administrator\Helper\DefaultTicketLayo
 use Ticketstation\Component\Ticketstation\Administrator\Helper\EventMail;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Pdf;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\TicketDesign;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\TicketLayoutFields;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\TicketPreviewCreator;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\TicketTextAlign;
 use Joomla\CMS\Application\CMSApplication;
 use Joomla\CMS\MVC\Factory\MVCFactoryInterface;
 use Joomla\Input\Input;
@@ -295,7 +297,7 @@ class TicketController extends FormController
 
         if (DefaultTicketLayout::applies($ticketid)) {
             DefaultTicketLayout::drawBackground($pdf);
-            $defaults = DefaultTicketLayout::defaultFields($pdf);
+            $defaults = DefaultTicketLayout::defaultFields($pdf, TicketTextAlign::of($data['ticket_textalign'] ?? null));
         } else {
             TicketDesign::draw($pdf, $ticketid);
         }
@@ -304,12 +306,15 @@ class TicketController extends FormController
         $width  = round($pdf->GetPageWidth(), 2);
         $height = round($pdf->GetPageHeight(), 2);
 
+        $texts = (new TicketPreviewCreator())->sampleTexts($data);
+
         $response = [
             'background'  => base64_encode($pdf->Output('S')),
             'width'       => $width,
             'height'      => $height,
             'defaults'    => $defaults,
-            'texts'       => (new TicketPreviewCreator())->sampleTexts($data),
+            'texts'       => $texts,
+            'widths'      => TicketLayoutFields::measure($texts, (string) ($data['orderticketindex_prependtext'] ?? '')),
             'invalidSize' => $invalid,
         ];
 

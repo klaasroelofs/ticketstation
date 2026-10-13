@@ -13,10 +13,12 @@
  * _fontsize, _fontcolor, qrcode_width, ...) are the only source, and they are saved with the
  * ticket form as before. Dragging writes those fields; typing in them moves the field here.
  *
- * Fields are placed like FPDF prints them (see TicketLayoutFields): Write() starts the text 1 mm
- * right of X with the baseline at Y + 0.3 x the font size, TextWithDirection('U') runs upwards
- * from X/Y, and the QR image is placed at 96 dpi. Text widths come from FPDF's own font metrics,
- * and the SVG text is stretched to exactly that width, so the frames match the PDF.
+ * Fields are placed like the PDF prints them (see TicketLayoutFields and Pdf, which keeps FPDF's
+ * placement): Write() starts the text 1 mm right of X with the baseline at Y + 0.3 x the font size
+ * (with the ticket's Text alignment on Right: the text ends 1 mm left of X), TextWithDirection('U')
+ * runs upwards from X/Y, and the QR image is placed at 96 dpi. Text widths come from the PDF's font
+ * metrics (for text in other scripts from the server, measured in DejaVu Sans), and the SVG text is
+ * stretched to exactly that width, so the frames match the PDF.
  *
  * While dragging, a field snaps to guides: the left edge, centre, top or baseline of the other
  * fields and the centre of the page. Undo/redo keeps snapshots of the form fields it writes.
@@ -253,13 +255,39 @@
         return FAMILIES[font] ? font : 'raleway';
     }
 
-    // The width of a text in mm, the way FPDF's GetStringWidth() measures it.
+    // Whether the PDF prints a text in DejaVu Sans (Pdf::fallbackFor()): it has a character that is
+    // not in Windows-1252, which is what the ticket fonts have. The zero-width and direction marks
+    // print nothing and don't count.
+    function needsFallback(text) {
+        for (var i = 0; i < text.length; i++) {
+            var code = text.charCodeAt(i);
+
+            if (code < 0x100 || CP1252[code] !== undefined || (code >= 0x200B && code <= 0x200F) ||
+                (code >= 0x202A && code <= 0x202E) || (code >= 0x2066 && code <= 0x2069) || code === 0xFEFF) {
+                continue;
+            }
+
+            return true;
+        }
+
+        return false;
+    }
+
+    // The width of a text in mm, the way the PDF measures it: from the font's own table for the
+    // characters of Windows-1252, and for any other text the width the server measured in DejaVu
+    // Sans (server.widths, per 1000 pt; an estimate until the server has answered).
     function textWidth(text, sizePt, bold) {
         var metrics = (opts.metrics || {})[family()];
         var widths = metrics ? metrics[bold ? 1 : 0] : null;
         var total = 0;
 
         text = String(text);
+
+        if (needsFallback(text)) {
+            var known = server && server.widths ? server.widths[text] : null;
+
+            return known ? known[bold ? 1 : 0] * sizePt / 1000 : text.length * 0.6 * sizePt * PT;
+        }
 
         for (var i = 0; i < text.length; i++) {
             var code = text.charCodeAt(i);
@@ -336,6 +364,10 @@
         var ls = lines(field);
         var x = pos.x + CELL_MARGIN;
         var centered = field.key === 'orderreference' && String(get('orderreference_centered')) === '1';
+        // Text alignment Right (ticket_textalign): the position is where the text ends, and the
+        // cell margin sits on that side (Pdf::WriteAligned()). Rotated texts and a centred
+        // reference are not aligned.
+        var toRight = field.kind === 'text' && !centered && String(value('ticket_textalign')) === 'R';
 
         if (centered) {
             // ticketcreator::doPDF(): the page centre moved 4 % to the left, minus half the text.
@@ -346,9 +378,10 @@
             var fs = line.size * PT;
             var baseline = field.kind === 'rotated' ? pos.y : pos.y + line.dy + 0.3 * fs;
 
-            line.x = field.kind === 'rotated' ? pos.x : x;
-            line.baseline = baseline;
             line.width = textWidth(line.text, line.size, line.bold);
+            line.x = field.kind === 'rotated' ? pos.x : (toRight ? pos.x - CELL_MARGIN - line.width : x);
+            line.baseline = baseline;
+            line.toRight = toRight;
 
             return {x: line.x, y: baseline - 0.78 * fs, w: line.width, h: fs};
         });
@@ -378,7 +411,8 @@
             outside: outside(printed),
             // Write() only fits a text in the page width minus the right margin and twice the cell
             // margin; the rest continues at the left margin, over the other text at that height.
-            overflow: field.kind === 'text' && box.x + box.w > server.width - PAGE_MARGIN - CELL_MARGIN + 0.01
+            // A text that ends at its position (toRight) is never wrapped.
+            overflow: field.kind === 'text' && !toRight && box.x + box.w > server.width - PAGE_MARGIN - CELL_MARGIN + 0.01
         };
     }
 
@@ -485,17 +519,31 @@
                         return;
                     }
 
-                    var text = svg('text', {
-                        x: line.x,
+                    // A text that ends at its position is anchored at its end, so it ends there
+                    // whatever width the browser's font gives it (a text in another script is not
+                    // stretched to the width of the frame).
+                    var attrs = {
+                        x: line.toRight ? line.x + line.width : line.x,
+                        'text-anchor': line.toRight ? 'end' : 'start',
                         y: line.baseline,
                         'font-size': line.size * PT,
                         'font-family': fam,
                         'font-weight': line.bold ? 700 : 400,
                         fill: color(field.key),
-                        // Stretch the browser's glyphs to the width FPDF gives the text.
-                        textLength: line.width,
-                        lengthAdjust: 'spacingAndGlyphs'
-                    });
+                        // The direction of the text follows its first strong letter, as the PDF
+                        // does; the sheet itself stays left to right.
+                        style: 'unicode-bidi: plaintext'
+                    };
+
+                    // Stretch the browser's glyphs to the width the PDF gives the text. Not for text
+                    // in DejaVu Sans: the browser draws that in another font, and stretching joined
+                    // Arabic letters only distorts them. Its frame has the right width anyway.
+                    if (!needsFallback(line.text)) {
+                        attrs.textLength = line.width;
+                        attrs.lengthAdjust = 'spacingAndGlyphs';
+                    }
+
+                    var text = svg('text', attrs);
                     text.textContent = line.text;
                     holder.appendChild(text);
                 });
@@ -859,7 +907,7 @@
         var p = geo.printed;
 
         return {
-            x: {left: p.x, center: p.x + p.w / 2},
+            x: {left: p.x, center: p.x + p.w / 2, right: p.x + p.w},
             y: {top: p.y, middle: p.y + p.h / 2, baseline: field.kind === 'text' ? geo.lines[0].baseline : null}
         };
     }
@@ -1244,8 +1292,14 @@
 
         var name = event.target.name.replace(/^jform\[|\]$/g, '');
 
+        // (the text alignment moves the default set of fields, which the server supplies)
         if (['ticket_size', 'ticket_orientation', 'override_ticketsize', 'venue', 'eventid', 'ticketname',
-            'ticketcode', 'freetext_1', 'startdate', 'doors_open', 'ticketprice'].indexOf(name) !== -1) {
+            'ticketcode', 'freetext_1', 'startdate', 'doors_open', 'ticketprice', 'ticket_textalign'].indexOf(name) !== -1) {
+            scheduleLoad();
+        }
+
+        // The width of a prepend text with letters of another script is measured by the server.
+        if (name === 'orderticketindex_prependtext' && needsFallback(String(event.target.value || ''))) {
             scheduleLoad();
         }
 
