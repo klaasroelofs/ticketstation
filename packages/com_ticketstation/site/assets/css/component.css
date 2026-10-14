@@ -507,6 +507,14 @@
     gap: .75rem;
 }
 
+/* The choices under a question in a message, e.g. "not enough tickets left" */
+.ticketstation .ts-message__choices {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .5rem;
+    margin-top: .75rem;
+}
+
 /* Floating messages on the seat chart page, so the chart doesn't move while seats are picked */
 .ticketstation .ts-toast {
     position: fixed;

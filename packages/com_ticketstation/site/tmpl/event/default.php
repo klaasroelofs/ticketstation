@@ -203,7 +203,7 @@ if (count($this->childs) != 0) {
                     <td class="ts-tickets__qty">
                         <?php if ($canOrder) { ?>
                             <label class="ts-visually-hidden" for="qty_<?php echo $ticketid; ?>"><?php echo Text::_('COM_TICKETSTATION_QUANTITY'); ?></label>
-                            <select id="qty_<?php echo $ticketid; ?>" class="ts-select ts-select--qty">
+                            <select id="qty_<?php echo $ticketid; ?>" class="ts-select ts-select--qty" data-full-max="<?php echo $ticket->max_qty > 0 ? (int) $ticket->max_qty : 10; ?>">
                                 <?php for ($qty = 1; $qty <= $maxQty; $qty++) { ?>
                                     <option value="<?php echo $qty; ?>"><?php echo $qty; ?></option>
                                 <?php } ?>
@@ -297,6 +297,25 @@ if (count($this->childs) != 0) {
             );
         }
 
+        // More tickets chosen than are left, with the waiting list on: the answer to the question
+        // in the message, as buttons (the server decides what is on offer, see buyticket()).
+        if (result.split) {
+            var choices = jQuery('<div class="ts-message__choices"></div>');
+
+            jQuery.each(result.split.choices, function (i, choice) {
+                jQuery('<button type="button" class="ts-btn ts-btn--sm"></button>')
+                    .addClass(i === 0 ? "ts-btn--primary" : "ts-btn--secondary")
+                    .text(choice.label)
+                    .on("click", function () {
+                        choices.find("button").prop("disabled", true);
+                        answerSplit(result.split.ticketid, choice);
+                    })
+                    .appendTo(choices);
+            });
+
+            message.find(".ts-alert").append(choices);
+        }
+
         if (message[0].scrollIntoView) {
             message[0].scrollIntoView({block: "nearest", behavior: "smooth"});
         }
@@ -375,9 +394,68 @@ if (count($this->childs) != 0) {
 
     }
 
-    function buytickets(ticket){
+    // The last tickets went into the basket: the ticket gets what a page loaded sold out has, the
+    // waiting list button and a quantity up to the maximum per order, so more can still be asked for.
+    function soldOut(ticket){
 
-        var inputdata = jQuery("#qty_"+ticket).val();
+        var select = jQuery("#qty_" + ticket);
+
+        if (!select.length) {
+            return;
+        }
+
+        var max = parseInt(select.data("full-max"), 10) || 10;
+
+        select.empty();
+
+        for (var qty = 1; qty <= max; qty++) {
+            select.append(jQuery("<option></option>").val(qty).text(qty));
+        }
+
+        // "Only a few left" no longer holds: a red "sold out" line takes its place, on top of the
+        // other notes of the ticket (free text, minimum and maximum per order)
+        var row  = select.closest("tr");
+        var note = row.next("tr.ts-tickets__note-row");
+
+        if (!note.length) {
+            note = jQuery('<tr class="ts-tickets__note-row"><td colspan="4"></td></tr>').insertAfter(row);
+            row.addClass("ts-tickets__row--has-note");
+        }
+
+        note.find(".ts-alert--warning, .ts-alert--soldout").remove();
+        note.children("td").prepend(
+            jQuery('<div class="ts-alert ts-alert--danger ts-alert--soldout"></div>')
+                .text(<?php echo json_encode(Text::_('COM_TICKETSTATION_SOLD_OUT2')); ?>)
+        );
+
+        row.find(".ts-tickets__action").empty().append(
+            jQuery('<button type="button" class="ts-btn ts-btn--secondary ts-btn--sm ts-btn--waitinglist"></button>')
+                .text(<?php echo json_encode(Text::_('COM_TICKETSTATION_JOIN_WAITINGLIST')); ?>)
+                .on("click", function () { waitinglist(ticket); })
+        );
+    }
+
+    // The choice made after "not enough tickets": the tickets that are left go in the basket, the
+    // rest on the waiting list. The waiting list only follows when the basket part worked
+    // (maximum per order, minimum per order), so nothing is half done without the customer seeing it.
+    function answerSplit(ticket, choice){
+
+        var toWaitingList = function () {
+            if (choice.waiting > 0) {
+                waitinglist(ticket, choice.waiting);
+            }
+        };
+
+        if (choice.basket > 0) {
+            buytickets(ticket, choice.basket, choice.waiting > 0 ? toWaitingList : null);
+        } else {
+            toWaitingList();
+        }
+    }
+
+    function buytickets(ticket, amount, then){
+
+        var inputdata = amount || jQuery("#qty_"+ticket).val();
 
         //organize the data properly
         var tokenName = '<?php echo \Joomla\CMS\Session\Session::getFormToken(); ?>';
@@ -400,6 +478,14 @@ if (count($this->childs) != 0) {
                 showResult(html);
                 updateCart();
                 updateAvailable();
+
+                if (html.soldout) {
+                    soldOut(ticket);
+                }
+
+                if (then && html.ok) {
+                    then();
+                }
             },
             error: requestFailed
         });
@@ -407,9 +493,9 @@ if (count($this->childs) != 0) {
 
     }
 
-    function waitinglist(items){
+    function waitinglist(items, amount){
 
-        var inputdata = jQuery("#qty_"+items).val();
+        var inputdata = amount || jQuery("#qty_"+items).val();
 
         //organize the data properly
         var tokenName = '<?php echo \Joomla\CMS\Session\Session::getFormToken(); ?>';

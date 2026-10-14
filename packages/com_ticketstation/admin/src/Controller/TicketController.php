@@ -291,6 +291,11 @@ class TicketController extends FormController
         $orientation = ($data['ticket_orientation'] ?? '') === 'L' ? 'L' : 'P';
 
         $pdf = new Pdf();
+
+        ## One page with fixed positions, as in ticketcreator::doPDF(): with the automatic page break
+        ## on, TCPDF fits an uploaded design inside the page minus its margins instead of over the
+        ## whole page, so the background in the editor would be smaller than on the ticket.
+        $pdf->SetAutoPageBreak(false);
         $pdf->AddPage($orientation, $size);
 
         $defaults = null;

@@ -17,8 +17,10 @@ use Joomla\CMS\HTML\HTMLHelper;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Date;
 
 /**
- * The tickets of all events, grouped per event (latest event first), a child ticket under its
- * parent. Used to limit a coupon to certain tickets.
+ * The parent tickets of all events, grouped per event (latest event first). Used to limit a coupon
+ * to certain tickets: a parent ticket brings its child tickets (see Coupon::expandTickets()), so
+ * those are not offered separately. A child ticket that an earlier version of the form let the
+ * coupon be limited to stays in the list, so editing the coupon doesn't drop it unseen.
  */
 class TicketsField extends GroupedlistField
 {
@@ -38,12 +40,14 @@ class TicketsField extends GroupedlistField
         $db->setQuery($query);
         $tickets = $db->loadObjectList();
 
-        // Parents first, each followed by its own child tickets.
+        // Only the child tickets this coupon is already limited to are listed, under their parent.
+        $selected = is_array($this->value) ? $this->value : explode(',', (string) $this->value);
+        $selected = array_map('intval', $selected);
         $children = [];
 
         foreach ($tickets as $ticket)
         {
-            if ((int) $ticket->parent > 0)
+            if ((int) $ticket->parent > 0 && in_array((int) $ticket->ticketid, $selected, true))
             {
                 $children[(int) $ticket->parent][] = $ticket;
             }

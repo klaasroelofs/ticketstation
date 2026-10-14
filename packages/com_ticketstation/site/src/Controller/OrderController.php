@@ -62,15 +62,16 @@ class OrderController extends BaseController
      *
      * @param $type
      * @param $message
+     * @param $extra    more for the page to act on, kept under its own key (see buyticket(): split)
      *
      * @since 1.0.0
      */
-    private function showMessage($type, $message)
+    private function showMessage($type, $message, array $extra = [])
     {
         $msg = '<div class="' . $type . '">' . $message . '</div>';
 
         // ok: the tickets were added, so the event page offers the way to the basket
-        $arr = ['status' => '666', 'msg' => $msg, 'ok' => str_contains($type, 'ts-alert--success')];
+        $arr = ['status' => '666', 'msg' => $msg, 'ok' => str_contains($type, 'ts-alert--success')] + $extra;
 
         echo json_encode($arr);
         exit();
@@ -123,7 +124,48 @@ class OrderController extends BaseController
 
         if ($this->amount > $available)
         {
-            $this->showMessage('ts-alert ts-alert--danger', Text::_(WaitingList::enabled((int) $tickets->eventid) ? 'COM_TICKETSTATION_ADD_TO_WAITINGLIST' : 'COM_TICKETSTATION_EVENT_SOLD_OUT'));
+            // More chosen than left, with the waiting list on: let the customer answer on the spot
+            // (the event page shows the choices as buttons under the message) instead of having to
+            // find a button that is only there once the page is loaded with nothing left.
+            $waitingListOn = WaitingList::enabled((int) $tickets->eventid);
+
+            if ($available <= 0 && $waitingListOn)
+            {
+                // The last ones went (maybe into this very basket) after the page was loaded
+                $this->showMessage(
+                    'ts-alert ts-alert--warning',
+                    Text::_('COM_TICKETSTATION_WAITINGLIST_NONE_LEFT'),
+                    ['split' => ['ticketid' => (int) $this->id, 'choices' => [
+                        ['basket' => 0, 'waiting' => (int) $this->amount, 'label' => Text::sprintf('COM_TICKETSTATION_WAITINGLIST_NONE_LEFT_BUTTON', $this->amount)],
+                    ]]]
+                );
+            }
+
+            if ($available > 0 && $waitingListOn)
+            {
+                $remainder = (int) $this->amount - (int) $available;
+                $canBuy    = $tickets->min_qty == 0 || $available >= $tickets->min_qty;
+                $choices   = [];
+
+                if ($canBuy)
+                {
+                    $choices[] = ['basket' => (int) $available, 'waiting' => $remainder, 'label' => Text::sprintf('COM_TICKETSTATION_WAITINGLIST_SPLIT_BOTH', $available, $remainder)];
+                    $choices[] = ['basket' => (int) $available, 'waiting' => 0, 'label' => Text::sprintf('COM_TICKETSTATION_WAITINGLIST_SPLIT_BASKET', $available)];
+                }
+                else
+                {
+                    // Fewer left than the minimum per order: none of them can be bought
+                    $choices[] = ['basket' => 0, 'waiting' => (int) $this->amount, 'label' => Text::sprintf('COM_TICKETSTATION_WAITINGLIST_SPLIT_ALL', $this->amount)];
+                }
+
+                $this->showMessage(
+                    'ts-alert ts-alert--warning',
+                    Text::sprintf('COM_TICKETSTATION_WAITINGLIST_SPLIT', $available, $this->amount),
+                    ['split' => ['ticketid' => (int) $this->id, 'choices' => $choices]]
+                );
+            }
+
+            $this->showMessage('ts-alert ts-alert--danger', Text::_('COM_TICKETSTATION_EVENT_SOLD_OUT'));
         }
 
         $post  = Factory::getApplication()->getInput()->post->getArray();
@@ -148,8 +190,12 @@ class OrderController extends BaseController
             $this->showMessage('ts-alert ts-alert--danger', Text::_('COM_TICKETSTATION_EVENT_SOLD_OUT'));
         }
 
+        // The last ones are in the basket now: the page turns the ticket's button into the waiting
+        // list one, as if it had been loaded sold out.
+        $soldOut = WaitingList::enabled((int) $tickets->eventid) && Availability::forPurchase((int) $this->id) <= 0;
+
         // "2 × Adult added to your basket"
-        $this->showMessage('ts-alert ts-alert--success', Text::sprintf('COM_TICKETSTATION_ADDED_TO_BASKET', (int) $this->amount, htmlspecialchars($tickets->ticketname, ENT_QUOTES, 'UTF-8')));
+        $this->showMessage('ts-alert ts-alert--success', Text::sprintf('COM_TICKETSTATION_ADDED_TO_BASKET', (int) $this->amount, htmlspecialchars($tickets->ticketname, ENT_QUOTES, 'UTF-8')), ['soldout' => $soldOut]);
     }
 
     /**
