@@ -8,7 +8,7 @@ Ticket sales for Joomla 6: events, seated and unseated tickets, a shopping baske
 - **Ordering**: a shopping basket and checkout on your own site, with a basket module for any template position.
 - **Payments**: Mollie (payment methods chosen by the customer at checkout, refunds from the box office) and Stripe Checkout out of the box, and other payment providers as plugins: see [developer/payment-plugins.md](developer/payment-plugins.md).
 - **Tickets and invoices**: PDF tickets with a QR code on a design you set up yourself, invoices, a reminder mail before the event, and Apple Wallet and Google Wallet passes with live updates.
-- **Box office**: orders, payments, refunds, reservations, resending tickets, and a lost-tickets page for customers.
+- **Box office**: orders, payments, refunds, bookings, resending tickets, and a lost-tickets page for customers.
 - **At the door**: ticket scanning in the browser, with a scan overview per event.
 - **Backend**: a control panel, built-in documentation, and Dutch and English translations.
 
