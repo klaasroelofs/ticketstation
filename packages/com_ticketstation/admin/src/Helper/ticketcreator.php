@@ -639,6 +639,37 @@ class ticketcreator
         return true;
     }
 
+    /**
+     * One PDF with some tickets of an order, for a customer who sends or downloads only part of
+     * their order. Nothing is stored: the file of the order stays as it is, and the tickets keep
+     * their QR codes (and their number in the order, "3/5").
+     *
+     * @param   int[]  $orderids  The tickets to draw, in page order (as Wallet::tickets() gives them)
+     *
+     * @return  string  The PDF document; empty when there is nothing to draw
+     *
+     * @since   2.36.0
+     */
+    public static function selectionPdf(array $orderids): string
+    {
+        if (!$orderids)
+        {
+            return '';
+        }
+
+        $pdf = new Pdf();
+
+        foreach ($orderids as $orderid)
+        {
+            if ((new self((int) $orderid))->doPDF(false, $pdf) === false)
+            {
+                return '';
+            }
+        }
+
+        return (string) $pdf->Output('', 'S');
+    }
+
     private static function deleteFile(string $path): void
     {
         if (file_exists($path))

@@ -58,6 +58,7 @@ $groups = [
         'invoicing'   => 'fa-file-invoice',
         'templates'   => 'fa-envelope',
         'wallet'      => 'fa-wallet',
+        'portal'      => 'fa-user-circle',
     ],
     'EVENTDAY' => [
         'scanning' => 'fa-qrcode',

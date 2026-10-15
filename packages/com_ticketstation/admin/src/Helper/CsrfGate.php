@@ -87,6 +87,11 @@ class CsrfGate
         // signed key in the link (Wallet::token()); the pass logo is public.
         'wallet' => ['apple', 'google', 'logo'],
 
+        // The customer portal: the links in its mails (authorised by their signed key) and the
+        // downloads, which Portal::canAccess() checks per order. Requesting a link and leaving
+        // are forms, and carry a token.
+        'portal' => ['enter', 'order', 'download', 'invoice', 'calendar'],
+
         // Ticket scanning hardware authenticates with its own API key
         // (checked in the constructor via hash_equals), not a browser session.
         'codescanner' => ['validation'],

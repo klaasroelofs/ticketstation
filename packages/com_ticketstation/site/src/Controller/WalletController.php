@@ -107,7 +107,13 @@ class WalletController extends BaseController
         $ordercode = $input->getInt('order', 0);
         $contact   = (new Config)->getContactEmail();
 
-        if (!Wallet::checkToken($ordercode, $input->getAlnum('key', '')))
+        // A link made for some tickets of the order carries them (t=1,2,3) and its own key
+        $selected = Wallet::normaliseIds(array_map('intval', explode(',', $input->getString('t', ''))));
+        $key      = $input->getAlnum('key', '');
+
+        if ($input->getString('t', '') !== ''
+            ? !Wallet::checkSelectionToken($ordercode, $selected, $key)
+            : !Wallet::checkToken($ordercode, $key))
         {
             $this->leave(Text::sprintf('COM_TICKETSTATION_WALLET_LINK_INVALID', $contact));
         }
@@ -118,6 +124,11 @@ class WalletController extends BaseController
         }
 
         $tickets = Wallet::tickets($ordercode);
+
+        if ($selected)
+        {
+            $tickets = array_values(array_filter($tickets, static fn ($ticket) => in_array((int) $ticket->orderid, $selected, true)));
+        }
 
         if (!$tickets)
         {

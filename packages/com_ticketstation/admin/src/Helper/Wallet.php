@@ -138,11 +138,51 @@ class Wallet
     }
 
     /**
+     * The key of a link that adds only some tickets of an order: it covers the order and exactly
+     * those tickets, so someone who is sent such a link can't use it to get the others.
+     *
+     * @param   int[]  $orderids  Order rows (tickets) of the order
+     */
+    public static function selectionToken(int $ordercode, array $orderids): string
+    {
+        $secret = (string) Factory::getApplication()->get('secret');
+
+        return substr(hash_hmac('sha256', 'ticketstation-wallet-selection:' . $ordercode . ':' . implode(',', self::normaliseIds($orderids)), $secret), 0, 32);
+    }
+
+    public static function checkSelectionToken(int $ordercode, array $orderids, string $token): bool
+    {
+        return $ordercode > 0 && $orderids !== [] && $token !== '' && hash_equals(self::selectionToken($ordercode, $orderids), $token);
+    }
+
+    /**
+     * Whole numbers above zero, each once, in ascending order: the same list gives the same key
+     * whichever way it was written.
+     *
+     * @return  int[]
+     */
+    public static function normaliseIds(array $ids): array
+    {
+        $ids = array_values(array_unique(array_filter(array_map('intval', $ids), static fn ($id) => $id > 0)));
+        sort($ids);
+
+        return $ids;
+    }
+
+    /**
      * The link that adds the tickets of an order to the given wallet. Unrouted, like the other
      * task links: the SEF router would drop the parameters.
      */
-    public static function link(string $wallet, int $ordercode): string
+    public static function link(string $wallet, int $ordercode, array $orderids = []): string
     {
+        $orderids = self::normaliseIds($orderids);
+
+        if ($orderids)
+        {
+            return Uri::root() . 'index.php?option=com_ticketstation&controller=wallet&task=' . $wallet
+                . '&order=' . $ordercode . '&t=' . implode(',', $orderids) . '&key=' . self::selectionToken($ordercode, $orderids);
+        }
+
         return Uri::root() . 'index.php?option=com_ticketstation&controller=wallet&task=' . $wallet
             . '&order=' . $ordercode . '&key=' . self::token($ordercode);
     }
@@ -262,12 +302,21 @@ class Wallet
      * @param   bool    $email     True for the ticket mail (inline styles, absolute image URLs),
      *                             false for the payment result page (the site stylesheet)
      * @param   string  $language  Language tag for the badges and texts; the site language when empty
+     * @param   int[]   $orderids  Only these tickets of the order (the links then carry them, with
+     *                             a key of their own); all of them when empty
      */
-    public static function buttons(int $ordercode, bool $email, string $language = ''): string
+    public static function buttons(int $ordercode, bool $email, string $language = '', array $orderids = []): string
     {
-        $wallets = self::available();
+        $wallets  = self::available();
+        $orderids = self::normaliseIds($orderids);
+        $tickets  = self::tickets($ordercode);
 
-        if (!$wallets || !self::tickets($ordercode))
+        if ($orderids)
+        {
+            $tickets = array_filter($tickets, static fn ($ticket) => in_array((int) $ticket->orderid, $orderids, true));
+        }
+
+        if (!$wallets || !$tickets)
         {
             return '';
         }
@@ -278,7 +327,7 @@ class Wallet
 
         foreach ($wallets as $wallet)
         {
-            $href  = htmlspecialchars(self::link($wallet, $ordercode), ENT_QUOTES, 'UTF-8');
+            $href  = htmlspecialchars(self::link($wallet, $ordercode, $orderids), ENT_QUOTES, 'UTF-8');
             $label = htmlspecialchars($text('COM_TICKETSTATION_WALLET_ADD_TO_' . strtoupper($wallet)), ENT_QUOTES, 'UTF-8');
             $badge = self::badge($wallet, $language);
 

@@ -97,6 +97,16 @@ class SendonPayment
             $message->appendPlaceholder('walletbuttons');
         }
 
+        ## The link to the order in the customer portal (empty when the portal is off)
+        $portallink = Portal::mailBlock((int) $this->eid);
+
+        $message->variables(['portallink' => $portallink]);
+
+        if ($portallink !== '')
+        {
+            $message->appendPlaceholder('portallink');
+        }
+
         $message->attachment($attachment);
 
         ## "Add to calendar": the order's events as an .ics file next to the tickets

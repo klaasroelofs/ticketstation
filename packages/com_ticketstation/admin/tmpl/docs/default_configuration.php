@@ -22,9 +22,10 @@ $tabs = [
     'DISPLAY'   => 'fa-eye',
     'ORDERS'    => 'fa-receipt',
     'CHECKOUT'  => 'fa-cash-register',
-    'DOCUMENTS' => 'fa-file-alt',
+    'INVOICING' => 'fa-file-invoice',
     'COMPANY'   => 'fa-building',
     'WALLET'    => 'fa-wallet',
+    'PORTAL'    => 'fa-user-circle',
 ];
 
 $list = function (string $prefix, int $count) {
@@ -41,9 +42,10 @@ $counts = [
     'DISPLAY'   => 4,
     'ORDERS'    => 3,
     'CHECKOUT'  => 5,
-    'DOCUMENTS' => 3,
+    'INVOICING' => 2,
     'COMPANY'   => 5,
     'WALLET'    => 1,
+    'PORTAL'    => 2,
 ];
 
 ?>

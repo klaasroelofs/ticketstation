@@ -13,6 +13,7 @@ defined('_JEXEC') or die;
 
 use Joomla\CMS\Plugin\CMSPlugin;
 use Joomla\Event\SubscriberInterface;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\Portal;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\WalletAppleService;
 
 /**
@@ -25,7 +26,30 @@ final class Ticketstation extends CMSPlugin implements SubscriberInterface
 {
     public static function getSubscribedEvents(): array
     {
-        return ['onAfterInitialise' => 'onAfterInitialise'];
+        return [
+            'onAfterInitialise' => 'onAfterInitialise',
+            'onUserAfterDelete' => 'onUserAfterDelete',
+        ];
+    }
+
+    /**
+     * An account that is deleted takes the addresses it had linked in the customer portal with it.
+     */
+    public function onUserAfterDelete($event = null): void
+    {
+        if (!class_exists(Portal::class) || !is_object($event))
+        {
+            return;
+        }
+
+        // 'subject' holds the deleted account's data (the first argument of the event)
+        $user    = $event->getArgument('subject') ?? $event->getArgument('user');
+        $success = $event->getArgument('deletingResult') ?? $event->getArgument('success') ?? true;
+
+        if ($success && is_array($user) && !empty($user['id']))
+        {
+            Portal::forgetUser((int) $user['id']);
+        }
     }
 
     public function onAfterInitialise($event = null): void

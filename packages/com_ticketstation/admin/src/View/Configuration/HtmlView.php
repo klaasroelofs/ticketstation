@@ -276,6 +276,24 @@ class HtmlView extends BaseHtmlView {
 
         $lists['wallet_google'] = $switch('wallet_google', (int) ($config->wallet_google ?? 0));
 
+        // Customer portal tab
+        $lists['portal_mode'] = HTMLHelper::_('select.genericList', [
+            ['value' => '0', 'text' => Text::_('COM_TICKETSTATION_PORTAL_MODE_OFF')],
+            ['value' => '1', 'text' => Text::_('COM_TICKETSTATION_PORTAL_MODE_EMAIL')],
+            ['value' => '2', 'text' => Text::_('COM_TICKETSTATION_PORTAL_MODE_ACCOUNT')],
+        ], 'portal_mode', ' class="form-select" ', 'value', 'text', (string) min(2, max(0, (int) ($config->portal_mode ?? 0))));
+
+        $lists['portal_share'] = $switch('portal_share', (int) ($config->portal_share ?? 1));
+
+        $pastMonths = [['value' => '0', 'text' => Text::_('COM_TICKETSTATION_PORTAL_PAST_ALWAYS')]];
+
+        foreach ([6, 12, 24, 36] as $months)
+        {
+            $pastMonths[] = ['value' => (string) $months, 'text' => Text::sprintf('COM_TICKETSTATION_PORTAL_PAST_MONTHS_N', $months)];
+        }
+
+        $lists['portal_past_months'] = HTMLHelper::_('select.genericList', $pastMonths, 'portal_past_months', ' class="form-select" ', 'value', 'text', (string) ($config->portal_past_months ?? 0));
+
         $walletLogoForm = new Form('com_ticketstation.configuration.walletlogo');
         $walletLogoForm->load('<form><field name="wallet_logo" type="media" preview="true" /></form>');
         $walletLogoForm->bind(['wallet_logo' => $config->wallet_logo ?? '']);

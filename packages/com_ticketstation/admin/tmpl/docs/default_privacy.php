@@ -35,7 +35,7 @@ $list = function (string $tag, string $prefix, int $count) {
         <details id="docs-privacy-stored" class="mb-3 border rounded p-3">
             <summary class="h5 mb-0"><span class="fa fa-database me-2" aria-hidden="true"></span><?= Text::_('COM_TICKETSTATION_PRIVACY_DOCS_STORED_TITLE') ?></summary>
             <div class="mt-3">
-                <?php $list('ul', 'COM_TICKETSTATION_PRIVACY_DOCS_STORED_', 5); ?>
+                <?php $list('ul', 'COM_TICKETSTATION_PRIVACY_DOCS_STORED_', 6); ?>
             </div>
         </details>
 

@@ -60,6 +60,14 @@ class TemplateDefaults
                 'Reminder: {eventname}',
                 '<p>Hi {firstname},</p><p>This is a reminder that you have tickets for <strong>{eventname}</strong>.</p><p>When: {eventdate}, {eventtime}<br />Doors open: {doorsopen}<br />Where: {location}</p><p>{orderlist}</p><p>The tickets were sent to you earlier. Can\'t find them? Request them again here: <a href="{ticketlink}">{ticketlink}</a>. The attached calendar file adds the event to your calendar.</p><p>We look forward to seeing you!</p><p>Kind regards,</p><p>{company_name}<br />{company_website}</p>',
             ],
+            9 => [
+                'Your orders',
+                '<p>Hi {firstname},</p><p>Use the link below to see your orders: download your tickets or get your invoice. The link works for {minutes} minutes.</p><p>{portallink}</p><p>Did you not ask for this? Then you can ignore this mail; nothing changes.</p><p>Kind regards,</p><p>{company_name}<br />{company_website}</p>',
+            ],
+            10 => [
+                '{sendername} has shared tickets with you',
+                '<p>Hi,</p><p>{sendername} has shared tickets with you:</p><p>{ticketlist}</p>{note}<p>The tickets are attached to this mail as a PDF file. Show the QR code on the ticket at the entrance.</p><p>Kind regards,</p><p>{company_name}<br />{company_website}</p>',
+            ],
         ];
 
         if (!isset($texts[$mailid])) {

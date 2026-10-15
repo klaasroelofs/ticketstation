@@ -23,6 +23,8 @@ DROP TABLE IF EXISTS `#__ticketstation_transactions_temp`;
 DROP TABLE IF EXISTS `#__ticketstation_venues`;
 DROP TABLE IF EXISTS `#__ticketstation_waitinglist`;
 DROP TABLE IF EXISTS `#__ticketstation_event_mails`;
+DROP TABLE IF EXISTS `#__ticketstation_portal_requests`;
+DROP TABLE IF EXISTS `#__ticketstation_portal_links`;
 DROP TABLE IF EXISTS `#__ticketstation_wallet_devices`;
 DROP TABLE IF EXISTS `#__ticketstation_wallet_messages`;
 DROP TABLE IF EXISTS `#__ticketstation_wallet_passes`;

@@ -43,14 +43,16 @@ class eTicketsMessage
      * The edit screen lists exactly these, so keep them in step with the senders.
      */
     private const TEMPLATE_FIELDS = [
-        1 => ['ordercode', 'orderdate', 'orderlist', 'price', 'walletbuttons'],
-        2 => ['ordercode', 'orderdate', 'orderlist', 'price', 'walletbuttons'],
+        1 => ['ordercode', 'orderdate', 'orderlist', 'price', 'walletbuttons', 'portallink'],
+        2 => ['ordercode', 'orderdate', 'orderlist', 'price', 'walletbuttons', 'portallink'],
         3 => ['ordercode', 'orderdate', 'orderlist', 'price', 'paymentlink'],
         4 => ['ordercode', 'orderdate', 'orderlist', 'confirmationlink'],
         5 => ['ordercode', 'orderdate', 'price', 'invoice_id'],
         6 => ['ordercode', 'orderdate', 'orderlist', 'price', 'paymentlink', 'removal_days', 'eventname'],
         7 => ['ordercode', 'orderdate', 'orderlist', 'price', 'subject', 'message', 'eventname', 'eventdate', 'eventtime', 'location'],
         8 => ['ordercode', 'orderdate', 'orderlist', 'price', 'eventname', 'eventdate', 'eventtime', 'doorsopen', 'location', 'ticketlink'],
+        9 => ['portallink', 'minutes'],
+        10 => ['sendername', 'ticketlist', 'note', 'walletbuttons'],
     ];
 
     /**
@@ -61,6 +63,7 @@ class eTicketsMessage
         6 => ['paymentlink'],
         7 => ['message'],
         4 => ['confirmationlink'],
+        9 => ['portallink'],
     ];
 
     /**
@@ -228,6 +231,11 @@ class eTicketsMessage
             'paymentlink'      => '<a href="' . $link . '">' . $link . '</a>',
             'confirmationlink' => '<a href="' . $link . '">' . $link . '</a>',
             'ticketlink'       => $link,
+            'portallink'       => '<a href="' . $link . '">' . $link . '</a>',
+            'minutes'          => '60',
+            'sendername'       => $name,
+            'ticketlist'       => $orders,
+            'note'             => '<p><em>' . TicketLanguage::sample('COM_TICKETSTATION_TEMPLATE_SAMPLE_MESSAGE') . '</em></p>',
             'invoice_id'       => '2026-0001',
             'removal_days'     => '7',
             'eventname'        => $event,

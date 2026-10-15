@@ -1629,3 +1629,178 @@
 .ticketstation .ts-checkout__order .ts-table {
     margin-bottom: 0;
 }
+
+/* ==========================================================================
+   Customer portal "My orders"
+   ========================================================================== */
+
+.ticketstation .ts-portal__bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: .75rem;
+    margin: 0 0 1.5rem;
+}
+
+.ticketstation .ts-portal__bar p {
+    margin: 0;
+}
+
+.ticketstation .ts-portal__group {
+    margin: 0 0 2rem;
+}
+
+.ticketstation .ts-portal__heading {
+    margin: 0 0 1rem;
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+
+.ticketstation .ts-portal__past > summary {
+    cursor: pointer;
+}
+
+.ticketstation .ts-portal__order {
+    margin-bottom: 1rem;
+}
+
+.ticketstation .ts-portal__order--past {
+    background: var(--ts-surface-alt);
+}
+
+.ticketstation .ts-portal__order-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .5rem .75rem;
+}
+
+.ticketstation .ts-portal__order-head .ts-card__title {
+    margin: 0;
+}
+
+.ticketstation .ts-portal__meta {
+    margin: .25rem 0 0;
+    font-size: .9375rem;
+}
+
+.ticketstation .ts-portal__event {
+    margin: 1rem 0 0;
+    padding-top: 1rem;
+    border-top: 1px solid var(--ts-border);
+}
+
+.ticketstation .ts-portal__event-name {
+    margin: 0;
+}
+
+.ticketstation .ts-portal__tickets {
+    margin: .5rem 0 0;
+    padding: 0;
+    list-style: none;
+}
+
+.ticketstation .ts-portal__tickets li {
+    margin: .125rem 0;
+}
+
+.ticketstation .ts-portal__ticket--invalid {
+    text-decoration: line-through;
+    color: var(--ts-muted);
+}
+
+.ticketstation .ts-portal__wallet {
+    margin-top: 1rem;
+}
+
+/* Customer portal: picking tickets to download or send */
+.ticketstation .ts-portal__pick {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--ts-border);
+}
+
+.ticketstation .ts-portal__pick > summary {
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.ticketstation .ts-portal__picklist {
+    margin: .75rem 0 0;
+    padding: 0;
+    list-style: none;
+}
+
+.ticketstation .ts-portal__picklist li {
+    margin: .375rem 0;
+}
+
+.ticketstation .ts-portal__picklist label {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: .25rem .5rem;
+    cursor: pointer;
+}
+
+.ticketstation .ts-portal__other {
+    margin: 1.5rem 0 0;
+    padding: 1rem;
+    border: 1px solid var(--ts-border);
+    border-radius: var(--ts-radius-sm);
+}
+
+/* The title sits inside the box like any heading (a legend would cut through the border and be
+   indented): floated to full width it takes part in the normal flow. */
+.ticketstation .ts-portal__other legend {
+    float: left;
+    width: 100%;
+    margin: 0 0 .5rem;
+    padding: 0;
+    font-size: 1.125rem;
+    font-weight: 600;
+    line-height: 1.3;
+}
+
+.ticketstation .ts-portal__other-intro {
+    clear: both;
+    margin: 0 0 1.25rem;
+    padding: .25rem 0;
+}
+
+.ticketstation .ts-portal__other .ts-field {
+    margin: 0 0 1rem;
+}
+
+.ticketstation .ts-portal__other textarea {
+    width: 100%;
+    min-height: 4.5rem;
+    resize: vertical;
+}
+
+/* Customer portal: linking an account */
+.ticketstation .ts-portal__offer {
+    margin-bottom: 1.5rem;
+    border-color: var(--ts-accent);
+}
+
+.ticketstation .ts-portal__links {
+    margin: .75rem 0 1rem;
+    padding: 0;
+    list-style: none;
+}
+
+.ticketstation .ts-portal__links li {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: .5rem .75rem;
+    padding: .5rem 0;
+    border-bottom: 1px solid var(--ts-border);
+}
+
+.ticketstation .ts-portal__links form {
+    margin: 0;
+}

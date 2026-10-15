@@ -87,6 +87,16 @@ class SendTicketCopy
             $message->appendPlaceholder('walletbuttons');
         }
 
+        ## The link to the order in the customer portal (empty when the portal is off)
+        $portallink = Portal::mailBlock((int) $this->eid);
+
+        $message->variables(['portallink' => $portallink]);
+
+        if ($portallink !== '')
+        {
+            $message->appendPlaceholder('portallink');
+        }
+
         $message->attachment($attachment);
 
         if ( ! $message->send())

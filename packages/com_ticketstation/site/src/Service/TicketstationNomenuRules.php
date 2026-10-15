@@ -129,6 +129,12 @@ class TicketstationNomenuRules implements RulesInterface
 
                 break;
 
+            // "my-orders" is what is built; "portal" is the name it had in the release candidates
+            case $segments[0] === 'my-orders' || $segments[0] === 'portal':
+                $vars['view'] = 'portal';
+
+                break;
+
             case $segments[0] === 'cart':
                 $vars['view'] = 'cart';
 
@@ -244,6 +250,12 @@ class TicketstationNomenuRules implements RulesInterface
                 $segments[] = $query['view'] . '-' . ($query['id'] ?? '');
                 unset($query['view']);
                 unset($query['id']);
+
+            } elseif ($query['view'] === 'portal') {
+
+                // Not "portal": a menu item with that alias would take the address over
+                $segments[] = 'my-orders';
+                unset($query['view']);
 
             } elseif ($query['view'] === 'paymentresult') {
 

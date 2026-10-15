@@ -1242,6 +1242,55 @@ $document->getWebAssetManager()->addInlineScript("
 
     <?= HTMLHelper::_('uitab.endTab'); ?>
 
+    <?= HTMLHelper::_('uitab.addTab', 'configTabs', 'portal', Text::_('COM_TICKETSTATION_CONFIG_TAB_PORTAL')); ?>
+
+        <p class="mt-3">
+            <?= Text::_('COM_TICKETSTATION_PORTAL_CONFIG_INTRO') ?>
+        </p>
+
+        <div class="card mt-3 rounded-to">
+            <h3 class="card-header">
+                <?= Text::_('COM_TICKETSTATION_CONFIG_TAB_PORTAL') ?>
+            </h3>
+            <div class="card-body">
+                <div class="row mb-3">
+                    <label for="portal_mode" class="col-sm-3 col-form-label">
+                        <?= Text::_('COM_TICKETSTATION_PORTAL_MODE') ?>
+                    </label>
+                    <div class="col-sm-9">
+                        <?= $this->lists['portal_mode']; ?>
+                        <small class="form-text">
+                            <?= Text::_('COM_TICKETSTATION_PORTAL_MODE_DESC') ?>
+                        </small>
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <label for="portal_share" class="col-sm-3 col-form-label">
+                        <?= Text::_('COM_TICKETSTATION_PORTAL_SHARE') ?>
+                    </label>
+                    <div class="col-sm-9">
+                        <?= $this->lists['portal_share']; ?>
+                        <small class="form-text">
+                            <?= Text::_('COM_TICKETSTATION_PORTAL_SHARE_DESC') ?>
+                        </small>
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <label for="portal_past_months" class="col-sm-3 col-form-label">
+                        <?= Text::_('COM_TICKETSTATION_PORTAL_PAST_MONTHS') ?>
+                    </label>
+                    <div class="col-sm-9">
+                        <?= $this->lists['portal_past_months']; ?>
+                        <small class="form-text">
+                            <?= Text::_('COM_TICKETSTATION_PORTAL_PAST_MONTHS_DESC') ?>
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    <?= HTMLHelper::_('uitab.endTab'); ?>
+
     <?= HTMLHelper::_('uitab.endTabSet'); ?>
 
     <input name="option" type="hidden" value="com_ticketstation" />

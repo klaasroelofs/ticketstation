@@ -129,6 +129,9 @@ CREATE TABLE IF NOT EXISTS `#__ticketstation_config` (
   `invoice_counter_live` int(11) NOT NULL DEFAULT 0,
   `invoice_counter_test` int(11) NOT NULL DEFAULT 0,
   `company_color` varchar(7) NOT NULL DEFAULT '',
+  `portal_mode` tinyint(1) NOT NULL DEFAULT 0,
+  `portal_past_months` smallint(4) NOT NULL DEFAULT 0,
+  `portal_share` tinyint(1) NOT NULL DEFAULT 1,
   PRIMARY KEY (`configid`)
 )  ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 DEFAULT COLLATE=utf8mb4_unicode_ci;
 
@@ -475,6 +478,27 @@ CREATE TABLE IF NOT EXISTS `#__ticketstation_event_mails` (
   `sent` datetime NOT NULL,
   PRIMARY KEY (`id`),
   KEY `idx_event_mails` (`ordercode`, `eventid`, `kind`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 DEFAULT COLLATE=utf8mb4_unicode_ci;
+
+DROP TABLE IF EXISTS `#__ticketstation_portal_requests`;
+CREATE TABLE IF NOT EXISTS `#__ticketstation_portal_requests` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `emailhash` char(64) NOT NULL,
+  `ip` varchar(60) NOT NULL DEFAULT '',
+  `created` datetime NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_portal_email` (`emailhash`, `created`),
+  KEY `idx_portal_ip` (`ip`, `created`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 DEFAULT COLLATE=utf8mb4_unicode_ci;
+
+DROP TABLE IF EXISTS `#__ticketstation_portal_links`;
+CREATE TABLE IF NOT EXISTS `#__ticketstation_portal_links` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `userid` int(11) NOT NULL,
+  `emailaddress` varchar(255) NOT NULL,
+  `created` datetime NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `idx_portal_link` (`userid`, `emailaddress`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 DEFAULT COLLATE=utf8mb4_unicode_ci;
 
 DROP TABLE IF EXISTS `#__ticketstation_wallet_passes`;
@@ -863,6 +887,8 @@ INSERT IGNORE INTO `#__ticketstation_templates` VALUES("5","Invoice","<p>Hi {fir
 INSERT IGNORE INTO `#__ticketstation_templates` VALUES("6","Waiting list payment link","<p>Hi {firstname},</p><p>Good news: tickets have become available for {eventname}, which you were waiting for:</p><p>{orderlist}</p><p>Use the link below to pay within {removal_days} days; after that the link expires and the tickets are released again:</p><p>{paymentlink}</p><p>After successful payment, the tickets will be sent directly to this email address.</p><p>Please don't hesitate to contact us in case of any questions.</p><p>Kind regards,</p><p>{company_name}<br />{company_website}</p>","Tickets are available: payment link");
 INSERT IGNORE INTO `#__ticketstation_templates` VALUES("7","Message to buyers of an event","<p>Hi {firstname},</p><p>{message}</p><p>Your order: <strong>{ordercode}</strong></p><p>{orderlist}</p><p>Please don't hesitate to contact us in case of any questions.</p><p>Kind regards,</p><p>{company_name}<br />{company_website}</p>","{subject}");
 INSERT IGNORE INTO `#__ticketstation_templates` VALUES("8","Event reminder","<p>Hi {firstname},</p><p>This is a reminder that you have tickets for <strong>{eventname}</strong>.</p><p>When: {eventdate}, {eventtime}<br />Doors open: {doorsopen}<br />Where: {location}</p><p>{orderlist}</p><p>The tickets were sent to you earlier. Can't find them? Request them again here: <a href=\"{ticketlink}\">{ticketlink}</a>. The attached calendar file adds the event to your calendar.</p><p>We look forward to seeing you!</p><p>Kind regards,</p><p>{company_name}<br />{company_website}</p>","Reminder: {eventname}");
+INSERT IGNORE INTO `#__ticketstation_templates` VALUES("9","Link to My orders","<p>Hi {firstname},</p><p>Use the link below to see your orders: download your tickets or get your invoice. The link works for {minutes} minutes.</p><p>{portallink}</p><p>Did you not ask for this? Then you can ignore this mail; nothing changes.</p><p>Kind regards,</p><p>{company_name}<br />{company_website}</p>","Your orders");
+INSERT IGNORE INTO `#__ticketstation_templates` VALUES("10","Tickets shared by a customer","<p>Hi,</p><p>{sendername} has shared tickets with you:</p><p>{ticketlist}</p>{note}<p>The tickets are attached to this mail as a PDF file. Show the QR code on the ticket at the entrance.</p><p>Kind regards,</p><p>{company_name}<br />{company_website}</p>","{sendername} has shared tickets with you");
 
 
 INSERT IGNORE INTO `#__ticketstation_config` (`configid`, `show_secondaddress`, `show_thirdaddress`, `valuta`, `payments_on`, `transactioncosts`, `priceformat`, `persending`, `dateformat`, `transcosts`, `variable_transcosts`, `man_payment`, `show_cancel`, `show_available_tickets`, `show_quantity_eventlist`, `show_price_eventlist`, `companyname`, `address1`, `address2`, `zipcode`, `city`, `state`, `phone`, `fax`, `email`, `website`, `company_logo`, `qr_width`, `removal_days`, `send_profile_mail`, `tos_tpl`, `use_automatic_login`, `remove_unfinished`, `removal_hours`, `pro_installed`, `show_mailchimp_signup`, `show_country`, `show_salutation`, `show_address`, `show_city`, `show_birthday`, `auto_username`, `activation_email`, `load_bootstrap`, `load_bootstrap_tpl`, `use_coupons`, `load_jquery`, `show_remark_field`, `show_waitinglist`, `eventname_position`, `ordernumber_position`, `orderdate_position`, `show_mailchimps`, `address_format_client`, `address_format_company`, `show_zipcode`, `show_phone`, `send_invoice`, `invoice_prefix`, `time_format`, `next_ordercode`, `show_venue`, `show_venue_address`, `show_venue_description`, `show_venue_website`, `show_jsonld`, `reminder_on`, `reminder_hours`, `from_name`, `from_email`, `terms_url`, `privacy_url`, `send_tickets_directly`, `wallet_apple`, `wallet_apple_cert`, `wallet_apple_key`, `wallet_apple_pending_key`, `wallet_google`, `wallet_google_issuer_id`, `wallet_google_key`, `wallet_google_updates`, `wallet_apple_updates`, `wallet_logo`, `wallet_bg_color`, `wallet_fg_color`, `price_decimals`, `price_decimal_sep`, `price_thousands_sep`, `price_symbol_after`, `payment_provider`, `payment_currency`, `test_mode`, `checkout_field_map`, `checkout_layout`, `invoice_counter_live`, `invoice_counter_test`) VALUES(
