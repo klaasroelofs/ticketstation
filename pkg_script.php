@@ -74,6 +74,7 @@ class pkg_ticketstationInstallerScript extends InstallerScript
         // administrator who removed or moved them keeps it that way.
         if ($type === 'install') {
             $this->placeDashboardModules($db);
+            $this->placeTestModeBar($db);
         }
 
         // The first install of a version with payment plugins, or an update from one before: bring the Mollie settings along.
@@ -185,6 +186,80 @@ class pkg_ticketstationInstallerScript extends InstallerScript
             Factory::getApplication()->enqueueMessage(
                 'The Ticketstation widgets could not be placed on the dashboard: ' . $e->getMessage()
                 . ' Add the module "Ticketstation Dashboard" in the position cpanel in the Administrator Modules.',
+                'notice'
+            );
+        }
+    }
+
+    /**
+     * Puts the test mode bar in the position top of the backend, for a new installation only (see
+     * placeDashboardModules). It shows nothing while the shop is live. Joomla's own blank instance
+     * of the module, which it makes at install, makes way as it does for the dashboard module.
+     */
+    private function placeTestModeBar($db)
+    {
+        try {
+            $installed = (int) $db->setQuery(
+                $db->getQuery(true)
+                    ->select('COUNT(*)')
+                    ->from($db->quoteName('#__extensions'))
+                    ->where($db->quoteName('type') . ' = ' . $db->quote('module'))
+                    ->where($db->quoteName('element') . ' = ' . $db->quote('mod_ticketstation_testmode'))
+                    ->where($db->quoteName('client_id') . ' = 1')
+            )->loadResult();
+
+            $blank = $db->setQuery(
+                $db->getQuery(true)
+                    ->select($db->quoteName('id'))
+                    ->from($db->quoteName('#__modules'))
+                    ->where($db->quoteName('module') . ' = ' . $db->quote('mod_ticketstation_testmode'))
+                    ->where($db->quoteName('client_id') . ' = 1')
+                    ->where($db->quoteName('published') . ' = 0')
+                    ->where($db->quoteName('position') . ' = ' . $db->quote(''))
+            )->loadColumn();
+
+            if ($blank) {
+                $ids = implode(',', array_map('intval', $blank));
+                $db->setQuery('DELETE FROM ' . $db->quoteName('#__modules_menu') . ' WHERE ' . $db->quoteName('moduleid') . ' IN (' . $ids . ')')->execute();
+                $db->setQuery('DELETE FROM ' . $db->quoteName('#__modules') . ' WHERE ' . $db->quoteName('id') . ' IN (' . $ids . ')')->execute();
+            }
+
+            $existing = (int) $db->setQuery(
+                $db->getQuery(true)
+                    ->select('COUNT(*)')
+                    ->from($db->quoteName('#__modules'))
+                    ->where($db->quoteName('module') . ' = ' . $db->quote('mod_ticketstation_testmode'))
+                    ->where($db->quoteName('client_id') . ' = 1')
+            )->loadResult();
+
+            if ($installed === 0 || $existing > 0) {
+                return;
+            }
+
+            $dutch  = strncmp((string) Factory::getApplication()->getLanguage()->getTag(), 'nl', 2) === 0;
+            $module = (object) [
+                'title'     => $dutch ? 'Ticketstation - Testmodus' : 'Ticketstation - Test mode',
+                'note'      => '',
+                'content'   => '',
+                'ordering'  => 1,
+                'position'  => 'top',
+                'published' => 1,
+                'module'    => 'mod_ticketstation_testmode',
+                'access'    => 3,
+                'showtitle' => 0,
+                'params'    => json_encode(['cache' => 0]),
+                'client_id' => 1,
+                'language'  => '*',
+            ];
+
+            $db->insertObject('#__modules', $module, 'id');
+            $assignment = (object) ['moduleid' => (int) $module->id, 'menuid' => 0];
+            $db->insertObject('#__modules_menu', $assignment);
+        } catch (\Throwable $e) {
+            // Only a convenience: the module can be added in the module manager
+            Factory::getApplication()->enqueueMessage(
+                'The Ticketstation test mode bar could not be placed: ' . $e->getMessage()
+                . ' Add the module "Ticketstation Test Mode" in the position top in the Administrator Modules.',
                 'notice'
             );
         }

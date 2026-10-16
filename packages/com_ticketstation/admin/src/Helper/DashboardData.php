@@ -470,6 +470,29 @@ class DashboardData
     }
 
     /**
+     * The number of attention items that point at one screen, the number on that screen's button
+     * in the Control panel (the Box Office, for the counter on its quick link).
+     *
+     * @param   string  $view  The view the items link to, for instance 'boxoffice'
+     *
+     * @return  int
+     */
+    public static function attentionCount(string $view): int
+    {
+        $count = 0;
+
+        foreach (self::attention((new Config())->get()) as $item)
+        {
+            if ($item->view === $view)
+            {
+                $count += $item->count;
+            }
+        }
+
+        return $count;
+    }
+
+    /**
      * Whether the company details still lack what invoices and mails need: an empty name, address,
      * postcode, city or email, or example data that a fresh install seeds (install.mysql.utf8.sql).
      *
@@ -572,7 +595,8 @@ class DashboardData
      * returned, so a link is never a refusal.
      *
      * @return  array  key => object with link, icon (a Font Awesome class), label (language key of
-     *                 the module), newTab, add (link to add a record, or null)
+     *                 the module), newTab, add (link to add a record, or null), counter (address of the
+     *                 counter of what needs attention, or null)
      */
     public static function quickLinks(): array
     {
@@ -586,6 +610,10 @@ class DashboardData
                 'label'  => 'MOD_TICKETSTATION_DASHBOARD_LINK_' . strtoupper($key),
                 'newTab' => $newTab,
                 'add'    => $addLink,
+                // The Box Office button shows how much needs attention there (see ControlpanelController::quickicon)
+                'counter' => $key === 'boxoffice'
+                    ? 'index.php?option=com_ticketstation&amp;controller=controlpanel&amp;task=quickicon&amp;key=boxoffice&amp;format=json'
+                    : null,
             ];
         };
 

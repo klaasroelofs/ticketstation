@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<extension type="module" client="administrator" method="upgrade">
+
+	<name>mod_ticketstation_testmode</name>
+	<creationDate>2026-10-16</creationDate>
+	<author>Klaas Roelofs</author>
+	<authorEmail>klaasroelofs@huibuuke.nl</authorEmail>
+	<authorUrl>https://www.huibuuke.nl</authorUrl>
+	<copyright>© 2026 Klaas Roelofs</copyright>
+	<license>GPL v3</license>
+	<version>2.37.0-rc2</version>
+	<description>MOD_TICKETSTATION_TESTMODE_XML_DESCRIPTION</description>
+
+	<namespace path="src">Ticketstation\Module\TicketstationTestmode</namespace>
+
+	<files>
+		<folder module="mod_ticketstation_testmode">services</folder>
+		<folder>src</folder>
+		<folder>tmpl</folder>
+	</files>
+
+	<languages>
+		<language tag="en-GB">language/en-GB/mod_ticketstation_testmode.ini</language>
+		<language tag="en-GB">language/en-GB/mod_ticketstation_testmode.sys.ini</language>
+		<language tag="nl-NL">language/nl-NL/mod_ticketstation_testmode.ini</language>
+		<language tag="nl-NL">language/nl-NL/mod_ticketstation_testmode.sys.ini</language>
+	</languages>
+
+	<config>
+		<fields name="params">
+			<fieldset name="basic">
+				<field
+					name="hide_in_component"
+					type="radio"
+					label="MOD_TICKETSTATION_TESTMODE_HIDE_LABEL"
+					description="MOD_TICKETSTATION_TESTMODE_HIDE_DESC"
+					layout="joomla.form.field.radio.switcher"
+					default="1"
+					filter="integer"
+					>
+					<option value="0">JNO</option>
+					<option value="1">JYES</option>
+				</field>
+			</fieldset>
+			<fieldset name="advanced">
+				<field
+					name="layout"
+					type="modulelayout"
+					label="JFIELD_ALT_LAYOUT_LABEL"
+					class="form-select"
+					validate="moduleLayout"
+				/>
+				<field
+					name="moduleclass_sfx"
+					type="textarea"
+					label="COM_MODULES_FIELD_MODULECLASS_SFX_LABEL"
+					rows="3"
+					validate="CssIdentifier"
+				/>
+				<!--
+					Whether the shop is in test mode can change at any moment: never cached.
+				-->
+				<field
+					name="cache"
+					type="hidden"
+					default="0"
+				/>
+			</fieldset>
+		</fields>
+	</config>
+</extension>

@@ -13,9 +13,11 @@ defined('_JEXEC') or die;
 
 use Ticketstation\Component\Ticketstation\Administrator\Controller\Mixin\RegisterControllerTasks;
 use Joomla\CMS\Application\CMSApplication;
+use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\Controller\BaseController;
 use Joomla\CMS\MVC\Factory\MVCFactoryInterface;
 use Joomla\Input\Input;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\DashboardData;
 
 /**
  * Default Controller of Ticketstation component
@@ -47,4 +49,27 @@ class ControlpanelController extends BaseController {
         return parent::display($cachable, $urlparams);
     }
 
+    /**
+     * The counter on the Box Office quick link of the dashboard module (mod_ticketstation_dashboard),
+     * in the form Joomla's own quick icons use: the amount, a text for screen readers and the name.
+     * Read only.
+     */
+    public function quickicon()
+    {
+        $amount = $this->input->getCmd('key', '') === 'boxoffice' ? DashboardData::attentionCount('boxoffice') : 0;
+
+        header('Content-Type: application/json; charset=utf-8');
+        header('Cache-Control: private, max-age=0, must-revalidate');
+        echo json_encode([
+            'success'  => true,
+            'message'  => null,
+            'messages' => null,
+            'data'     => [
+                'amount' => $amount,
+                'sronly' => Text::plural('COM_TICKETSTATION_QUICKICON_BOXOFFICE_SRONLY', $amount),
+                'name'   => Text::_('COM_TICKETSTATION_BOXOFFICE'),
+            ],
+        ]);
+        exit();
+    }
 }

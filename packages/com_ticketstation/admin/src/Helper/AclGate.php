@@ -52,7 +52,8 @@ class AclGate
             'display' => self::MANAGE,
         ],
         'controlpanel' => [
-            ''     => self::MANAGE,
+            ''          => self::MANAGE,
+            'quickicon' => self::MANAGE,
         ],
         'docs' => [
             ''             => self::MANAGE,

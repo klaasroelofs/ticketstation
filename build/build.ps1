@@ -8,6 +8,7 @@
             packages\com_ticketstation.zip
             packages\mod_ticketstation_basket.zip
             packages\mod_ticketstation_dashboard.zip
+            packages\mod_ticketstation_testmode.zip
             packages\plg_task_ticketstation.zip
             packages\plg_system_ticketstation.zip
             packages\plg_ticketstationpayment_mollie.zip
@@ -37,6 +38,7 @@ $RepoRoot     = (Resolve-Path $RepoRoot).Path
 $ComponentDir = Join-Path $RepoRoot 'packages\com_ticketstation'
 $ModuleDir    = Join-Path $RepoRoot 'packages\mod_ticketstation_basket'
 $DashboardModuleDir = Join-Path $RepoRoot 'packages\mod_ticketstation_dashboard'
+$TestModeModuleDir = Join-Path $RepoRoot 'packages\mod_ticketstation_testmode'
 $PluginDir    = Join-Path $RepoRoot 'packages\plg_task_ticketstation'
 $SystemPluginDir = Join-Path $RepoRoot 'packages\plg_system_ticketstation'
 $MolliePluginDir = Join-Path $RepoRoot 'packages\plg_ticketstationpayment_mollie'
@@ -67,6 +69,7 @@ $versions = [ordered] @{
     'ticketstation.xml'            = Get-ManifestVersion (Join-Path $ComponentDir 'ticketstation.xml')
     'mod_ticketstation_basket.xml' = Get-ManifestVersion (Join-Path $ModuleDir 'mod_ticketstation_basket.xml')
     'mod_ticketstation_dashboard.xml' = Get-ManifestVersion (Join-Path $DashboardModuleDir 'mod_ticketstation_dashboard.xml')
+    'mod_ticketstation_testmode.xml' = Get-ManifestVersion (Join-Path $TestModeModuleDir 'mod_ticketstation_testmode.xml')
     'task/ticketstation.xml'      = Get-ManifestVersion (Join-Path $PluginDir 'ticketstation.xml')
     'system/ticketstation.xml'    = Get-ManifestVersion (Join-Path $SystemPluginDir 'ticketstation.xml')
     'ticketstationpayment/mollie.xml' = Get-ManifestVersion (Join-Path $MolliePluginDir 'mollie.xml')
@@ -186,6 +189,11 @@ try {
     $dashStage = Join-Path $staging 'mod_ticketstation_dashboard'
     Copy-Tree $DashboardModuleDir $dashStage
     New-Zip $dashStage (Join-Path $pkgRoot 'packages\mod_ticketstation_dashboard.zip')
+
+    # Administrator module (the bar at the top of the backend while the shop is in test mode)
+    $testStage = Join-Path $staging 'mod_ticketstation_testmode'
+    Copy-Tree $TestModeModuleDir $testStage
+    New-Zip $testStage (Join-Path $pkgRoot 'packages\mod_ticketstation_testmode.zip')
 
     # Task plugin (the reminder mail)
     $plgStage = Join-Path $staging 'plg_task_ticketstation'

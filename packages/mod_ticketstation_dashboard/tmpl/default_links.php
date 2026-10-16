@@ -18,7 +18,8 @@ use Joomla\CMS\Language\Text;
 
 // The buttons are Joomla's own quick icons (the same markup and style as the Site and System cards),
 // so they look and behave like those. An item with an "add" link gets the plus button next to it.
-$buttons = [];
+$buttons    = [];
+$hasCounter = false;
 
 foreach ($links as $item) {
     $button = [
@@ -35,7 +36,20 @@ foreach ($links as $item) {
         $button['linkadd'] = htmlspecialchars($item->add, ENT_QUOTES, 'UTF-8');
     }
 
+    // A counter, filled in after the page has loaded by Joomla's own quick icon script.
+    if ($item->counter) {
+        $button['ajaxurl'] = $item->counter;
+        $hasCounter        = true;
+    }
+
     $buttons[] = $button;
+}
+
+if ($hasCounter) {
+    // The script of Joomla's quick icon module, as that module loads it
+    $app->getDocument()->getWebAssetManager()
+        ->useScript('core')
+        ->registerAndUseScript('mod_quickicon', 'mod_quickicon/quickicon.min.js', ['relative' => true, 'version' => 'auto'], ['type' => 'module']);
 }
 ?>
 <nav class="quick-icons px-3 pb-3" aria-label="<?php echo htmlspecialchars(Text::_('MOD_TICKETSTATION_DASHBOARD_WIDGET_LINKS'), ENT_QUOTES, 'UTF-8'); ?>">
