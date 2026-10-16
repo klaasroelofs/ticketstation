@@ -268,8 +268,8 @@ class Refund
     /**
      * Refunds (part of) a paid order and records what happens to its tickets. With a provider
      * payment the refund is made at the provider; nothing is stored when it refuses it. The
-     * tickets only change once the refund can't be cancelled any more (see FINAL): usually a day
-     * later, when the provider reports it as processing. Without a provider payment the refund is
+     * tickets only change once the refund can't be cancelled any more (see FINAL): with Mollie
+     * after about 120 minutes, when it reports the refund as processing; with Stripe practically at once. Without a provider payment the refund is
      * registered as paid back by hand and the tickets change straight away.
      *
      * @param   array  $treatments  orderid => TICKET_ constant
@@ -658,7 +658,7 @@ class Refund
     /**
      * Looks at the latest refunds and chargebacks of the whole provider account and stores the ones
      * that belong to an order. Mollie only reports a refund by webhook once it processes it
-     * (usually the next working day), so without this a refund a colleague made in the Mollie
+     * (after about 120 minutes), so without this a refund a colleague made in the Mollie
      * Dashboard would stay unnoticed until then. Called when the dashboard or the Box Office opens,
      * at most once every few minutes per session; errors are ignored, the webhook remains the
      * fallback. All providers are asked, switched on or not: their earlier payments can still be

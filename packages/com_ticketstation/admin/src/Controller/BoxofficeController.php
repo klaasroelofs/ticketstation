@@ -749,7 +749,15 @@ class BoxofficeController extends BaseController {
 
             if ($refund && Refund::isWaiting($refund))
             {
-                $app->enqueueMessage(Text::_('COM_TICKETSTATION_REFUND_TICKETS_WAITING'), 'notice');
+                $key = 'COM_TICKETSTATION_REFUND_TICKETS_WAITING';
+
+                // Each provider has its own timing, so the notice names it
+                if (in_array($refund->provider, ['mollie', 'stripe'], true))
+                {
+                    $key .= '_' . strtoupper($refund->provider);
+                }
+
+                $app->enqueueMessage(Text::_($key), 'notice');
             }
         }
         catch (\RuntimeException $e)

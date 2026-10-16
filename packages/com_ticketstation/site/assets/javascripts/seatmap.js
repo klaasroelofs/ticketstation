@@ -5,8 +5,8 @@
  * @copyright   Copyright (C) 2026 Klaas Roelofs. All rights reserved.
  * @license     GNU General Public License version 3; see LICENSE
  *
- * Zoom buttons of the seat charts drawn by SeatChart::open(): they scale the chart inside its
- * scroll area and keep the point in the middle of the view where it was.
+ * Zoom of the seat charts drawn by SeatChart::open(): the zoom buttons and pinching with two fingers
+ * scale the chart inside its scroll area and keep the point they zoom around where it was.
  *
  * Seat tooltips: a seat with data-ts-tip (lines separated by newlines, the first one being the
  * seat itself) shows that text next to it on hover or keyboard focus, and for a moment after a
@@ -17,16 +17,22 @@
     'use strict';
 
     var STEPS = [1, 1.5, 2, 3, 4];
+    var MAX_ZOOM = STEPS[STEPS.length - 1];
 
-    function zoomTo(frame, zoom) {
+    // Zooms the chart, keeping the point at (x, y) in the viewport (default: the middle of the view)
+    // where it was.
+    function zoomTo(frame, zoom, x, y) {
         var scroll = frame.querySelector('.ts-chart-scroll');
+        var box = scroll.getBoundingClientRect();
         var before = parseFloat(frame.style.getPropertyValue('--ts-zoom')) || 1;
-        var cx = (scroll.scrollLeft + scroll.clientWidth / 2) / before;
-        var cy = (scroll.scrollTop + scroll.clientHeight / 2) / before;
+        var ox = x === undefined ? scroll.clientWidth / 2 : x - box.left;
+        var oy = y === undefined ? scroll.clientHeight / 2 : y - box.top;
+        var cx = (scroll.scrollLeft + ox) / before;
+        var cy = (scroll.scrollTop + oy) / before;
 
         frame.style.setProperty('--ts-zoom', zoom);
-        scroll.scrollLeft = cx * zoom - scroll.clientWidth / 2;
-        scroll.scrollTop = cy * zoom - scroll.clientHeight / 2;
+        scroll.scrollLeft = cx * zoom - ox;
+        scroll.scrollTop = cy * zoom - oy;
     }
 
     document.addEventListener('click', function (event) {
@@ -40,18 +46,77 @@
 
         var frame = button.closest('.ts-chart-frame');
         var current = parseFloat(frame.style.getPropertyValue('--ts-zoom')) || 1;
-        var index = STEPS.indexOf(current);
         var action = button.getAttribute('data-ts-zoom');
 
+        // Pinching can leave the zoom between two steps: go to the next step from there.
         if (action === 'in') {
-            zoomTo(frame, STEPS[Math.min(STEPS.length - 1, index + 1)]);
+            zoomTo(frame, STEPS.filter(function (step) { return step > current + 0.001; })[0] || MAX_ZOOM);
         } else if (action === 'out') {
-            zoomTo(frame, STEPS[Math.max(0, index - 1)]);
+            zoomTo(frame, STEPS.filter(function (step) { return step < current - 0.001; }).pop() || 1);
         } else {
             zoomTo(frame, 1);
         }
     });
 
+    // Pinch to zoom on a touch screen. Two fingers zoom around the point between them; one finger
+    // still scrolls the chart. The touch handlers are not passive, since the page's own pinch zoom
+    // and scrolling have to be stopped while the chart is being pinched.
+    var pinch = null;
+    var pinchEnded = 0;
+
+    function touchDistance(touches) {
+        return Math.hypot(touches[0].clientX - touches[1].clientX, touches[0].clientY - touches[1].clientY);
+    }
+
+    document.addEventListener('touchstart', function (event) {
+        var scroll = event.target.closest ? event.target.closest('.ts-chart-scroll') : null;
+
+        if (!scroll || event.touches.length !== 2) {
+            return;
+        }
+
+        var frame = scroll.closest('.ts-chart-frame');
+        var start = touchDistance(event.touches);
+
+        if (!frame || start < 1) {
+            return;
+        }
+
+        hideTip();
+        pinch = {frame: frame, start: start, zoom: parseFloat(frame.style.getPropertyValue('--ts-zoom')) || 1};
+    }, {passive: true});
+
+    document.addEventListener('touchmove', function (event) {
+        if (!pinch || event.touches.length !== 2) {
+            return;
+        }
+
+        event.preventDefault();
+
+        var zoom = Math.round(Math.min(MAX_ZOOM, Math.max(1, pinch.zoom * touchDistance(event.touches) / pinch.start)) * 100) / 100;
+        var x = (event.touches[0].clientX + event.touches[1].clientX) / 2;
+        var y = (event.touches[0].clientY + event.touches[1].clientY) / 2;
+
+        zoomTo(pinch.frame, zoom, x, y);
+    }, {passive: false});
+
+    function pinchStop(event) {
+        if (pinch && event.touches.length < 2) {
+            pinch = null;
+            pinchEnded = Date.now();
+        }
+    }
+
+    document.addEventListener('touchend', pinchStop);
+    document.addEventListener('touchcancel', pinchStop);
+
+    // Lifting the fingers after a pinch must not pick the seat under them.
+    document.addEventListener('click', function (event) {
+        if (pinchEnded && Date.now() - pinchEnded < 500) {
+            event.stopPropagation();
+            event.preventDefault();
+        }
+    }, true);
     var TAP_TIME = 2500;
     var tip = null;
     var tipSeat = null;

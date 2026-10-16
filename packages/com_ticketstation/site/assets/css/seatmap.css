@@ -42,6 +42,8 @@
     max-width: 100%;
     overflow: auto;
     -webkit-overflow-scrolling: touch;
+    /* One finger scrolls; pinching is handled by seatmap.js instead of zooming the whole page. */
+    touch-action: pan-x pan-y;
     padding-bottom: .5rem;
 }
 

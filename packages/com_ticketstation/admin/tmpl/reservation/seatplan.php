@@ -213,7 +213,13 @@ $chartCanvas     = SeatChart::canvas($chartSettings, $this->seats, $chartBackgro
             $('#glassbox').on('click', '.seat-element', function () {
                 var $seat = $(this);
 
-                if ($seat.data('taken') == 1 || $seat.data('mine') == 1) {
+                if ($seat.data('taken') == 1) {
+                    return;
+                }
+
+                // A seat that is already chosen is given back by clicking it again
+                if ($seat.data('mine') == 1) {
+                    removeSeat($seat.attr('id').replace('seat-', ''));
                     return;
                 }
 
@@ -243,8 +249,11 @@ $chartCanvas     = SeatChart::canvas($chartSettings, $this->seats, $chartBackgro
             $('#cart-list').on('click', '.remove-seat', function (e) {
                 e.preventDefault();
 
-                var id = $(this).data('id');
+                removeSeat($(this).data('id'));
+            });
 
+            // Gives a chosen seat back: from the list of chosen seats, or by clicking the seat again.
+            function removeSeat(id) {
                 $.ajax({
                     type: 'post',
                     url: 'index.php?option=com_ticketstation&controller=reservation&task=removeSeat&format=raw',
@@ -260,7 +269,7 @@ $chartCanvas     = SeatChart::canvas($chartSettings, $this->seats, $chartBackgro
                 }).fail(function () {
                     showMessage('<?= Text::_('COM_TICKETSTATION_RESERVATION_SAVE_FAILED') ?>');
                 });
-            });
+            }
 
             // A free seat can still be switched to another price category after it was clicked.
             $('#cart-list').on('change', '.seat-category', function () {

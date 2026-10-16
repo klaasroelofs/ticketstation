@@ -387,7 +387,12 @@ $bannerStyle = TicketstationFunctions::backgroundImageStyle('ticket' . (int) $th
 
     $('#ticket-options').on('click', '.remove', function (event) {
 
-        var currentId = $(this).attr('id');
+        removeSeat($(this).attr('id'));
+
+    });
+
+    // Gives a chosen seat back: from the Remove button, or by clicking the seat again in the chart.
+    function removeSeat(currentId) {
 
         var tokenName = '<?php echo \Joomla\CMS\Session\Session::getFormToken(); ?>';
         var data = 'id=' + currentId  + '&ordercode=' + <?php echo $ordercode; ?> + '&' + tokenName + '=1';
@@ -430,7 +435,7 @@ $bannerStyle = TicketstationFunctions::backgroundImageStyle('ticket' . (int) $th
             error: requestFailed
         });
 
-    });
+    }
 
     $('#items').on('click', '.ts-chosen-seat', function (event) {
 
@@ -473,6 +478,12 @@ $bannerStyle = TicketstationFunctions::backgroundImageStyle('ticket' . (int) $th
             // Get the current clicked id :)
             var seatNumber = $(this).attr('id');
             var currentId = seatNumber.split('-');
+
+            // A seat that is already yours is given back by clicking it again
+            if ($(this).hasClass('seat-element--mine')) {
+                removeSeat(currentId[1]);
+                return;
+            }
 
             var tokenName = '<?php echo \Joomla\CMS\Session\Session::getFormToken(); ?>';
             var data = 'id=' + currentId[1]  + '&ordercode=' + <?php echo $ordercode; ?> + '&' + tokenName + '=1';
