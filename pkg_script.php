@@ -458,12 +458,15 @@ class pkg_ticketstationInstallerScript extends InstallerScript
 
     /**
      * Converts the small Markdown subset the release notes use: ## and ### headings, "- " list
-     * items, paragraphs, **bold**, *italic*, `code` and [links](https://...).
+     * items with, below an item, "  - " items (indented by two spaces or more) as a sub list,
+     * paragraphs, **bold**, *italic*, `code` and [links](https://...).
      */
     private function markdownToHtml($markdown)
     {
         $html  = '';
         $list  = false;
+        $item  = false;
+        $sub   = false;
         $para  = [];
         $lines = preg_split('/\R/', trim($markdown));
 
@@ -474,25 +477,61 @@ class pkg_ticketstationInstallerScript extends InstallerScript
             }
         };
 
-        foreach ($lines as $line) {
-            $line = rtrim($line);
+        // Closes the sub list, the item it belongs to and the list, as far as they are open
+        $closeList = function () use (&$html, &$list, &$item, &$sub) {
+            if ($sub) {
+                $html .= '</ul>';
+                $sub   = false;
+            }
 
-            if (preg_match('/^- (.*)$/', $line, $m)) {
-                $flushPara();
-
-                if (!$list) {
-                    $html .= '<ul>';
-                    $list  = true;
-                }
-
-                $html .= '<li>' . $this->inline($m[1]) . '</li>';
-                continue;
+            if ($item) {
+                $html .= '</li>';
+                $item  = false;
             }
 
             if ($list) {
                 $html .= '</ul>';
                 $list  = false;
             }
+        };
+
+        foreach ($lines as $line) {
+            $line = rtrim($line);
+
+            // A sub item: indented, and only below an item
+            if ($item && preg_match('/^ {2,}- (.*)$/', $line, $m)) {
+                if (!$sub) {
+                    $html .= '<ul>';
+                    $sub   = true;
+                }
+
+                $html .= '<li>' . $this->inline($m[1]) . '</li>';
+                continue;
+            }
+
+            if (preg_match('/^- (.*)$/', $line, $m)) {
+                $flushPara();
+
+                if ($sub) {
+                    $html .= '</ul>';
+                    $sub   = false;
+                }
+
+                if ($item) {
+                    $html .= '</li>';
+                }
+
+                if (!$list) {
+                    $html .= '<ul>';
+                    $list  = true;
+                }
+
+                $html .= '<li>' . $this->inline($m[1]);
+                $item  = true;
+                continue;
+            }
+
+            $closeList();
 
             if (preg_match('/^(#{2,3}) (.*)$/', $line, $m)) {
                 $flushPara();
@@ -506,14 +545,10 @@ class pkg_ticketstationInstallerScript extends InstallerScript
         }
 
         $flushPara();
-
-        if ($list) {
-            $html .= '</ul>';
-        }
+        $closeList();
 
         return $html;
     }
-
     private function inline($text)
     {
         $text = htmlspecialchars($text, ENT_QUOTES, 'UTF-8');
