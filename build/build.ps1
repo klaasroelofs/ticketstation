@@ -7,6 +7,7 @@
             release-notes.md            (release-notes\<version>.md, when it exists)
             packages\com_ticketstation.zip
             packages\mod_ticketstation_basket.zip
+            packages\mod_ticketstation_dashboard.zip
             packages\plg_task_ticketstation.zip
             packages\plg_system_ticketstation.zip
             packages\plg_ticketstationpayment_mollie.zip
@@ -35,6 +36,7 @@ Add-Type -AssemblyName System.IO.Compression.FileSystem
 $RepoRoot     = (Resolve-Path $RepoRoot).Path
 $ComponentDir = Join-Path $RepoRoot 'packages\com_ticketstation'
 $ModuleDir    = Join-Path $RepoRoot 'packages\mod_ticketstation_basket'
+$DashboardModuleDir = Join-Path $RepoRoot 'packages\mod_ticketstation_dashboard'
 $PluginDir    = Join-Path $RepoRoot 'packages\plg_task_ticketstation'
 $SystemPluginDir = Join-Path $RepoRoot 'packages\plg_system_ticketstation'
 $MolliePluginDir = Join-Path $RepoRoot 'packages\plg_ticketstationpayment_mollie'
@@ -64,6 +66,7 @@ $versions = [ordered] @{
     'pkg_ticketstation.xml'        = Get-ManifestVersion (Join-Path $RepoRoot 'pkg_ticketstation.xml')
     'ticketstation.xml'            = Get-ManifestVersion (Join-Path $ComponentDir 'ticketstation.xml')
     'mod_ticketstation_basket.xml' = Get-ManifestVersion (Join-Path $ModuleDir 'mod_ticketstation_basket.xml')
+    'mod_ticketstation_dashboard.xml' = Get-ManifestVersion (Join-Path $DashboardModuleDir 'mod_ticketstation_dashboard.xml')
     'task/ticketstation.xml'      = Get-ManifestVersion (Join-Path $PluginDir 'ticketstation.xml')
     'system/ticketstation.xml'    = Get-ManifestVersion (Join-Path $SystemPluginDir 'ticketstation.xml')
     'ticketstationpayment/mollie.xml' = Get-ManifestVersion (Join-Path $MolliePluginDir 'mollie.xml')
@@ -178,6 +181,11 @@ try {
     Copy-Tree $ModuleDir $modStage
     $modVersion = Get-ManifestVersion (Join-Path $modStage 'mod_ticketstation_basket.xml')
     New-Zip $modStage (Join-Path $pkgRoot 'packages\mod_ticketstation_basket.zip')
+
+    # Administrator module (the Ticketstation widgets on Joomla's dashboard)
+    $dashStage = Join-Path $staging 'mod_ticketstation_dashboard'
+    Copy-Tree $DashboardModuleDir $dashStage
+    New-Zip $dashStage (Join-Path $pkgRoot 'packages\mod_ticketstation_dashboard.zip')
 
     # Task plugin (the reminder mail)
     $plgStage = Join-Path $staging 'plg_task_ticketstation'

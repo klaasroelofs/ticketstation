@@ -1,0 +1,175 @@
+<?xml version="1.0" encoding="utf-8"?>
+<extension type="module" client="administrator" method="upgrade">
+
+	<name>mod_ticketstation_dashboard</name>
+	<creationDate>2026-10-16</creationDate>
+	<author>Klaas Roelofs</author>
+	<authorEmail>klaasroelofs@huibuuke.nl</authorEmail>
+	<authorUrl>https://www.huibuuke.nl</authorUrl>
+	<copyright>© 2026 Klaas Roelofs</copyright>
+	<license>GPL v3</license>
+	<version>2.37.0-rc1</version>
+	<description>MOD_TICKETSTATION_DASHBOARD_XML_DESCRIPTION</description>
+
+	<namespace path="src">Ticketstation\Module\TicketstationDashboard</namespace>
+
+	<files>
+		<folder module="mod_ticketstation_dashboard">services</folder>
+		<folder>src</folder>
+		<folder>tmpl</folder>
+	</files>
+
+	<languages>
+		<language tag="en-GB">language/en-GB/mod_ticketstation_dashboard.ini</language>
+		<language tag="en-GB">language/en-GB/mod_ticketstation_dashboard.sys.ini</language>
+		<language tag="nl-NL">language/nl-NL/mod_ticketstation_dashboard.ini</language>
+		<language tag="nl-NL">language/nl-NL/mod_ticketstation_dashboard.sys.ini</language>
+	</languages>
+
+	<media destination="mod_ticketstation_dashboard" folder="media">
+		<filename>joomla.asset.json</filename>
+		<folder>css</folder>
+	</media>
+
+	<config>
+		<fields name="params">
+			<fieldset name="basic">
+				<field
+					name="widget"
+					type="list"
+					label="MOD_TICKETSTATION_DASHBOARD_WIDGET_LABEL"
+					description="MOD_TICKETSTATION_DASHBOARD_WIDGET_DESC"
+					default="attention"
+					validate="options"
+					class="form-select"
+					>
+					<option value="attention">MOD_TICKETSTATION_DASHBOARD_WIDGET_ATTENTION</option>
+					<option value="stats">MOD_TICKETSTATION_DASHBOARD_WIDGET_STATS</option>
+					<option value="upcoming">MOD_TICKETSTATION_DASHBOARD_WIDGET_UPCOMING</option>
+					<option value="links">MOD_TICKETSTATION_DASHBOARD_WIDGET_LINKS</option>
+				</field>
+				<field
+					name="hide_when_empty"
+					type="radio"
+					label="MOD_TICKETSTATION_DASHBOARD_HIDE_WHEN_EMPTY_LABEL"
+					description="MOD_TICKETSTATION_DASHBOARD_HIDE_WHEN_EMPTY_DESC"
+					layout="joomla.form.field.radio.switcher"
+					default="0"
+					filter="integer"
+					showon="widget:attention"
+					>
+					<option value="0">JNO</option>
+					<option value="1">JYES</option>
+				</field>
+				<field
+					name="count"
+					type="number"
+					label="MOD_TICKETSTATION_DASHBOARD_COUNT_LABEL"
+					description="MOD_TICKETSTATION_DASHBOARD_COUNT_DESC"
+					default="5"
+					min="1"
+					max="20"
+					filter="integer"
+					showon="widget:upcoming"
+				/>
+				<!--
+					A list of rows rather than a multiple select: a multiple select posts its choices in
+					the order of its options, so the order the administrator wants would be lost. The
+					rows can be dragged into order. The default is the JSON of the usual six links.
+				-->
+				<field
+					name="links"
+					type="subform"
+					label="MOD_TICKETSTATION_DASHBOARD_LINKS_LABEL"
+					description="MOD_TICKETSTATION_DASHBOARD_LINKS_DESC"
+					multiple="true"
+					min="1"
+					buttons="add,remove,move"
+					layout="joomla.form.field.subform.repeatable-table"
+					default='{"links0":{"link":"controlpanel"},"links1":{"link":"events"},"links2":{"link":"tickets"},"links3":{"link":"reservation"},"links4":{"link":"boxoffice"},"links5":{"link":"scanpage"}}'
+					showon="widget:links"
+					>
+					<form>
+				<field
+					name="link"
+					type="list"
+					label="MOD_TICKETSTATION_DASHBOARD_LINK_LABEL"
+					default="boxoffice"
+					validate="options"
+					class="form-select"
+					>
+					<option value="controlpanel">MOD_TICKETSTATION_DASHBOARD_LINK_CONTROLPANEL</option>
+					<option value="reservation">MOD_TICKETSTATION_DASHBOARD_LINK_RESERVATION</option>
+					<option value="boxoffice">MOD_TICKETSTATION_DASHBOARD_LINK_BOXOFFICE</option>
+					<option value="clients">MOD_TICKETSTATION_DASHBOARD_LINK_CLIENTS</option>
+					<option value="transactions">MOD_TICKETSTATION_DASHBOARD_LINK_TRANSACTIONS</option>
+					<option value="invoices">MOD_TICKETSTATION_DASHBOARD_LINK_INVOICES</option>
+					<option value="coupons">MOD_TICKETSTATION_DASHBOARD_LINK_COUPONS</option>
+					<option value="waitinglist">MOD_TICKETSTATION_DASHBOARD_LINK_WAITINGLIST</option>
+					<option value="tickets">MOD_TICKETSTATION_DASHBOARD_LINK_TICKETS</option>
+					<option value="events">MOD_TICKETSTATION_DASHBOARD_LINK_EVENTS</option>
+					<option value="venues">MOD_TICKETSTATION_DASHBOARD_LINK_VENUES</option>
+					<option value="seatplans">MOD_TICKETSTATION_DASHBOARD_LINK_SEATPLANS</option>
+					<option value="scanpage">MOD_TICKETSTATION_DASHBOARD_LINK_SCANPAGE</option>
+					<option value="scanners">MOD_TICKETSTATION_DASHBOARD_LINK_SCANNERS</option>
+					<option value="templates">MOD_TICKETSTATION_DASHBOARD_LINK_TEMPLATES</option>
+					<option value="configuration">MOD_TICKETSTATION_DASHBOARD_LINK_CONFIGURATION</option>
+					<option value="payments">MOD_TICKETSTATION_DASHBOARD_LINK_PAYMENTS</option>
+					<option value="docs">MOD_TICKETSTATION_DASHBOARD_LINK_DOCS</option>
+				</field>
+					</form>
+				</field>
+				<!--
+					Joomla's dashboard card reads the icon before the title from the parameter header_icon.
+					A list rather than a text field: nobody has to know the class names. The default says
+					"Ticketstation" for any widget; the instances the package places get their own.
+				-->
+				<field
+					name="header_icon"
+					type="list"
+					label="MOD_TICKETSTATION_DASHBOARD_HEADER_ICON_LABEL"
+					description="MOD_TICKETSTATION_DASHBOARD_HEADER_ICON_DESC"
+					default="fa fa-ticket-alt"
+					validate="options"
+					class="form-select"
+					>
+					<option value="">MOD_TICKETSTATION_DASHBOARD_ICON_NONE</option>
+					<option value="fa fa-bell">MOD_TICKETSTATION_DASHBOARD_ICON_BELL</option>
+					<option value="fa fa-chart-line">MOD_TICKETSTATION_DASHBOARD_ICON_CHART</option>
+					<option value="fa fa-calendar-alt">MOD_TICKETSTATION_DASHBOARD_ICON_CALENDAR</option>
+					<option value="fa fa-bolt">MOD_TICKETSTATION_DASHBOARD_ICON_BOLT</option>
+					<option value="fa fa-ticket-alt">MOD_TICKETSTATION_DASHBOARD_ICON_TICKET</option>
+					<option value="fa fa-coins">MOD_TICKETSTATION_DASHBOARD_ICON_COINS</option>
+					<option value="fa fa-star">MOD_TICKETSTATION_DASHBOARD_ICON_STAR</option>
+					<option value="fa fa-users">MOD_TICKETSTATION_DASHBOARD_ICON_USERS</option>
+					<option value="fa fa-cog">MOD_TICKETSTATION_DASHBOARD_ICON_COG</option>
+				</field>
+			</fieldset>
+			<fieldset name="advanced">
+				<field
+					name="layout"
+					type="modulelayout"
+					label="JFIELD_ALT_LAYOUT_LABEL"
+					class="form-select"
+					validate="moduleLayout"
+				/>
+				<field
+					name="moduleclass_sfx"
+					type="textarea"
+					label="COM_MODULES_FIELD_MODULECLASS_SFX_LABEL"
+					rows="3"
+					validate="CssIdentifier"
+				/>
+				<!--
+					Sales figures, attention items and availability change by the minute, and the
+					output depends on what the viewer may see, so the module is never cached.
+				-->
+				<field
+					name="cache"
+					type="hidden"
+					default="0"
+				/>
+			</fieldset>
+		</fields>
+	</config>
+</extension>

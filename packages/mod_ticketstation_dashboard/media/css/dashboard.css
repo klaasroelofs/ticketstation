@@ -1,0 +1,38 @@
+/* Ticketstation widgets on Joomla's dashboard. Colours come from the theme variables, which Atum
+   defines without the usual --bs- prefix (the --bs- names are the fallback for other admin
+   templates), so they follow Atum's light/dark setting. */
+
+/* Joomla's module chrome puts the content right against the edge of the card. */
+.ts-dash {
+    padding: 1rem 1.25rem 1.25rem;
+}
+/* The quick links are Joomla's own quick icons, which bring their own spacing. */
+.ts-dash--links {
+    padding: 0;
+}
+
+.ts-dash-kpis {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr));
+    gap: .75rem 1rem;
+}
+.ts-dash-kpi-value {
+    font-size: 1.6rem;
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+.ts-dash-chart {
+    display: block;
+    width: 100%;
+    height: 64px;
+}
+.ts-dash-chart rect.is-sale {
+    fill: var(--primary, var(--bs-primary, #0d6efd));
+}
+.ts-dash-chart rect.is-sale:hover {
+    fill: var(--primary-text-emphasis, var(--bs-primary-text-emphasis, #052c65));
+}
+.ts-dash-chart rect.is-empty {
+    fill: var(--border-color, var(--bs-border-color, #dee2e6));
+}

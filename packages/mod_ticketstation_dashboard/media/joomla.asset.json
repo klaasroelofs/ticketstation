@@ -1,0 +1,15 @@
+{
+  "$schema": "https://developer.joomla.org/schemas/json-schema/web_assets.json",
+  "name": "mod_ticketstation_dashboard",
+  "version": "auto",
+  "description": "Ticketstation dashboard module assets",
+  "license": "GPL-3.0-only",
+  "assets": [
+    {
+      "name": "mod_ticketstation_dashboard.dashboard",
+      "description": "Dashboard widget styles",
+      "type": "style",
+      "uri": "mod_ticketstation_dashboard/dashboard.css"
+    }
+  ]
+}

@@ -13,9 +13,8 @@ use Joomla\CMS\Language\Text;
 use Joomla\CMS\Layout\LayoutHelper;
 use Joomla\CMS\Router\Route;
 use Joomla\CMS\Uri\Uri;
-use Ticketstation\Component\Ticketstation\Administrator\Helper\AclGate;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\DashboardData;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Price;
-use Ticketstation\Component\Ticketstation\Administrator\Helper\WaitingList;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Date;
 
 // No direct access to this file
@@ -42,39 +41,8 @@ foreach ($this->attention as $item) {
     $badges[$item->view] = $badge;
 }
 
-// The screen buttons: view, icon and label, per group.
-$tileGroups = [
-    'COM_TICKETSTATION_CPANEL_HEADER_TRANSACTIONMANAGEMENT' => [
-        ['boxoffice', 'fa-money-bill-alt', 'COM_TICKETSTATION_BOXOFFICE'],
-        ['clients', 'fa-users', 'COM_TICKETSTATION_CUSTOMERS'],
-        ['transactions', 'fa-credit-card', 'COM_TICKETSTATION_TRANSACTIONS'],
-        ['invoices', 'fa-file-invoice', 'COM_TICKETSTATION_INVOICES'],
-        ['coupons', 'fa-percent', 'COM_TICKETSTATION_COUPONS'],
-        ['reservation', 'fa-calendar-plus', 'COM_TICKETSTATION_RESERVATION_CPANEL_BUTTON'],
-    ],
-    'COM_TICKETSTATION_CPANEL_HEADER_TICKETMANAGEMENT' => [
-        ['tickets', 'fa-ticket-alt', 'COM_TICKETSTATION_TICKETS'],
-        ['events', 'fa-calendar-alt', 'COM_TICKETSTATION_EVENTS'],
-        ['venues', 'fa-solid fa-hotel', 'COM_TICKETSTATION_VENUES'],
-        ['seatplans', 'fa-chair', 'COM_TICKETSTATION_SEATPLANS'],
-    ],
-    'COM_TICKETSTATION_CPANEL_HEADER_CONFIGURATION' => [
-        ['scanners', 'fa-qrcode', 'COM_TICKETSTATION_TICKETSCANNING'],
-        ['templates', 'fa-envelope', 'COM_TICKETSTATION_VIEW_TEMPLATES_TITLE'],
-        ['configuration', 'fa-cog', 'COM_TICKETSTATION_CONFIGURATION'],
-        ['payments', 'fa-credit-card', 'COM_TICKETSTATION_PAYMENTS_CONFIG'],
-        ['docs', 'fa-book', 'COM_TICKETSTATION_VIEW_DOCS_TITLE'],
-    ],
-];
-if (WaitingList::anywhere()) {
-    $tileGroups['COM_TICKETSTATION_CPANEL_HEADER_TRANSACTIONMANAGEMENT'][] = ['waitinglist', 'fa-hourglass-half', 'COM_TICKETSTATION_WAITINGLIST'];
-}
-
-// Only the screens this user may open (see AclGate).
-foreach ($tileGroups as $groupKey => $tiles) {
-    $tileGroups[$groupKey] = array_filter($tiles, static fn($tile) => AclGate::canOpen($tile[0]));
-}
-$tileGroups = array_filter($tileGroups);
+// The screen buttons per group, limited to the screens this user may open (see DashboardData and AclGate).
+$tileGroups = DashboardData::tileGroups();
 
 $stats     = $this->stats;
 $weekDiff  = $stats['week']->tickets - $stats['prev_week']->tickets;

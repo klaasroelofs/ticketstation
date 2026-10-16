@@ -68,6 +68,13 @@ $bullets = function (string $prefix, int $count) {
             </div>
         </details>
 
+        <details id="docs-controlpanel-dashboard" class="mb-3 border rounded p-3">
+            <summary class="h5 mb-0"><span class="fa fa-th-large me-2" aria-hidden="true"></span><?= Text::_('COM_TICKETSTATION_CONTROLPANEL_DOCS_DASHBOARD_TITLE') ?></summary>
+            <div class="mt-3">
+                <?php $bullets('COM_TICKETSTATION_CONTROLPANEL_DOCS_DASHBOARD_', 4); ?>
+            </div>
+        </details>
+
         <details id="docs-controlpanel-version" class="border rounded p-3">
             <summary class="h5 mb-0"><span class="fa fa-sync-alt me-2" aria-hidden="true"></span><?= Text::_('COM_TICKETSTATION_CONTROLPANEL_DOCS_VERSION_TITLE') ?></summary>
             <div class="mt-3">

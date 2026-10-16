@@ -70,6 +70,12 @@ class pkg_ticketstationInstallerScript extends InstallerScript
                 ->where($db->quoteName('element') . ' = ' . $db->quote('ticketstation'))
         )->execute();
 
+        // A new installation gets the dashboard widgets on Joomla's dashboard. Never on an update: an
+        // administrator who removed or moved them keeps it that way.
+        if ($type === 'install') {
+            $this->placeDashboardModules($db);
+        }
+
         // The first install of a version with payment plugins, or an update from one before: bring the Mollie settings along.
         if ($type === 'install' || $this->oldVersion === null || version_compare($this->oldVersion, '2.25.0-rc3', '<')) {
             $this->setUpMolliePlugin($db);
@@ -98,6 +104,90 @@ class pkg_ticketstationInstallerScript extends InstallerScript
         }
 
         return true;
+    }
+
+    /**
+     * Puts two widgets of the Ticketstation dashboard module on Joomla's Home Dashboard (position
+     * cpanel): what needs attention, and the key figures. Called for a new installation only, and
+     * only while no instance of the module exists. The titles, which start with "Ticketstation" so the cards are recognisable on the dashboard, follow the administrator language,
+     * as Joomla stores module titles as plain text.
+     */
+    private function placeDashboardModules($db)
+    {
+        try {
+            $installed = (int) $db->setQuery(
+                $db->getQuery(true)
+                    ->select('COUNT(*)')
+                    ->from($db->quoteName('#__extensions'))
+                    ->where($db->quoteName('type') . ' = ' . $db->quote('module'))
+                    ->where($db->quoteName('element') . ' = ' . $db->quote('mod_ticketstation_dashboard'))
+                    ->where($db->quoteName('client_id') . ' = 1')
+            )->loadResult();
+
+            // Joomla itself creates one unpublished instance without a position when it installs an
+            // administrator module; that is not a choice of the administrator, so it makes way.
+            $blank = $db->setQuery(
+                $db->getQuery(true)
+                    ->select($db->quoteName('id'))
+                    ->from($db->quoteName('#__modules'))
+                    ->where($db->quoteName('module') . ' = ' . $db->quote('mod_ticketstation_dashboard'))
+                    ->where($db->quoteName('client_id') . ' = 1')
+                    ->where($db->quoteName('published') . ' = 0')
+                    ->where($db->quoteName('position') . ' = ' . $db->quote(''))
+            )->loadColumn();
+
+            if ($blank) {
+                $ids = implode(',', array_map('intval', $blank));
+                $db->setQuery('DELETE FROM ' . $db->quoteName('#__modules_menu') . ' WHERE ' . $db->quoteName('moduleid') . ' IN (' . $ids . ')')->execute();
+                $db->setQuery('DELETE FROM ' . $db->quoteName('#__modules') . ' WHERE ' . $db->quoteName('id') . ' IN (' . $ids . ')')->execute();
+            }
+
+            $existing = (int) $db->setQuery(
+                $db->getQuery(true)
+                    ->select('COUNT(*)')
+                    ->from($db->quoteName('#__modules'))
+                    ->where($db->quoteName('module') . ' = ' . $db->quote('mod_ticketstation_dashboard'))
+                    ->where($db->quoteName('client_id') . ' = 1')
+            )->loadResult();
+
+            if ($installed === 0 || $existing > 0) {
+                return;
+            }
+
+            $dutch   = strncmp((string) Factory::getApplication()->getLanguage()->getTag(), 'nl', 2) === 0;
+            $widgets = [
+                ['attention', $dutch ? 'Ticketstation - Aandacht nodig' : 'Ticketstation - Needs attention', 'fa fa-bell'],
+                ['stats', $dutch ? 'Ticketstation - Kerncijfers' : 'Ticketstation - Key figures', 'fa fa-chart-line'],
+            ];
+
+            foreach ($widgets as $index => [$widget, $title, $icon]) {
+                $module = (object) [
+                    'title'     => $title,
+                    'note'      => '',
+                    'content'   => '',
+                    'ordering'  => $index + 1,
+                    'position'  => 'cpanel',
+                    'published' => 1,
+                    'module'    => 'mod_ticketstation_dashboard',
+                    'access'    => 3,
+                    'showtitle' => 1,
+                    'params'    => json_encode(['widget' => $widget, 'hide_when_empty' => 0, 'cache' => 0, 'header_tag' => 'h2', 'header_icon' => $icon]),
+                    'client_id' => 1,
+                    'language'  => '*',
+                ];
+
+                $db->insertObject('#__modules', $module, 'id');
+                $assignment = (object) ['moduleid' => (int) $module->id, 'menuid' => 0];
+                $db->insertObject('#__modules_menu', $assignment);
+            }
+        } catch (\Throwable $e) {
+            // Only a convenience: the module can be added in the module manager
+            Factory::getApplication()->enqueueMessage(
+                'The Ticketstation widgets could not be placed on the dashboard: ' . $e->getMessage()
+                . ' Add the module "Ticketstation Dashboard" in the position cpanel in the Administrator Modules.',
+                'notice'
+            );
+        }
     }
 
     /**
