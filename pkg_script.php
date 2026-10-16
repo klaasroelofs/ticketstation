@@ -108,10 +108,12 @@ class pkg_ticketstationInstallerScript extends InstallerScript
     }
 
     /**
-     * Puts two widgets of the Ticketstation dashboard module on Joomla's Home Dashboard (position
-     * cpanel): what needs attention, and the key figures. Called for a new installation only, and
-     * only while no instance of the module exists. The titles, which start with "Ticketstation" so the cards are recognisable on the dashboard, follow the administrator language,
-     * as Joomla stores module titles as plain text.
+     * Puts three widgets of the Ticketstation dashboard module on Joomla's Home Dashboard (position
+     * cpanel): what needs attention, the key figures and the quick links (with the usual links,
+     * which the module itself chooses while its links are not set). Called for a new installation
+     * only, and only while no instance of the module exists. The titles start with "Ticketstation"
+     * so the cards are recognisable on the dashboard and follow the administrator language, as
+     * Joomla stores module titles as plain text.
      */
     private function placeDashboardModules($db)
     {
@@ -159,6 +161,7 @@ class pkg_ticketstationInstallerScript extends InstallerScript
             $widgets = [
                 ['attention', $dutch ? 'Ticketstation - Aandacht nodig' : 'Ticketstation - Needs attention', 'fa fa-bell'],
                 ['stats', $dutch ? 'Ticketstation - Kerncijfers' : 'Ticketstation - Key figures', 'fa fa-chart-line'],
+                ['links', $dutch ? 'Ticketstation - Snelle links' : 'Ticketstation - Quick links', 'fa fa-bolt'],
             ];
 
             foreach ($widgets as $index => [$widget, $title, $icon]) {
