@@ -25,7 +25,12 @@ $wa = $document->getWebAssetManager();
 $wa->registerAndUseStyle('ticketstation', Uri::base() . 'components/com_ticketstation/assets/css/ticketstation.css');
 $wa->registerAndUseStyle('searchtools', Uri::root() . 'media/templates/administrator/atum/css/system/searchtools/searchtools.css');
 
-$filtered = $this->filters['search'] !== '' || $this->filters['paid'] || $this->filters['event'] || $this->filters['sent'];
+// The filters behind the Filter Options button (everything but the search), and whether any is on.
+$filtersOn = array_filter(array_diff_key($this->filters, ['search' => true]));
+$filtered  = $this->filters['search'] !== '' || $filtersOn;
+
+// Joomla's script for the Filter Options button, the active filters and Clear.
+HTMLHelper::_('searchtools.form', '#adminForm', ['searchFieldSelector' => '#searchbox']);
 
 // A count of the tickets of an order as a small badge: "2/4", coloured by how far along it is.
 $progress = function (int $done, int $total, string $title, string $complete = 'bg-success') {
@@ -66,30 +71,39 @@ $progress = function (int $done, int $total, string $title, string $complete = '
                                 </div>
                             </div>
 
-                            <div class="ordering-select">
-                                <div class="js-stools-field-list"><?= $this->lists['events']; ?></div>
-                            </div>
-
-                            <div class="ordering-select">
-                                <div class="js-stools-field-list"><?= $this->lists['paid']; ?></div>
-                            </div>
-
-                            <div class="ordering-select">
-                                <div class="js-stools-field-list"><?= $this->lists['sent']; ?></div>
-                            </div>
-
                             <div class="filter-search-actions btn-group">
-                                <button type="button" class="filter-search-actions__button btn btn-primary js-stools-btn-clear" onclick="
-                                    var form = this.form;
-                                    form.searchbox.value = '';
-                                    form.filter_ordering_event.value = '0';
-                                    form.filter_ordering_paid.value = '0';
-                                    form.filter_ordering_sent.value = '0';
-                                    form.submit();">
+                                <button type="button" class="filter-search-actions__button btn btn-primary js-stools-btn-filter">
+                                    <?= Text::_('JFILTER_OPTIONS'); ?>
+                                    <span class="icon-angle-down" aria-hidden="true"></span>
+                                </button>
+                                <button type="button" class="filter-search-actions__button btn btn-primary js-stools-btn-clear">
                                     <?= Text::_('JSEARCH_FILTER_CLEAR'); ?>
                                 </button>
                             </div>
 
+                            <div class="ordering-select">
+                                <div class="js-stools-field-list"><?= $this->lists['limit']; ?></div>
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <!-- The filters, behind the Filter Options button; open while one of them is on. -->
+                    <div class="js-stools-container-filters clearfix<?= $filtersOn ? ' js-stools-container-filters-visible' : ''; ?>">
+                        <?php foreach (['events', 'paid', 'method', 'sent', 'scanned', 'discount', 'blocked', 'confirmed'] as $name) { ?>
+                            <div class="js-stools-field-filter"><?= $this->lists[$name]; ?></div>
+                        <?php } ?>
+                        <div class="js-stools-field-filter">
+                            <div class="input-group">
+                                <label class="input-group-text" for="filter_datefrom"><?= Text::_('COM_TICKETSTATION_BOXOFFICE_FILTER_DATE_FROM'); ?></label>
+                                <input type="date" name="filter_datefrom" id="filter_datefrom" value="<?= $this->escape($this->filters['datefrom']); ?>" class="form-control js-select-submit-on-change">
+                            </div>
+                        </div>
+                        <div class="js-stools-field-filter">
+                            <div class="input-group">
+                                <label class="input-group-text" for="filter_dateto"><?= Text::_('COM_TICKETSTATION_BOXOFFICE_FILTER_DATE_TO'); ?></label>
+                                <input type="date" name="filter_dateto" id="filter_dateto" value="<?= $this->escape($this->filters['dateto']); ?>" class="form-control js-select-submit-on-change">
+                            </div>
                         </div>
                     </div>
                 </div>

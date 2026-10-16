@@ -131,6 +131,13 @@ class BoxofficeModel extends ListModel
             'paid'   => ['filter_ordering_paid', 0, 'int'],
             'event'  => ['filter_ordering_event', 0, 'int'],
             'sent'   => ['filter_ordering_sent', 0, 'int'],
+            'scanned'   => ['filter_ordering_scanned', 0, 'int'],
+            'method'    => ['filter_ordering_method', '', 'string'],
+            'discount'  => ['filter_ordering_discount', 0, 'int'],
+            'blocked'   => ['filter_ordering_blocked', 0, 'int'],
+            'confirmed' => ['filter_ordering_confirmed', 0, 'int'],
+            'datefrom'  => ['filter_datefrom', '', 'string'],
+            'dateto'    => ['filter_dateto', '', 'string'],
         ]);
 
         $array    = $app->getInput()->get('cid', [0], 'array');
@@ -275,6 +282,70 @@ class BoxofficeModel extends ListModel
         $db->setQuery($query);
 
         return $db->loadObjectList();
+    }
+
+    /**
+     * The payment methods of the payments made in the current mode, for the payment method
+     * filter.
+     *
+     * @return  array  provider, type
+     */
+    public function getMethodOptions()
+    {
+        $db    = Factory::getContainer()->get('DatabaseDriver');
+        $query = $db->getQuery(true)
+            ->select([$db->quoteName('provider'), $db->quoteName('type')])
+            ->from($db->quoteName('#__ticketstation_transactions'))
+            ->where(TestData::condition('test'))
+            ->where($db->quoteName('type') . ' != ' . $db->quote(''))
+            ->group([$db->quoteName('provider'), $db->quoteName('type')])
+            ->order([$db->quoteName('provider'), $db->quoteName('type')]);
+
+        $db->setQuery($query);
+
+        return $db->loadObjectList();
+    }
+
+    /**
+     * The value of the payment method filter for a payment method.
+     */
+    public static function methodValue(string $provider, string $type): string
+    {
+        return $provider . '|' . $type;
+    }
+
+    /**
+     * The order date filter as UTC bounds, the way the order dates are stored: orders from the
+     * start of the first day (inclusive) to the start of the day after the last (exclusive), the
+     * days in the time zone the dates are shown in.
+     *
+     * @return  array  [from, until]: 'Y-m-d H:i:s' or null when that side is not filtered.
+     */
+    private function getDateBounds()
+    {
+        $app      = Factory::getApplication();
+        $timezone = new \DateTimeZone($app->getIdentity()->getParam('timezone', $app->get('offset', 'UTC')));
+        $bounds   = [];
+
+        foreach (['datefrom' => '', 'dateto' => ' +1 day'] as $name => $shift)
+        {
+            $day = (string) $this->getState('filter.' . $name);
+            $utc = null;
+
+            if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $day) && ($date = \DateTime::createFromFormat('!Y-m-d', $day, $timezone)))
+            {
+                if ($shift !== '')
+                {
+                    $date->modify($shift);
+                }
+
+                $utc = $date->setTimezone(new \DateTimeZone('UTC'))->format('Y-m-d H:i:s');
+            }
+
+            $bounds[] = $utc;
+        }
+
+        return $bounds;
     }
 
     /**
@@ -452,6 +523,79 @@ class BoxofficeModel extends ListModel
         elseif ($sent === 2)
         {
             $query->having('MIN(COALESCE(' . $db->quoteName('a.pdfsent') . ', 0)) = 0');
+        }
+
+        // Scanned: none of the tickets, some of them, or all of them.
+        $scannedTickets = 'SUM(COALESCE(' . $db->quoteName('a.scanned') . ', 0))';
+        $scanned        = (int) $this->getState('filter.scanned');
+
+        if ($scanned === 1)
+        {
+            $query->having($scannedTickets . ' = 0');
+        }
+        elseif ($scanned === 2)
+        {
+            $query->having($scannedTickets . ' > 0 AND ' . $scannedTickets . ' < COUNT(*)');
+        }
+        elseif ($scanned === 3)
+        {
+            $query->having($scannedTickets . ' >= COUNT(*)');
+        }
+
+        $blocked = (int) $this->getState('filter.blocked');
+
+        if ($blocked === 1 || $blocked === 2)
+        {
+            $query->having('SUM(COALESCE(' . $db->quoteName('a.blacklisted') . ', 0) = 1) ' . ($blocked === 1 ? '> 0' : '= 0'));
+        }
+
+        // Confirmed is the order's published flag, as the list shows it.
+        $confirmed = (int) $this->getState('filter.confirmed');
+
+        if ($confirmed === 1 || $confirmed === 2)
+        {
+            $query->having('MAX(COALESCE(' . $db->quoteName('a.published') . ', 0)) ' . ($confirmed === 1 ? '= 1' : '<> 1'));
+        }
+
+        $discount = (int) $this->getState('filter.discount');
+
+        if ($discount === 1 || $discount === 2)
+        {
+            $query->where(($discount === 1 ? '' : 'NOT ') . 'EXISTS (SELECT 1 FROM ' . $db->quoteName('#__ticketstation_ordertotals', 'ot')
+                . ' WHERE ' . $db->quoteName('ot.ordercode') . ' = ' . $db->quoteName('a.ordercode')
+                . ' AND ' . $db->quoteName('ot.coupon') . ' IS NOT NULL AND ' . $db->quoteName('ot.coupon') . " != '')");
+        }
+
+        // The payment method of any payment of the order, or "none" for an order without one.
+        $method = (string) $this->getState('filter.method');
+
+        if ($method === 'none')
+        {
+            $query->where('NOT EXISTS (SELECT 1 FROM ' . $db->quoteName('#__ticketstation_transactions', 'tr')
+                . ' WHERE ' . $db->quoteName('tr.orderid') . ' = CAST(' . $db->quoteName('a.ordercode') . ' AS UNSIGNED)'
+                . ' AND ' . TestData::condition('tr.test') . ')');
+        }
+        elseif ($method !== '' && strpos($method, '|') !== false)
+        {
+            [$provider, $type] = explode('|', $method, 2);
+
+            $query->where('EXISTS (SELECT 1 FROM ' . $db->quoteName('#__ticketstation_transactions', 'tr')
+                . ' WHERE ' . $db->quoteName('tr.orderid') . ' = CAST(' . $db->quoteName('a.ordercode') . ' AS UNSIGNED)'
+                . ' AND ' . TestData::condition('tr.test')
+                . ' AND ' . $db->quoteName('tr.provider') . ' = ' . $db->quote($provider)
+                . ' AND ' . $db->quoteName('tr.type') . ' = ' . $db->quote($type) . ')');
+        }
+
+        [$from, $until] = $this->getDateBounds();
+
+        if ($from !== null)
+        {
+            $query->having('MIN(' . $db->quoteName('a.orderdate') . ') >= ' . $db->quote($from));
+        }
+
+        if ($until !== null)
+        {
+            $query->having('MIN(' . $db->quoteName('a.orderdate') . ') < ' . $db->quote($until));
         }
 
         if ($search !== '')
@@ -641,6 +785,14 @@ class BoxofficeModel extends ListModel
         $event  = (int) $this->getState('filter.event');
         $sent   = (int) $this->getState('filter.sent');
         $search = (string) $this->getState('filter.search');
+        $method = (string) $this->getState('filter.method');
+
+        $filterScanned   = (int) $this->getState('filter.scanned');
+        $filterBlocked   = (int) $this->getState('filter.blocked');
+        $filterConfirmed = (int) $this->getState('filter.confirmed');
+        $filterDiscount  = (int) $this->getState('filter.discount');
+
+        [$from, $until] = $this->getDateBounds();
 
         $candidates = [];
 
@@ -698,6 +850,33 @@ class BoxofficeModel extends ListModel
                 continue;
             }
 
+            // The same filters as getKeyQuery() applies to a live order. A removed order has no
+            // coupon on record, so it counts as one without.
+            $count   = count($lines);
+            $scanned = count(array_filter($lines, static function ($line) {
+                return (int) ($line->scanned ?? 0) === 1;
+            }));
+            $blocked = count(array_filter($lines, static function ($line) {
+                return (int) ($line->blacklisted ?? 0) === 1;
+            })) > 0;
+            $orderdate = min(array_map(static function ($line) {
+                return (string) $line->orderdate;
+            }, $lines));
+
+            if (($filterScanned === 1 && $scanned > 0)
+                || ($filterScanned === 2 && ($scanned === 0 || $scanned >= $count))
+                || ($filterScanned === 3 && $scanned < $count)
+                || ($filterBlocked === 1 && !$blocked)
+                || ($filterBlocked === 2 && $blocked)
+                || ($filterConfirmed === 1 && (int) $first->published !== 1)
+                || ($filterConfirmed === 2 && (int) $first->published === 1)
+                || $filterDiscount === 1
+                || ($from !== null && $orderdate < $from)
+                || ($until !== null && $orderdate >= $until))
+            {
+                continue;
+            }
+
             $candidates[(string) $ordercode] = (object) [
                 'ghost'   => $ghost,
                 'lines'   => $lines,
@@ -729,6 +908,14 @@ class BoxofficeModel extends ListModel
             $client    = $clients[$candidate->first->userid] ?? null;
 
             if ($search !== '' && !$this->ghostMatchesSearch($search, $ordercode, $lines, $client, $references[$ordercode] ?? '', $notes[$ordercode] ?? ''))
+            {
+                continue;
+            }
+
+            // The payment method is that of the latest payment, which is the one a removed order is shown with.
+            $payment = $transactions[$ordercode] ?? null;
+
+            if ($method === 'none' ? $payment !== null : ($method !== '' && (!$payment || self::methodValue((string) $payment->provider, (string) $payment->type) !== $method)))
             {
                 continue;
             }

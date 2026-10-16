@@ -18,6 +18,7 @@ use Joomla\CMS\MVC\View\HtmlView as BaseHtmlView;
 use Joomla\CMS\Toolbar\Toolbar;
 use Joomla\CMS\Toolbar\ToolbarHelper;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\AclGate;
+use Ticketstation\Component\Ticketstation\Administrator\Model\BoxofficeModel;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\CustomerNote;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Invoice;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\PaymentCurrencies;
@@ -65,48 +66,114 @@ class HtmlView extends BaseHtmlView
         $this->addListToolbar();
 
         $filters = [
-            'search' => (string) $model->getState('filter.search'),
-            'paid'   => (int) $model->getState('filter.paid'),
-            'event'  => (int) $model->getState('filter.event'),
-            'sent'   => (int) $model->getState('filter.sent'),
+            'search'    => (string) $model->getState('filter.search'),
+            'paid'      => (int) $model->getState('filter.paid'),
+            'event'     => (int) $model->getState('filter.event'),
+            'sent'      => (int) $model->getState('filter.sent'),
+            'scanned'   => (int) $model->getState('filter.scanned'),
+            'method'    => (string) $model->getState('filter.method'),
+            'discount'  => (int) $model->getState('filter.discount'),
+            'blocked'   => (int) $model->getState('filter.blocked'),
+            'confirmed' => (int) $model->getState('filter.confirmed'),
+            'datefrom'  => (string) $model->getState('filter.datefrom'),
+            'dateto'    => (string) $model->getState('filter.dateto'),
         ];
+
+        // A filter select: its first option is the "all" choice and has the empty value, as in
+        // Joomla's own lists, so the Filter Options script can tell which filters are active.
+        // The list is submitted as soon as a filter changes.
+        $select = static function (string $name, string $label, array $choices, $selected): string {
+            $options = [HTMLHelper::_('select.option', '', Text::_($label))];
+
+            foreach ($choices as $value => $text)
+            {
+                $options[] = HTMLHelper::_('select.option', (string) $value, $text);
+            }
+
+            return HTMLHelper::_('select.genericlist', $options, 'filter_ordering_' . $name,
+                'class="form-select js-select-submit-on-change" aria-label="' . Text::_($label) . '"',
+                'value', 'text', $selected ? (string) $selected : '');
+        };
 
         // The events, the most recent first, with their date so events with the same name
         // (a series) can be told apart. Event dates are stored in local time, as entered.
-        $events = [HTMLHelper::_('select.option', '0', Text::_('COM_TICKETSTATION_SELECTLIST_EVENT'))];
+        $events = [];
 
         foreach ($model->getEventOptions() as $event)
         {
-            $date     = $event->eventdate ? Date::display($event->eventdate, $config->dateformat) : '';
-            $events[] = HTMLHelper::_('select.option', $event->eventid, $event->eventname . ($date !== '' ? ' (' . $date . ')' : ''));
+            $date                    = $event->eventdate ? Date::display($event->eventdate, $config->dateformat) : '';
+            $events[$event->eventid] = $event->eventname . ($date !== '' ? ' (' . $date . ')' : '');
         }
 
-        $lists['events'] = HTMLHelper::_('select.genericlist', $events, 'filter_ordering_event',
-            'class="form-select" onchange="this.form.submit();" aria-label="' . Text::_('COM_TICKETSTATION_SELECTLIST_EVENT') . '"',
-            'value', 'text', $filters['event']);
+        $lists['events'] = $select('event', 'COM_TICKETSTATION_SELECTLIST_EVENT', $events, $filters['event']);
 
-        $paid = [
-            HTMLHelper::_('select.option', '0', Text::_('COM_TICKETSTATION_SELECTLIST_PAYMENT_STATUS')),
-            HTMLHelper::_('select.option', '1', Text::_('COM_TICKETSTATION_PAID')),
-            HTMLHelper::_('select.option', '2', Text::_('COM_TICKETSTATION_UNPAID_OVERVIEW')),
-            HTMLHelper::_('select.option', '3', Text::_('COM_TICKETSTATION_REFUNDED')),
-            HTMLHelper::_('select.option', '4', Text::_('COM_TICKETSTATION_PENDING')),
-            HTMLHelper::_('select.option', '5', Text::_('COM_TICKETSTATION_REFUND_FILTER_ATTENTION')),
-        ];
+        $lists['paid'] = $select('paid', 'COM_TICKETSTATION_SELECTLIST_PAYMENT_STATUS', [
+            1 => Text::_('COM_TICKETSTATION_PAID'),
+            2 => Text::_('COM_TICKETSTATION_UNPAID_OVERVIEW'),
+            3 => Text::_('COM_TICKETSTATION_REFUNDED'),
+            4 => Text::_('COM_TICKETSTATION_PENDING'),
+            5 => Text::_('COM_TICKETSTATION_REFUND_FILTER_ATTENTION'),
+        ], $filters['paid']);
 
-        $lists['paid'] = HTMLHelper::_('select.genericlist', $paid, 'filter_ordering_paid',
-            'class="form-select" onchange="this.form.submit();" aria-label="' . Text::_('COM_TICKETSTATION_SELECTLIST_PAYMENT_STATUS') . '"',
-            'value', 'text', $filters['paid']);
+        // The payment methods used, with the provider they went through, and the orders without an online payment (box office sales).
+        $methods = [];
 
-        $sent = [
-            HTMLHelper::_('select.option', '0', Text::_('COM_TICKETSTATION_BOXOFFICE_SELECTLIST_SENT')),
-            HTMLHelper::_('select.option', '1', Text::_('COM_TICKETSTATION_SENT_TICKETS')),
-            HTMLHelper::_('select.option', '2', Text::_('COM_TICKETSTATION_UNSENT_TICKETS')),
-        ];
+        foreach ($model->getMethodOptions() as $method)
+        {
+            $provider = ProviderRegistry::providerLabel((string) $method->provider);
+            $label    = ProviderRegistry::methodLabel(strtolower((string) $method->type), (string) $method->provider);
 
-        $lists['sent'] = HTMLHelper::_('select.genericlist', $sent, 'filter_ordering_sent',
-            'class="form-select" onchange="this.form.submit();" aria-label="' . Text::_('COM_TICKETSTATION_BOXOFFICE_SELECTLIST_SENT') . '"',
-            'value', 'text', $filters['sent']);
+            $methods[BoxofficeModel::methodValue((string) $method->provider, (string) $method->type)] = $label . ($provider !== '' ? ' (' . $provider . ')' : '');
+        }
+
+        $methods['none'] = Text::_('COM_TICKETSTATION_BOXOFFICE_FILTER_METHOD_NONE');
+
+        $lists['method'] = $select('method', 'COM_TICKETSTATION_BOXOFFICE_FILTER_METHOD', $methods, $filters['method']);
+
+        $lists['sent'] = $select('sent', 'COM_TICKETSTATION_BOXOFFICE_SELECTLIST_SENT', [
+            1 => Text::_('COM_TICKETSTATION_SENT_TICKETS'),
+            2 => Text::_('COM_TICKETSTATION_UNSENT_TICKETS'),
+        ], $filters['sent']);
+
+        $lists['scanned'] = $select('scanned', 'COM_TICKETSTATION_BOXOFFICE_FILTER_SCANNED', [
+            1 => Text::_('COM_TICKETSTATION_BOXOFFICE_FILTER_SCANNED_NONE'),
+            2 => Text::_('COM_TICKETSTATION_BOXOFFICE_FILTER_SCANNED_PARTLY'),
+            3 => Text::_('COM_TICKETSTATION_BOXOFFICE_FILTER_SCANNED_ALL'),
+        ], $filters['scanned']);
+
+        $lists['discount'] = $select('discount', 'COM_TICKETSTATION_BOXOFFICE_FILTER_DISCOUNT', [
+            1 => Text::_('COM_TICKETSTATION_BOXOFFICE_FILTER_DISCOUNT_WITH'),
+            2 => Text::_('COM_TICKETSTATION_BOXOFFICE_FILTER_DISCOUNT_WITHOUT'),
+        ], $filters['discount']);
+
+        $lists['blocked'] = $select('blocked', 'COM_TICKETSTATION_BOXOFFICE_FILTER_BLOCKED', [
+            1 => Text::_('COM_TICKETSTATION_BOXOFFICE_FILTER_BLOCKED_WITH'),
+            2 => Text::_('COM_TICKETSTATION_BOXOFFICE_FILTER_BLOCKED_WITHOUT'),
+        ], $filters['blocked']);
+
+        $lists['confirmed'] = $select('confirmed', 'COM_TICKETSTATION_BOXOFFICE_FILTER_CONFIRMED', [
+            1 => Text::_('COM_TICKETSTATION_BOXOFFICE_FILTER_CONFIRMED_YES'),
+            2 => Text::_('COM_TICKETSTATION_BOXOFFICE_FILTER_CONFIRMED_NO'),
+        ], $filters['confirmed']);
+
+        // The number of orders per page: Joomla's own choices (as in Articles), plus the current
+        // value when the site's default is another one. It is the setting for all lists (see ListState).
+        $limit  = (int) $model->getState('limit');
+        $limits = array_unique(array_merge([5, 10, 15, 20, 25, 30, 50, 100, 200, 500], $limit > 0 ? [$limit] : []));
+        sort($limits);
+
+        $options = [];
+
+        foreach ($limits as $value)
+        {
+            $options[] = HTMLHelper::_('select.option', (string) $value, (string) $value);
+        }
+
+        $options[] = HTMLHelper::_('select.option', '0', Text::_('JALL'));
+
+        $lists['limit'] = HTMLHelper::_('select.genericlist', $options, 'limit',
+            'class="form-select js-select-submit-on-change" aria-label="' . Text::_('JGLOBAL_LIST_LIMIT') . '" title="' . Text::_('JGLOBAL_LIST_LIMIT') . '"',
+            'value', 'text', (string) $limit);
 
         // Refunds a colleague made in the Mollie Dashboard, before the webhook reports them.
         Refund::pollProviders();
