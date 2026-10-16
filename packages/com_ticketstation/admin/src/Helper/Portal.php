@@ -91,10 +91,12 @@ class Portal
     }
 
     /**
-     * Whether a request to open a link looks like someone clicking it (or typing it in): not an
-     * image, frame or script of another site. A page of another site could otherwise open its own
-     * link in a visitor's browser and so put that visitor into somebody else's orders. Browsers
-     * without the Sec-Fetch headers, and mail programs that strip them, are let through.
+     * Whether a request to open a link is a page navigation: not an image, frame, script or fetch
+     * of another site. A page of another site could otherwise load the link invisibly in a
+     * visitor's browser and so put that visitor into somebody else's orders. Browsers without the
+     * Sec-Fetch headers, and mail programs that strip them, are let through. User activation
+     * (`Sec-Fetch-User`) is deliberately not required: the Gmail app on a phone, and other mail
+     * apps with their own in-app browser, open links without it.
      */
     public static function isUserNavigation(): bool
     {
@@ -102,16 +104,8 @@ class Portal
 
         $dest = $header('DEST');
         $mode = $header('MODE');
-        $site = $header('SITE');
-        $user = $header('USER');
 
-        if (($dest !== '' && $dest !== 'document') || ($mode !== '' && $mode !== 'navigate'))
-        {
-            return false;
-        }
-
-        // From another site only as the result of a click or a key press ("?1")
-        return !(in_array($site, ['cross-site', 'same-site'], true) && $user !== '?1');
+        return ($dest === '' || $dest === 'document') && ($mode === '' || $mode === 'navigate');
     }
 
     /**
