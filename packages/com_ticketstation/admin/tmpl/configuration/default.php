@@ -1248,6 +1248,13 @@ $document->getWebAssetManager()->addInlineScript("
             <?= Text::_('COM_TICKETSTATION_PORTAL_CONFIG_INTRO') ?>
         </p>
 
+        <?php if ($this->portalNotice !== '') { ?>
+            <div class="alert alert-warning">
+                <span class="icon-exclamation-triangle" aria-hidden="true"></span>
+                <?= $this->portalNotice ?>
+            </div>
+        <?php } ?>
+
         <div class="card mt-3 rounded-to">
             <h3 class="card-header">
                 <?= Text::_('COM_TICKETSTATION_CONFIG_TAB_PORTAL') ?>

@@ -85,7 +85,7 @@ class PortalController extends BaseController
         // doesn't give away that the address has orders.
         $queue = $app->getMessageQueue(true);
 
-        Portal::requestLink($email, (string) ($_SERVER['REMOTE_ADDR'] ?? ''));
+        Portal::requestLink($email, Portal::visitorIp());
 
         $app->getMessageQueue(true);
 
@@ -109,6 +109,11 @@ class PortalController extends BaseController
     {
         $this->requireOn();
 
+        if (!$this->clicked())
+        {
+            return;
+        }
+
         $input = $this->input;
 
         if (!Portal::enter($input->getInt('c', 0), $input->getInt('x', 0), $input->getAlnum('key', '')))
@@ -125,6 +130,11 @@ class PortalController extends BaseController
     public function order()
     {
         $this->requireOn();
+
+        if (!$this->clicked())
+        {
+            return;
+        }
 
         $input = $this->input;
 
@@ -351,7 +361,7 @@ class PortalController extends BaseController
     {
         $app = Factory::getApplication();
 
-        if (!Portal::maySend($ordercode, (string) ($_SERVER['REMOTE_ADDR'] ?? '')))
+        if (!Portal::maySend($ordercode, Portal::visitorIp()))
         {
             $app->enqueueMessage(Text::_('COM_TICKETSTATION_PORTAL_TOO_OFTEN'), 'warning');
             $this->setRedirect($this->portalUrl());
@@ -375,6 +385,23 @@ class PortalController extends BaseController
         }
 
         $this->setRedirect($this->portalUrl());
+    }
+
+    /**
+     * Whether the request to open a link is a click (see Portal::isUserNavigation()). When it isn't,
+     * nothing is opened and the visitor goes to the page with a message.
+     */
+    private function clicked(): bool
+    {
+        if (Portal::isUserNavigation())
+        {
+            return true;
+        }
+
+        Factory::getApplication()->enqueueMessage(Text::_('COM_TICKETSTATION_PORTAL_LINK_NOT_CLICKED'), 'warning');
+        $this->setRedirect($this->portalUrl());
+
+        return false;
     }
 
     /**

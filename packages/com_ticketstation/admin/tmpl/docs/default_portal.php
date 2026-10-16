@@ -36,7 +36,7 @@ $bullets = function (string $prefix, int $count) {
         <details id="docs-portal-setup" class="mb-3 border rounded p-3">
             <summary class="h5 mb-0"><span class="fa fa-toggle-on me-2" aria-hidden="true"></span><?= Text::_('COM_TICKETSTATION_PORTAL_DOCS_SETUP_TITLE') ?></summary>
             <div class="mt-3">
-                <?php $bullets('COM_TICKETSTATION_PORTAL_DOCS_SETUP_', 4); ?>
+                <?php $bullets('COM_TICKETSTATION_PORTAL_DOCS_SETUP_', 5); ?>
             </div>
         </details>
 
@@ -47,17 +47,10 @@ $bullets = function (string $prefix, int $count) {
             </div>
         </details>
 
-        <details id="docs-portal-what" class="mb-3 border rounded p-3">
+        <details id="docs-portal-what" class="border rounded p-3">
             <summary class="h5 mb-0"><span class="fa fa-list me-2" aria-hidden="true"></span><?= Text::_('COM_TICKETSTATION_PORTAL_DOCS_WHAT_TITLE') ?></summary>
             <div class="mt-3">
                 <?php $bullets('COM_TICKETSTATION_PORTAL_DOCS_WHAT_', 6); ?>
-            </div>
-        </details>
-
-        <details id="docs-portal-limits" class="mb-0 border rounded p-3">
-            <summary class="h5 mb-0"><span class="fa fa-info-circle me-2" aria-hidden="true"></span><?= Text::_('COM_TICKETSTATION_PORTAL_DOCS_LIMITS_TITLE') ?></summary>
-            <div class="mt-3">
-                <?php $bullets('COM_TICKETSTATION_PORTAL_DOCS_LIMITS_', 2); ?>
             </div>
         </details>
     </div>

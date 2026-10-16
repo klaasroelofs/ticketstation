@@ -22,6 +22,7 @@ use Ticketstation\Component\Ticketstation\Administrator\Helper\AclGate;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\CheckoutFieldMap;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\DefaultTicketLayout;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Docs;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\Portal;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\Wallet;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\WalletApple;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\WalletApplePush;
@@ -313,6 +314,21 @@ class HtmlView extends BaseHtmlView {
         $this->walletCsrLink =Route::_('index.php?option=com_ticketstation&controller=configuration&task=walletcsr&' . Session::getFormToken() . '=1', false);
 
         $this->config = $config;
+        // Customer portal: on without a menu item of its own, the page can be taken over by another item
+        $this->portalNotice = '';
+
+        if ((int) ($config->portal_mode ?? 0) > 0)
+        {
+            $menu = Portal::menuStatus();
+
+            if (!$menu['own'])
+            {
+                $this->portalNotice = $menu['clashes']
+                    ? Text::sprintf('COM_TICKETSTATION_PORTAL_MENU_CLASH', '<code>' . implode('</code>, <code>', array_map([$this, 'escape'], $menu['clashes'])) . '</code>')
+                    : Text::_('COM_TICKETSTATION_PORTAL_MENU_MISSING');
+            }
+        }
+
         $this->lists = $lists;
         $this->userFields = CheckoutFieldMap::userFields();
         $this->checkoutMap = CheckoutFieldMap::decode($config->checkout_field_map ?? '');

@@ -14,6 +14,7 @@ defined('_JEXEC') or die;
 use Joomla\CMS\Factory;
 use Joomla\CMS\Mail\MailHelper;
 use Joomla\CMS\Uri\Uri;
+use Joomla\Utilities\IpHelper;
 
 /**
  * The customer portal "My orders": which orders a visitor may see and what they may do with them.
@@ -80,6 +81,40 @@ class Portal
     private const PAID_STATES = [1, 2];
 
     /**
+     * The address of the visitor, for the limits. Joomla's own: behind a load balancer or reverse
+     * proxy it is the visitor's, once the Global Configuration says "Behind Load Balancer"; without
+     * that, `REMOTE_ADDR` is the proxy's and all visitors share one limit.
+     */
+    public static function visitorIp(): string
+    {
+        return (string) IpHelper::getIp();
+    }
+
+    /**
+     * Whether a request to open a link looks like someone clicking it (or typing it in): not an
+     * image, frame or script of another site. A page of another site could otherwise open its own
+     * link in a visitor's browser and so put that visitor into somebody else's orders. Browsers
+     * without the Sec-Fetch headers, and mail programs that strip them, are let through.
+     */
+    public static function isUserNavigation(): bool
+    {
+        $header = static fn (string $name): string => strtolower(trim((string) ($_SERVER['HTTP_SEC_FETCH_' . $name] ?? '')));
+
+        $dest = $header('DEST');
+        $mode = $header('MODE');
+        $site = $header('SITE');
+        $user = $header('USER');
+
+        if (($dest !== '' && $dest !== 'document') || ($mode !== '' && $mode !== 'navigate'))
+        {
+            return false;
+        }
+
+        // From another site only as the result of a click or a key press ("?1")
+        return !(in_array($site, ['cross-site', 'same-site'], true) && $user !== '?1');
+    }
+
+    /**
      * Whether the portal is switched on (Configuration > Customer portal).
      */
     public static function enabled(): bool
@@ -93,6 +128,46 @@ class Portal
     public static function accountsEnabled(): bool
     {
         return (int) ((new Config)->get()->portal_mode ?? 0) >= 2;
+    }
+
+    /**
+     * What the menu says about the page: whether there is a published menu item of the type My
+     * orders, and the paths of published menu items with the alias the page is built at
+     * (my-orders, or portal as in the release candidates) that are of another kind. Without an own
+     * menu item of its own the page sits behind the shop's menu item, and such an item can take
+     * its address over.
+     *
+     * @return  array{own: bool, clashes: string[]}
+     */
+    public static function menuStatus(): array
+    {
+        $db = Factory::getContainer()->get('DatabaseDriver');
+
+        $query = $db->getQuery(true)
+            ->select([$db->quoteName('alias'), $db->quoteName('path'), $db->quoteName('link')])
+            ->from($db->quoteName('#__menu'))
+            ->where($db->quoteName('client_id') . ' = 0')
+            ->where($db->quoteName('published') . ' = 1')
+            ->where('(' . $db->quoteName('link') . ' LIKE ' . $db->quote('%option=com_ticketstation&view=portal%')
+                . ' OR ' . $db->quoteName('alias') . ' IN (' . $db->quote('my-orders') . ', ' . $db->quote('portal') . '))');
+
+        $db->setQuery($query);
+
+        $status = ['own' => false, 'clashes' => []];
+
+        foreach ($db->loadObjectList() as $item)
+        {
+            if (str_contains((string) $item->link, 'option=com_ticketstation&view=portal'))
+            {
+                $status['own'] = true;
+            }
+            else
+            {
+                $status['clashes'][] = '/' . ltrim((string) $item->path, '/');
+            }
+        }
+
+        return $status;
     }
 
     /**
@@ -510,6 +585,15 @@ class Portal
             ->where($db->quoteName('c.emailaddress') . ' IN (' . implode(',', array_map([$db, 'quote'], $emails)) . ')')
             ->whereIn($db->quoteName('o.paid'), self::PAID_STATES);
 
+        // What the page leaves out as too old (Show past orders) can't be fetched by its number either
+        $months = self::pastMonths();
+
+        if ($months > 0)
+        {
+            $query->join('INNER', $db->quoteName('#__ticketstation_tickets', 't') . ' ON ' . $db->quoteName('t.ticketid') . ' = ' . $db->quoteName('o.ticketid'))
+                ->where($db->quoteName('t.enddate') . ' >= ' . $db->quote(Date::localNow('Y-m-d H:i:s', '-' . $months . ' months')));
+        }
+
         $db->setQuery($query);
 
         return (int) $db->loadResult() > 0;
@@ -771,12 +855,14 @@ class Portal
             unset($row->emailaddress);
 
             $usable         = $row->upcoming && self::usable($row->ordercode);
-            $row->file      = $usable ? self::ticketFile($row->ordercode) : '';
             $row->wallet    = $usable ? Wallet::buttons($row->ordercode, false) : '';
             $row->calendar  = $usable && Calendar::ics($row->ordercode) !== '';
             $row->invoice   = self::invoiceFile($row->ordercode);
             $row->share     = $sharing;
             $row->pick      = $usable ? self::pickable($row->ordercode) : [];
+
+            // There is something to download when the file is there, or can be made when it is asked for
+            $row->file      = $usable && ($row->pick || self::ticketFile($row->ordercode, false) !== '') ? 'yes' : '';
 
             if ($row->upcoming)
             {
@@ -894,11 +980,16 @@ class Portal
 
     /**
      * The ticket PDF of an order: its path when there is one to download, else ''.
+     *
+     * @param   bool  $make  Make the file again first when a ticket was made invalid after it was made
+     *                       (a download does; looking at the list doesn't write anything)
      */
-    public static function ticketFile(int $ordercode): string
+    public static function ticketFile(int $ordercode, bool $make = true): string
     {
-        // A ticket made invalid after the file was made: make the file again without it
-        Refund::refreshTicketFiles($ordercode);
+        if ($make)
+        {
+            Refund::refreshTicketFiles($ordercode);
+        }
 
         foreach ([Tickets::combinedPath($ordercode), Tickets::singlePath($ordercode)] as $path)
         {
