@@ -17,7 +17,9 @@ use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\Controller\BaseController;
 use Joomla\CMS\MVC\Factory\MVCFactoryInterface;
 use Joomla\Input\Input;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\Config;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\DashboardData;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\Date;
 
 /**
  * Default Controller of Ticketstation component
@@ -47,6 +49,33 @@ class ControlpanelController extends BaseController {
 
 
         return parent::display($cachable, $urlparams);
+    }
+
+    /**
+     * The figures of the door widget of the dashboard module (mod_ticketstation_dashboard), asked
+     * for every half minute while the dashboard is open. Read only.
+     */
+    public function door()
+    {
+        $config = (new Config())->get();
+        $events = [];
+
+        foreach (DashboardData::doorToday() as $row)
+        {
+            $events[] = [
+                'id'         => $row->eventid,
+                'sold'       => $row->sold,
+                'scanned'    => $row->scanned,
+                'left'       => $row->left,
+                'percentage' => $row->percentage,
+                'lastscan'   => $row->lastscan ? Date::display($row->lastscan, $config->time_format) : '',
+            ];
+        }
+
+        header('Content-Type: application/json; charset=utf-8');
+        header('Cache-Control: private, max-age=0, must-revalidate');
+        echo json_encode(['success' => true, 'message' => null, 'messages' => null, 'data' => ['events' => $events]]);
+        exit();
     }
 
     /**

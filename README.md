@@ -19,7 +19,7 @@ Ticketstation ships as one Joomla package, `pkg_ticketstation`, which contains:
 |---|---|
 | `com_ticketstation` (component) | [`packages/com_ticketstation`](packages/com_ticketstation) |
 | `mod_ticketstation_basket` (basket module): shows the visitor's cart as a compact icon or a full cart | [`packages/mod_ticketstation_basket`](packages/mod_ticketstation_basket) |
-| `mod_ticketstation_dashboard` (administrator module): puts Ticketstation on Joomla's dashboard, as widgets for what needs attention, the sales figures, the upcoming events and quick links | [`packages/mod_ticketstation_dashboard`](packages/mod_ticketstation_dashboard) |
+| `mod_ticketstation_dashboard` (administrator module): puts Ticketstation on Joomla's dashboard, as widgets for what needs attention, the sales figures, the upcoming events, quick links, how far the entrance is on the day of an event and the latest orders | [`packages/mod_ticketstation_dashboard`](packages/mod_ticketstation_dashboard) |
 | `mod_ticketstation_testmode` (administrator module): a bar at the top of the backend while the shop is in test mode | [`packages/mod_ticketstation_testmode`](packages/mod_ticketstation_testmode) |
 | `plg_task_ticketstation` (task plugin): scheduled tasks for the reminder mail and the wallet updates | [`packages/plg_task_ticketstation`](packages/plg_task_ticketstation) |
 | `plg_system_ticketstation` (system plugin): answers the Apple Wallet web service for live updates, and removes the addresses linked to a customer portal account when that account is deleted | [`packages/plg_system_ticketstation`](packages/plg_system_ticketstation) |

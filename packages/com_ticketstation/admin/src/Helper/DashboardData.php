@@ -470,6 +470,105 @@ class DashboardData
     }
 
     /**
+     * The events that are today, with how far the entrance is: the tickets that count (paid, not
+     * blocked and not made invalid by a refund, as the scanner counts them), how many of those are
+     * scanned, and when the last one was. Events without a sold ticket are listed with zeros.
+     * Today is the site's day, as ticket dates are stored in site time.
+     *
+     * @return  array  objects with eventid, eventname, start (the first start today), sold, scanned,
+     *                 left, percentage, lastscan (the scan date as stored, or null)
+     */
+    public static function doorToday(): array
+    {
+        $db    = Factory::getContainer()->get('DatabaseDriver');
+        $today = self::getLocalNow();
+        $from  = substr($today, 0, 10) . ' 00:00:00';
+        $to    = (new \DateTime($from))->modify('+1 day')->format('Y-m-d H:i:s');
+
+        $query = $db->getQuery(true)
+            ->select([
+                'e.eventid',
+                'e.eventname',
+                'MIN(t.startdate) AS start',
+                'COUNT(o.orderid) AS sold',
+                'COALESCE(SUM(o.scanned), 0) AS scanned',
+                'MAX(o.scandate) AS lastscan',
+            ])
+            ->from($db->quoteName('#__ticketstation_tickets', 't'))
+            ->join('INNER', $db->quoteName('#__ticketstation_events', 'e') . ' ON ' . $db->quoteName('e.eventid') . ' = ' . $db->quoteName('t.eventid'))
+            ->join(
+                'LEFT',
+                $db->quoteName('#__ticketstation_orders', 'o') . ' ON ' . $db->quoteName('o.ticketid') . ' = ' . $db->quoteName('t.ticketid')
+                . ' AND ' . $db->quoteName('o.paid') . ' = 1'
+                . ' AND COALESCE(' . $db->quoteName('o.blacklisted') . ', 0) <> 1'
+                . ' AND ' . Refund::validSql('o')
+                . ' AND ' . TestData::condition('o.test')
+            )
+            ->where($db->quoteName('t.startdate') . ' >= ' . $db->quote($from))
+            ->where($db->quoteName('t.startdate') . ' < ' . $db->quote($to))
+            ->group([$db->quoteName('e.eventid'), $db->quoteName('e.eventname')])
+            ->order('MIN(t.startdate) ASC');
+
+        $db->setQuery($query);
+        $rows = $db->loadObjectList();
+
+        foreach ($rows as $row)
+        {
+            $row->eventid    = (int) $row->eventid;
+            $row->sold       = (int) $row->sold;
+            $row->scanned    = (int) $row->scanned;
+            $row->left       = max(0, $row->sold - $row->scanned);
+            $row->percentage = $row->sold > 0 ? min(100, (int) round($row->scanned / $row->sold * 100)) : 0;
+        }
+
+        return $rows;
+    }
+
+    /**
+     * The latest paid orders, newest first, one per order code: when, who, which event, how many
+     * tickets and the total of the order (the tickets minus a coupon, plus the service fee).
+     *
+     * @param   int  $limit  How many orders.
+     *
+     * @return  array  objects with ordercode, orderdate (UTC, as stored), name, eventname, events
+     *                 (the number of different events), tickets, total
+     */
+    public static function latestOrders(int $limit = 8): array
+    {
+        $db = Factory::getContainer()->get('DatabaseDriver');
+
+        $query = $db->getQuery(true)
+            ->select([
+                $db->quoteName('o.ordercode'),
+                'MAX(' . $db->quoteName('o.orderdate') . ') AS orderdate',
+                'MIN(' . $db->quoteName('c.name') . ') AS name',
+                'MIN(' . $db->quoteName('e.eventname') . ') AS eventname',
+                'COUNT(DISTINCT ' . $db->quoteName('o.eventid') . ') AS events',
+                'COUNT(' . $db->quoteName('o.orderid') . ') AS tickets',
+            ])
+            ->from($db->quoteName('#__ticketstation_orders', 'o'))
+            ->join('LEFT', $db->quoteName('#__ticketstation_clients', 'c') . ' ON ' . $db->quoteName('c.clientid') . ' = ' . $db->quoteName('o.userid'))
+            ->join('LEFT', $db->quoteName('#__ticketstation_events', 'e') . ' ON ' . $db->quoteName('e.eventid') . ' = ' . $db->quoteName('o.eventid'))
+            ->where(TestData::condition('o.test'))
+            ->where($db->quoteName('o.paid') . ' = 1')
+            ->group($db->quoteName('o.ordercode'))
+            ->order('MAX(' . $db->quoteName('o.orderdate') . ') DESC')
+            ->order('MAX(' . $db->quoteName('o.orderid') . ') DESC');
+
+        $db->setQuery($query, 0, max(1, $limit));
+        $rows = $db->loadObjectList();
+
+        foreach ($rows as $row)
+        {
+            $row->events  = (int) $row->events;
+            $row->tickets = (int) $row->tickets;
+            $row->total   = (float) OrderTotals::get($row->ordercode)->total;
+        }
+
+        return $rows;
+    }
+
+    /**
      * The number of attention items that point at one screen, the number on that screen's button
      * in the Control panel (the Box Office, for the counter on its quick link).
      *

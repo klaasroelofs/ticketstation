@@ -54,6 +54,7 @@ class AclGate
         'controlpanel' => [
             ''          => self::MANAGE,
             'quickicon' => self::MANAGE,
+            'door'      => self::BOXOFFICE,
         ],
         'docs' => [
             ''             => self::MANAGE,

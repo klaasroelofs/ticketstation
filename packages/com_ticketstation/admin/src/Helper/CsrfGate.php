@@ -37,7 +37,7 @@ class CsrfGate
      */
     private const ADMIN_EXEMPT = [
         'display'          => ['display'],
-        'controlpanel'     => ['main', 'quickicon'],
+        'controlpanel'     => ['main', 'quickicon', 'door'],
         'invoices'         => ['display', 'controlpanel'],
         'coupon'           => ['display', 'cancel', 'controlpanel'],
         'payments'         => ['main', 'cancel'],

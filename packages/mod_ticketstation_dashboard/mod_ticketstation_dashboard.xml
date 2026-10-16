@@ -8,7 +8,7 @@
 	<authorUrl>https://www.huibuuke.nl</authorUrl>
 	<copyright>© 2026 Klaas Roelofs</copyright>
 	<license>GPL v3</license>
-	<version>2.37.0-rc2</version>
+	<version>2.37.0-rc3</version>
 	<description>MOD_TICKETSTATION_DASHBOARD_XML_DESCRIPTION</description>
 
 	<namespace path="src">Ticketstation\Module\TicketstationDashboard</namespace>
@@ -29,6 +29,7 @@
 	<media destination="mod_ticketstation_dashboard" folder="media">
 		<filename>joomla.asset.json</filename>
 		<folder>css</folder>
+		<folder>js</folder>
 	</media>
 
 	<config>
@@ -47,6 +48,8 @@
 					<option value="stats">MOD_TICKETSTATION_DASHBOARD_WIDGET_STATS</option>
 					<option value="upcoming">MOD_TICKETSTATION_DASHBOARD_WIDGET_UPCOMING</option>
 					<option value="links">MOD_TICKETSTATION_DASHBOARD_WIDGET_LINKS</option>
+					<option value="door">MOD_TICKETSTATION_DASHBOARD_WIDGET_DOOR</option>
+					<option value="orders">MOD_TICKETSTATION_DASHBOARD_WIDGET_ORDERS</option>
 				</field>
 				<field
 					name="hide_when_empty"
@@ -70,7 +73,7 @@
 					min="1"
 					max="20"
 					filter="integer"
-					showon="widget:upcoming"
+					showon="widget:upcoming[OR]widget:orders"
 				/>
 				<!--
 					A list of rows rather than a multiple select: a multiple select posts its choices in
@@ -143,6 +146,8 @@
 					<option value="fa fa-star">MOD_TICKETSTATION_DASHBOARD_ICON_STAR</option>
 					<option value="fa fa-users">MOD_TICKETSTATION_DASHBOARD_ICON_USERS</option>
 					<option value="fa fa-cog">MOD_TICKETSTATION_DASHBOARD_ICON_COG</option>
+					<option value="fa fa-door-open">MOD_TICKETSTATION_DASHBOARD_ICON_DOOR</option>
+					<option value="fa fa-receipt">MOD_TICKETSTATION_DASHBOARD_ICON_RECEIPT</option>
 				</field>
 			</fieldset>
 			<fieldset name="advanced">
