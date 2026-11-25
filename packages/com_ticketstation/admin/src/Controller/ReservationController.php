@@ -343,6 +343,41 @@ class ReservationController extends BaseController
     }
 
     /**
+     * Step 2b (AJAX): releases every seat of the open seat chart in one go, as removeSeat() does
+     * for one. Seats of another chart in the same reservation and tickets without a seat stay.
+     */
+    public function removeSeats()
+    {
+        $app       = Factory::getApplication();
+        $model     = $this->getModel('Reservation');
+        $ordercode = (string) $this->getOrdercode();
+        $chart     = (int) ($this->getState()['ticketid'] ?? 0);
+        $removed   = [];
+
+        if ($ordercode !== '' && $chart)
+        {
+            foreach ($model->getReservationLines($ordercode) as $line)
+            {
+                if (! $line->seated || $line->owner !== $chart)
+                {
+                    continue;
+                }
+
+                foreach ($line->seats as $seat)
+                {
+                    $model->deleteOrderRow($seat->orderid);
+                    $model->freeSeatCoords($seat->sector);
+
+                    $removed[] = $seat->sector;
+                }
+            }
+        }
+
+        echo json_encode(['error' => '0', 'msg' => Text::_('COM_TICKETSTATION_THIS_SEAT_IS_REMOVED'), 'removed' => $removed]);
+        $app->close();
+    }
+
+    /**
      * Removes a line of the reservation from any step (link with token): a seat by its
      * orderid, or the rows without a seat of one ticket type by its ticketid. Then back to the
      * step the admin was on.

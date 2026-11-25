@@ -238,6 +238,7 @@ class AclGate
             'addquantity'     => self::RESERVE,
             'makereservation' => self::RESERVE,
             'removeseat'      => self::RESERVE,
+            'removeseats'     => self::RESERVE,
             'updateseat'      => self::RESERVE,
             'removerow'       => self::RESERVE,
             'lines'           => self::RESERVE,

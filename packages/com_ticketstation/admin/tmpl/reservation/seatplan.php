@@ -43,6 +43,18 @@ foreach ($this->summary as $row)
 }
 
 $chartOwner      = (int) $this->ticket->ticketid;
+
+// Whether this chart has seats in the reservation (the "remove all seats" button needs them).
+$hasChartSeats = false;
+
+foreach ($this->lines as $line)
+{
+    if ($line->seated && $line->owner === $chartOwner)
+    {
+        $hasChartSeats = true;
+    }
+}
+
 $chartSettings   = SeatChart::settings($chartOwner);
 $chartBackground = SeatChart::background($chartSettings, $chartOwner);
 $chartShapes     = SeatChart::shapes($chartSettings);
@@ -175,6 +187,9 @@ $chartCanvas     = SeatChart::canvas($chartSettings, $this->seats, $chartBackgro
                    href="<?= Route::_('index.php?option=com_ticketstation&controller=reservation&task=finishSeats') ?>">
                     <?= Text::_('COM_TICKETSTATION_RESERVATION_CONTINUE') ?>
                 </a>
+                <button type="button" id="remove-all-seats-btn" class="btn btn-outline-danger ms-2"<?= $hasChartSeats ? '' : ' disabled' ?>>
+                    <span class="icon-trash" aria-hidden="true"></span> <?= Text::_('COM_TICKETSTATION_RESERVATION_REMOVE_ALL_SEATS') ?>
+                </button>
             </div>
         </div>
 
@@ -203,6 +218,8 @@ $chartCanvas     = SeatChart::canvas($chartSettings, $this->seats, $chartBackgro
             }).done(function (html) {
                 $('#cart-list').html(html);
                 $('#finish-seats-btn').toggleClass('disabled', $('#reservation-lines').data('rows') < 1);
+                // Only the seats of this chart can be removed here (they carry a remove-seat button)
+                $('#remove-all-seats-btn').prop('disabled', $('#cart-list .remove-seat').length < 1);
             }).fail(function () {
                 showMessage(<?= json_encode(Text::_('COM_TICKETSTATION_RESERVATION_SAVE_FAILED')) ?>);
             });
@@ -270,6 +287,37 @@ $chartCanvas     = SeatChart::canvas($chartSettings, $this->seats, $chartBackgro
                     showMessage('<?= Text::_('COM_TICKETSTATION_RESERVATION_SAVE_FAILED') ?>');
                 });
             }
+
+            // Gives all chosen seats of this chart back at once, after a confirmation.
+            $('#remove-all-seats-btn').on('click', function () {
+                if (!window.confirm(<?= json_encode(Text::_('COM_TICKETSTATION_RESERVATION_REMOVE_ALL_SEATS_CONFIRM')) ?>)) {
+                    return;
+                }
+
+                var $button = $(this).prop('disabled', true);
+
+                $.ajax({
+                    type: 'post',
+                    url: 'index.php?option=com_ticketstation&controller=reservation&task=removeSeats&format=raw',
+                    data: {[csrfTokenName]: 1},
+                    dataType: 'json'
+                }).done(function (result) {
+                    if (result.error === '0') {
+                        $('.seat-element.seat-mine').each(function () {
+                            // A seat of another chart in the reservation is not on this chart
+                            if ($.inArray(parseInt(this.id.replace('seat-', ''), 10), result.removed) !== -1) {
+                                $(this).removeClass('seat-mine').data('mine', 0);
+                            }
+                        });
+                    } else {
+                        showMessage(result.msg);
+                    }
+                    refreshLines();
+                }).fail(function () {
+                    showMessage(<?= json_encode(Text::_('COM_TICKETSTATION_RESERVATION_SAVE_FAILED')) ?>);
+                    $button.prop('disabled', false);
+                });
+            });
 
             // A free seat can still be switched to another price category after it was clicked.
             $('#cart-list').on('change', '.seat-category', function () {
