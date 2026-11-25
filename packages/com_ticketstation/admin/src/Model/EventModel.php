@@ -195,4 +195,76 @@ class EventModel extends AdminModel
         return $this->eventid;
     }
 
+    /**
+     * The dates of an event as they are stored now: eventdate, startdate and closingdate.
+     */
+    public function getStoredDates(int $eventid): array
+    {
+        if ($eventid <= 0) {
+            return [];
+        }
+
+        $db = $this->getDatabase();
+        $db->setQuery($db->getQuery(true)
+            ->select($db->quoteName(['eventdate', 'startdate', 'closingdate']))
+            ->from($db->quoteName('#__ticketstation_events'))
+            ->where($db->quoteName('eventid') . ' = ' . $eventid));
+
+        return (array) $db->loadAssoc();
+    }
+
+    /**
+     * The number of tickets of an event, children of multiseat tickets included.
+     * Test and live tickets both count: moving an event moves all of them.
+     */
+    public function getTicketCount(int $eventid): int
+    {
+        if ($eventid <= 0) {
+            return 0;
+        }
+
+        $db = $this->getDatabase();
+        $db->setQuery($db->getQuery(true)
+            ->select('COUNT(*)')
+            ->from($db->quoteName('#__ticketstation_tickets'))
+            ->where($db->quoteName('eventid') . ' = ' . $eventid));
+
+        return (int) $db->loadResult();
+    }
+
+    /**
+     * Moves the dates of all tickets of an event by a number of days, keeping the time of day
+     * (20:00 stays 20:00, also across a change between summer and winter time). That is the
+     * ticket's own date and time, when it is published and when its sale stops.
+     *
+     * @param   int  $eventid  The event
+     * @param   int  $days     Days to move, negative for earlier
+     *
+     * @return  int  The number of tickets moved
+     */
+    public function shiftTicketDates(int $eventid, int $days): int
+    {
+        if ($eventid <= 0 || $days === 0) {
+            return 0;
+        }
+
+        $db   = $this->getDatabase();
+        $set  = [];
+
+        foreach (['startdate', 'enddate', 'publish_date_time', 'sale_stop'] as $column) {
+            $name  = $db->quoteName($column);
+            // A blank date ('0000-00-00') stays as it is
+            $set[] = $name . ' = IF(' . $name . ' > ' . $db->quote('1000-01-01')
+                . ', DATE_ADD(' . $name . ', INTERVAL ' . $days . ' DAY), ' . $name . ')';
+        }
+
+        $db->setQuery($db->getQuery(true)
+            ->update($db->quoteName('#__ticketstation_tickets'))
+            ->set($set)
+            ->where($db->quoteName('eventid') . ' = ' . $eventid));
+        $db->execute();
+
+        return (int) $db->getAffectedRows();
+    }
+
 }

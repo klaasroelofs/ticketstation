@@ -17,6 +17,7 @@ use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\Controller\FormController;
 use Joomla\CMS\Uri\Uri;
 use Ticketstation\Component\Ticketstation\Administrator\Controller\Mixin\RegisterControllerTasks;
+use Ticketstation\Component\Ticketstation\Administrator\Helper\Date;
 use Ticketstation\Component\Ticketstation\Administrator\Helper\EventMail;
 use Joomla\CMS\Application\CMSApplication;
 use Joomla\CMS\MVC\Factory\MVCFactoryInterface;
@@ -75,9 +76,46 @@ class EventController extends FormController
             $data['eventdate'] = null;
         }
 
-        $before = EventMail::watch('event', (int) ($data['eventid'] ?? 0));
+        $eventid = (int) ($data['eventid'] ?? 0);
+        $before  = EventMail::watch('event', $eventid);
+
+        // The question "move the tickets along?" is only asked, and only answered with yes, for
+        // an event that already exists and whose date really changed.
+        $shiftTickets = !empty($data['shift_tickets']);
+        unset($data['shift_tickets']);
+        $days = 0;
+        $movedEventDates = false;
+
+        if ($shiftTickets && $eventid > 0 && !empty($data['eventdate'])) {
+            $stored = $model->getStoredDates($eventid);
+            $days   = $this->daysBetween($stored['eventdate'] ?? null, $data['eventdate']);
+
+            // The event's own publish and unpublish dates move along, unless they were changed on this very save
+            if ($days !== 0) {
+                foreach (['startdate', 'closingdate'] as $field) {
+                    if (!empty($data[$field]) && !empty($stored[$field])
+                        && substr((string) $data[$field], 0, 16) === substr((string) $stored[$field], 0, 16)) {
+                        $data[$field] = date('Y-m-d H:i:s', strtotime($data[$field] . ' ' . sprintf('%+d', $days) . ' days'));
+                        $movedEventDates = true;
+                    }
+                }
+            }
+        }
 
         if ($model->store($data)) {
+            if ($days !== 0) {
+                $moved = $model->shiftTicketDates($eventid, $days);
+
+                if ($moved > 0) {
+                    $when = Text::plural('COM_TICKETSTATION_EVENT_SHIFT_DAYS_' . ($days > 0 ? 'LATER' : 'EARLIER'), abs($days));
+                    Factory::getApplication()->enqueueMessage(Text::plural('COM_TICKETSTATION_EVENT_TICKETS_SHIFTED', $moved, $when), 'info');
+                }
+
+                if (!empty($movedEventDates)) {
+                    Factory::getApplication()->enqueueMessage(Text::_('COM_TICKETSTATION_EVENT_PUBLISHDATES_SHIFTED'), 'info');
+                }
+            }
+
             // Date or name changed and the event has buyers: point to the Communication screen
             EventMail::announceChange($before, $data);
 
@@ -86,6 +124,22 @@ class EventController extends FormController
             $this->setRedirect(Uri::base() . 'index.php?option=com_ticketstation&view=events', Text::_('COM_TICKETSTATION_EVENT_SAVED_FAILED'));
         }
 
+    }
+
+    /**
+     * Whole days from one date to another (Y-m-d), negative when the second is earlier; 0 when
+     * either is not a date.
+     */
+    private function daysBetween($from, $to): int
+    {
+        if (!Date::isDate($from) || !Date::isDate($to)) {
+            return 0;
+        }
+
+        $a = new \DateTime(substr($from, 0, 10));
+        $b = new \DateTime(substr($to, 0, 10));
+
+        return (int) $a->diff($b)->format('%r%a');
     }
 
     public function save($cachable = false, $urlparams = [])

@@ -23,12 +23,16 @@ class HtmlView extends BaseHtmlView
 {
     protected $form;
     protected $item;
+    protected $ticketCount = 0;
 
     function display($tpl = null)
     {
         $model       = $this->getModel();
         $this->form  = $model->getForm();
         $this->item  = $model->getItem();
+
+        // Tickets that can move along when the event date changes
+        $this->ticketCount = $model->getTicketCount((int) ($this->item->eventid ?? 0));
 
         // Set up the toolbar
         $add_edit = empty($this->item->eventid) ? Text::_('COM_TICKETSTATION_ADD') : Text::_('COM_TICKETSTATION_EDIT');
